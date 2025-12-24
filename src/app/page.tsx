@@ -18,10 +18,6 @@ export default function Home() {
     <div className="min-h-screen bg-[#FAF9F6]">
       {/* Hero */}
       <main className="flex flex-col items-center justify-center px-4 pt-24 pb-16">
-        <p className="text-sm uppercase tracking-widest text-gray-500 mb-4">
-          Toronto Meetup #6
-        </p>
-
         <h1 className="text-4xl md:text-6xl font-serif font-bold text-center max-w-3xl leading-tight mb-6">
           Find your matches
         </h1>
