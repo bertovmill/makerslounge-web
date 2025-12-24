@@ -1,0 +1,5121 @@
+{
+  "total_attendees": 119,
+  "total_matches": 236,
+  "rounds": [
+    {
+      "round": 1,
+      "type": "complementary",
+      "match_count": 59,
+      "matches": [
+        {
+          "helper": {
+            "name": "Yazin Joseph",
+            "linkedin": "https://linkedin.com/in/yazinjoseph",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Social media branding/content"
+            ]
+          },
+          "helped": {
+            "name": "Ilham Farah",
+            "linkedin": "https://linkedin.com/in/ilham-farah",
+            "needs": [
+              "Design (UX/UI)",
+              "I\u2019m looking for a mentor in UX/UI"
+            ]
+          },
+          "reason": "Yazin has specific expertise in Design (UX/UI), making him a strong match for Ilham's mentorship needs in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Ravi Amin",
+            "linkedin": "https://linkedin.com/in/raviamin",
+            "superpowers": [
+              "AI automations",
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Web development",
+              "Mobile app development",
+              "Event planning",
+              "Filmmaking/photography",
+              "Sales",
+              "Community Building",
+              "E-commerce",
+              "Debunker of fake news & main stream ideology"
+            ]
+          },
+          "helped": {
+            "name": "Swap :)",
+            "linkedin": "",
+            "needs": [
+              "Web development",
+              "Mobile app development",
+              "AI automations"
+            ]
+          },
+          "reason": "Ravi's superpowers in AI automations, web development, and mobile app development directly align with Swap's needs for better bikeshare solutions.",
+          "score": 90,
+          "is_trio": true,
+          "third_person": {
+            "name": "Matt Doyle",
+            "linkedin": "https://linkedin.com/in/matthewldoyle",
+            "superpowers": [
+              "Sales"
+            ],
+            "needs": [
+              "Web development"
+            ]
+          },
+          "third_person_reason": "Matt Doyle can provide sales insights to Swap's needs while also benefiting from Swap's skills in web development and AI automations."
+        },
+        {
+          "helper": {
+            "name": "Zlad Dujsic",
+            "linkedin": "https://linkedin.com/in/zlad-dujsic-078a6b51",
+            "superpowers": [
+              "Social media branding/content",
+              "Design (UX/UI)",
+              "Filmmaking/photography",
+              "Sales",
+              "Pitching & fundraising",
+              "E-commerce",
+              "Ads & Marketing"
+            ]
+          },
+          "helped": {
+            "name": "Disha Sareen",
+            "linkedin": "https://linkedin.com/in/disha-sareen-8b9661118",
+            "needs": [
+              "Filmmaking/Photography"
+            ]
+          },
+          "reason": "Zlad has superpowers in both filmmaking/photography and social media branding/content, making him an ideal match for Disha's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Irina Afanasenko",
+            "linkedin": "https://linkedin.com/in/irina-prod",
+            "superpowers": [
+              "Event planning",
+              "Community Building"
+            ]
+          },
+          "helped": {
+            "name": "Vinit Shah",
+            "linkedin": "https://linkedin.com/in/vinitshah99",
+            "needs": [
+              "Event planning",
+              "Hardtech experience, supply chain folks"
+            ]
+          },
+          "reason": "Irina's superpower in event planning directly aligns with Vinit's need for help with event planning, making her an ideal match.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Adam Cote",
+            "linkedin": "https://linkedin.com/in/adam-cote",
+            "superpowers": [
+              "Accounting or Finance",
+              "Community Building",
+              "AI automations"
+            ]
+          },
+          "helped": {
+            "name": "Hish I",
+            "linkedin": "https://linkedin.com/in/hishi",
+            "needs": [
+              "Community Building"
+            ]
+          },
+          "reason": "Adam has superpowers in Community Building and extensive knowledge in AI automations, which aligns well with Hish's focus on co-housing in Toronto.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Arman Blackstone",
+            "linkedin": "",
+            "superpowers": [
+              "AI automations",
+              "Social media branding/content",
+              "Accounting or Finance",
+              "Sales",
+              "Community Building",
+              "Pitching & fundraising",
+              "Legal",
+              "Recruiting",
+              "E-commerce",
+              "Podcasting"
+            ]
+          },
+          "helped": {
+            "name": "Rahul Malhotra",
+            "linkedin": "https://linkedin.com/in/Rahulbgold",
+            "needs": [
+              "Pitching & Fundraising",
+              "Podcasting"
+            ]
+          },
+          "reason": "Arman possesses superpowers in both Pitching & fundraising and Podcasting, making him an ideal match for Rahul's specific needs.",
+          "score": 95,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Henry Pak",
+            "linkedin": "https://linkedin.com/in/henry-pak",
+            "superpowers": [
+              "AI automations",
+              "Web development",
+              "Product development"
+            ]
+          },
+          "helped": {
+            "name": "William",
+            "linkedin": "https://linkedin.com/in/william-naayem",
+            "needs": [
+              "AI automations",
+              "Looking for an operations expert"
+            ]
+          },
+          "reason": "Henry's superpower in AI automations directly aligns with William's need for help in that area while also being relevant to his focus on building an agency that incorporates AI systems.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Raneem Zaitoun",
+            "linkedin": "https://linkedin.com/in/raneem-zaitounos",
+            "superpowers": [
+              "Social media branding/content",
+              "Event planning",
+              "Accounting or Finance",
+              "Sales",
+              "Community Building",
+              "Pitching & fundraising",
+              "Recruiting",
+              "Web development"
+            ]
+          },
+          "helped": {
+            "name": "Ivin Thomas",
+            "linkedin": "https://linkedin.com/in/ivinthomas",
+            "needs": [
+              "Community Building",
+              "Sales",
+              "Pitching & Fundraising",
+              "Recruiting",
+              "Having teammates with different skillsets and who believe in the need for such a system to be in place for greater consumer transparency and fact awareness."
+            ]
+          },
+          "reason": "Raneem has superpowers in Community Building, Pitching & Fundraising, and Recruiting, which align closely with Ivin's needs for building a vetted and certified organization.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Sam",
+            "linkedin": "https://linkedin.com/in/sam-d-413631164",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Sales",
+              "Community Building",
+              "Pitching & fundraising",
+              "Recruiting",
+              "AI automations",
+              "Web development",
+              "Mobile app development",
+              "Event planning",
+              "Industry Expertise in Automotive, and a background in Computer Science."
+            ]
+          },
+          "helped": {
+            "name": "Sarah Ziat",
+            "linkedin": "https://linkedin.com/in/Ziatsarah",
+            "needs": [
+              "Pitching & Fundraising",
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Legal",
+              "Recruiting",
+              "Meeting a co founder"
+            ]
+          },
+          "reason": "Sam's diverse superpowers include Design (UX/UI), Social media branding/content, and Recruiting, which align closely with Sarah's needs for branding and finding a co-founder, along with pitching and fundraising support.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Ahmad Almadhoun",
+            "linkedin": "https://linkedin.com/in/madhoundes",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Web development",
+              "Mobile app development"
+            ]
+          },
+          "helped": {
+            "name": "Prabhdeep Singh",
+            "linkedin": "https://linkedin.com/in/prabhs07",
+            "needs": [
+              "Design (UX/UI)",
+              "Web development"
+            ]
+          },
+          "reason": "Ahmad has superpowers in both Design (UX/UI) and Web development, directly aligning with Prabhdeep's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Sunny Yimeng Dong",
+            "linkedin": "https://linkedin.com/in/sunnyyimengdong&sa=X&ved=2ahUKEwjJwLGW5dGQAxU1D1kFHeFdDncQ7xYoAHoECAsQAQ&biw=390&bih=663&dpr=3",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Event planning",
+              "Social media branding/content",
+              "Filmmaking/photography"
+            ]
+          },
+          "helped": {
+            "name": "kai :)",
+            "linkedin": "https://linkedin.com/in/hulloitskai",
+            "needs": [
+              "Social media branding/content"
+            ]
+          },
+          "reason": "Sunny has strong expertise in social media branding/content, which directly aligns with Kai's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Brian Jin",
+            "linkedin": "https://linkedin.com/in/brian-jin-data",
+            "superpowers": [
+              "AI automations",
+              "Web development",
+              "Pitching & fundraising"
+            ]
+          },
+          "helped": {
+            "name": "basma kaanane",
+            "linkedin": "https://linkedin.com/in/basma-kaanane-09520b197",
+            "needs": [
+              "Pitching & Fundraising",
+              "Social media branding/content",
+              "Recruiting",
+              "Computer Vision"
+            ]
+          },
+          "reason": "Brian has superpowers in Pitching & Fundraising, which aligns perfectly with Basma's needs, while also possessing Web Development skills that could support her project.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Viraj Shah",
+            "linkedin": "https://linkedin.com/in/viraj-irl",
+            "superpowers": [
+              "AI automations",
+              "Event planning",
+              "Sales",
+              "Community Building",
+              "Communication"
+            ]
+          },
+          "helped": {
+            "name": "Avinash",
+            "linkedin": "https://linkedin.com/in/avinashrathee",
+            "needs": [
+              "Community Building"
+            ]
+          },
+          "reason": "Viraj's superpowers in community building and AI automations align perfectly with Avinash's needs for community building while working on an AI research agent.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Stephan Ledain",
+            "linkedin": "https://linkedin.com/in/stephanledain",
+            "superpowers": [
+              "Community Building",
+              "Podcasting",
+              "Event planning",
+              "Consulting, Storytelling, Product Development and Innovation, Design"
+            ]
+          },
+          "helped": {
+            "name": "Shilo Jeyarajasingam",
+            "linkedin": "https://linkedin.com/in/shilo-jeyaraj",
+            "needs": [
+              "Community Building"
+            ]
+          },
+          "reason": "Stephan has strong skills in community building, which directly aligns with Shilo's need for assistance in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Zayyan Ahmed",
+            "linkedin": "https://linkedin.com/in/qahmed1",
+            "superpowers": [
+              "AI automations",
+              "Mobile app development",
+              "Design (UX/UI)",
+              "Pitching & fundraising",
+              "Web development",
+              "Data Engineering, Product Management, AI Engineering"
+            ]
+          },
+          "helped": {
+            "name": "Nish V",
+            "linkedin": "https://linkedin.com/in/nishvel",
+            "needs": [
+              "Design (UX/UI)",
+              "Mobile app development",
+              "AI automations"
+            ]
+          },
+          "reason": "Zayyan has superpowers in AI automations, Mobile app development, and Design (UX/UI), which directly align with Nish's needs for his cost tracking and habit modification apps.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Ayesha Hafeez",
+            "linkedin": "https://linkedin.com/in/ayesha-hafeez-3115ba95",
+            "superpowers": [
+              "AI automations",
+              "Web development",
+              "Mobile app development",
+              "Product Management"
+            ]
+          },
+          "helped": {
+            "name": "Allen Liu",
+            "linkedin": "https://linkedin.com/in/yanzeliu",
+            "needs": [
+              "AI automations",
+              "Pitching & Fundraising",
+              "Web development",
+              "Mobile app development"
+            ]
+          },
+          "reason": "Ayesha possesses superpowers in AI automations, web development, and mobile app development, all of which align directly with Allen's project needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Gursimran Chadha",
+            "linkedin": "https://linkedin.com/in/gurchadha",
+            "superpowers": [
+              "Sales",
+              "Community Building",
+              "Pitching & fundraising",
+              "Podcasting"
+            ]
+          },
+          "helped": {
+            "name": "Devender Butani",
+            "linkedin": "https://linkedin.com/in/devender-butani",
+            "needs": [
+              "Podcasting"
+            ]
+          },
+          "reason": "Gursimran has podcasting expertise along with skills in community building and pitching, which can greatly benefit Devender's podcasting needs for his startup.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Miguel Twahirwa",
+            "linkedin": "https://linkedin.com/in/migueltwahirwa",
+            "superpowers": [
+              "Mobile app development",
+              "Web development",
+              "AI automations",
+              "Analytics"
+            ]
+          },
+          "helped": {
+            "name": "Ezra Dey",
+            "linkedin": "https://linkedin.com/in/karekin-dey",
+            "needs": [
+              "Mobile app development"
+            ]
+          },
+          "reason": "Miguel has expertise in mobile app development and web development, making him the ideal match for Ezra's needs.",
+          "score": 95,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Leo P",
+            "linkedin": "https://linkedin.com/in/qlzkme",
+            "superpowers": [
+              "Web development",
+              "E-commerce",
+              "AI automations"
+            ]
+          },
+          "helped": {
+            "name": "Armin Aghayan",
+            "linkedin": "https://linkedin.com/in/arminaghayan",
+            "needs": [
+              "Web development"
+            ]
+          },
+          "reason": "Leo P has web development as a superpower, which directly aligns with Armin's needs for his AI property management app.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Bon",
+            "linkedin": "https://linkedin.com/in/bonbong",
+            "superpowers": [
+              "Pitching & fundraising",
+              "Design (UX/UI)",
+              "Web development"
+            ]
+          },
+          "helped": {
+            "name": "Tina Li",
+            "linkedin": "https://linkedin.com/in/tinamli",
+            "needs": [
+              "Podcasting",
+              "Pitching & Fundraising"
+            ]
+          },
+          "reason": "Bon possesses superpowers in pitching & fundraising, which directly aligns with Tina's needs, and has design skills that can support her podcasting efforts.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Declan Kintu",
+            "linkedin": "https://linkedin.com/in/declan-trevor-kintu",
+            "superpowers": [
+              "AI automations",
+              "Design (UX/UI)",
+              "Web development",
+              "Mobile app development",
+              "Community Building",
+              "Recruiting"
+            ]
+          },
+          "helped": {
+            "name": "Wendy Huang",
+            "linkedin": "https://linkedin.com/in/wendy-siqi-huang",
+            "needs": [
+              "Recruiting"
+            ]
+          },
+          "reason": "Declan has superpowers in AI automations, Design (UX/UI), Web development, Mobile app development, Community Building, and Recruiting, making him well-suited to assist Wendy with her needs in recruiting.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Annie",
+            "linkedin": "https://linkedin.com/in/anh-phan-001",
+            "superpowers": [
+              "Social media branding/content",
+              "Event planning",
+              "Filmmaking/photography",
+              "Sales",
+              "Community Building"
+            ]
+          },
+          "helped": {
+            "name": "Kachi",
+            "linkedin": "https://linkedin.com/in/ginikachieloka",
+            "needs": [
+              "Legal",
+              "Community Building",
+              "Would just love to connect and engage with brilliant people working on interesting projects"
+            ]
+          },
+          "reason": "Annie's superpowers in community building and social media branding align well with Kachi's interests in connecting with others and engaging in creative projects.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Henry Hiles",
+            "linkedin": "https://linkedin.com/company/ I don't have a LinkedIn",
+            "superpowers": [
+              "Mobile app development",
+              "Web development",
+              "Community Building",
+              "Native app development, including desktop."
+            ]
+          },
+          "helped": {
+            "name": "Azhar Hemani",
+            "linkedin": "https://linkedin.com/in/azharhemani",
+            "needs": [
+              "AI automations",
+              "Web development",
+              "Mobile app development"
+            ]
+          },
+          "reason": "Henry has expertise in both web development and mobile app development, which aligns with Azhar's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Berto Mill",
+            "linkedin": "https://linkedin.com/in/bertomill",
+            "superpowers": [
+              "AI automations",
+              "Sales",
+              "Organization"
+            ]
+          },
+          "helped": {
+            "name": "Eric",
+            "linkedin": "https://linkedin.com/in/eric-dekryger",
+            "needs": [
+              "Sales"
+            ]
+          },
+          "reason": "Berto has superpowers in both AI automations and Sales, which directly aligns with Eric's needs for Sales and LinkedIn AI Outreach.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Fidha Mariyam",
+            "linkedin": "https://linkedin.com/in/fidhamariyam",
+            "superpowers": [
+              "E-commerce",
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Shopify strategy, CRO and audits"
+            ]
+          },
+          "helped": {
+            "name": "Kimberly Ng",
+            "linkedin": "https://linkedin.com/in/kimberly-ng-0b8466380",
+            "needs": [
+              "Social media branding/content",
+              "Community Building",
+              "E-commerce",
+              "Filmmaking/Photography",
+              "Accounting or Finance",
+              "Design (UX/UI)"
+            ]
+          },
+          "reason": "Fidha has expertise in e-commerce, social media branding/content, and design (UX/UI), which aligns closely with Kimberly's needs for building her whimsical florists and studio.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Miray B",
+            "linkedin": "https://linkedin.com/in/mirayberber",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Web development",
+              "Podcasting",
+              "Coffee\ud83d\udc9b Chemistry\ud83e\uddea"
+            ]
+          },
+          "helped": {
+            "name": "David Ampofo",
+            "linkedin": "https://linkedin.com/in/dvampofo",
+            "needs": [
+              "Design (UX/UI)",
+              "Web development",
+              "Filmmaking/Photography"
+            ]
+          },
+          "reason": "Miray B has superpowers in Design (UX/UI) and Web development, directly matching David's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Lokesh",
+            "linkedin": "https://linkedin.com/in/Lokesh",
+            "superpowers": [
+              "Sales"
+            ]
+          },
+          "helped": {
+            "name": "Jagrit Acharya",
+            "linkedin": "https://linkedin.com/in/jagritacharya",
+            "needs": [
+              "Sales"
+            ]
+          },
+          "reason": "Lokesh specializes in sales, which aligns directly with Jagrit's need for help in sales.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Alejandro",
+            "linkedin": "https://linkedin.com/in/aicastellanos",
+            "superpowers": [
+              "AI automations",
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Web development",
+              "Event planning",
+              "Mobile app development",
+              "Filmmaking/photography"
+            ]
+          },
+          "helped": {
+            "name": "Irina Belgorodskii",
+            "linkedin": "https://linkedin.com/in/irina-belgorodskii",
+            "needs": [
+              "Filmmaking/Photography",
+              "Accounting or Finance",
+              "Pitching & Fundraising",
+              "Mobile app development",
+              "Design (UX/UI)",
+              "AI automations",
+              "Web development",
+              "Social media branding/content"
+            ]
+          },
+          "reason": "Alejandro has superpowers in AI automations, Design (UX/UI), Social media branding/content, and Filmmaking/photography, which align closely with Irina's diverse needs in filmmaking, design, and technology.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Brittany Will",
+            "linkedin": "https://linkedin.com/in/thebrittwill",
+            "superpowers": [
+              "Community Building",
+              "Event planning",
+              "Pitching & fundraising",
+              "Curation, Storytelling , Positioning"
+            ]
+          },
+          "helped": {
+            "name": "Jin Choe",
+            "linkedin": "https://linkedin.com/in/rainmaker1232",
+            "needs": [
+              "Pitching & Fundraising",
+              "looking for ways to move out of infinite start up loop"
+            ]
+          },
+          "reason": "Brittany has strong skills in pitching and fundraising, which are Jin's primary needs, along with community building and storytelling that could help him move forward.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Minas Adonai",
+            "linkedin": "https://linkedin.com/in/minas-adonai",
+            "superpowers": [
+              "Sales",
+              "Filmmaking/photography",
+              "Product"
+            ]
+          },
+          "helped": {
+            "name": "Purva Daga",
+            "linkedin": "https://linkedin.com/in/purva-daga",
+            "needs": [
+              "Sales"
+            ]
+          },
+          "reason": "Minas specializes in sales and has experience in filmmaking/photography, which could complement Purva's needs at Hidlang.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Saswat",
+            "linkedin": "https://linkedin.com/in/saswat-baruah-06b52419",
+            "superpowers": [
+              "Web development",
+              "AI automations"
+            ]
+          },
+          "helped": {
+            "name": "gaya k",
+            "linkedin": "https://linkedin.com/in/gayakhiani",
+            "needs": [
+              "Web development"
+            ]
+          },
+          "reason": "Saswat has strong web development skills, which directly align with Gaya's need for help in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Paul",
+            "linkedin": "https://linkedin.com/in/paul-bokserman",
+            "superpowers": [
+              "AI automations",
+              "E-commerce",
+              "Pitching & fundraising",
+              "Guided Meditation"
+            ]
+          },
+          "helped": {
+            "name": "Jin Park",
+            "linkedin": "https://linkedin.com/in/jin-park020716",
+            "needs": [
+              "Pitching & Fundraising",
+              "Sales"
+            ]
+          },
+          "reason": "Paul's expertise in pitching & fundraising aligns perfectly with Jin Park's needs, and he also has superpowers in sales, which further enhances the match.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Eddy Okun",
+            "linkedin": "https://linkedin.com/in/eddyokun",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Sales",
+              "Marketing, GTM"
+            ]
+          },
+          "helped": {
+            "name": "Kira YAN",
+            "linkedin": "https://linkedin.com/in/yanzexu",
+            "needs": [
+              "Social media branding/content"
+            ]
+          },
+          "reason": "Eddy has strong expertise in social media branding/content which directly aligns with Kira's needs for help in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Mehvish",
+            "linkedin": "https://linkedin.com/in/mehvish-ali-355b35118",
+            "superpowers": [
+              "Event planning",
+              "Filmmaking/photography",
+              "Sales",
+              "Design (UX/UI)",
+              "Leadership"
+            ]
+          },
+          "helped": {
+            "name": "Junaid L Mahmood",
+            "linkedin": "https://linkedin.com/in/junaidmahmood-",
+            "needs": [
+              "Event planning",
+              "Filmmaking/Photography",
+              "Community Building",
+              "Recruiting",
+              "Legal"
+            ]
+          },
+          "reason": "Mehvish possesses superpowers in both event planning and filmmaking/photography, directly aligning with Junaid's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Joshua Johnson",
+            "linkedin": "https://linkedin.com/in/joshb-johnson",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Social media branding/content"
+            ]
+          },
+          "helped": {
+            "name": "Stefany nieto",
+            "linkedin": "https://linkedin.com/in/stefanynieto",
+            "needs": [
+              "Web development",
+              "Social media branding/content"
+            ]
+          },
+          "reason": "Joshua has superpowers in both design (UX/UI) and social media branding/content, making him an excellent match for Stefany's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "youssef assad",
+            "linkedin": "https://linkedin.com/in/youssef-assad",
+            "superpowers": [
+              "Mobile app development"
+            ]
+          },
+          "helped": {
+            "name": "Rose Ruhao Lou",
+            "linkedin": "https://linkedin.com/in/ruhaolou",
+            "needs": [
+              "Mobile app development"
+            ]
+          },
+          "reason": "Youssef Assad possesses superpowers in mobile app development, which directly aligns with Rose's need for assistance in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Paola Santiago",
+            "linkedin": "https://linkedin.com/in/paolamariesantiago",
+            "superpowers": [
+              "AI automations",
+              "Design (UX/UI)",
+              "Web development",
+              "Mobile app development",
+              "Podcasting",
+              "Product Management"
+            ]
+          },
+          "helped": {
+            "name": "Manuel Olumorin",
+            "linkedin": "https://linkedin.com/in/manuel-olumorin",
+            "needs": [
+              "Web development"
+            ]
+          },
+          "reason": "Paola has web development skills along with design expertise, making her the most suitable helper for Manuel's web development needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Irene",
+            "linkedin": "https://linkedin.com/in/irene-cili",
+            "superpowers": [
+              "Community Building"
+            ]
+          },
+          "helped": {
+            "name": "Monique Danao",
+            "linkedin": "https://linkedin.com/in/monique-danao-7a7501125",
+            "needs": [
+              "Community Building"
+            ]
+          },
+          "reason": "Irene's superpower in Community Building directly aligns with Monique's need for help in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Kari Gachugu",
+            "linkedin": "https://linkedin.com/in/kari-gachugu-bb00a6228",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Filmmaking/photography",
+              "Podcasting",
+              "Sales",
+              "Talking to people"
+            ]
+          },
+          "helped": {
+            "name": "Chantal Nguyen",
+            "linkedin": "https://linkedin.com/in/chantal-nguyen-169b5a2b2",
+            "needs": [
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Web development",
+              "Event planning",
+              "Filmmaking/Photography",
+              "Community Building",
+              "Opportunities to collaborate on early-stage projects or join teams that need design/content help."
+            ]
+          },
+          "reason": "Kari has strong skills in design (UX/UI), social media branding/content, and filmmaking/photography, which align closely with Chantal's needs for her personal portfolio and content hub.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Tyler Abbey",
+            "linkedin": "https://linkedin.com/in/tylergaryabbey",
+            "superpowers": [
+              "Sales",
+              "Design (UX/UI)",
+              "Friendship"
+            ]
+          },
+          "helped": {
+            "name": "Reza Tangestani",
+            "linkedin": "https://linkedin.com/in/rezatangestani",
+            "needs": [
+              "Sales"
+            ]
+          },
+          "reason": "Eduardo has strong sales skills along with web development and design abilities, which can greatly assist Reza in enhancing his sales strategies for enghub.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Ahmad Sofi-Mahmudi",
+            "linkedin": "https://linkedin.com/in/asofimahmudi",
+            "superpowers": [
+              "AI automations",
+              "Event planning",
+              "Community Building"
+            ]
+          },
+          "helped": {
+            "name": "Shake",
+            "linkedin": "https://linkedin.com/in/shake-the-ai-guy",
+            "needs": [
+              "Community Building"
+            ]
+          },
+          "reason": "Ahmad's superpowers in AI automations and community building make him an excellent match for Shake's needs in both areas.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Pierre",
+            "linkedin": "",
+            "superpowers": [
+              "AI automations",
+              "Design (UX/UI)",
+              "Sales",
+              "Pitching & fundraising",
+              "Model training and hardware programming"
+            ]
+          },
+          "helped": {
+            "name": "Wonbong Koh",
+            "linkedin": "https://linkedin.com/in/6472387450",
+            "needs": [
+              "AI automations"
+            ]
+          },
+          "reason": "Pierre has superpowers in AI automations and also possesses skills in sales and fundraising, making him well-suited to assist Wonbong with AI-related projects and investment opportunities.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Sophia Ghashghaei",
+            "linkedin": "https://linkedin.com/in/sophia-ghashghaei",
+            "superpowers": [
+              "Social media branding/content",
+              "Event planning",
+              "Sales",
+              "Problem solving and creative ideation"
+            ]
+          },
+          "helped": {
+            "name": "Arya Sharma",
+            "linkedin": "https://linkedin.com/in/arya-sharma",
+            "needs": [
+              "Sales",
+              "Social media branding/content",
+              "Event planning"
+            ]
+          },
+          "reason": "Sophia has superpowers in social media branding/content, event planning, and sales, which align perfectly with Arya's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Ayman Abduldayem",
+            "linkedin": "https://linkedin.com/in/ayman-abduldayem",
+            "superpowers": [
+              "Social media branding/content",
+              "Filmmaking/photography"
+            ]
+          },
+          "helped": {
+            "name": "Asar Qadir",
+            "linkedin": "https://linkedin.com/in/asar-qadir-13bb5a25a",
+            "needs": [
+              "Social media branding/content"
+            ]
+          },
+          "reason": "Ayman specializes in social media branding/content and also has skills in filmmaking/photography, making him well-suited to assist Asar with social media branding for his AI search project.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Melissa Tran",
+            "linkedin": "https://linkedin.com/in/melissa-tran",
+            "superpowers": [
+              "Web development",
+              "AI automations",
+              "Sales",
+              "E-commerce"
+            ]
+          },
+          "helped": {
+            "name": "Josh Maldonado",
+            "linkedin": "https://linkedin.com/in/joshmaldonado",
+            "needs": [
+              "Sales",
+              "Design (UX/UI)"
+            ]
+          },
+          "reason": "Melissa has strong skills in both Sales and Web development, which align well with Josh's needs in Sales and Design (UX/UI) for his prototype studio.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Alok Kumar Deepak",
+            "linkedin": "https://linkedin.com/in/alokdeepak555",
+            "superpowers": [
+              "Sales",
+              "Event planning",
+              "E-commerce",
+              "Pitching & fundraising",
+              "Accounting or Finance"
+            ]
+          },
+          "helped": {
+            "name": "Priyanshi Sanghvi",
+            "linkedin": "https://linkedin.com/in/priyanshi-sanghvi",
+            "needs": [
+              "Sales"
+            ]
+          },
+          "reason": "Alok has superpowers in sales and e-commerce, making him well-suited to help Priyanshi with her e-commerce brand's sales challenges.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Nima Tahami",
+            "linkedin": "https://linkedin.com/in/nimatahami",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Mobile app development",
+              "Pitching & fundraising",
+              "Web development"
+            ]
+          },
+          "helped": {
+            "name": "noah deskin",
+            "linkedin": "https://linkedin.com/in/noah-deskin",
+            "needs": [
+              "AI automations",
+              "Design (UX/UI)",
+              "Mobile app development"
+            ]
+          },
+          "reason": "Nima possesses superpowers in both Design (UX/UI) and Mobile app development, directly aligning with Noah's needs while also being skilled in fundraising, which can support a startup.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Syed Qamar",
+            "linkedin": "https://linkedin.com/in/syedqamar",
+            "superpowers": [
+              "Sales",
+              "Social media branding/content",
+              "Event planning",
+              "Business management"
+            ]
+          },
+          "helped": {
+            "name": "Veronica Ye",
+            "linkedin": "https://linkedin.com/in/veronica-ye",
+            "needs": [
+              "Sales"
+            ]
+          },
+          "reason": "Syed has superpowers in Sales and Social media branding/content, which directly align with Veronica's need for help with sales in her freelancing Amazon revenue journey.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Eduardo",
+            "linkedin": "https://linkedin.com/in/eduardo-chavez2024",
+            "superpowers": [
+              "Sales",
+              "Design (UX/UI)",
+              "Web development",
+              "Social media branding/content",
+              "Pitching & fundraising"
+            ]
+          },
+          "helped": {
+            "name": "Katy Rozanova",
+            "linkedin": "https://linkedin.com/in/katy-rozanova",
+            "needs": [
+              "AI automations",
+              "Social media branding/content",
+              "E-commerce",
+              "Sales"
+            ]
+          },
+          "reason": "Eduardo's superpowers in Sales and Social media branding/content align well with Katy's needs for assistance in her e-commerce and branding efforts.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Nikhil Gnanavel",
+            "linkedin": "https://linkedin.com/in/nikhil-gnanavel",
+            "superpowers": [
+              "Community Building",
+              "Pitching & fundraising",
+              "Recruiting",
+              "AI automations",
+              "Accounting or Finance",
+              "Legal"
+            ]
+          },
+          "helped": {
+            "name": "Shivang",
+            "linkedin": "https://linkedin.com/in/sr099",
+            "needs": [
+              "Pitching & Fundraising",
+              "Legal",
+              "Social media branding/content"
+            ]
+          },
+          "reason": "Nikhil possesses superpowers in pitching & fundraising and legal, directly addressing Shivang's specific needs, while also having community building and AI automation skills that could be beneficial for his projects.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Ramon Sharif",
+            "linkedin": "https://linkedin.com/in/ramonsharif",
+            "superpowers": [
+              "Pitching & fundraising",
+              "AI automations",
+              "Design (UX/UI)",
+              "Web development",
+              "Mobile app development",
+              "Business Development"
+            ]
+          },
+          "helped": {
+            "name": "Stephanie Reimer",
+            "linkedin": "https://linkedin.com/in/reimerstephie",
+            "needs": [
+              "Pitching & Fundraising",
+              "Sales"
+            ]
+          },
+          "reason": "He has superpowers in pitching & fundraising, which directly aligns with Stephanie's needs while also having experience in design, which complements her freelance business expansion.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Aaron L. Greenspan",
+            "linkedin": "https://linkedin.com/in/aaron-greenspan",
+            "superpowers": [
+              "Social media branding/content",
+              "Filmmaking/photography",
+              "Event planning",
+              "Pitching & fundraising",
+              "AI automations",
+              "Design (UX/UI)",
+              "Community Building",
+              "Recruiting",
+              "Podcasting",
+              "E-commerce",
+              "Accessibility, inclusive design, usability testing"
+            ]
+          },
+          "helped": {
+            "name": "Adrian Clarke- Commercial Insurance B",
+            "linkedin": "https://linkedin.com/in/-adrian-clarke",
+            "needs": [
+              "Event planning",
+              "Social media branding/content",
+              "Community Building",
+              "Pitching & Fundraising",
+              "Recruiting",
+              "Podcasting"
+            ]
+          },
+          "reason": "Aaron has a wide range of superpowers that directly align with Adrian\u2019s needs, particularly in social media branding/content, event planning, community building, and podcasting.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Arash Nouri",
+            "linkedin": "https://linkedin.com/in/arashnouri95",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Event planning",
+              "Filmmaking/photography",
+              "Community Building",
+              "Recruiting",
+              "Web development",
+              "Social media branding/content",
+              "Reality distortion field"
+            ]
+          },
+          "helped": {
+            "name": "Xing Yang Lan",
+            "linkedin": "https://linkedin.com/in/bill-xing-yang-6aaa01147",
+            "needs": [
+              "Community Building"
+            ]
+          },
+          "reason": "Arash has strong community building skills alongside expertise in event planning and web development, making him well-suited to assist with Xing's community building needs for his VoiceAI startup.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Hossein Yousefi",
+            "linkedin": "https://linkedin.com/in/hossein-yousefi-55364729b",
+            "superpowers": [
+              "AI automations",
+              "Sales",
+              "Community Building",
+              "Truthfulness"
+            ]
+          },
+          "helped": {
+            "name": "Valera Che",
+            "linkedin": "https://linkedin.com/in/valeriia-chernova",
+            "needs": [
+              "Pitching & Fundraising",
+              "Podcasting"
+            ]
+          },
+          "reason": "He has experience in sales and community building, which can assist Valera in pitching and fundraising effectively.",
+          "score": 80,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Mariglen Qorri",
+            "linkedin": "https://linkedin.com/in/mariglen-qorri",
+            "superpowers": [
+              "Community Building",
+              "Design (UX/UI)",
+              "Product management"
+            ]
+          },
+          "helped": {
+            "name": "Vidhi Rana",
+            "linkedin": "https://linkedin.com/in/vidhi-rana-6a934016b",
+            "needs": [
+              "Filmmaking/Photography",
+              "I am going to visit this event for the first time, and i am excited to meet new talents with who i can make connections and develop new idea which are helpful for community."
+            ]
+          },
+          "reason": "Mariglen's superpowers in community building and design will complement Vidhi's focus on therapeutic garden design and collaboration for community-oriented projects.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Rajan Devnath",
+            "linkedin": "https://linkedin.com/in/rdevnath",
+            "superpowers": [
+              "AI automations",
+              "E-commerce",
+              "Operations"
+            ]
+          },
+          "helped": {
+            "name": "razy",
+            "linkedin": "https://linkedin.com/in/razyshafiee",
+            "needs": [
+              "AI automations"
+            ]
+          },
+          "reason": "Rajan's superpowers in AI automations directly align with razy's need for help with AI automations.",
+          "score": 95,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Wasim Abuzaher",
+            "linkedin": "https://linkedin.com/in/wasimabuzaher",
+            "superpowers": [
+              "Web development",
+              "Mobile app development"
+            ]
+          },
+          "helped": {
+            "name": "Jack Mufudzi",
+            "linkedin": "https://linkedin.com/in/jackmufudzi",
+            "needs": [
+              "AI automations"
+            ]
+          },
+          "reason": "Wasim's web and mobile app development skills can assist Jack with the technical aspects of AI automation for his music event index.",
+          "score": 75,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Michael Shmelev",
+            "linkedin": "https://linkedin.com/in/michaelshmelev",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Community Building",
+              "Good dancer"
+            ]
+          },
+          "helped": {
+            "name": "Pranshu Bhatia",
+            "linkedin": "https://linkedin.com/in/pranshubhatia99",
+            "needs": [
+              "Community Building",
+              "Pitching & Fundraising",
+              "Seeking Mentorship and industry wisdom."
+            ]
+          },
+          "reason": "Michael's expertise in community building can directly support Pranshu's needs in that area, making him the best fit for mentorship and fundraising efforts as well.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Nancy Wu",
+            "linkedin": "https://linkedin.com/in/na",
+            "superpowers": [
+              "Mobile app development"
+            ]
+          },
+          "helped": {
+            "name": "Lydia Shan",
+            "linkedin": "https://linkedin.com/in/lydiashan",
+            "needs": [
+              "Web development",
+              "Mobile app development"
+            ]
+          },
+          "reason": "Nancy's mobile app development superpower directly aligns with Lydia's need for help in mobile app development for her DJ visualizer app.",
+          "score": 90,
+          "is_trio": false
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "type": "complementary",
+      "match_count": 59,
+      "matches": [
+        {
+          "helper": {
+            "name": "Prabhdeep Singh",
+            "linkedin": "https://linkedin.com/in/prabhs07",
+            "superpowers": [
+              "AI automations",
+              "Pitching & fundraising",
+              "AI research"
+            ]
+          },
+          "helped": {
+            "name": "Mariglen Qorri",
+            "linkedin": "https://linkedin.com/in/mariglen-qorri",
+            "needs": [
+              "AI automations"
+            ]
+          },
+          "reason": "Prabhdeep specializes in AI automations, making him the ideal helper for Mariglen's needs in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Kachi",
+            "linkedin": "https://linkedin.com/in/ginikachieloka",
+            "superpowers": [
+              "AI automations",
+              "Social media branding/content",
+              "Organization/ Ops"
+            ]
+          },
+          "helped": {
+            "name": "Raneem Zaitoun",
+            "linkedin": "https://linkedin.com/in/raneem-zaitounos",
+            "needs": [
+              "AI automations",
+              "Mobile app development",
+              "Design (UX/UI)"
+            ]
+          },
+          "reason": "Kachi has expertise in AI automations and also possesses skills in social media branding/content, which can complement Raneem's needs in AI and design aspects.",
+          "score": 75,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Xing Yang Lan",
+            "linkedin": "https://linkedin.com/in/bill-xing-yang-6aaa01147",
+            "superpowers": [
+              "Web development",
+              "Design (UX/UI)",
+              "AI automations",
+              "Python"
+            ]
+          },
+          "helped": {
+            "name": "Minas Adonai",
+            "linkedin": "https://linkedin.com/in/minas-adonai",
+            "needs": [
+              "Web development",
+              "Design (UX/UI)",
+              "AI automations"
+            ]
+          },
+          "reason": "Xing has superpowers in web development, design (UX/UI), and AI automations, closely aligning with the needs of Minas Adonai's startup.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Sarah Ziat",
+            "linkedin": "https://linkedin.com/in/Ziatsarah",
+            "superpowers": [
+              "Community Building",
+              "Event planning",
+              "Filmmaking/photography",
+              "Sales",
+              "Story telling"
+            ]
+          },
+          "helped": {
+            "name": "Brian Jin",
+            "linkedin": "https://linkedin.com/in/brian-jin-data",
+            "needs": [
+              "Sales",
+              "Community Building",
+              "Business co-founder"
+            ]
+          },
+          "reason": "Sarah has strong skills in Sales and Community Building, making her an ideal match for Brian's needs in those areas while also supporting his focus on building a business.",
+          "score": 90,
+          "is_trio": true,
+          "third_person": {
+            "name": "Stephanie Reimer",
+            "linkedin": "https://linkedin.com/in/reimerstephie",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Filmmaking/photography",
+              "Web development"
+            ],
+            "needs": [
+              "Pitching & Fundraising",
+              "Sales"
+            ]
+          },
+          "third_person_reason": "Stephanie can assist Brian with his needs in Sales and her skills in Filmmaking/photography complement Sarah's abilities, while Sarah can help Stephanie in her design business expansion and Brian can provide insights into fundraising."
+        },
+        {
+          "helper": {
+            "name": "Monique Danao",
+            "linkedin": "https://linkedin.com/in/monique-danao-7a7501125",
+            "superpowers": [
+              "Pitching & fundraising",
+              "Content, Marketing, Design (UI/UX)"
+            ]
+          },
+          "helped": {
+            "name": "Alejandro",
+            "linkedin": "https://linkedin.com/in/aicastellanos",
+            "needs": [
+              "Podcasting",
+              "Pitching & Fundraising",
+              "Accounting or Finance"
+            ]
+          },
+          "reason": "Monique specializes in pitching & fundraising, which aligns perfectly with Alejandro's needs, and her expertise in content can also support his podcasting efforts.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Ivin Thomas",
+            "linkedin": "https://linkedin.com/in/ivinthomas",
+            "superpowers": [
+              "Social media branding/content",
+              "Event planning",
+              "Filmmaking/photography",
+              "Design (UX/UI)",
+              "Content Strategy, Brand Marketing, Copywriting"
+            ]
+          },
+          "helped": {
+            "name": "Pierre",
+            "linkedin": "",
+            "needs": [
+              "Social media branding/content",
+              "Filmmaking/Photography",
+              "Podcasting",
+              "Community Building",
+              "Sales"
+            ]
+          },
+          "reason": "Ivin possesses skills in social media branding, filmmaking/photography, and content strategy, which align closely with Pierre's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Shake",
+            "linkedin": "https://linkedin.com/in/shake-the-ai-guy",
+            "superpowers": [
+              "AI automations"
+            ]
+          },
+          "helped": {
+            "name": "Stephan Ledain",
+            "linkedin": "https://linkedin.com/in/stephanledain",
+            "needs": [
+              "Sales",
+              "Web development",
+              "AI automations",
+              "Legal, Immigration support"
+            ]
+          },
+          "reason": "Shake has expertise in AI automations, which aligns perfectly with Stephan's needs, and offers potential insights for his projects AdaptAI and Eternal Remedy.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Hish I",
+            "linkedin": "https://linkedin.com/in/hishi",
+            "superpowers": [
+              "Accounting or Finance",
+              "Strategy"
+            ]
+          },
+          "helped": {
+            "name": "Leo P",
+            "linkedin": "https://linkedin.com/in/qlzkme",
+            "needs": [
+              "Community Building",
+              "Sales",
+              "Accounting or Finance"
+            ]
+          },
+          "reason": "Hish I's superpower in Accounting or Finance directly aligns with Leo P's needs, while also providing strategic insight for self-hosting AI models in small businesses.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Avinash",
+            "linkedin": "https://linkedin.com/in/avinashrathee",
+            "superpowers": [
+              "Pitching & fundraising",
+              "Product"
+            ]
+          },
+          "helped": {
+            "name": "Saswat",
+            "linkedin": "https://linkedin.com/in/saswat-baruah-06b52419",
+            "needs": [
+              "Sales",
+              "Community Building",
+              "Pitching & Fundraising"
+            ]
+          },
+          "reason": "Avinash's superpowers in pitching and fundraising directly align with Saswat's needs, while also being knowledgeable about product work.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Arya Sharma",
+            "linkedin": "https://linkedin.com/in/arya-sharma",
+            "superpowers": [
+              "AI automations",
+              "Design (UX/UI)",
+              "Sales",
+              "Pitching & fundraising",
+              "Podcasting",
+              "Recruiting",
+              "People management"
+            ]
+          },
+          "helped": {
+            "name": "Lokesh",
+            "linkedin": "https://linkedin.com/in/Lokesh",
+            "needs": [
+              "AI automations",
+              "Sales"
+            ]
+          },
+          "reason": "Arya has expertise in AI automations and sales, which directly aligns with Lokesh's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Valera Che",
+            "linkedin": "https://linkedin.com/in/valeriia-chernova",
+            "superpowers": [
+              "Web development",
+              "Mobile app development"
+            ]
+          },
+          "helped": {
+            "name": "Brittany Will",
+            "linkedin": "https://linkedin.com/in/thebrittwill",
+            "needs": [
+              "Web development",
+              "Mobile app development",
+              "Social media branding/content"
+            ]
+          },
+          "reason": "Valera's superpowers in both web development and mobile app development align perfectly with Brittany's needs, making them an excellent match.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Kira YAN",
+            "linkedin": "https://linkedin.com/in/yanzexu",
+            "superpowers": [
+              "Web development",
+              "Design (UX/UI)"
+            ]
+          },
+          "helped": {
+            "name": "Bon",
+            "linkedin": "https://linkedin.com/in/bonbong",
+            "needs": [
+              "Web development",
+              "Design (UX/UI)",
+              "Accounting or Finance"
+            ]
+          },
+          "reason": "Kira has skills in both web development and design (UX/UI), which are exactly what Bon needs help with.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Rahul Malhotra",
+            "linkedin": "https://linkedin.com/in/Rahulbgold",
+            "superpowers": [
+              "Sales",
+              "Podcasting",
+              "E-commerce",
+              "Pitching & fundraising",
+              "Investment banking"
+            ]
+          },
+          "helped": {
+            "name": "Ramon Sharif",
+            "linkedin": "https://linkedin.com/in/ramonsharif",
+            "needs": [
+              "Legal",
+              "E-commerce",
+              "Community Building",
+              "Sales",
+              "Domain Expertise"
+            ]
+          },
+          "reason": "He has expertise in Sales and E-commerce, which aligns closely with Ramon's needs for his Venture Studio.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Ilham Farah",
+            "linkedin": "https://linkedin.com/in/ilham-farah",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Event planning",
+              "Filmmaking/photography",
+              "No code websites, ai assisted app and website building"
+            ]
+          },
+          "helped": {
+            "name": "Viraj Shah",
+            "linkedin": "https://linkedin.com/in/viraj-irl",
+            "needs": [
+              "Design (UX/UI)",
+              "Web development",
+              "Mobile app development",
+              "Event planning",
+              "Pitching & Fundraising",
+              "Podcasting",
+              "Sales",
+              "Community Building"
+            ]
+          },
+          "reason": "Ilham has superpowers in Design (UX/UI), Event planning, and no-code solutions, aligning well with Viraj's needs in design and event planning.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Tina Li",
+            "linkedin": "https://linkedin.com/in/tinamli",
+            "superpowers": [
+              "Event planning",
+              "Recruiting",
+              "Sales"
+            ]
+          },
+          "helped": {
+            "name": "Paul",
+            "linkedin": "https://linkedin.com/in/paul-bokserman",
+            "needs": [
+              "Sales",
+              "Pitching & Fundraising",
+              "Accounting or Finance",
+              "Event planning"
+            ]
+          },
+          "reason": "Tina has superpowers in event planning and sales, which directly align with Paul's needs for pitching and event planning.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Devender Butani",
+            "linkedin": "https://linkedin.com/in/devender-butani",
+            "superpowers": [
+              "Web development",
+              "Mobile app development"
+            ]
+          },
+          "helped": {
+            "name": "Declan Kintu",
+            "linkedin": "https://linkedin.com/in/declan-trevor-kintu",
+            "needs": [
+              "Web development",
+              "Mobile app development"
+            ]
+          },
+          "reason": "Devender has superpowers in both web development and mobile app development, which directly align with Declan's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "gaya k",
+            "linkedin": "https://linkedin.com/in/gayakhiani",
+            "superpowers": [
+              "Social media branding/content",
+              "Design (UX/UI)",
+              "Filmmaking/photography"
+            ]
+          },
+          "helped": {
+            "name": "Adam Cote",
+            "linkedin": "https://linkedin.com/in/adam-cote",
+            "needs": [
+              "Sales",
+              "Pitching & Fundraising",
+              "Mobile app development",
+              "Filmmaking/Photography",
+              "Design (UX/UI)",
+              "Social media branding/content"
+            ]
+          },
+          "reason": "gaya k possesses superpowers in social media branding/content, design (UX/UI), and filmmaking/photography, all of which align closely with Adam's project needs and challenges.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Rose Ruhao Lou",
+            "linkedin": "https://linkedin.com/in/ruhaolou",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Speaks 4 languages"
+            ]
+          },
+          "helped": {
+            "name": "Wasim Abuzaher",
+            "linkedin": "https://linkedin.com/in/wasimabuzaher",
+            "needs": [
+              "Design (UX/UI)"
+            ]
+          },
+          "reason": "Rose's superpower in Design (UX/UI) directly matches Wasim's need for help in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Eric",
+            "linkedin": "https://linkedin.com/in/eric-dekryger",
+            "superpowers": [
+              "AI automations",
+              "Web development"
+            ]
+          },
+          "helped": {
+            "name": "Nancy Wu",
+            "linkedin": "https://linkedin.com/in/na",
+            "needs": [
+              "AI automations"
+            ]
+          },
+          "reason": "Eric has superpowers in AI automations and web development, making him well-suited to assist Nancy Wu with her project.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Priyanshi Sanghvi",
+            "linkedin": "https://linkedin.com/in/priyanshi-sanghvi",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Filmmaking/photography",
+              "E-commerce",
+              "Architecture"
+            ]
+          },
+          "helped": {
+            "name": "Joshua Johnson",
+            "linkedin": "https://linkedin.com/in/joshb-johnson",
+            "needs": [
+              "Design (UX/UI)"
+            ]
+          },
+          "reason": "Priyanshi's superpowers in Design (UX/UI) align perfectly with Joshua's needs as he seeks to grow in the same field.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Allen Liu",
+            "linkedin": "https://linkedin.com/in/yanzeliu",
+            "superpowers": [
+              "E-commerce",
+              "Social media branding/content",
+              "Product Management"
+            ]
+          },
+          "helped": {
+            "name": "Henry Pak",
+            "linkedin": "https://linkedin.com/in/henry-pak",
+            "needs": [
+              "Design (UX/UI)",
+              "Web development",
+              "Social media branding/content"
+            ]
+          },
+          "reason": "Allen Liu's superpowers in e-commerce and social media branding/content align closely with Henry Pak's need for help with social media branding/content, and he may provide insights on web development due to his product management experience.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Armin Aghayan",
+            "linkedin": "https://linkedin.com/in/arminaghayan",
+            "superpowers": [
+              "Sales",
+              "E-commerce",
+              "Web development",
+              "Driven"
+            ]
+          },
+          "helped": {
+            "name": "Alok Kumar Deepak",
+            "linkedin": "https://linkedin.com/in/alokdeepak555",
+            "needs": [
+              "Sales"
+            ]
+          },
+          "reason": "Armin has strong sales skills, which directly align with Alok's need for help in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Veronica Ye",
+            "linkedin": "https://linkedin.com/in/veronica-ye",
+            "superpowers": [
+              "E-commerce"
+            ]
+          },
+          "helped": {
+            "name": "Fidha Mariyam",
+            "linkedin": "https://linkedin.com/in/fidhamariyam",
+            "needs": [
+              "Sales",
+              "Web development",
+              "I\u2019d love to connect with other founders, learn from their experiences, and get feedback on growing my services and systems."
+            ]
+          },
+          "reason": "Veronica's expertise in e-commerce aligns perfectly with Fidha's focus on building and scaling a Shopify agency, providing valuable insights and feedback for her growth in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Reza Tangestani",
+            "linkedin": "https://linkedin.com/in/rezatangestani",
+            "superpowers": [
+              "AI automations"
+            ]
+          },
+          "helped": {
+            "name": "Kari Gachugu",
+            "linkedin": "https://linkedin.com/in/kari-gachugu-bb00a6228",
+            "needs": [
+              "Community Building",
+              "AI automations"
+            ]
+          },
+          "reason": "Reza has superpowers in AI automations, which directly aligns with one of Kari's primary needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Junaid L Mahmood",
+            "linkedin": "https://linkedin.com/in/junaidmahmood-",
+            "superpowers": [
+              "AI automations",
+              "Web development",
+              "Social media branding/content",
+              "Community Building"
+            ]
+          },
+          "helped": {
+            "name": "Miray B",
+            "linkedin": "https://linkedin.com/in/mirayberber",
+            "needs": [
+              "AI automations"
+            ]
+          },
+          "reason": "Junaid specializes in AI automations and has web development skills, making him well-suited to assist Miray with her needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Asar Qadir",
+            "linkedin": "https://linkedin.com/in/asar-qadir-13bb5a25a",
+            "superpowers": [
+              "Pitching & fundraising",
+              "Podcasting",
+              "Sales",
+              "Event planning",
+              "Empathy"
+            ]
+          },
+          "helped": {
+            "name": "Mehvish",
+            "linkedin": "https://linkedin.com/in/mehvish-ali-355b35118",
+            "needs": [
+              "Community Building",
+              "Pitching & Fundraising",
+              "That\u2019s it for now"
+            ]
+          },
+          "reason": "Asar has superpowers in pitching & fundraising, which directly aligns with Mehvish's needs, and also offers experience in community building.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Vinit Shah",
+            "linkedin": "https://linkedin.com/in/vinitshah99",
+            "superpowers": [
+              "Sales",
+              "Community Building",
+              "Recruiting",
+              "Social media branding/content"
+            ]
+          },
+          "helped": {
+            "name": "Melissa Tran",
+            "linkedin": "https://linkedin.com/in/melissa-tran",
+            "needs": [
+              "Recruiting"
+            ]
+          },
+          "reason": "Vinit has expertise in recruiting, making him the best match for Melissa's needs in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Irina Belgorodskii",
+            "linkedin": "https://linkedin.com/in/irina-belgorodskii",
+            "superpowers": [
+              "Social media branding/content",
+              "Sales",
+              "Event planning",
+              "E-commerce",
+              "Marketing"
+            ]
+          },
+          "helped": {
+            "name": "Zayyan Ahmed",
+            "linkedin": "https://linkedin.com/in/qahmed1",
+            "needs": [
+              "Social media branding/content",
+              "Community Building",
+              "Podcasting",
+              "E-commerce"
+            ]
+          },
+          "reason": "Irina's superpowers in social media branding/content and e-commerce directly align with Zayyan's needs, making her a strong fit for his projects.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Ezra Dey",
+            "linkedin": "https://linkedin.com/in/karekin-dey",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Filmmaking/photography",
+              "Pitching & fundraising"
+            ]
+          },
+          "helped": {
+            "name": "Annie",
+            "linkedin": "https://linkedin.com/in/anh-phan-001",
+            "needs": [
+              "Pitching & Fundraising"
+            ]
+          },
+          "reason": "Ezra has superpowers in pitching and fundraising, making them the best fit to help Annie with her map app project.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Chantal Nguyen",
+            "linkedin": "https://linkedin.com/in/chantal-nguyen-169b5a2b2",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Filmmaking/photography",
+              "Grinding Hackathons in my free time"
+            ]
+          },
+          "helped": {
+            "name": "Miguel Twahirwa",
+            "linkedin": "https://linkedin.com/in/migueltwahirwa",
+            "needs": [
+              "Filmmaking/Photography",
+              "Community Building",
+              "Social media branding/content",
+              "Marketing"
+            ]
+          },
+          "reason": "Chantal has superpowers in both filmmaking/photography and social media branding/content, making her an excellent fit to assist Miguel with his projects.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Henry Hiles",
+            "linkedin": "https://linkedin.com/company/ I don't have a LinkedIn",
+            "superpowers": [
+              "Mobile app development",
+              "Web development",
+              "Community Building",
+              "Native app development, including desktop."
+            ]
+          },
+          "helped": {
+            "name": "Michael Shmelev",
+            "linkedin": "https://linkedin.com/in/michaelshmelev",
+            "needs": [
+              "Mobile app development"
+            ]
+          },
+          "reason": "Henry has superpowers in mobile app development, making him an ideal match for Michael's needs in that area.",
+          "score": 95,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Nish V",
+            "linkedin": "https://linkedin.com/in/nishvel",
+            "superpowers": [
+              "Web development"
+            ]
+          },
+          "helped": {
+            "name": "Eddy Okun",
+            "linkedin": "https://linkedin.com/in/eddyokun",
+            "needs": [
+              "Web development"
+            ]
+          },
+          "reason": "Nish V specializes in web development, making him highly suitable to assist Eddy Okun with his project neothread.ai.",
+          "score": 95,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "William",
+            "linkedin": "https://linkedin.com/in/william-naayem",
+            "superpowers": [
+              "AI automations",
+              "Sales",
+              "Social media branding/content",
+              "Marketing"
+            ]
+          },
+          "helped": {
+            "name": "Ravi Amin",
+            "linkedin": "https://linkedin.com/in/raviamin",
+            "needs": [
+              "AI automations",
+              "Event planning",
+              "Pitching & Fundraising",
+              "Sales",
+              "Web development",
+              "Passive income, Time, ET, vacations, theory of everything"
+            ]
+          },
+          "reason": "William's expertise in AI automations and sales aligns closely with Ravi's needs for AI automations and sales development.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Katy Rozanova",
+            "linkedin": "https://linkedin.com/in/katy-rozanova",
+            "superpowers": [
+              "Accounting or Finance",
+              "Community Building",
+              "Event planning"
+            ]
+          },
+          "helped": {
+            "name": "Hossein Yousefi",
+            "linkedin": "https://linkedin.com/in/hossein-yousefi-55364729b",
+            "needs": [
+              "Pitching & Fundraising",
+              "Accounting or Finance",
+              "I need to sell"
+            ]
+          },
+          "reason": "Katy has superpowers in Accounting or Finance and also excels in Community Building, which can greatly assist Hossein in pitching and fundraising efforts for his BI/AI business.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Stefany nieto",
+            "linkedin": "https://linkedin.com/in/stefanynieto",
+            "superpowers": [
+              "E-commerce",
+              "Community Building",
+              "Pitching & fundraising",
+              "Event planning",
+              "Supply Chain"
+            ]
+          },
+          "helped": {
+            "name": "Arman Blackstone",
+            "linkedin": "",
+            "needs": [
+              "Legal",
+              "Pitching & Fundraising",
+              "Recruiting",
+              "Sales",
+              "Accounting or Finance",
+              "Social media branding/content",
+              "E-commerce"
+            ]
+          },
+          "reason": "Stefany's superpowers in e-commerce, pitching & fundraising, and community building align well with Arman's needs for fundraising and social media branding content.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Adrian Clarke- Commercial Insurance B",
+            "linkedin": "https://linkedin.com/in/-adrian-clarke",
+            "superpowers": [
+              "Community Building",
+              "Sales"
+            ]
+          },
+          "helped": {
+            "name": "youssef assad",
+            "linkedin": "https://linkedin.com/in/youssef-assad",
+            "needs": [
+              "Sales",
+              "Pitching & Fundraising"
+            ]
+          },
+          "reason": "Adrian has superpowers in Community Building and Sales, making him a strong match for Youssef's needs in Sales and pitching.",
+          "score": 80,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Lydia Shan",
+            "linkedin": "https://linkedin.com/in/lydiashan",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Digital illustration"
+            ]
+          },
+          "helped": {
+            "name": "Paola Santiago",
+            "linkedin": "https://linkedin.com/in/paolamariesantiago",
+            "needs": [
+              "Social media branding/content",
+              "Sales",
+              "Community Building"
+            ]
+          },
+          "reason": "Lydia's superpowers in social media branding/content and design (UX/UI) align closely with Paola's needs in social media branding and website building.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Aaron L. Greenspan",
+            "linkedin": "https://linkedin.com/in/aaron-greenspan",
+            "superpowers": [
+              "Social media branding/content",
+              "Filmmaking/photography",
+              "Event planning",
+              "Pitching & fundraising",
+              "AI automations",
+              "Design (UX/UI)",
+              "Community Building",
+              "Recruiting",
+              "Podcasting",
+              "E-commerce",
+              "Accessibility, inclusive design, usability testing"
+            ]
+          },
+          "helped": {
+            "name": "Arash Nouri",
+            "linkedin": "https://linkedin.com/in/arashnouri95",
+            "needs": [
+              "Community Building",
+              "Recruiting",
+              "Pitching & Fundraising",
+              "Podcasting",
+              "Event planning",
+              "Web development",
+              "Design (UX/UI)",
+              "Like-minded partners & builders"
+            ]
+          },
+          "reason": "Aaron has a diverse range of superpowers, including community building, pitching & fundraising, and podcasting, which align closely with Arash's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Gursimran Chadha",
+            "linkedin": "https://linkedin.com/in/gurchadha",
+            "superpowers": [
+              "Sales",
+              "Community Building",
+              "Pitching & fundraising",
+              "Podcasting"
+            ]
+          },
+          "helped": {
+            "name": "Ahmad Almadhoun",
+            "linkedin": "https://linkedin.com/in/madhoundes",
+            "needs": [
+              "Social media branding/content",
+              "Sales",
+              "Pitching & Fundraising"
+            ]
+          },
+          "reason": "He has expertise in Sales, Community Building, and Pitching & Fundraising, aligning well with Ahmad's needs.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Sophia Ghashghaei",
+            "linkedin": "https://linkedin.com/in/sophia-ghashghaei",
+            "superpowers": [
+              "Social media branding/content",
+              "Event planning",
+              "Sales",
+              "Problem solving and creative ideation"
+            ]
+          },
+          "helped": {
+            "name": "Irina Afanasenko",
+            "linkedin": "https://linkedin.com/in/irina-prod",
+            "needs": [
+              "Social media branding/content",
+              "Web development",
+              "Mobile app development",
+              "Event planning",
+              "Filmmaking/Photography",
+              "Legal"
+            ]
+          },
+          "reason": "Sophia's superpowers in social media branding/content and event planning align directly with Irina's needs for her women's social club.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Shilo Jeyarajasingam",
+            "linkedin": "https://linkedin.com/in/shilo-jeyaraj",
+            "superpowers": [
+              "Design (UX/UI)",
+              "AI automations"
+            ]
+          },
+          "helped": {
+            "name": "Rajan Devnath",
+            "linkedin": "https://linkedin.com/in/rdevnath",
+            "needs": [
+              "AI automations"
+            ]
+          },
+          "reason": "Shilo has superpowers in AI automations, which directly aligns with Rajan's need for help in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Jin Choe",
+            "linkedin": "https://linkedin.com/in/rainmaker1232",
+            "superpowers": [
+              "Accounting or Finance",
+              "investment"
+            ]
+          },
+          "helped": {
+            "name": "Sunny Yimeng Dong",
+            "linkedin": "https://linkedin.com/in/sunnyyimengdong&sa=X&ved=2ahUKEwjJwLGW5dGQAxU1D1kFHeFdDncQ7xYoAHoECAsQAQ&biw=390&bih=663&dpr=3",
+            "needs": [
+              "Web development",
+              "Accounting or Finance"
+            ]
+          },
+          "reason": "Jin Choe's superpowers in Accounting or Finance directly align with Sunny's need for help in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Zlad Dujsic",
+            "linkedin": "https://linkedin.com/in/zlad-dujsic-078a6b51",
+            "superpowers": [
+              "Social media branding/content",
+              "Design (UX/UI)",
+              "Filmmaking/photography",
+              "Sales",
+              "Pitching & fundraising",
+              "E-commerce",
+              "Ads & Marketing"
+            ]
+          },
+          "helped": {
+            "name": "Tyler Abbey",
+            "linkedin": "https://linkedin.com/in/tylergaryabbey",
+            "needs": [
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Podcasting",
+              "Web development",
+              "AI automations",
+              "Mobile app development",
+              "Filmmaking/Photography",
+              "Pitching & Fundraising",
+              "Event planning",
+              "Permission to bring a 3D printer?"
+            ]
+          },
+          "reason": "Zlad's superpowers in social media branding/content, design (UX/UI), and filmmaking/photography align well with Tyler's diverse needs in branding and content creation.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Josh Maldonado",
+            "linkedin": "https://linkedin.com/in/joshmaldonado",
+            "superpowers": [
+              "Event planning",
+              "Community Building",
+              "Mobile app development"
+            ]
+          },
+          "helped": {
+            "name": "Ayesha Hafeez",
+            "linkedin": "https://linkedin.com/in/ayesha-hafeez-3115ba95",
+            "needs": [
+              "Mobile app development"
+            ]
+          },
+          "reason": "Josh has mobile app development skills and is also experienced in event planning and community building, making him well-suited to assist Ayesha with her app project.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Sam",
+            "linkedin": "https://linkedin.com/in/sam-d-413631164",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Sales",
+              "Community Building",
+              "Pitching & fundraising",
+              "Recruiting",
+              "AI automations",
+              "Web development",
+              "Mobile app development",
+              "Event planning",
+              "Industry Expertise in Automotive, and a background in Computer Science."
+            ]
+          },
+          "helped": {
+            "name": "Nikhil Gnanavel",
+            "linkedin": "https://linkedin.com/in/nikhil-gnanavel",
+            "needs": [
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Web development",
+              "Mobile app development",
+              "Event planning",
+              "Filmmaking/Photography",
+              "Pitching & Fundraising",
+              "Recruiting",
+              "Finding a good partner for a startup"
+            ]
+          },
+          "reason": "Sam has extensive superpowers that align closely with Nikhil's needs across multiple areas including design, social media branding, web development, and pitching & fundraising.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Syed Qamar",
+            "linkedin": "https://linkedin.com/in/syedqamar",
+            "superpowers": [
+              "Sales",
+              "Social media branding/content",
+              "Event planning",
+              "Business management"
+            ]
+          },
+          "helped": {
+            "name": "Berto Mill",
+            "linkedin": "https://linkedin.com/in/bertomill",
+            "needs": [
+              "Social media branding/content",
+              "Event planning"
+            ]
+          },
+          "reason": "Syed has superpowers in social media branding/content and event planning, which aligns perfectly with Berto's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Eduardo",
+            "linkedin": "https://linkedin.com/in/eduardo-chavez2024",
+            "superpowers": [
+              "Sales",
+              "Design (UX/UI)",
+              "Web development",
+              "Social media branding/content",
+              "Pitching & fundraising"
+            ]
+          },
+          "helped": {
+            "name": "Ahmad Sofi-Mahmudi",
+            "linkedin": "https://linkedin.com/in/asofimahmudi",
+            "needs": [
+              "Pitching & Fundraising",
+              "Recruiting"
+            ]
+          },
+          "reason": "Eduardo has superpowers in Sales and Pitching & Fundraising, which align directly with Ahmad's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Shivang",
+            "linkedin": "https://linkedin.com/in/sr099",
+            "superpowers": [
+              "AI automations",
+              "Design (UX/UI)",
+              "Web development"
+            ]
+          },
+          "helped": {
+            "name": "Irene",
+            "linkedin": "https://linkedin.com/in/irene-cili",
+            "needs": [
+              "AI automations"
+            ]
+          },
+          "reason": "Shivang's superpowers in AI automations specifically align with Irene's need for assistance in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Azhar Hemani",
+            "linkedin": "https://linkedin.com/in/azharhemani",
+            "superpowers": [
+              "Sales"
+            ]
+          },
+          "helped": {
+            "name": "Ayman Abduldayem",
+            "linkedin": "https://linkedin.com/in/ayman-abduldayem",
+            "needs": [
+              "Sales",
+              "Pitching & Fundraising"
+            ]
+          },
+          "reason": "Azhar has sales expertise, which aligns with Ayman's needs for sales and fundraising support.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Yazin Joseph",
+            "linkedin": "https://linkedin.com/in/yazinjoseph",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Social media branding/content"
+            ]
+          },
+          "helped": {
+            "name": "Nima Tahami",
+            "linkedin": "https://linkedin.com/in/nimatahami",
+            "needs": [
+              "Social media branding/content",
+              "Sales"
+            ]
+          },
+          "reason": "Yazin's expertise in social media branding/content directly aligns with Nima's needs, making him the best fit.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Purva Daga",
+            "linkedin": "https://linkedin.com/in/purva-daga",
+            "superpowers": [
+              "Web development"
+            ]
+          },
+          "helped": {
+            "name": "Matt Doyle",
+            "linkedin": "https://linkedin.com/in/matthewldoyle",
+            "needs": [
+              "Web development"
+            ]
+          },
+          "reason": "Purva's superpower in web development directly aligns with Matt's needs for assistance in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "basma kaanane",
+            "linkedin": "https://linkedin.com/in/basma-kaanane-09520b197",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Filmmaking/photography"
+            ]
+          },
+          "helped": {
+            "name": "Disha Sareen",
+            "linkedin": "https://linkedin.com/in/disha-sareen-8b9661118",
+            "needs": [
+              "Filmmaking/Photography"
+            ]
+          },
+          "reason": "Basma's superpowers in Design (UX/UI) and Filmmaking/photography directly match Disha's needs for help in filmmaking and photography.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "kai :)",
+            "linkedin": "https://linkedin.com/in/hulloitskai",
+            "superpowers": [
+              "Web development",
+              "AI automations",
+              "Community Building",
+              "doing stuff right away\u2122\ufe0f"
+            ]
+          },
+          "helped": {
+            "name": "Swap :)",
+            "linkedin": "",
+            "needs": [
+              "Web development",
+              "Mobile app development",
+              "AI automations"
+            ]
+          },
+          "reason": "Kai possesses superpowers in both web development and AI automations, aligning well with Swap's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Manuel Olumorin",
+            "linkedin": "https://linkedin.com/in/manuel-olumorin",
+            "superpowers": [
+              "Web development",
+              "Sales"
+            ]
+          },
+          "helped": {
+            "name": "Jagrit Acharya",
+            "linkedin": "https://linkedin.com/in/jagritacharya",
+            "needs": [
+              "Sales"
+            ]
+          },
+          "reason": "Manuel has superpowers in both web development and sales, making him a strong match for Jagrit's needs in sales for his AI body language analysis salescoach.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "David Ampofo",
+            "linkedin": "https://linkedin.com/in/dvampofo",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Filmmaking/photography",
+              "Web development"
+            ]
+          },
+          "helped": {
+            "name": "Kimberly Ng",
+            "linkedin": "https://linkedin.com/in/kimberly-ng-0b8466380",
+            "needs": [
+              "Social media branding/content",
+              "Community Building",
+              "E-commerce",
+              "Filmmaking/Photography",
+              "Accounting or Finance",
+              "Design (UX/UI)"
+            ]
+          },
+          "reason": "David possesses superpowers in both Design (UX/UI) and Filmmaking/photography, which are essential for Kimberly\u2019s needs in social media branding and content creation.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Jack Mufudzi",
+            "linkedin": "https://linkedin.com/in/jackmufudzi",
+            "superpowers": [
+              "Event planning"
+            ]
+          },
+          "helped": {
+            "name": "Wendy Huang",
+            "linkedin": "https://linkedin.com/in/wendy-siqi-huang",
+            "needs": [
+              "Recruiting"
+            ]
+          },
+          "reason": "Jack's experience with event planning could support Wendy in organizing networking events related to recruiting.",
+          "score": 75,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Wonbong Koh",
+            "linkedin": "https://linkedin.com/in/6472387450",
+            "superpowers": [
+              "Accounting or Finance",
+              "Filmmaking/photography"
+            ]
+          },
+          "helped": {
+            "name": "Vidhi Rana",
+            "linkedin": "https://linkedin.com/in/vidhi-rana-6a934016b",
+            "needs": [
+              "Filmmaking/Photography",
+              "I am going to visit this event for the first time, and i am excited to meet new talents with who i can make connections and develop new idea which are helpful for community."
+            ]
+          },
+          "reason": "Wonbong's superpowers in filmmaking/photography directly align with Vidhi's interests in those areas.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "noah deskin",
+            "linkedin": "https://linkedin.com/in/noah-deskin",
+            "superpowers": [
+              "Design (UX/UI)",
+              "AI automations",
+              "Mobile app development"
+            ]
+          },
+          "helped": {
+            "name": "razy",
+            "linkedin": "https://linkedin.com/in/razyshafiee",
+            "needs": [
+              "AI automations"
+            ]
+          },
+          "reason": "Noah has expertise in AI automations, which directly aligns with Razy's needs for assistance with their Agentic AI System.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Jin Park",
+            "linkedin": "https://linkedin.com/in/jin-park020716",
+            "superpowers": [
+              "Web development",
+              "Sales"
+            ]
+          },
+          "helped": {
+            "name": "Pranshu Bhatia",
+            "linkedin": "https://linkedin.com/in/pranshubhatia99",
+            "needs": [
+              "Community Building",
+              "Pitching & Fundraising",
+              "Seeking Mentorship and industry wisdom."
+            ]
+          },
+          "reason": "Jin's superpowers in web development and sales may help Pranshu with pitching and potentially fundraising strategies, making him a useful resource.",
+          "score": 65,
+          "is_trio": false
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "type": "complementary",
+      "match_count": 59,
+      "matches": [
+        {
+          "helper": {
+            "name": "Swap :)",
+            "linkedin": "",
+            "superpowers": [
+              "Web development",
+              "Mobile app development",
+              "procrastination"
+            ]
+          },
+          "helped": {
+            "name": "Syed Qamar",
+            "linkedin": "https://linkedin.com/in/syedqamar",
+            "needs": [
+              "AI automations"
+            ]
+          },
+          "reason": "Rasy has superpowers in AI automations, making them an ideal match to assist Syed Qamar with his specific needs.",
+          "score": 95,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Kimberly Ng",
+            "linkedin": "https://linkedin.com/in/kimberly-ng-0b8466380",
+            "superpowers": [
+              "Event planning",
+              "Sales",
+              "Community Building"
+            ]
+          },
+          "helped": {
+            "name": "Gursimran Chadha",
+            "linkedin": "https://linkedin.com/in/gurchadha",
+            "needs": [
+              "Podcasting",
+              "Community Building",
+              "Pitching & Fundraising",
+              "Sales",
+              "Event planning"
+            ]
+          },
+          "reason": "Kimberly has superpowers in event planning, sales, and community building, which align closely with Gursimran's needs for podcasting, community building, and event planning.",
+          "score": 90,
+          "is_trio": true,
+          "third_person": {
+            "name": "Irina Afanasenko",
+            "linkedin": "https://linkedin.com/in/irina-prod",
+            "superpowers": [
+              "Event planning",
+              "Community Building"
+            ],
+            "needs": [
+              "Social media branding/content",
+              "Web development",
+              "Mobile app development",
+              "Event planning",
+              "Filmmaking/Photography",
+              "Legal"
+            ]
+          },
+          "third_person_reason": "Irina can assist Gursimran with Event planning while Kimberly can help Irina with Community Building, making it a synergistic trio."
+        },
+        {
+          "helper": {
+            "name": "Ravi Amin",
+            "linkedin": "https://linkedin.com/in/raviamin",
+            "superpowers": [
+              "AI automations",
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Web development",
+              "Mobile app development",
+              "Event planning",
+              "Filmmaking/photography",
+              "Sales",
+              "Community Building",
+              "E-commerce",
+              "Debunker of fake news & main stream ideology"
+            ]
+          },
+          "helped": {
+            "name": "Henry Hiles",
+            "linkedin": "https://linkedin.com/company/ I don't have a LinkedIn",
+            "needs": [
+              "Design (UX/UI)",
+              "Mobile app development",
+              "Native app developers, using Flutter."
+            ]
+          },
+          "reason": "Ravi has a strong background in design (UX/UI) and mobile app development, making him well-suited to assist Henry with his Nexus project built on Flutter.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Jagrit Acharya",
+            "linkedin": "https://linkedin.com/in/jagritacharya",
+            "superpowers": [
+              "Web development"
+            ]
+          },
+          "helped": {
+            "name": "Yazin Joseph",
+            "linkedin": "https://linkedin.com/in/yazinjoseph",
+            "needs": [
+              "Community Building",
+              "Web development"
+            ]
+          },
+          "reason": "Jagrit has superpowers in web development, which directly aligns with Yazin's needs for web development assistance for his website rebrand and portfolio.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Declan Kintu",
+            "linkedin": "https://linkedin.com/in/declan-trevor-kintu",
+            "superpowers": [
+              "AI automations",
+              "Design (UX/UI)",
+              "Web development",
+              "Mobile app development",
+              "Community Building",
+              "Recruiting"
+            ]
+          },
+          "helped": {
+            "name": "Zlad Dujsic",
+            "linkedin": "https://linkedin.com/in/zlad-dujsic-078a6b51",
+            "needs": [
+              "Mobile app development"
+            ]
+          },
+          "reason": "Declan has expertise in mobile app development, making him well-suited to assist Zlad with his project.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Brian Jin",
+            "linkedin": "https://linkedin.com/in/brian-jin-data",
+            "superpowers": [
+              "AI automations",
+              "Web development",
+              "Pitching & fundraising"
+            ]
+          },
+          "helped": {
+            "name": "Aaron L. Greenspan",
+            "linkedin": "https://linkedin.com/in/aaron-greenspan",
+            "needs": [
+              "Sales",
+              "Accounting or Finance",
+              "Pitching & Fundraising",
+              "Legal",
+              "Web development",
+              "Social media branding/content",
+              "AI automations"
+            ]
+          },
+          "reason": "He offers expertise in AI automations, Web development, and Pitching & fundraising, all of which align closely with Aaron's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Junaid L Mahmood",
+            "linkedin": "https://linkedin.com/in/junaidmahmood-",
+            "superpowers": [
+              "AI automations",
+              "Web development",
+              "Social media branding/content",
+              "Community Building"
+            ]
+          },
+          "helped": {
+            "name": "Sam",
+            "linkedin": "https://linkedin.com/in/sam-d-413631164",
+            "needs": [
+              "Web development",
+              "Mobile app development",
+              "AI automations",
+              "Technical Co Founders! Or Anyone looking to build something interesting!"
+            ]
+          },
+          "reason": "Junaid has expertise in AI automations and web development, which directly aligns with Sam's needs for help in those areas.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Vinit Shah",
+            "linkedin": "https://linkedin.com/in/vinitshah99",
+            "superpowers": [
+              "Sales",
+              "Community Building",
+              "Recruiting",
+              "Social media branding/content"
+            ]
+          },
+          "helped": {
+            "name": "Eduardo",
+            "linkedin": "https://linkedin.com/in/eduardo-chavez2024",
+            "needs": [
+              "Social media branding/content",
+              "Community Building"
+            ]
+          },
+          "reason": "His superpowers in social media branding/content and community building directly align with Eduardo's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Stephanie Reimer",
+            "linkedin": "https://linkedin.com/in/reimerstephie",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Filmmaking/photography",
+              "Web development"
+            ]
+          },
+          "helped": {
+            "name": "Sophia Ghashghaei",
+            "linkedin": "https://linkedin.com/in/sophia-ghashghaei",
+            "needs": [
+              "Pitching & Fundraising",
+              "Community Building",
+              "Web development",
+              "exposure to the creative world and people \ud83d\udc90"
+            ]
+          },
+          "reason": "Stephanie's expertise in web development and design (UX/UI) aligns well with Sophia's need for exposure to the creative world and community building for her floral business.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Wendy Huang",
+            "linkedin": "https://linkedin.com/in/wendy-siqi-huang",
+            "superpowers": [
+              "Community Building"
+            ]
+          },
+          "helped": {
+            "name": "Shake",
+            "linkedin": "https://linkedin.com/in/shake-the-ai-guy",
+            "needs": [
+              "Community Building"
+            ]
+          },
+          "reason": "Wendy is specialized in community building, which directly aligns with Shake's need for assistance in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Prabhdeep Singh",
+            "linkedin": "https://linkedin.com/in/prabhs07",
+            "superpowers": [
+              "AI automations",
+              "Pitching & fundraising",
+              "AI research"
+            ]
+          },
+          "helped": {
+            "name": "Wonbong Koh",
+            "linkedin": "https://linkedin.com/in/6472387450",
+            "needs": [
+              "AI automations"
+            ]
+          },
+          "reason": "Prabhdeep's superpowers in AI automations and AI research directly align with Wonbong's needs in AI automations for his projects in AI/Cybersecurity/Nuclear Investment Opportunities.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Joshua Johnson",
+            "linkedin": "https://linkedin.com/in/joshb-johnson",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Social media branding/content"
+            ]
+          },
+          "helped": {
+            "name": "basma kaanane",
+            "linkedin": "https://linkedin.com/in/basma-kaanane-09520b197",
+            "needs": [
+              "Pitching & Fundraising",
+              "Social media branding/content",
+              "Recruiting",
+              "Computer Vision"
+            ]
+          },
+          "reason": "Joshua has expertise in social media branding/content, which aligns well with Basma's needs and can potentially complement her focus on pitching & fundraising.",
+          "score": 80,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Disha Sareen",
+            "linkedin": "https://linkedin.com/in/disha-sareen-8b9661118",
+            "superpowers": [
+              "Community Building"
+            ]
+          },
+          "helped": {
+            "name": "Xing Yang Lan",
+            "linkedin": "https://linkedin.com/in/bill-xing-yang-6aaa01147",
+            "needs": [
+              "Community Building"
+            ]
+          },
+          "reason": "Disha has superpowers in Community Building, which directly aligns with Xing Yang Lan's needs.",
+          "score": 95,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Katy Rozanova",
+            "linkedin": "https://linkedin.com/in/katy-rozanova",
+            "superpowers": [
+              "Accounting or Finance",
+              "Community Building",
+              "Event planning"
+            ]
+          },
+          "helped": {
+            "name": "Hish I",
+            "linkedin": "https://linkedin.com/in/hishi",
+            "needs": [
+              "Community Building"
+            ]
+          },
+          "reason": "Katy has superpowers in community building and event planning, which align directly with Hish's needs for community building related to co-housing.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Rahul Malhotra",
+            "linkedin": "https://linkedin.com/in/Rahulbgold",
+            "superpowers": [
+              "Sales",
+              "Podcasting",
+              "E-commerce",
+              "Pitching & fundraising",
+              "Investment banking"
+            ]
+          },
+          "helped": {
+            "name": "Devender Butani",
+            "linkedin": "https://linkedin.com/in/devender-butani",
+            "needs": [
+              "Podcasting"
+            ]
+          },
+          "reason": "Rahul's expertise in podcasting aligns perfectly with Devender's needs for help with his podcasting startup.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Lydia Shan",
+            "linkedin": "https://linkedin.com/in/lydiashan",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Digital illustration"
+            ]
+          },
+          "helped": {
+            "name": "Adam Cote",
+            "linkedin": "https://linkedin.com/in/adam-cote",
+            "needs": [
+              "Sales",
+              "Pitching & Fundraising",
+              "Mobile app development",
+              "Filmmaking/Photography",
+              "Design (UX/UI)",
+              "Social media branding/content"
+            ]
+          },
+          "reason": "Lydia has expertise in both Design (UX/UI) and Social media branding/content, which aligns well with Adam's focus on mobile app development and his social media branding needs.",
+          "score": 88,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Matt Doyle",
+            "linkedin": "https://linkedin.com/in/matthewldoyle",
+            "superpowers": [
+              "Sales"
+            ]
+          },
+          "helped": {
+            "name": "Alok Kumar Deepak",
+            "linkedin": "https://linkedin.com/in/alokdeepak555",
+            "needs": [
+              "Sales"
+            ]
+          },
+          "reason": "Matt specializes in sales, making him directly aligned with Alok's need for assistance in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Asar Qadir",
+            "linkedin": "https://linkedin.com/in/asar-qadir-13bb5a25a",
+            "superpowers": [
+              "Pitching & fundraising",
+              "Podcasting",
+              "Sales",
+              "Event planning",
+              "Empathy"
+            ]
+          },
+          "helped": {
+            "name": "Hossein Yousefi",
+            "linkedin": "https://linkedin.com/in/hossein-yousefi-55364729b",
+            "needs": [
+              "Pitching & Fundraising",
+              "Accounting or Finance",
+              "I need to sell"
+            ]
+          },
+          "reason": "Asar specializes in pitching & fundraising and sales, which aligns perfectly with Hossein's needs for support in those areas.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Henry Pak",
+            "linkedin": "https://linkedin.com/in/henry-pak",
+            "superpowers": [
+              "AI automations",
+              "Web development",
+              "Product development"
+            ]
+          },
+          "helped": {
+            "name": "Mariglen Qorri",
+            "linkedin": "https://linkedin.com/in/mariglen-qorri",
+            "needs": [
+              "AI automations"
+            ]
+          },
+          "reason": "Henry's superpowers in AI automations and product development are a perfect match for Mariglen's focus on a clock in/out app in field service.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Tyler Abbey",
+            "linkedin": "https://linkedin.com/in/tylergaryabbey",
+            "superpowers": [
+              "Sales",
+              "Design (UX/UI)",
+              "Friendship"
+            ]
+          },
+          "helped": {
+            "name": "Priyanshi Sanghvi",
+            "linkedin": "https://linkedin.com/in/priyanshi-sanghvi",
+            "needs": [
+              "Sales"
+            ]
+          },
+          "reason": "Tyler has strong sales expertise, which directly aligns with Priyanshi's need for help in that area while also having design skills that can benefit her e-commerce brand.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Avinash",
+            "linkedin": "https://linkedin.com/in/avinashrathee",
+            "superpowers": [
+              "Pitching & fundraising",
+              "Product"
+            ]
+          },
+          "helped": {
+            "name": "Tina Li",
+            "linkedin": "https://linkedin.com/in/tinamli",
+            "needs": [
+              "Podcasting",
+              "Pitching & Fundraising"
+            ]
+          },
+          "reason": "Avinash's superpowers in pitching and fundraising directly align with Tina's needs in those areas, making him an excellent match.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Vidhi Rana",
+            "linkedin": "https://linkedin.com/in/vidhi-rana-6a934016b",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Event planning",
+              "Architectural Model Making, Rendering with Photoshop (Learning) , Logo Design"
+            ]
+          },
+          "helped": {
+            "name": "Ilham Farah",
+            "linkedin": "https://linkedin.com/in/ilham-farah",
+            "needs": [
+              "Design (UX/UI)",
+              "I\u2019m looking for a mentor in UX/UI"
+            ]
+          },
+          "reason": "Vidhi has superpowers in Design (UX/UI), which directly align with Ilham's need for a mentor in that area, particularly for her AR assisted visualization app project.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Monique Danao",
+            "linkedin": "https://linkedin.com/in/monique-danao-7a7501125",
+            "superpowers": [
+              "Pitching & fundraising",
+              "Content, Marketing, Design (UI/UX)"
+            ]
+          },
+          "helped": {
+            "name": "Ahmad Sofi-Mahmudi",
+            "linkedin": "https://linkedin.com/in/asofimahmudi",
+            "needs": [
+              "Pitching & Fundraising",
+              "Recruiting"
+            ]
+          },
+          "reason": "Monique has superpowers in Pitching & fundraising and Design (UI/UX), which directly align with Ahmad's needs for pitching and fundraising support.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Paola Santiago",
+            "linkedin": "https://linkedin.com/in/paolamariesantiago",
+            "superpowers": [
+              "AI automations",
+              "Design (UX/UI)",
+              "Web development",
+              "Mobile app development",
+              "Podcasting",
+              "Product Management"
+            ]
+          },
+          "helped": {
+            "name": "Miray B",
+            "linkedin": "https://linkedin.com/in/mirayberber",
+            "needs": [
+              "AI automations"
+            ]
+          },
+          "reason": "Paola specializes in AI automations, design, and podcasting, which align closely with Miray's needs in AI automations and her podcast project.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Eddy Okun",
+            "linkedin": "https://linkedin.com/in/eddyokun",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Sales",
+              "Marketing, GTM"
+            ]
+          },
+          "helped": {
+            "name": "David Ampofo",
+            "linkedin": "https://linkedin.com/in/dvampofo",
+            "needs": [
+              "Design (UX/UI)",
+              "Web development",
+              "Filmmaking/Photography"
+            ]
+          },
+          "reason": "Eddy has superpowers in Design (UX/UI) and web development, directly aligning with David's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Arya Sharma",
+            "linkedin": "https://linkedin.com/in/arya-sharma",
+            "superpowers": [
+              "AI automations",
+              "Design (UX/UI)",
+              "Sales",
+              "Pitching & fundraising",
+              "Podcasting",
+              "Recruiting",
+              "People management"
+            ]
+          },
+          "helped": {
+            "name": "Stephan Ledain",
+            "linkedin": "https://linkedin.com/in/stephanledain",
+            "needs": [
+              "Sales",
+              "Web development",
+              "AI automations",
+              "Legal, Immigration support"
+            ]
+          },
+          "reason": "Arya has superpowers in Sales and AI automations, which directly align with Stephan's needs for building AdaptAI and Eternal Remedy.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Paul",
+            "linkedin": "https://linkedin.com/in/paul-bokserman",
+            "superpowers": [
+              "AI automations",
+              "E-commerce",
+              "Pitching & fundraising",
+              "Guided Meditation"
+            ]
+          },
+          "helped": {
+            "name": "Ayman Abduldayem",
+            "linkedin": "https://linkedin.com/in/ayman-abduldayem",
+            "needs": [
+              "Sales",
+              "Pitching & Fundraising"
+            ]
+          },
+          "reason": "Paul has superpowers in pitching & fundraising, which directly align with Ayman's needs, while also having experience in sales.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Raneem Zaitoun",
+            "linkedin": "https://linkedin.com/in/raneem-zaitounos",
+            "superpowers": [
+              "Social media branding/content",
+              "Event planning",
+              "Accounting or Finance",
+              "Sales",
+              "Community Building",
+              "Pitching & fundraising",
+              "Recruiting",
+              "Web development"
+            ]
+          },
+          "helped": {
+            "name": "Leo P",
+            "linkedin": "https://linkedin.com/in/qlzkme",
+            "needs": [
+              "Community Building",
+              "Sales",
+              "Accounting or Finance"
+            ]
+          },
+          "reason": "Raneem has superpowers in accounting or finance, community building, and sales, aligning well with Leo's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Pranshu Bhatia",
+            "linkedin": "https://linkedin.com/in/pranshubhatia99",
+            "superpowers": [
+              "Legal",
+              "Agri Systems understanding, Systems Thinker."
+            ]
+          },
+          "helped": {
+            "name": "Irene",
+            "linkedin": "https://linkedin.com/in/irene-cili",
+            "needs": [
+              "AI automations"
+            ]
+          },
+          "reason": "Razy specializes in AI automations and is an innovative solution finder, making them the best fit for Irene's needs in AI automations for her gaming marketplace.",
+          "score": 95,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "William",
+            "linkedin": "https://linkedin.com/in/william-naayem",
+            "superpowers": [
+              "AI automations",
+              "Sales",
+              "Social media branding/content",
+              "Marketing"
+            ]
+          },
+          "helped": {
+            "name": "Kira YAN",
+            "linkedin": "https://linkedin.com/in/yanzexu",
+            "needs": [
+              "Social media branding/content"
+            ]
+          },
+          "reason": "William has superpowers in social media branding/content, making him an ideal match for Kira's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Ivin Thomas",
+            "linkedin": "https://linkedin.com/in/ivinthomas",
+            "superpowers": [
+              "Social media branding/content",
+              "Event planning",
+              "Filmmaking/photography",
+              "Design (UX/UI)",
+              "Content Strategy, Brand Marketing, Copywriting"
+            ]
+          },
+          "helped": {
+            "name": "Berto Mill",
+            "linkedin": "https://linkedin.com/in/bertomill",
+            "needs": [
+              "Social media branding/content",
+              "Event planning"
+            ]
+          },
+          "reason": "Ivin has expertise in both social media branding/content and event planning, making him well-suited to assist Berto with his needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Nima Tahami",
+            "linkedin": "https://linkedin.com/in/nimatahami",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Mobile app development",
+              "Pitching & fundraising",
+              "Web development"
+            ]
+          },
+          "helped": {
+            "name": "Sarah Ziat",
+            "linkedin": "https://linkedin.com/in/Ziatsarah",
+            "needs": [
+              "Pitching & Fundraising",
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Legal",
+              "Recruiting",
+              "Meeting a co founder"
+            ]
+          },
+          "reason": "Nima possesses skills in Design (UX/UI), Pitching & fundraising, and Web development, which closely align with Sarah's needs for pitching, design, and overall project development.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Arman Blackstone",
+            "linkedin": "",
+            "superpowers": [
+              "AI automations",
+              "Social media branding/content",
+              "Accounting or Finance",
+              "Sales",
+              "Community Building",
+              "Pitching & fundraising",
+              "Legal",
+              "Recruiting",
+              "E-commerce",
+              "Podcasting"
+            ]
+          },
+          "helped": {
+            "name": "Pierre",
+            "linkedin": "",
+            "needs": [
+              "Social media branding/content",
+              "Filmmaking/Photography",
+              "Podcasting",
+              "Community Building",
+              "Sales"
+            ]
+          },
+          "reason": "Arman has extensive skills in social media branding/content, community building, sales, and podcasting, which align closely with Pierre's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Nikhil Gnanavel",
+            "linkedin": "https://linkedin.com/in/nikhil-gnanavel",
+            "superpowers": [
+              "Community Building",
+              "Pitching & fundraising",
+              "Recruiting",
+              "AI automations",
+              "Accounting or Finance",
+              "Legal"
+            ]
+          },
+          "helped": {
+            "name": "Alejandro",
+            "linkedin": "https://linkedin.com/in/aicastellanos",
+            "needs": [
+              "Podcasting",
+              "Pitching & Fundraising",
+              "Accounting or Finance"
+            ]
+          },
+          "reason": "Nikhil has superpowers in Accounting or Finance and Pitching & Fundraising, making him a strong match for Alejandro's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Irina Belgorodskii",
+            "linkedin": "https://linkedin.com/in/irina-belgorodskii",
+            "superpowers": [
+              "Social media branding/content",
+              "Sales",
+              "Event planning",
+              "E-commerce",
+              "Marketing"
+            ]
+          },
+          "helped": {
+            "name": "Stefany nieto",
+            "linkedin": "https://linkedin.com/in/stefanynieto",
+            "needs": [
+              "Web development",
+              "Social media branding/content"
+            ]
+          },
+          "reason": "Irina's expertise in social media branding/content and her event planning skills align well with Stefany's needs for both her supply chain communication and Girls With Big Ideas event series.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Rajan Devnath",
+            "linkedin": "https://linkedin.com/in/rdevnath",
+            "superpowers": [
+              "AI automations",
+              "E-commerce",
+              "Operations"
+            ]
+          },
+          "helped": {
+            "name": "Jack Mufudzi",
+            "linkedin": "https://linkedin.com/in/jackmufudzi",
+            "needs": [
+              "AI automations"
+            ]
+          },
+          "reason": "Rajan has strong skills in AI automations which directly aligns with Jack's needs for help with AI automations.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Ahmad Almadhoun",
+            "linkedin": "https://linkedin.com/in/madhoundes",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Web development",
+              "Mobile app development"
+            ]
+          },
+          "helped": {
+            "name": "Josh Maldonado",
+            "linkedin": "https://linkedin.com/in/joshmaldonado",
+            "needs": [
+              "Sales",
+              "Design (UX/UI)"
+            ]
+          },
+          "reason": "Ahmad has superpowers in both Design (UX/UI) and Web development, which directly align with Josh's needs for sales and design assistance.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Shivang",
+            "linkedin": "https://linkedin.com/in/sr099",
+            "superpowers": [
+              "AI automations",
+              "Design (UX/UI)",
+              "Web development"
+            ]
+          },
+          "helped": {
+            "name": "Wasim Abuzaher",
+            "linkedin": "https://linkedin.com/in/wasimabuzaher",
+            "needs": [
+              "Design (UX/UI)"
+            ]
+          },
+          "reason": "Shivang has expertise in both Design (UX/UI) and Web development, which aligns closely with Wasim's needs for help in design while working on frontend React projects.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Ramon Sharif",
+            "linkedin": "https://linkedin.com/in/ramonsharif",
+            "superpowers": [
+              "Pitching & fundraising",
+              "AI automations",
+              "Design (UX/UI)",
+              "Web development",
+              "Mobile app development",
+              "Business Development"
+            ]
+          },
+          "helped": {
+            "name": "Jin Choe",
+            "linkedin": "https://linkedin.com/in/rainmaker1232",
+            "needs": [
+              "Pitching & Fundraising",
+              "looking for ways to move out of infinite start up loop"
+            ]
+          },
+          "reason": "Ramon specializes in pitching and fundraising, which directly aligns with Jin's need for help in those areas while also offering additional skills in web development and AI automations.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Minas Adonai",
+            "linkedin": "https://linkedin.com/in/minas-adonai",
+            "superpowers": [
+              "Sales",
+              "Filmmaking/photography",
+              "Product"
+            ]
+          },
+          "helped": {
+            "name": "Jin Park",
+            "linkedin": "https://linkedin.com/in/jin-park020716",
+            "needs": [
+              "Pitching & Fundraising",
+              "Sales"
+            ]
+          },
+          "reason": "Minas specializes in sales, which is directly relevant to Jin's needs, and also has experience with product, making him a strong match for assisting with VoiceStacks.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Shilo Jeyarajasingam",
+            "linkedin": "https://linkedin.com/in/shilo-jeyaraj",
+            "superpowers": [
+              "Design (UX/UI)",
+              "AI automations"
+            ]
+          },
+          "helped": {
+            "name": "Nish V",
+            "linkedin": "https://linkedin.com/in/nishvel",
+            "needs": [
+              "Design (UX/UI)",
+              "Mobile app development",
+              "AI automations"
+            ]
+          },
+          "reason": "Shilo has superpowers in both Design (UX/UI) and AI automations, which directly align with Nish's needs for design and automation in his apps.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Miguel Twahirwa",
+            "linkedin": "https://linkedin.com/in/migueltwahirwa",
+            "superpowers": [
+              "Mobile app development",
+              "Web development",
+              "AI automations",
+              "Analytics"
+            ]
+          },
+          "helped": {
+            "name": "Azhar Hemani",
+            "linkedin": "https://linkedin.com/in/azharhemani",
+            "needs": [
+              "AI automations",
+              "Web development",
+              "Mobile app development"
+            ]
+          },
+          "reason": "Miguel has superpowers in mobile app development, web development, and AI automations, making him a well-rounded fit for Azhar's needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Brittany Will",
+            "linkedin": "https://linkedin.com/in/thebrittwill",
+            "superpowers": [
+              "Community Building",
+              "Event planning",
+              "Pitching & fundraising",
+              "Curation, Storytelling , Positioning"
+            ]
+          },
+          "helped": {
+            "name": "Viraj Shah",
+            "linkedin": "https://linkedin.com/in/viraj-irl",
+            "needs": [
+              "Design (UX/UI)",
+              "Web development",
+              "Mobile app development",
+              "Event planning",
+              "Pitching & Fundraising",
+              "Podcasting",
+              "Sales",
+              "Community Building"
+            ]
+          },
+          "reason": "Brittany has expertise in Event planning, Pitching & fundraising, and Community Building, which align well with Viraj's needs.",
+          "score": 88,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Adrian Clarke- Commercial Insurance B",
+            "linkedin": "https://linkedin.com/in/-adrian-clarke",
+            "superpowers": [
+              "Community Building",
+              "Sales"
+            ]
+          },
+          "helped": {
+            "name": "Saswat",
+            "linkedin": "https://linkedin.com/in/saswat-baruah-06b52419",
+            "needs": [
+              "Sales",
+              "Community Building",
+              "Pitching & Fundraising"
+            ]
+          },
+          "reason": "Adrian has strengths in both community building and sales, which align directly with Saswat's needs for support in those areas.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Sunny Yimeng Dong",
+            "linkedin": "https://linkedin.com/in/sunnyyimengdong&sa=X&ved=2ahUKEwjJwLGW5dGQAxU1D1kFHeFdDncQ7xYoAHoECAsQAQ&biw=390&bih=663&dpr=3",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Event planning",
+              "Social media branding/content",
+              "Filmmaking/photography"
+            ]
+          },
+          "helped": {
+            "name": "Chantal Nguyen",
+            "linkedin": "https://linkedin.com/in/chantal-nguyen-169b5a2b2",
+            "needs": [
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Web development",
+              "Event planning",
+              "Filmmaking/Photography",
+              "Community Building",
+              "Opportunities to collaborate on early-stage projects or join teams that need design/content help."
+            ]
+          },
+          "reason": "Sunny possesses superpowers in design (UX/UI), event planning, and social media branding/content, making her an excellent match for Chantal's diverse needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Zayyan Ahmed",
+            "linkedin": "https://linkedin.com/in/qahmed1",
+            "superpowers": [
+              "AI automations",
+              "Mobile app development",
+              "Design (UX/UI)",
+              "Pitching & fundraising",
+              "Web development",
+              "Data Engineering, Product Management, AI Engineering"
+            ]
+          },
+          "helped": {
+            "name": "Allen Liu",
+            "linkedin": "https://linkedin.com/in/yanzeliu",
+            "needs": [
+              "AI automations",
+              "Pitching & Fundraising",
+              "Web development",
+              "Mobile app development"
+            ]
+          },
+          "reason": "Zayyan has a comprehensive skill set in AI automations, mobile app development, pitching & fundraising, and web development, making him an ideal match for Allen's diverse needs.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Arash Nouri",
+            "linkedin": "https://linkedin.com/in/arashnouri95",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Event planning",
+              "Filmmaking/photography",
+              "Community Building",
+              "Recruiting",
+              "Web development",
+              "Social media branding/content",
+              "Reality distortion field"
+            ]
+          },
+          "helped": {
+            "name": "Melissa Tran",
+            "linkedin": "https://linkedin.com/in/melissa-tran",
+            "needs": [
+              "Recruiting"
+            ]
+          },
+          "reason": "Arash has superpowers in recruiting, which directly aligns with Melissa's need for help in that area, along with additional skills in web development and community building.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Lokesh",
+            "linkedin": "https://linkedin.com/in/Lokesh",
+            "superpowers": [
+              "Sales"
+            ]
+          },
+          "helped": {
+            "name": "Purva Daga",
+            "linkedin": "https://linkedin.com/in/purva-daga",
+            "needs": [
+              "Sales"
+            ]
+          },
+          "reason": "Lokesh has expertise in sales, which directly aligns with Purva's needs for help in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Ezra Dey",
+            "linkedin": "https://linkedin.com/in/karekin-dey",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Filmmaking/photography",
+              "Pitching & fundraising"
+            ]
+          },
+          "helped": {
+            "name": "Valera Che",
+            "linkedin": "https://linkedin.com/in/valeriia-chernova",
+            "needs": [
+              "Pitching & Fundraising",
+              "Podcasting"
+            ]
+          },
+          "reason": "Ezra has superpowers in pitching & fundraising, which directly aligns with Valera's needs, and also has skills in design that could enhance podcasting efforts.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Fidha Mariyam",
+            "linkedin": "https://linkedin.com/in/fidhamariyam",
+            "superpowers": [
+              "E-commerce",
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Shopify strategy, CRO and audits"
+            ]
+          },
+          "helped": {
+            "name": "Kachi",
+            "linkedin": "https://linkedin.com/in/ginikachieloka",
+            "needs": [
+              "Legal",
+              "Community Building",
+              "Would just love to connect and engage with brilliant people working on interesting projects"
+            ]
+          },
+          "reason": "Fidha has superpowers in e-commerce and social media branding which align well with Kachi's influencer campaign and desire to connect with creative strategists.",
+          "score": 80,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Ayesha Hafeez",
+            "linkedin": "https://linkedin.com/in/ayesha-hafeez-3115ba95",
+            "superpowers": [
+              "AI automations",
+              "Web development",
+              "Mobile app development",
+              "Product Management"
+            ]
+          },
+          "helped": {
+            "name": "Nancy Wu",
+            "linkedin": "https://linkedin.com/in/na",
+            "needs": [
+              "AI automations"
+            ]
+          },
+          "reason": "Ayesha has expertise in AI automations along with web development, making her highly suited to assist Nancy Wu with AI automations.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Armin Aghayan",
+            "linkedin": "https://linkedin.com/in/arminaghayan",
+            "superpowers": [
+              "Sales",
+              "E-commerce",
+              "Web development",
+              "Driven"
+            ]
+          },
+          "helped": {
+            "name": "Eric",
+            "linkedin": "https://linkedin.com/in/eric-dekryger",
+            "needs": [
+              "Sales"
+            ]
+          },
+          "reason": "Armin has superpowers in sales, which directly aligns with Eric's need for help in that area.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Mehvish",
+            "linkedin": "https://linkedin.com/in/mehvish-ali-355b35118",
+            "superpowers": [
+              "Event planning",
+              "Filmmaking/photography",
+              "Sales",
+              "Design (UX/UI)",
+              "Leadership"
+            ]
+          },
+          "helped": {
+            "name": "Reza Tangestani",
+            "linkedin": "https://linkedin.com/in/rezatangestani",
+            "needs": [
+              "Sales"
+            ]
+          },
+          "reason": "Mehvish has experience in sales and design, which aligns well with Reza's needs for sales assistance while working on enghub.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Rose Ruhao Lou",
+            "linkedin": "https://linkedin.com/in/ruhaolou",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Speaks 4 languages"
+            ]
+          },
+          "helped": {
+            "name": "Bon",
+            "linkedin": "https://linkedin.com/in/bonbong",
+            "needs": [
+              "Web development",
+              "Design (UX/UI)",
+              "Accounting or Finance"
+            ]
+          },
+          "reason": "Rose has UX/UI design skills that directly align with Bon's needs, making her the best match for design help.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Manuel Olumorin",
+            "linkedin": "https://linkedin.com/in/manuel-olumorin",
+            "superpowers": [
+              "Web development",
+              "Sales"
+            ]
+          },
+          "helped": {
+            "name": "youssef assad",
+            "linkedin": "https://linkedin.com/in/youssef-assad",
+            "needs": [
+              "Sales",
+              "Pitching & Fundraising"
+            ]
+          },
+          "reason": "He has superpowers in both web development and sales, which align well with youssef assad's needs in sales and fundraising for his Edtech project.",
+          "score": 80,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Kari Gachugu",
+            "linkedin": "https://linkedin.com/in/kari-gachugu-bb00a6228",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Social media branding/content",
+              "Filmmaking/photography",
+              "Podcasting",
+              "Sales",
+              "Talking to people"
+            ]
+          },
+          "helped": {
+            "name": "kai :)",
+            "linkedin": "https://linkedin.com/in/hulloitskai",
+            "needs": [
+              "Social media branding/content"
+            ]
+          },
+          "reason": "Kari has superpowers in both social media branding/content and design, making her a strong match for helping kai with social media branding.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Michael Shmelev",
+            "linkedin": "https://linkedin.com/in/michaelshmelev",
+            "superpowers": [
+              "Design (UX/UI)",
+              "Community Building",
+              "Good dancer"
+            ]
+          },
+          "helped": {
+            "name": "noah deskin",
+            "linkedin": "https://linkedin.com/in/noah-deskin",
+            "needs": [
+              "AI automations",
+              "Design (UX/UI)",
+              "Mobile app development"
+            ]
+          },
+          "reason": "Michael's skills in Design (UX/UI) directly align with Noah's needs, making him the most relevant helper available.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "Annie",
+            "linkedin": "https://linkedin.com/in/anh-phan-001",
+            "superpowers": [
+              "Social media branding/content",
+              "Event planning",
+              "Filmmaking/photography",
+              "Sales",
+              "Community Building"
+            ]
+          },
+          "helped": {
+            "name": "Veronica Ye",
+            "linkedin": "https://linkedin.com/in/veronica-ye",
+            "needs": [
+              "Sales"
+            ]
+          },
+          "reason": "Annie's superpowers in Sales and community building directly align with Veronica's need for help in sales for her freelancing Amazon revenue.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "helper": {
+            "name": "razy",
+            "linkedin": "https://linkedin.com/in/razyshafiee",
+            "superpowers": [
+              "AI automations",
+              "Innovative solution finder"
+            ]
+          },
+          "helped": {
+            "name": "gaya k",
+            "linkedin": "https://linkedin.com/in/gayakhiani",
+            "needs": [
+              "Web development"
+            ]
+          },
+          "reason": "Razy's AI automation skills can assist in creating interactive elements for the educational exhibit on quantum computing.",
+          "score": 85,
+          "is_trio": false
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "type": "similarity",
+      "match_count": 59,
+      "matches": [
+        {
+          "person_a": {
+            "name": "Shake",
+            "linkedin": "https://linkedin.com/in/shake-the-ai-guy",
+            "project": "AI for business transformation for M&A"
+          },
+          "person_b": {
+            "name": "Bon",
+            "linkedin": "https://linkedin.com/in/bonbong",
+            "project": "Social media"
+          },
+          "similarity_reason": "Both are in the Spark phase focusing on ideation, with Bon needing web development and design skills that could complement Shake's AI automation expertise for business transformation.",
+          "score": 75,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Miray B",
+            "linkedin": "https://linkedin.com/in/mirayberber",
+            "project": "Notion in Motion (Podcast) \nProduct Design(SaaS)"
+          },
+          "person_b": {
+            "name": "Stephan Ledain",
+            "linkedin": "https://linkedin.com/in/stephanledain",
+            "project": "I'm building AdaptAI and Eternal Remedy"
+          },
+          "similarity_reason": "Both are in the momentum phase and share a need for AI automations, allowing them to discuss advancements in automation within their projects.",
+          "score": 85,
+          "is_trio": true,
+          "person_c": {
+            "name": "Avinash",
+            "linkedin": "https://linkedin.com/in/avinashrathee",
+            "project": "AI research agent"
+          },
+          "third_person_reason": "Avinash's experience in product and fundraising can complement Miray B and Stephan Ledain's projects focused on SaaS and AI, enhancing their development and market potential."
+        },
+        {
+          "person_a": {
+            "name": "Katy Rozanova",
+            "linkedin": "https://linkedin.com/in/katy-rozanova",
+            "project": "Promise Piece - wearable promises"
+          },
+          "person_b": {
+            "name": "Tyler Abbey",
+            "linkedin": "https://linkedin.com/in/tylergaryabbey",
+            "project": "3D printing empire!"
+          },
+          "similarity_reason": "Both are in the build phase and need social media branding/content and AI automations, allowing for discussion on strategies and experiences in these areas.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Veronica Ye",
+            "linkedin": "https://linkedin.com/in/veronica-ye",
+            "project": "freelancing amazon revenue"
+          },
+          "person_b": {
+            "name": "Michael Shmelev",
+            "linkedin": "https://linkedin.com/in/michaelshmelev",
+            "project": "Returnley"
+          },
+          "similarity_reason": "Both are in the Spark phase (ideation) and could share insights on early-stage project development and exploring sales strategies for their concepts.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Tina Li",
+            "linkedin": "https://linkedin.com/in/tinamli",
+            "project": "Neighbourhood initiatives, civic tech "
+          },
+          "person_b": {
+            "name": "Melissa Tran",
+            "linkedin": "https://linkedin.com/in/melissa-tran",
+            "project": "looking to work on a project"
+          },
+          "similarity_reason": "Both are in the Spark phase focusing on neighborhood initiatives and recruiting, which allows them to share insights on civic engagement and effective team building.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Manuel Olumorin",
+            "linkedin": "https://linkedin.com/in/manuel-olumorin",
+            "project": "Exploring right now"
+          },
+          "person_b": {
+            "name": "Fidha Mariyam",
+            "linkedin": "https://linkedin.com/in/fidhamariyam",
+            "project": "Building and scaling a Shopify focused creative agency, working with product based brands on store builds, conversion optimization, branding, and growth systems. Also developing educational content and resources for founders learning Shopify and e commerce."
+          },
+          "similarity_reason": "Both are in the spark phase (ideation) and have overlapping needs for web development, allowing them to discuss and share ideas related to building web-based solutions for their projects.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Chantal Nguyen",
+            "linkedin": "https://linkedin.com/in/chantal-nguyen-169b5a2b2",
+            "project": "Building a personal portfolio website and content hub to showcase my UI/UX, photography, and design work.\n\nDesigning a small photobooth/content-creation service for events, plus a website and social content to support it."
+          },
+          "person_b": {
+            "name": "Brittany Will",
+            "linkedin": "https://linkedin.com/in/thebrittwill",
+            "project": "ThoughtPlay ; TheSugarQuit "
+          },
+          "similarity_reason": "Both are in the build phase focusing on web development and social media branding/content for their respective projects, which allows for a collaborative exchange of ideas on design and implementation.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Shivang",
+            "linkedin": "https://linkedin.com/in/sr099",
+            "project": "- AI safety awareness campaign \n- AI side quest-giver companion \n- InspireAI"
+          },
+          "person_b": {
+            "name": "Nima Tahami",
+            "linkedin": "https://linkedin.com/in/nimatahami",
+            "project": "CueClip.app"
+          },
+          "similarity_reason": "Both are in the build phase and working on AI-related projects with similar needs in social media branding/content.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Miguel Twahirwa",
+            "linkedin": "https://linkedin.com/in/migueltwahirwa",
+            "project": "AI DJ"
+          },
+          "person_b": {
+            "name": "Lydia Shan",
+            "linkedin": "https://linkedin.com/in/lydiashan",
+            "project": "DJ visualizer app "
+          },
+          "similarity_reason": "Both are working on AI-related projects in the DJ space and share overlapping needs for web and mobile app development, allowing for complementary discussions about technical aspects and community engagement.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Eric",
+            "linkedin": "https://linkedin.com/in/eric-dekryger",
+            "project": "Linkedin Ai Outreach\nLinkedin ai job applier"
+          },
+          "person_b": {
+            "name": "Jagrit Acharya",
+            "linkedin": "https://linkedin.com/in/jagritacharya",
+            "project": "Ai body language analysis salescoach"
+          },
+          "similarity_reason": "Both are in the build phase and need sales, which allows them to share strategies on leveraging AI in sales processes.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Syed Qamar",
+            "linkedin": "https://linkedin.com/in/syedqamar",
+            "project": "AI Algolabs "
+          },
+          "person_b": {
+            "name": "Sam",
+            "linkedin": "https://linkedin.com/in/sam-d-413631164",
+            "project": "Start up"
+          },
+          "similarity_reason": "Both are in the build phase and have overlapping needs for AI automations, which allows them to share ideas and experiences on their respective projects.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Nish V",
+            "linkedin": "https://linkedin.com/in/nishvel",
+            "project": "cost tracking app; habit modification app"
+          },
+          "person_b": {
+            "name": "Swap :)",
+            "linkedin": "",
+            "project": "better bikeshare"
+          },
+          "similarity_reason": "Both are working on mobile app development in the build phase with overlapping needs for AI automations and web development.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Xing Yang Lan",
+            "linkedin": "https://linkedin.com/in/bill-xing-yang-6aaa01147",
+            "project": "VoiceStacks, VoiceAI startup"
+          },
+          "person_b": {
+            "name": "Shilo Jeyarajasingam",
+            "linkedin": "https://linkedin.com/in/shilo-jeyaraj",
+            "project": "Multiplayer AI-enhanced study app "
+          },
+          "similarity_reason": "Both are in the build phase and have a need for community building, allowing for the sharing of insights and experiences in their respective projects.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Nancy Wu",
+            "linkedin": "https://linkedin.com/in/na",
+            "project": "https://github.com/player-ui"
+          },
+          "person_b": {
+            "name": "Lokesh",
+            "linkedin": "https://linkedin.com/in/Lokesh",
+            "project": "Solar energy "
+          },
+          "similarity_reason": "Lokesh is also focused on AI automations and is in the maintenance phase, which allows for sharing insights on optimization and improvements.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Asar Qadir",
+            "linkedin": "https://linkedin.com/in/asar-qadir-13bb5a25a",
+            "project": "AI search for multi media"
+          },
+          "person_b": {
+            "name": "Rahul Malhotra",
+            "linkedin": "https://linkedin.com/in/Rahulbgold",
+            "project": "Investment "
+          },
+          "similarity_reason": "Both are in the maintenance phase focusing on pitching and fundraising, allowing them to share insights on stabilizing and improving their respective projects.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "youssef assad",
+            "linkedin": "https://linkedin.com/in/youssef-assad",
+            "project": "Edtech "
+          },
+          "person_b": {
+            "name": "Annie",
+            "linkedin": "https://linkedin.com/in/anh-phan-001",
+            "project": "a map app"
+          },
+          "similarity_reason": "Both are in the build phase working on applications that require pitching and fundraising, allowing them to share strategies and insights on their respective projects.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Ahmad Sofi-Mahmudi",
+            "linkedin": "https://linkedin.com/in/asofimahmudi",
+            "project": "FacultyFinder.io"
+          },
+          "person_b": {
+            "name": "Paul",
+            "linkedin": "https://linkedin.com/in/paul-bokserman",
+            "project": "Peaceful Hospitality "
+          },
+          "similarity_reason": "Both are in the build phase and have overlapping needs for pitching & fundraising and event planning, which could facilitate a fruitful discussion on community building and collaboration strategies.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Jin Park",
+            "linkedin": "https://linkedin.com/in/jin-park020716",
+            "project": "VoiceStacks, voice agent builder"
+          },
+          "person_b": {
+            "name": "Eddy Okun",
+            "linkedin": "https://linkedin.com/in/eddyokun",
+            "project": "neothread.ai"
+          },
+          "similarity_reason": "Both are in the momentum phase and have web development skills while Jin needs sales support that could align with Eddy's project growth.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Rose Ruhao Lou",
+            "linkedin": "https://linkedin.com/in/ruhaolou",
+            "project": "Startup "
+          },
+          "person_b": {
+            "name": "Zlad Dujsic",
+            "linkedin": "https://linkedin.com/in/zlad-dujsic-078a6b51",
+            "project": "planmyfun.app"
+          },
+          "similarity_reason": "Both are in the build phase focusing on mobile app development, allowing for sharing of ideas and experiences in app creation.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Joshua Johnson",
+            "linkedin": "https://linkedin.com/in/joshb-johnson",
+            "project": "I have a couple of case studies built out on my portfolio ( https://joshuajohnson.framer.website/). I\u2019m still looking opportunities to grow and learn as I try to break into the Design industry "
+          },
+          "person_b": {
+            "name": "Nikhil Gnanavel",
+            "linkedin": "https://linkedin.com/in/nikhil-gnanavel",
+            "project": "MCP agents "
+          },
+          "similarity_reason": "Both are in the momentum phase and have overlapping needs in design (UX/UI) and social media branding/content, which allows for sharing valuable insights and experiences.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Wonbong Koh",
+            "linkedin": "https://linkedin.com/in/6472387450",
+            "project": "AI/Cybersecurity/Nuclear Investment Opportunities"
+          },
+          "person_b": {
+            "name": "Azhar Hemani",
+            "linkedin": "https://linkedin.com/in/azharhemani",
+            "project": "Founder and CEO of Salesnova. An AI automation tool for sales teams"
+          },
+          "similarity_reason": "Both are working on AI automation projects and are in the momentum phase, which allows for shared insights and experiences regarding implementation and development.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Kira YAN",
+            "linkedin": "https://linkedin.com/in/yanzexu",
+            "project": "n/a"
+          },
+          "person_b": {
+            "name": "Stefany nieto",
+            "linkedin": "https://linkedin.com/in/stefanynieto",
+            "project": "Supply chain communication & Girls With Big Ideas event series (two seperate projects)"
+          },
+          "similarity_reason": "Both are in the spark phase focused on ideation, with overlapping needs for web development and social media branding/content, making them ideal for exchanging ideas and experiences in brand development.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "gaya k",
+            "linkedin": "https://linkedin.com/in/gayakhiani",
+            "project": "educational exhibit on quantum computing"
+          },
+          "person_b": {
+            "name": "Matt Doyle",
+            "linkedin": "https://linkedin.com/in/matthewldoyle",
+            "project": "n/a"
+          },
+          "similarity_reason": "Both are in the Spark phase working on projects that need web development, which allows for discussions on ideation and technical needs.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "razy",
+            "linkedin": "https://linkedin.com/in/razyshafiee",
+            "project": "Agentic AI System"
+          },
+          "person_b": {
+            "name": "William",
+            "linkedin": "https://linkedin.com/in/william-naayem",
+            "project": "I\u2019m building Sapien Labs a creative growth agency. We scale content pipelines using creative strategy and AI systems for performance, marketing agencies, director, consumer brands, startups, and small businesses. "
+          },
+          "similarity_reason": "Both are working on AI systems and are in the build phase, which allows for collaborative discussions on AI automations to enhance their projects.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "kai :)",
+            "linkedin": "https://linkedin.com/in/hulloitskai",
+            "project": "smaller world"
+          },
+          "person_b": {
+            "name": "Yazin Joseph",
+            "linkedin": "https://linkedin.com/in/yazinjoseph",
+            "project": "Website rebrand, serious games marketing campaign, building portfolio "
+          },
+          "similarity_reason": "Both are in the momentum phase and have overlapping needs in web development and community building, making them well-suited to share insights on growing their respective projects.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Ravi Amin",
+            "linkedin": "https://linkedin.com/in/raviamin",
+            "project": "AI voice bots, home cloud n8n LLMs server, AWS n Google cloud, web3 domains, 100 Trillion token DAO, Aliens n UFOs, Quantum, passive income"
+          },
+          "person_b": {
+            "name": "Arya Sharma",
+            "linkedin": "https://linkedin.com/in/arya-sharma",
+            "project": "Datawise "
+          },
+          "similarity_reason": "Both are in the build phase focusing on sales and event planning, which allows them to share experiences and strategies related to their AI and community-driven projects.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Monique Danao",
+            "linkedin": "https://linkedin.com/in/monique-danao-7a7501125",
+            "project": "I'm a maker with skills in content and design looking to offer my services"
+          },
+          "person_b": {
+            "name": "Pranshu Bhatia",
+            "linkedin": "https://linkedin.com/in/pranshubhatia99",
+            "project": "Agri Tech Solutions supporting sustainable food systems. "
+          },
+          "similarity_reason": "Both are in the Spark phase focusing on community building and seeking mentorship and industry wisdom to further their projects.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Reza Tangestani",
+            "linkedin": "https://linkedin.com/in/rezatangestani",
+            "project": "enghub - github for engineers "
+          },
+          "person_b": {
+            "name": "Alok Kumar Deepak",
+            "linkedin": "https://linkedin.com/in/alokdeepak555",
+            "project": "Building Information Management "
+          },
+          "similarity_reason": "Both are in the build phase focusing on sales, providing a platform that could benefit from shared insights on growth strategies.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Priyanshi Sanghvi",
+            "linkedin": "https://linkedin.com/in/priyanshi-sanghvi",
+            "project": "My e-commerce brand "
+          },
+          "person_b": {
+            "name": "Pierre",
+            "linkedin": "",
+            "project": "Omnilense (glasses similar tot he meta glasses but with the battery life to record continuously for the whole day)"
+          },
+          "similarity_reason": "Both are in the build phase and need sales and filmmaking/photography skills, making them well-suited to share experiences related to e-commerce growth and creative marketing strategies.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Hossein Yousefi",
+            "linkedin": "https://linkedin.com/in/hossein-yousefi-55364729b",
+            "project": "BI/AI for businesses"
+          },
+          "person_b": {
+            "name": "Gursimran Chadha",
+            "linkedin": "https://linkedin.com/in/gurchadha",
+            "project": "Backyard eggs"
+          },
+          "similarity_reason": "Both are in the build phase and have overlapping needs in pitching & fundraising and community building, which provides an opportunity for idea exchange and support.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Irina Afanasenko",
+            "linkedin": "https://linkedin.com/in/irina-prod",
+            "project": "I run a women\u2019s social club in Toronto "
+          },
+          "person_b": {
+            "name": "Berto Mill",
+            "linkedin": "https://linkedin.com/in/bertomill",
+            "project": "Makerslounge\nAI Agents for Tax"
+          },
+          "similarity_reason": "Both are in the momentum phase and focused on social media branding/content and event planning, which aligns well with Irina's women's social club initiatives.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Sophia Ghashghaei",
+            "linkedin": "https://linkedin.com/in/sophia-ghashghaei",
+            "project": "fleuriiish, a floral business based around the art of japanese ikebana @fleuriiish.ikebana on instagram"
+          },
+          "person_b": {
+            "name": "Kimberly Ng",
+            "linkedin": "https://linkedin.com/in/kimberly-ng-0b8466380",
+            "project": "building two whimsical florists & our studio "
+          },
+          "similarity_reason": "Both are involved in the floral business and share overlapping needs in social media branding/content and community building while being in the momentum phase.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Allen Liu",
+            "linkedin": "https://linkedin.com/in/yanzeliu",
+            "project": "I'm looking to build a headless retail media ad server that aggregates long-tail SMB e-commerce merchants into a unified, high-scale ad network. This allows brands to programmatically buy sponsored product placements across thousands of independent Shopify, Lightspeed, and WooCommerce stores via a single interface, unlocking high-margin ad revenue for small retailers who are currently excluded from the retail media boom.\n\nAnother project in ideation: an all-inclusive marketing tool for long-tail merchants to gain traffic and traction in local markets. "
+          },
+          "person_b": {
+            "name": "Brian Jin",
+            "linkedin": "https://linkedin.com/in/brian-jin-data",
+            "project": "Data ERP/Collaboration Platform"
+          },
+          "similarity_reason": "Both are in the spark phase and focused on building platforms for communities and e-commerce, sharing a mutual interest in community building and sales strategies.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Mariglen Qorri",
+            "linkedin": "https://linkedin.com/in/mariglen-qorri",
+            "project": "Field service. It's a clock in/out app for insulation installation companies"
+          },
+          "person_b": {
+            "name": "Raneem Zaitoun",
+            "linkedin": "https://linkedin.com/in/raneem-zaitounos",
+            "project": "Cerebra - AI PM tool"
+          },
+          "similarity_reason": "Both are in the build phase and have overlapping needs for AI automations as well as design (UX/UI), making them ideal for sharing insights on their respective applications.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Vidhi Rana",
+            "linkedin": "https://linkedin.com/in/vidhi-rana-6a934016b",
+            "project": "Developing therapeutic Garden design for community  with presentation \nResidential Staging And Redesign "
+          },
+          "person_b": {
+            "name": "Ayman Abduldayem",
+            "linkedin": "https://linkedin.com/in/ayman-abduldayem",
+            "project": "Social Media (Youtube, IG)\nBuilding a Video marketing Agency"
+          },
+          "similarity_reason": "Both are in the spark phase, focused on community-building projects, and have overlapping needs in filmmaking/photography and design skills.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Jack Mufudzi",
+            "linkedin": "https://linkedin.com/in/jackmufudzi",
+            "project": "Music event index"
+          },
+          "person_b": {
+            "name": "Irene",
+            "linkedin": "https://linkedin.com/in/irene-cili",
+            "project": "Gaming marketplace"
+          },
+          "similarity_reason": "Both are in the spark phase focused on AI automations, allowing them to share ideas around integrating AI into event planning.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Eduardo",
+            "linkedin": "https://linkedin.com/in/eduardo-chavez2024",
+            "project": "1. App- Spotify wrapped for friend groups but instead of music its pic & predictions group members have made about each other \n2. Hood mounted shelf tray for DIY car mechanics "
+          },
+          "person_b": {
+            "name": "Arash Nouri",
+            "linkedin": "https://linkedin.com/in/arashnouri95",
+            "project": "Building my own design studio"
+          },
+          "similarity_reason": "Both are in the spark phase focusing on community building and need skills in pitching & fundraising, making them well-suited to share insights and ideas.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Prabhdeep Singh",
+            "linkedin": "https://linkedin.com/in/prabhs07",
+            "project": "I'm working on building that worlds first constant time RAGs. "
+          },
+          "person_b": {
+            "name": "Ilham Farah",
+            "linkedin": "https://linkedin.com/in/ilham-farah",
+            "project": "UX/UI project for an AR assisted visualization app "
+          },
+          "similarity_reason": "Both are working on design aspects with a focus on UX/UI and are in the build phase, which allows for shared insights and collaboration on design improvements.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Junaid L Mahmood",
+            "linkedin": "https://linkedin.com/in/junaidmahmood-",
+            "project": "- ai for game development (tractor.tech)\n- ai hacking agents (esprit.dev)"
+          },
+          "person_b": {
+            "name": "Arman Blackstone",
+            "linkedin": "",
+            "project": "AI large world model, adaptive intelligence. "
+          },
+          "similarity_reason": "Both are in the build phase and have overlapping needs in legal and community building, making them suitable for discussing shared challenges and strategies in their AI projects.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Mehvish",
+            "linkedin": "https://linkedin.com/in/mehvish-ali-355b35118",
+            "project": "Wedding projects"
+          },
+          "person_b": {
+            "name": "Rajan Devnath",
+            "linkedin": "https://linkedin.com/in/rdevnath",
+            "project": "Quikpik.io"
+          },
+          "similarity_reason": "Both Mehvish and Rajan are working on projects in the momentum phase and are focused on growth, with complementary needs in community building.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Ayesha Hafeez",
+            "linkedin": "https://linkedin.com/in/ayesha-hafeez-3115ba95",
+            "project": "PlanMyFun app: social calendar planning app"
+          },
+          "person_b": {
+            "name": "noah deskin",
+            "linkedin": "https://linkedin.com/in/noah-deskin",
+            "project": "Startup"
+          },
+          "similarity_reason": "Both are working on mobile app development projects in the build phase and could share insights on AI automations and design aspects.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Vinit Shah",
+            "linkedin": "https://linkedin.com/in/vinitshah99",
+            "project": "Recruitment, immigration, international education "
+          },
+          "person_b": {
+            "name": "Wendy Huang",
+            "linkedin": "https://linkedin.com/in/wendy-siqi-huang",
+            "project": "TBA!"
+          },
+          "similarity_reason": "Both are in the maintenance phase and have needs related to recruiting, allowing for a productive discussion on building teams and improving processes within their projects.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Stephanie Reimer",
+            "linkedin": "https://linkedin.com/in/reimerstephie",
+            "project": "on expanding my freelance design business. And personally, I developed an interactive illustrated advent calendar for friends this year. Super fun. "
+          },
+          "person_b": {
+            "name": "Adam Cote",
+            "linkedin": "https://linkedin.com/in/adam-cote",
+            "project": "Working on a project that allows resellers to upload photos of their inventory, get automated listing descriptions, and post automatically to Facebook Marketplace and other relevant locations "
+          },
+          "similarity_reason": "Both are in the build phase working on projects that involve design and photography, and they have overlapping needs in sales and pitching/fundraising.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Alejandro",
+            "linkedin": "https://linkedin.com/in/aicastellanos",
+            "project": "Ai"
+          },
+          "person_b": {
+            "name": "Henry Pak",
+            "linkedin": "https://linkedin.com/in/henry-pak",
+            "project": "An ai driven edtech platform for higher level students and early professional learners"
+          },
+          "similarity_reason": "Both are working on AI-related projects in the build phase, with overlapping needs for design and social media branding/content, allowing for discussions on collaboration and best practices in their respective fields.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Zayyan Ahmed",
+            "linkedin": "https://linkedin.com/in/qahmed1",
+            "project": "Pimm\nPsyAI (Open Source)\nD2C Products"
+          },
+          "person_b": {
+            "name": "Ramon Sharif",
+            "linkedin": "https://linkedin.com/in/ramonsharif",
+            "project": "Venture Studio"
+          },
+          "similarity_reason": "Both are in the build phase and have overlapping needs in community building and e-commerce, which allows for a fruitful exchange of ideas and experiences.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Henry Hiles",
+            "linkedin": "https://linkedin.com/company/ I don't have a LinkedIn",
+            "project": "Nexus, a Matrix client built with Flutter: https://git.federated.nexus/henry-hiles/nexus"
+          },
+          "person_b": {
+            "name": "Declan Kintu",
+            "linkedin": "https://linkedin.com/in/declan-trevor-kintu",
+            "project": "theGarage"
+          },
+          "similarity_reason": "Both are in the Build phase of their projects and require mobile app development, making their collaboration on app development insights highly relevant.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Saswat",
+            "linkedin": "https://linkedin.com/in/saswat-baruah-06b52419",
+            "project": "Product Usage Analytics, MCP, APIs"
+          },
+          "person_b": {
+            "name": "David Ampofo",
+            "linkedin": "https://linkedin.com/in/dvampofo",
+            "project": "Web development"
+          },
+          "similarity_reason": "Both are in the maintenance phase and have overlapping needs in web development, allowing for a focused discussion on stabilizing and improving product usage analytics.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Aaron L. Greenspan",
+            "linkedin": "https://linkedin.com/in/aaron-greenspan",
+            "project": "Trottx, PawTrack, client projects "
+          },
+          "person_b": {
+            "name": "Kachi",
+            "linkedin": "https://linkedin.com/in/ginikachieloka",
+            "project": "Working on a digital guide for founders, freelancers and small teams that want to systemize and optimize their business processes. Hoping to connect with people in either of those three categories.\n\nAlso working on a travel-inspired influencer campaign for an e-commerce brand and would love to connect with some creative strategists or anyone whose worked on a similar project "
+          },
+          "similarity_reason": "Both are in the Spark phase focusing on ideation and have overlapping needs in community building and social media branding/content, making them ideal for sharing insights and strategies.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "basma kaanane",
+            "linkedin": "https://linkedin.com/in/basma-kaanane-09520b197",
+            "project": "Optiliftai.com"
+          },
+          "person_b": {
+            "name": "Sarah Ziat",
+            "linkedin": "https://linkedin.com/in/Ziatsarah",
+            "project": "Mechanism to restore our natural instinct of human connection "
+          },
+          "similarity_reason": "Both are in the build phase and have overlapping needs for pitching & fundraising, design (UX/UI), and social media branding/content, allowing for valuable discussions and collaboration.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Valera Che",
+            "linkedin": "https://linkedin.com/in/valeriia-chernova",
+            "project": "IT"
+          },
+          "person_b": {
+            "name": "Viraj Shah",
+            "linkedin": "https://linkedin.com/in/viraj-irl",
+            "project": "Career Development "
+          },
+          "similarity_reason": "Both are in the build phase and have overlapping needs in pitching & fundraising, as well as skills in web and mobile app development.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Disha Sareen",
+            "linkedin": "https://linkedin.com/in/disha-sareen-8b9661118",
+            "project": "Extroverted community builder with a social media presence. "
+          },
+          "person_b": {
+            "name": "Ahmad Almadhoun",
+            "linkedin": "https://linkedin.com/in/madhoundes",
+            "project": "Thumbspark AI Startup to create professional Youtube thumbnails ads"
+          },
+          "similarity_reason": "Both are in the momentum phase with a focus on social media branding/content, which allows for the exchange of ideas on community building and audience engagement.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Hish I",
+            "linkedin": "https://linkedin.com/in/hishi",
+            "project": "Co-housing in Toronto"
+          },
+          "person_b": {
+            "name": "Kari Gachugu",
+            "linkedin": "https://linkedin.com/in/kari-gachugu-bb00a6228",
+            "project": "Diaminate "
+          },
+          "similarity_reason": "Both are in the build phase and have community building as a need, making them suitable to discuss collaborative strategies for fostering community engagement.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Ivin Thomas",
+            "linkedin": "https://linkedin.com/in/ivinthomas",
+            "project": "A vetting, standards, and certification organization that assesses brand marketing claims, practices, ingredients, and compliance practices and sorts them with a tier system, giving customers the power of knowledge of the brands they take home."
+          },
+          "person_b": {
+            "name": "Irina Belgorodskii",
+            "linkedin": "https://linkedin.com/in/irina-belgorodskii",
+            "project": "Brainstorming Business Ideas "
+          },
+          "similarity_reason": "Both are in the spark phase focusing on ideas related to community building, social media branding, and pitching, allowing for an exchange of strategies and insights.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Josh Maldonado",
+            "linkedin": "https://linkedin.com/in/joshmaldonado",
+            "project": "- prototype studio"
+          },
+          "person_b": {
+            "name": "Wasim Abuzaher",
+            "linkedin": "https://linkedin.com/in/wasimabuzaher",
+            "project": "Frontend react ptojects"
+          },
+          "similarity_reason": "Both are in the Spark phase focusing on ideation, and while Josh needs design (UX/UI), Wasim is specifically looking for that same kind of expertise.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Leo P",
+            "linkedin": "https://linkedin.com/in/qlzkme",
+            "project": "No project, specifically. Interested in self-hosting AI models and applied AI in small businesses."
+          },
+          "person_b": {
+            "name": "Adrian Clarke- Commercial Insurance B",
+            "linkedin": "https://linkedin.com/in/-adrian-clarke",
+            "project": "Ev Charging network research "
+          },
+          "similarity_reason": "Both are in the Spark phase and share a need for Community Building, making them well-positioned to exchange ideas around building networks and initiating projects.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Armin Aghayan",
+            "linkedin": "https://linkedin.com/in/arminaghayan",
+            "project": "AI property management app"
+          },
+          "person_b": {
+            "name": "Sunny Yimeng Dong",
+            "linkedin": "https://linkedin.com/in/sunnyyimengdong&sa=X&ved=2ahUKEwjJwLGW5dGQAxU1D1kFHeFdDncQ7xYoAHoECAsQAQ&biw=390&bih=663&dpr=3",
+            "project": "my portfolio"
+          },
+          "similarity_reason": "Both are in the build phase and need web development support, allowing them to share insights on their respective app developments.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Purva Daga",
+            "linkedin": "https://linkedin.com/in/purva-daga",
+            "project": "Hidlang"
+          },
+          "person_b": {
+            "name": "Paola Santiago",
+            "linkedin": "https://linkedin.com/in/paolamariesantiago",
+            "project": "STEM Report\nWebsite Building\nInclusifAI Beta\n"
+          },
+          "similarity_reason": "Both are in the build phase and have overlapping needs in sales and community building, which allows for sharing strategies and experiences in growing their projects.",
+          "score": 85,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Devender Butani",
+            "linkedin": "https://linkedin.com/in/devender-butani",
+            "project": "My Startup "
+          },
+          "person_b": {
+            "name": "Ezra Dey",
+            "linkedin": "https://linkedin.com/in/karekin-dey",
+            "project": "Emote ai"
+          },
+          "similarity_reason": "Both are building startups in the same phase and share a need for mobile app development, allowing them to exchange ideas and experiences related to their projects.",
+          "score": 90,
+          "is_trio": false
+        },
+        {
+          "person_a": {
+            "name": "Minas Adonai",
+            "linkedin": "https://linkedin.com/in/minas-adonai",
+            "project": "Startup "
+          },
+          "person_b": {
+            "name": "Jin Choe",
+            "linkedin": "https://linkedin.com/in/rainmaker1232",
+            "project": "truplis.com"
+          },
+          "similarity_reason": "Both are in the build phase and are working on startups, allowing for discussions around challenges in development and common startup experiences, despite having different specific needs.",
+          "score": 75,
+          "is_trio": false
+        }
+      ]
+    }
+  ]
+}
