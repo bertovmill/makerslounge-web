@@ -1,244 +1,312 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { supabase } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
+import FeedCard from "@/components/FeedCard";
+
+interface Project {
+  id: string;
+  title: string;
+  description: string | null;
+  media_urls: string[] | null;
+  created_at: string;
+  profiles: {
+    id: string;
+    name: string | null;
+    photo_url: string | null;
+  } | null;
+}
 
 export default function Home() {
-  const [name, setName] = useState("");
-  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(true);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (name.trim()) {
-      router.push(`/matches?name=${encodeURIComponent(name.trim())}`);
-    }
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select(`
+          id,
+          title,
+          description,
+          media_urls,
+          created_at,
+          profiles (
+            id,
+            name,
+            photo_url
+          )
+        `)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (!error && data) {
+        setProjects(data as Project[]);
+      }
+      setLoadingProjects(false);
+    };
+
+    fetchProjects();
+  }, []);
+
+  const handleAuthRequired = () => {
+    document.querySelector<HTMLButtonElement>('[data-auth-button]')?.click();
   };
 
   return (
     <div className="min-h-screen bg-[#FAF9F6]">
-      {/* Hero */}
-      <main className="flex flex-col items-center justify-center px-4 pt-24 pb-16">
-        <h1 className="text-4xl md:text-6xl font-serif font-bold text-center max-w-3xl leading-tight mb-6">
-          Find your matches
-        </h1>
-
-        <p className="text-lg text-gray-600 text-center max-w-xl mb-12">
-          Enter your name to see who you&apos;ve been matched with for speed networking.
-        </p>
-
-        {/* Search */}
-        <form onSubmit={handleSearch} className="w-full max-w-xl">
-          <div className="flex items-center bg-white rounded-full shadow-lg p-2">
-            <input
-              type="text"
-              placeholder="Enter your name..."
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="flex-1 px-6 py-4 text-lg bg-transparent outline-none"
-            />
-            <button
-              type="submit"
-              className="bg-[#1a1a1a] text-white px-8 py-4 rounded-full font-medium hover:bg-[#333] transition-colors flex items-center gap-2"
+      {/* Hero Section - Compact for logged-in users */}
+      {!user ? (
+        <section className="max-w-6xl mx-auto px-4 py-16 md:py-24">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold leading-tight mb-6">
+                Connect with makers building the future
+              </h1>
+              <p className="text-xl text-gray-600 mb-8">
+                Share your projects, discover collaborators, and grow your network in a community of builders.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link
+                  href="/people"
+                  className="bg-[#1a1a1a] text-white px-8 py-4 rounded-full font-medium hover:bg-[#333] transition-colors text-center"
+                >
+                  Explore makers
+                </Link>
+                <button
+                  onClick={handleAuthRequired}
+                  className="border-2 border-[#1a1a1a] text-[#1a1a1a] px-8 py-4 rounded-full font-medium hover:bg-[#1a1a1a] hover:text-white transition-colors"
+                >
+                  Join now
+                </button>
+              </div>
+            </div>
+            <div className="relative hidden md:block">
+              <div className="bg-gradient-to-br from-[#F4A261] to-[#E76F51] rounded-3xl p-8 aspect-square flex items-center justify-center">
+                <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
+                  <div className="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-lg transform -rotate-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full mb-2"></div>
+                    <div className="h-2 bg-gray-200 rounded w-3/4 mb-1"></div>
+                    <div className="h-2 bg-gray-100 rounded w-1/2"></div>
+                  </div>
+                  <div className="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-lg transform rotate-3 translate-y-4">
+                    <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-teal-500 rounded-full mb-2"></div>
+                    <div className="h-2 bg-gray-200 rounded w-3/4 mb-1"></div>
+                    <div className="h-2 bg-gray-100 rounded w-1/2"></div>
+                  </div>
+                  <div className="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-lg transform rotate-2 -translate-y-2">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full mb-2"></div>
+                    <div className="h-2 bg-gray-200 rounded w-3/4 mb-1"></div>
+                    <div className="h-2 bg-gray-100 rounded w-1/2"></div>
+                  </div>
+                  <div className="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-lg transform -rotate-2 translate-y-2">
+                    <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mb-2"></div>
+                    <div className="h-2 bg-gray-200 rounded w-3/4 mb-1"></div>
+                    <div className="h-2 bg-gray-100 rounded w-1/2"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="max-w-6xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl md:text-3xl font-serif font-bold">
+              Welcome back
+            </h1>
+            <Link
+              href="/profile"
+              className="bg-[#1a1a1a] text-white px-6 py-2 rounded-full font-medium hover:bg-[#333] transition-colors text-sm"
             >
-              Search
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </button>
+              Add project
+            </Link>
           </div>
-        </form>
-      </main>
+        </section>
+      )}
 
-      {/* Stats Section */}
-      <section className="max-w-4xl mx-auto px-4 py-16">
-        <h2 className="text-2xl md:text-3xl font-serif font-bold text-center mb-12">
-          Making meaningful connections happen
-        </h2>
-
-        <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-          <div className="border border-gray-200 rounded-xl px-8 py-6 text-center bg-white">
-            <p className="text-3xl md:text-4xl font-serif font-bold">119</p>
-            <p className="text-xs uppercase tracking-widest text-gray-500 mt-1">Attendees</p>
-          </div>
-          <div className="border border-gray-200 rounded-xl px-8 py-6 text-center bg-white">
-            <p className="text-3xl md:text-4xl font-serif font-bold">4</p>
-            <p className="text-xs uppercase tracking-widest text-gray-500 mt-1">Rounds</p>
-          </div>
-          <div className="border border-gray-200 rounded-xl px-8 py-6 text-center bg-white">
-            <p className="text-3xl md:text-4xl font-serif font-bold">100%</p>
-            <p className="text-xs uppercase tracking-widest text-gray-500 mt-1">Coverage</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Rounds Cards */}
-      <section className="px-4 md:px-8 pb-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto">
-          <div className="bg-[#F9A8D4] rounded-2xl p-6 aspect-square flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold">Round 1</span>
-              <span className="text-2xl">🤝</span>
-            </div>
-            <div>
-              <p className="text-sm opacity-80">Complementary</p>
-              <p className="text-xs opacity-60 mt-1">Skills meet needs</p>
-            </div>
-          </div>
-
-          <div className="bg-[#FDBA74] rounded-2xl p-6 aspect-square flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold">Round 2</span>
-              <span className="text-2xl">💡</span>
-            </div>
-            <div>
-              <p className="text-sm opacity-80">Complementary</p>
-              <p className="text-xs opacity-60 mt-1">Skills meet needs</p>
-            </div>
-          </div>
-
-          <div className="bg-[#86EFAC] rounded-2xl p-6 aspect-square flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold">Round 3</span>
-              <span className="text-2xl">🎯</span>
-            </div>
-            <div>
-              <p className="text-sm opacity-80">Similarity</p>
-              <p className="text-xs opacity-60 mt-1">Similar projects</p>
-            </div>
-          </div>
-
-          <div className="bg-[#C4B5FD] rounded-2xl p-6 aspect-square flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold">Round 4</span>
-              <span className="text-2xl">✨</span>
-            </div>
-            <div>
-              <p className="text-sm opacity-80">Similarity</p>
-              <p className="text-xs opacity-60 mt-1">Similar projects</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Attendees Section */}
-      <section className="py-16 bg-gradient-to-b from-[#FAF9F6] to-[#FFF5E6]">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-2xl md:text-4xl font-serif font-bold text-center mb-4">
-            Connecting makers with complementary skills
+      {/* Project Feed */}
+      <section className="py-8 md:py-12">
+        <div className="max-w-2xl mx-auto px-4">
+          <h2 className="text-xl md:text-2xl font-serif font-bold mb-6">
+            Recent Projects
           </h2>
-          <p className="text-gray-600 text-center mb-12 max-w-2xl mx-auto">
-            Our AI matches you with people who have what you need, and need what you have.
-          </p>
 
-          {/* Scrolling cards */}
-          <div className="overflow-x-auto pb-4 -mx-4 px-4">
-            <div className="flex gap-4 min-w-max">
-              {/* Card 1 */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm w-48 flex-shrink-0 border border-gray-100">
-                <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full mb-3 flex items-center justify-center text-white font-bold">
-                  VS
+          {loadingProjects ? (
+            <div className="text-center py-12 text-gray-500">Loading projects...</div>
+          ) : projects.length === 0 ? (
+            <div className="bg-white rounded-2xl p-8 text-center border border-gray-100">
+              <p className="text-gray-500 mb-4">No projects yet. Be the first to share!</p>
+              {user ? (
+                <Link
+                  href="/profile"
+                  className="inline-block bg-[#1a1a1a] text-white px-6 py-3 rounded-full font-medium hover:bg-[#333] transition-colors"
+                >
+                  Create a project
+                </Link>
+              ) : (
+                <button
+                  onClick={handleAuthRequired}
+                  className="bg-[#1a1a1a] text-white px-6 py-3 rounded-full font-medium hover:bg-[#333] transition-colors"
+                >
+                  Sign up to post
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {projects.map((project) => (
+                <FeedCard
+                  key={project.id}
+                  project={project}
+                  onAuthRequired={user ? undefined : handleAuthRequired}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* What you can do - Only show for non-logged-in users */}
+      {!user && (
+        <section className="bg-white py-16 md:py-24">
+          <div className="max-w-6xl mx-auto px-4">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-center mb-4">
+              What you can do on MakersLounge
+            </h2>
+            <p className="text-gray-600 text-center mb-12 max-w-2xl mx-auto">
+              Whether you&apos;re looking for collaborators, feedback, or inspiration — find your people here.
+            </p>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center p-6">
+                <div className="w-16 h-16 bg-[#F9A8D4] rounded-2xl mx-auto mb-4 flex items-center justify-center text-2xl">
+                  🚀
                 </div>
-                <p className="font-semibold text-sm">Viraj Shah</p>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">AI</span>
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">Sales</span>
-                </div>
+                <h3 className="font-semibold text-lg mb-2">Share your projects</h3>
+                <p className="text-gray-600 text-sm">
+                  Showcase what you&apos;re building with images, videos, and descriptions.
+                </p>
               </div>
 
-              {/* Card 2 */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm w-48 flex-shrink-0 border border-gray-100">
-                <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-full mb-3 flex items-center justify-center text-white font-bold">
-                  HY
+              <div className="text-center p-6">
+                <div className="w-16 h-16 bg-[#FDBA74] rounded-2xl mx-auto mb-4 flex items-center justify-center text-2xl">
+                  🤝
                 </div>
-                <p className="font-semibold text-sm">Hossein Yousefi</p>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">AI</span>
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">Community</span>
-                </div>
+                <h3 className="font-semibold text-lg mb-2">Connect with makers</h3>
+                <p className="text-gray-600 text-sm">
+                  Find people with complementary skills or similar interests.
+                </p>
               </div>
 
-              {/* Card 3 */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm w-48 flex-shrink-0 border border-gray-100">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-teal-500 rounded-full mb-3 flex items-center justify-center text-white font-bold">
-                  AK
+              <div className="text-center p-6">
+                <div className="w-16 h-16 bg-[#86EFAC] rounded-2xl mx-auto mb-4 flex items-center justify-center text-2xl">
+                  💬
                 </div>
-                <p className="font-semibold text-sm">Alok Kumar</p>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">E-commerce</span>
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">Finance</span>
-                </div>
+                <h3 className="font-semibold text-lg mb-2">Get feedback</h3>
+                <p className="text-gray-600 text-sm">
+                  Share ideas and get input from a supportive community of builders.
+                </p>
               </div>
+            </div>
+          </div>
+        </section>
+      )}
 
-              {/* Card 4 */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm w-48 flex-shrink-0 border border-gray-100">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full mb-3 flex items-center justify-center text-white font-bold">
-                  ED
-                </div>
-                <p className="font-semibold text-sm">Eduardo</p>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">UX/UI</span>
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">Web Dev</span>
-                </div>
-              </div>
+      {/* Featured Makers Preview */}
+      <section className="py-16 md:py-24">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl md:text-3xl font-serif font-bold">
+              Discover makers
+            </h2>
+            <Link
+              href="/people"
+              className="text-[#1a1a1a] font-medium hover:underline"
+            >
+              View all →
+            </Link>
+          </div>
 
-              {/* Card 5 */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm w-48 flex-shrink-0 border border-gray-100">
-                <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mb-3 flex items-center justify-center text-white font-bold">
-                  GC
-                </div>
-                <p className="font-semibold text-sm">Gursimran Chadha</p>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">Podcasting</span>
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">Events</span>
-                </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+              <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full mb-3 flex items-center justify-center text-white font-bold">
+                VS
               </div>
+              <p className="font-semibold text-sm">Viraj Shah</p>
+              <p className="text-xs text-gray-500 mt-1">AI & Sales</p>
+            </div>
 
-              {/* Card 6 */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm w-48 flex-shrink-0 border border-gray-100">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full mb-3 flex items-center justify-center text-white font-bold">
-                  RA
-                </div>
-                <p className="font-semibold text-sm">Ravi Amin</p>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">Pitching</span>
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">Web Dev</span>
-                </div>
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-full mb-3 flex items-center justify-center text-white font-bold">
+                HY
               </div>
+              <p className="font-semibold text-sm">Hossein Yousefi</p>
+              <p className="text-xs text-gray-500 mt-1">AI & Community</p>
+            </div>
 
-              {/* More indicator */}
-              <div className="bg-[#F4A261]/20 rounded-2xl p-5 w-48 flex-shrink-0 flex items-center justify-center">
-                <p className="text-[#c77f4a] font-medium text-sm">+113 more makers</p>
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-teal-500 rounded-full mb-3 flex items-center justify-center text-white font-bold">
+                AK
               </div>
+              <p className="font-semibold text-sm">Alok Kumar</p>
+              <p className="text-xs text-gray-500 mt-1">E-commerce & Finance</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full mb-3 flex items-center justify-center text-white font-bold">
+                ED
+              </div>
+              <p className="font-semibold text-sm">Eduardo</p>
+              <p className="text-xs text-gray-500 mt-1">UX/UI & Web Dev</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Orange section with illustration style */}
-      <div className="bg-[#F4A261] mx-4 md:mx-8 rounded-3xl h-64 mb-8 relative overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <p className="text-white font-serif text-2xl md:text-4xl font-bold text-center px-8 z-10">
-            Built with AI-powered matching
-          </p>
+      {/* CTA Section - Only for non-logged-in users */}
+      {!user && (
+        <section className="py-16 md:py-24">
+          <div className="max-w-4xl mx-auto px-4">
+            <div className="bg-[#1a1a1a] rounded-3xl p-8 md:p-12 text-center text-white">
+              <h2 className="text-2xl md:text-4xl font-serif font-bold mb-4">
+                Ready to join the community?
+              </h2>
+              <p className="text-gray-300 mb-8 max-w-xl mx-auto">
+                Create your profile, share your projects, and connect with makers who share your passion.
+              </p>
+              <button
+                onClick={handleAuthRequired}
+                className="bg-white text-[#1a1a1a] px-8 py-4 rounded-full font-medium hover:bg-gray-100 transition-colors"
+              >
+                Get started — it&apos;s free
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Footer */}
+      <footer className="border-t border-gray-200 py-8">
+        <div className="max-w-6xl mx-auto px-4 text-center text-sm text-gray-500">
+          <p>MakersLounge — Where builders connect</p>
         </div>
-        {/* Decorative wave pattern at bottom */}
-        <svg className="absolute bottom-0 left-0 right-0 text-[#c77f4a]" viewBox="0 0 1200 120" preserveAspectRatio="none">
-          <path d="M0,60 C200,120 400,0 600,60 C800,120 1000,0 1200,60 L1200,120 L0,120 Z" fill="currentColor" opacity="0.3"/>
-        </svg>
-        {/* Decorative stars */}
-        <svg className="absolute top-6 left-8 w-6 h-6 text-white/30" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2L9 9H2l6 5-2 8 6-4 6 4-2-8 6-5h-7z"/>
-        </svg>
-        <svg className="absolute bottom-16 right-16 w-8 h-8 text-white/30" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2L9 9H2l6 5-2 8 6-4 6 4-2-8 6-5h-7z"/>
-        </svg>
-        <svg className="absolute top-10 right-8 w-10 h-10 text-white/20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2L9 9H2l6 5-2 8 6-4 6 4-2-8 6-5h-7z"/>
-        </svg>
-        <svg className="absolute bottom-20 left-16 w-5 h-5 text-white/40" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2L9 9H2l6 5-2 8 6-4 6 4-2-8 6-5h-7z"/>
-        </svg>
-      </div>
+      </footer>
     </div>
   );
 }

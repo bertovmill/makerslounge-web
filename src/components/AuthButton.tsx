@@ -92,6 +92,7 @@ export default function AuthButton() {
   return (
     <>
       <button
+        data-auth-button
         onClick={() => setShowModal(true)}
         className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
       >
