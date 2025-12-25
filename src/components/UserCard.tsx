@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
 
 interface UserCardProps {
   user: {
@@ -28,9 +29,9 @@ export default function UserCard({
 
   return (
     <Link href={`/profile/${user.id}`}>
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all cursor-pointer h-full">
+      <Card className="glass-card p-5 hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
         {/* Avatar */}
-        <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full mb-3 flex items-center justify-center text-white font-bold overflow-hidden">
+        <div className="w-14 h-14 bg-gradient-to-br from-rose-400 to-orange-400 rounded-full mb-3 flex items-center justify-center text-white font-bold overflow-hidden">
           {user.photo_url ? (
             <img
               src={user.photo_url}
@@ -49,7 +50,7 @@ export default function UserCard({
 
         {/* Bio (truncated) */}
         {user.bio && (
-          <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
             {user.bio}
           </p>
         )}
@@ -62,21 +63,21 @@ export default function UserCard({
                 key={skill}
                 className={`text-xs px-2 py-1 rounded-full ${
                   highlightedSkills.includes(skill)
-                    ? "bg-[#F4A261]/30 text-[#a66b3d] font-medium"
-                    : "bg-gray-100 text-gray-600"
+                    ? "bg-primary/15 text-primary font-medium"
+                    : "bg-secondary text-muted-foreground"
                 }`}
               >
                 {skill}
               </span>
             ))}
             {user.skills.length > 3 && (
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-muted-foreground/60">
                 +{user.skills.length - 3}
               </span>
             )}
           </div>
         )}
-      </div>
+      </Card>
     </Link>
   );
 }

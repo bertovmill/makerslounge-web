@@ -25,22 +25,22 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="flex items-center justify-between px-4 md:px-8 py-4">
-      <Link href="/" className="text-xl font-serif font-bold">
-        MakersLounge
+    <nav className="sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 py-4 bg-background/80 backdrop-blur-md border-b border-border">
+      <Link href="/" className="text-xl font-bold tracking-tight">
+        <span className="text-primary">Makers</span>Lounge
       </Link>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-6">
         <Link
           href="/people"
-          className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           People
         </Link>
         {user && (
           <Link
             href="/profile"
-            className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Profile
           </Link>
@@ -49,13 +49,13 @@ export default function Navbar() {
           <>
             <Link
               href="/admin"
-              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Admin
             </Link>
             <Link
               href="/feedback"
-              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Feedback
             </Link>
