@@ -56,7 +56,12 @@ export default function Home() {
         .limit(10);
 
       if (!error && data) {
-        setProjects(data as Project[]);
+        // Supabase returns profiles as array from join, normalize to single object
+        const normalized = data.map((p) => ({
+          ...p,
+          profiles: Array.isArray(p.profiles) ? p.profiles[0] || null : p.profiles,
+        }));
+        setProjects(normalized as Project[]);
       }
       setLoadingProjects(false);
     };
