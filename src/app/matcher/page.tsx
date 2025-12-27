@@ -293,6 +293,39 @@ export default function MatcherPage() {
           </div>
         )}
 
+        {/* Generated Pairs */}
+        {pairs.length > 0 && (
+          <div className="bg-card rounded-2xl p-6 shadow-sm border border-border mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Generated Pairs</h2>
+              <Button variant="outline" size="sm" onClick={() => setPairs([])}>
+                Clear
+              </Button>
+            </div>
+            <div className="grid gap-3">
+              {pairs.map((pair, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-4 p-4 bg-accent/30 rounded-xl"
+                >
+                  <div className="flex-1">
+                    <p className="font-medium">{pair.person1.name}</p>
+                    <p className="text-sm text-muted-foreground">{pair.person1.email}</p>
+                  </div>
+                  <div className="text-2xl text-muted-foreground">↔</div>
+                  <div className="flex-1">
+                    <p className="font-medium">{pair.person2.name}</p>
+                    <p className="text-sm text-muted-foreground">{pair.person2.email}</p>
+                  </div>
+                  <div className="text-sm text-muted-foreground bg-background px-3 py-1 rounded-full">
+                    {pair.reason}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* CSV Upload (collapsible) */}
         {showCSVUploader && (
           <div className="bg-card rounded-2xl p-6 shadow-sm border border-border mb-6">
