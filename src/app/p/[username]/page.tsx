@@ -12,6 +12,7 @@ interface Profile {
   username: string | null;
   name: string | null;
   photo_url: string | null;
+  avatar_style: string | null;
   bio: string | null;
   skills: string[] | null;
   linkedin: string | null;
@@ -96,7 +97,7 @@ export default function UsernameProfilePage() {
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
           <div className="flex items-start gap-6">
             {/* Avatar */}
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-white text-2xl font-bold overflow-hidden flex-shrink-0">
+            <div className="w-24 h-24 rounded-full overflow-hidden flex-shrink-0">
               {profile?.photo_url ? (
                 <img
                   src={profile.photo_url}
@@ -104,7 +105,7 @@ export default function UsernameProfilePage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                profile?.name?.charAt(0).toUpperCase() || "?"
+                renderAvatar(profile?.avatar_style, profile?.name || "", "lg")
               )}
             </div>
 
