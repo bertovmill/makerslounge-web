@@ -273,12 +273,17 @@ export default function MatcherPage() {
               {contacts.length} contact{contacts.length !== 1 ? "s" : ""}
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => setShowCSVUploader(!showCSVUploader)}
-          >
-            {showCSVUploader ? "Hide CSV Import" : "Import CSV"}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowCSVUploader(!showCSVUploader)}
+            >
+              {showCSVUploader ? "Hide CSV Import" : "Import CSV"}
+            </Button>
+            <Button onClick={generatePairs} disabled={contacts.length < 2}>
+              Generate Pairs
+            </Button>
+          </div>
         </div>
 
         {/* Message */}

@@ -114,7 +114,7 @@ export default function PublicProfilePage() {
             <Card className="glass-card p-6 md:p-8">
               <div className="flex flex-col md:flex-row md:items-end gap-4 md:gap-6">
                 {/* Avatar - positioned to overlap cover */}
-                <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl bg-gradient-to-br from-rose-400 to-orange-400 flex items-center justify-center text-white text-3xl md:text-4xl font-bold overflow-hidden border-4 border-background shadow-lg flex-shrink-0 -mt-20 md:-mt-24">
+                <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl overflow-hidden border-4 border-background shadow-lg flex-shrink-0 -mt-20 md:-mt-24">
                   {profile?.photo_url ? (
                     <img
                       src={profile.photo_url}
@@ -122,7 +122,9 @@ export default function PublicProfilePage() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    initials
+                    <div className="w-full h-full flex items-center justify-center">
+                      {renderAvatar(profile?.avatar_style, profile?.name || "", "xl")}
+                    </div>
                   )}
                 </div>
 

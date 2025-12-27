@@ -70,10 +70,8 @@ export function LogoIcon({ size = 32 }: { size?: number }) {
     >
       <defs>
         <linearGradient id="logoIconGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#3B82F6" />
-          <stop offset="40%" stopColor="#14B8A6" />
-          <stop offset="70%" stopColor="#F97316" />
-          <stop offset="100%" stopColor="#FBBF24" />
+          <stop offset="0%" stopColor="#2563EB" />
+          <stop offset="100%" stopColor="#F97316" />
         </linearGradient>
       </defs>
 

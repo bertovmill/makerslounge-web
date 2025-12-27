@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import ProjectCard from "@/components/ProjectCard";
+import { renderAvatar } from "@/components/AvatarPicker";
 
 interface Profile {
   id: string;

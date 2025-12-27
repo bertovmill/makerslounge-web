@@ -146,9 +146,11 @@ export default function FeedCard({
         setLikeCount((c) => c + 1);
       }
     } else {
-      // Like - optimistic update
+      // Like - optimistic update with particle animation
       setHasLiked(true);
       setLikeCount((c) => c + 1);
+      setShowParticles(true);
+      setTimeout(() => setShowParticles(false), 700);
 
       const { error } = await supabase
         .from("likes")
@@ -271,20 +273,27 @@ export default function FeedCard({
 
       {/* Actions */}
       <div className="p-4 border-t border-border flex items-center gap-4">
-        <button
+        {showParticles && <LikeParticles buttonRef={likeButtonRef} />}
+        <motion.button
+          ref={likeButtonRef}
           onClick={handleLike}
           disabled={isLiking}
+          whileTap={{ scale: 0.9 }}
+          animate={hasLiked ? { scale: [1, 1.2, 1] } : {}}
+          transition={{ duration: 0.2 }}
           className={`flex items-center gap-2 text-sm transition-colors ${
             hasLiked
               ? "text-red-500 hover:text-red-600"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <svg
+          <motion.svg
             className="w-5 h-5"
             fill={hasLiked ? "currentColor" : "none"}
             stroke="currentColor"
             viewBox="0 0 24 24"
+            animate={hasLiked ? { scale: [1, 1.3, 1] } : {}}
+            transition={{ duration: 0.3 }}
           >
             <path
               strokeLinecap="round"
@@ -292,9 +301,9 @@ export default function FeedCard({
               strokeWidth={1.5}
               d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
             />
-          </svg>
+          </motion.svg>
           {likeCount > 0 ? likeCount : "Like"}
-        </button>
+        </motion.button>
         <button
           onClick={() => setShowComments(!showComments)}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm transition-colors"
