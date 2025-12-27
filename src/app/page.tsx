@@ -76,7 +76,20 @@ export default function Home() {
       setLoadingProjects(false);
     };
 
+    const fetchFeaturedMakers = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, name, photo_url, skills")
+        .not("name", "is", null)
+        .limit(4);
+
+      if (data) {
+        setFeaturedMakers(data);
+      }
+    };
+
     fetchProjects();
+    fetchFeaturedMakers();
   }, []);
 
   const handleAuthRequired = () => {
@@ -247,25 +260,37 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { initials: "VS", name: "Viraj Shah", role: "AI & Sales", gradient: "from-violet-500 to-purple-600" },
-              { initials: "HY", name: "Hossein Yousefi", role: "AI & Community", gradient: "from-orange-400 to-red-500" },
-              { initials: "AK", name: "Alok Kumar", role: "E-commerce & Finance", gradient: "from-emerald-400 to-teal-500" },
-              { initials: "ED", name: "Eduardo", role: "UX/UI & Web Dev", gradient: "from-blue-400 to-indigo-500" },
-            ].map((maker, i) => (
-              <Card
-                key={i}
-                className="glass-card p-5 hover:scale-[1.02] transition-transform duration-300 cursor-pointer"
-              >
-                <div
-                  className={`w-12 h-12 bg-gradient-to-br ${maker.gradient} rounded-full mb-3 flex items-center justify-center text-white font-bold text-sm`}
-                >
-                  {maker.initials}
-                </div>
-                <p className="font-semibold text-sm">{maker.name}</p>
-                <p className="text-xs text-muted-foreground mt-1">{maker.role}</p>
-              </Card>
-            ))}
+            {featuredMakers.map((maker) => {
+              const initials = maker.name
+                ?.split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()
+                .slice(0, 2) || "?";
+              const skillsDisplay = maker.skills?.slice(0, 2).join(" & ") || "";
+
+              return (
+                <Link key={maker.id} href={`/profile/${maker.id}`}>
+                  <Card className="glass-card p-5 hover:scale-[1.02] transition-transform duration-300 cursor-pointer h-full">
+                    <div className="w-12 h-12 bg-gradient-to-br from-rose-400 to-orange-400 rounded-full mb-3 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                      {maker.photo_url ? (
+                        <img
+                          src={maker.photo_url}
+                          alt={maker.name || "Maker"}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        initials
+                      )}
+                    </div>
+                    <p className="font-semibold text-sm">{maker.name}</p>
+                    {skillsDisplay && (
+                      <p className="text-xs text-muted-foreground mt-1">{skillsDisplay}</p>
+                    )}
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>

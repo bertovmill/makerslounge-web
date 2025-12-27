@@ -143,8 +143,8 @@ function PeopleContent() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name, bio, or skills..."
-              className="flex-1 px-4 py-3 text-lg bg-transparent outline-none placeholder:text-muted-foreground"
+              placeholder="Search makers..."
+              className="flex-1 min-w-0 px-4 py-3 text-lg bg-transparent outline-none placeholder:text-muted-foreground"
             />
             {(searchQuery || selectedSkills.length > 0) && (
               <Button

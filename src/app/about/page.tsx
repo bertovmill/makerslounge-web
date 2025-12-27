@@ -89,8 +89,84 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* What We Do */}
       <section className="relative py-16 md:py-24 bg-gradient-to-b from-transparent via-accent/5 to-transparent">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              What we do
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              More than just a platform—we bring makers together through multiple channels.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {[
+              {
+                icon: "🎙️",
+                title: "MakersLounge Podcast",
+                description:
+                  "Candid conversations with founders sharing their stories—the wins, the struggles, and everything in between.",
+                gradient: "from-purple-100 to-violet-100",
+                href: "/podcasts",
+                linkText: "Listen now",
+              },
+              {
+                icon: "🏟️",
+                title: "Events at New Stadium",
+                description:
+                  "In-person gatherings where makers meet, share ideas, and forge real connections in Toronto.",
+                gradient: "from-orange-100 to-amber-100",
+                href: "/events",
+                linkText: "See events",
+              },
+              {
+                icon: "🤖",
+                title: "AI Workshops",
+                description:
+                  "Hands-on sessions to help makers leverage AI tools and stay ahead of the curve.",
+                gradient: "from-sky-100 to-cyan-100",
+              },
+              {
+                icon: "💼",
+                title: "AI Consulting",
+                description:
+                  "Strategic guidance for businesses looking to integrate AI into their products and workflows.",
+                gradient: "from-emerald-100 to-green-100",
+              },
+            ].map((item, i) => (
+              <Card
+                key={i}
+                className="glass-card p-6 group hover:scale-[1.02] transition-all duration-300"
+              >
+                <div className="flex items-start gap-4">
+                  <div
+                    className={`w-14 h-14 bg-gradient-to-br ${item.gradient} rounded-xl flex items-center justify-center text-2xl shrink-0 group-hover:scale-110 transition-transform duration-300`}
+                  >
+                    {item.icon}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg mb-1">{item.title}</h3>
+                    <p className="text-muted-foreground text-sm">{item.description}</p>
+                    {item.href && (
+                      <Link
+                        href={item.href}
+                        className="inline-block mt-3 text-sm font-medium text-primary hover:underline underline-offset-4"
+                      >
+                        {item.linkText} →
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="relative py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -193,24 +269,24 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {[
               {
-                title: "Everyone has something to contribute",
+                title: "Everyone belongs here",
                 description:
-                  "Whether you're a seasoned entrepreneur or just starting out, your perspective matters here.",
+                  "First project or fiftieth—your experience level doesn't matter. What matters is that you're building something.",
               },
               {
-                title: "Collaboration beats competition",
+                title: "No gatekeeping",
                 description:
-                  "The maker community grows stronger when we support each other and share openly.",
+                  "This isn't an exclusive club. If you're curious and want to create, you're one of us.",
               },
               {
-                title: "Ideas are worth sharing early",
+                title: "Share early, share often",
                 description:
-                  "Don't wait until it's perfect. Get feedback, iterate, and build in public.",
+                  "Your half-baked idea deserves to see the light. Get feedback, iterate, grow.",
               },
               {
-                title: "Real connections take time",
+                title: "Real connections over networking",
                 description:
-                  "We're building for lasting relationships, not quick networking hits.",
+                  "We're not about collecting contacts. We're about finding people you genuinely want to build with.",
               },
             ].map((item, i) => (
               <Card key={i} className="glass-card p-6 hover:scale-[1.01] transition-transform duration-300">
@@ -231,7 +307,8 @@ export default function AboutPage() {
                 Ready to find your people?
               </h2>
               <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-                Join a community of makers who are building, learning, and growing together.
+                Born in Toronto, growing everywhere. Join a community of makers who are
+                building, learning, and supporting each other.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" className="rounded-full px-8">
