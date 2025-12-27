@@ -44,6 +44,13 @@ export default function Navbar() {
         Events
       </Link>
       <Link
+        href="/workshops"
+        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        onClick={closeMenu}
+      >
+        Workshops
+      </Link>
+      <Link
         href="/about"
         className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         onClick={closeMenu}
