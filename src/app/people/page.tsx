@@ -39,7 +39,8 @@ function PeopleContent() {
     try {
       let query = supabase
         .from("profiles")
-        .select("id, name, photo_url, bio, skills", { count: "exact" });
+        .select("id, name, photo_url, bio, skills", { count: "exact" })
+        .not("name", "is", null); // Only show profiles with names
 
       if (searchQuery.trim()) {
         query = query.or(
@@ -61,8 +62,16 @@ function PeopleContent() {
         setProfiles([]);
         setTotalCount(0);
       } else {
-        setProfiles(data || []);
-        setTotalCount(count || 0);
+        // Deduplicate profiles by name (keep first occurrence)
+        const seen = new Set<string>();
+        const uniqueProfiles = (data || []).filter((profile) => {
+          const key = profile.name?.toLowerCase() || profile.id;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        setProfiles(uniqueProfiles);
+        setTotalCount(uniqueProfiles.length);
       }
     } catch (err) {
       console.error("Fetch error:", err);

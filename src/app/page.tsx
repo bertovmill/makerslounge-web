@@ -22,9 +22,17 @@ interface Project {
   } | null;
 }
 
+interface FeaturedMaker {
+  id: string;
+  name: string | null;
+  photo_url: string | null;
+  skills: string[] | null;
+}
+
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [featuredMakers, setFeaturedMakers] = useState<FeaturedMaker[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
 
   useEffect(() => {
@@ -117,25 +125,14 @@ export default function Home() {
                 {/* Subtle warm glow */}
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-accent/10 to-transparent rounded-3xl blur-2xl" />
 
-                {/* Card grid */}
-                <div className="relative glass-card rounded-3xl p-8 aspect-square flex items-center justify-center">
-                  <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
-                    {[
-                      { color: "from-rose-400 to-orange-400", rotate: "-rotate-3" },
-                      { color: "from-emerald-400 to-teal-400", rotate: "rotate-3 translate-y-4" },
-                      { color: "from-sky-400 to-blue-400", rotate: "rotate-2 -translate-y-2" },
-                      { color: "from-amber-400 to-yellow-400", rotate: "-rotate-2 translate-y-2" },
-                    ].map((item, i) => (
-                      <div
-                        key={i}
-                        className={`bg-white rounded-2xl p-4 shadow-sm border border-border transform ${item.rotate} hover:scale-105 transition-all duration-300 hover:shadow-md`}
-                      >
-                        <div className={`w-10 h-10 bg-gradient-to-br ${item.color} rounded-full mb-3`} />
-                        <div className="h-2 bg-muted rounded w-3/4 mb-1.5" />
-                        <div className="h-2 bg-muted/60 rounded w-1/2" />
-                      </div>
-                    ))}
-                  </div>
+                {/* Community event photo */}
+                <div className="relative glass-card rounded-3xl overflow-hidden">
+                  <img
+                    src="/makerslounge-photos/lounge-networking.jpeg"
+                    alt="MakersLounge community event"
+                    className="w-full h-auto object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
                 </div>
               </div>
             </div>
