@@ -19,6 +19,12 @@ export interface MatcherContact {
 
 const COLUMNS_STORAGE_KEY = "matcher_custom_columns";
 
+interface Pair {
+  person1: MatcherContact;
+  person2: MatcherContact;
+  reason: string;
+}
+
 export default function MatcherPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -27,6 +33,8 @@ export default function MatcherPage() {
   const [columns, setColumns] = useState<string[]>([]);
   const [showCSVUploader, setShowCSVUploader] = useState(false);
   const [message, setMessage] = useState("");
+  const [pairs, setPairs] = useState<Pair[]>([]);
+  const [matchingCriteria, setMatchingCriteria] = useState("interests");
 
   useEffect(() => {
     const init = async () => {
@@ -194,6 +202,56 @@ export default function MatcherPage() {
   const showMessage = (msg: string) => {
     setMessage(msg);
     setTimeout(() => setMessage(""), 3000);
+  };
+
+  const generatePairs = () => {
+    if (contacts.length < 2) {
+      showMessage("Need at least 2 contacts to generate pairs");
+      return;
+    }
+
+    // Group contacts by their interest (case-insensitive)
+    const groups: Record<string, MatcherContact[]> = {};
+    const unmatched: MatcherContact[] = [];
+
+    contacts.forEach((contact) => {
+      const interest = contact.custom_fields?.[matchingCriteria]?.toLowerCase().trim();
+      if (interest) {
+        if (!groups[interest]) groups[interest] = [];
+        groups[interest].push(contact);
+      } else {
+        unmatched.push(contact);
+      }
+    });
+
+    const newPairs: Pair[] = [];
+
+    // Pair people within the same interest group
+    Object.entries(groups).forEach(([interest, members]) => {
+      for (let i = 0; i < members.length - 1; i += 2) {
+        newPairs.push({
+          person1: members[i],
+          person2: members[i + 1],
+          reason: `Both interested in ${interest}`,
+        });
+      }
+      // If odd number, add last person to unmatched
+      if (members.length % 2 === 1) {
+        unmatched.push(members[members.length - 1]);
+      }
+    });
+
+    // Pair remaining unmatched people randomly
+    for (let i = 0; i < unmatched.length - 1; i += 2) {
+      newPairs.push({
+        person1: unmatched[i],
+        person2: unmatched[i + 1],
+        reason: "Random pairing",
+      });
+    }
+
+    setPairs(newPairs);
+    showMessage(`Generated ${newPairs.length} pair${newPairs.length !== 1 ? "s" : ""}`);
   };
 
   if (loading) {
