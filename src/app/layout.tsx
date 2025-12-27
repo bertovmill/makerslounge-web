@@ -1,23 +1,28 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Space_Grotesk, Syne } from "next/font/google";
 import "./globals.css";
 import FeedbackButton from "@/components/FeedbackButton";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-const inter = Inter({
-  variable: "--font-inter",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+const syne = Syne({
+  variable: "--font-heading",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "MakersLounge - Find Your Matches",
-  description: "Find your speed networking matches for MakersLounge Toronto",
+  title: "MakersLounge - Toronto's Maker Community",
+  description: "Connect with makers, share projects, and grow your network in Toronto's most supportive community for builders.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -27,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-background text-foreground min-h-screen flex flex-col`}>
+      <body className={`${spaceGrotesk.variable} ${syne.variable} font-sans antialiased bg-background text-foreground min-h-screen flex flex-col`}>
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />

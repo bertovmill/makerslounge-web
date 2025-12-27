@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "./Logo";
 
 export default function Footer() {
   return (
@@ -7,11 +8,11 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="text-xl font-bold tracking-tight">
-              <span className="text-primary">Makers</span>Lounge
+            <Link href="/" className="inline-block hover:opacity-90 transition-opacity">
+              <Logo size="sm" />
             </Link>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Connecting makers and builders.
+            <p className="mt-3 text-sm text-muted-foreground">
+              Toronto&apos;s community for makers and builders.
             </p>
           </div>
 

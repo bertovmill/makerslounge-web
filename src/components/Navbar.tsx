@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import AuthButton from "./AuthButton";
+import Logo from "./Logo";
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
@@ -99,8 +100,8 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <nav className="flex items-center justify-between px-4 md:px-8 py-4">
-        <Link href="/" className="text-xl font-bold tracking-tight">
-          <span className="text-primary">Makers</span>Lounge
+        <Link href="/" className="hover:opacity-90 transition-opacity">
+          <Logo size="sm" />
         </Link>
 
         {/* Desktop nav */}

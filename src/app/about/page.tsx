@@ -236,7 +236,23 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="max-w-md mx-auto">
+          {/* Founders Photo */}
+          <div className="max-w-lg mx-auto mb-12">
+            <div className="relative rounded-2xl overflow-hidden">
+              <img
+                src="/makerslounge-photos/coffee-chat.jpeg"
+                alt="Berto and Katy, founders of MakersLounge"
+                className="w-full h-auto object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4 text-white">
+                <p className="font-semibold text-lg">Berto & Katy</p>
+                <p className="text-sm text-white/80">Co-founders of MakersLounge</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             <Card className="glass-card p-8 text-center hover:scale-[1.02] transition-transform duration-300">
               <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden">
                 <img
@@ -246,11 +262,22 @@ export default function AboutPage() {
                 />
               </div>
               <h3 className="font-semibold text-xl mb-1">Berto Mill</h3>
-              <p className="text-primary font-medium mb-4">Founder</p>
+              <p className="text-primary font-medium mb-4">Co-founder</p>
               <p className="text-muted-foreground text-sm leading-relaxed">
                 Multi-disciplinary builder who loves wearing many hats—from code to design to business.
-                Started MakersLounge after struggling to find collaborators, and now I&apos;m on a mission
-                to help other makers find their people too.
+                Started MakersLounge after struggling to find collaborators.
+              </p>
+            </Card>
+
+            <Card className="glass-card p-8 text-center hover:scale-[1.02] transition-transform duration-300">
+              <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                <span className="text-3xl">K</span>
+              </div>
+              <h3 className="font-semibold text-xl mb-1">Katy</h3>
+              <p className="text-primary font-medium mb-4">Co-founder</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Passionate about building community and connecting makers with the right people
+                to bring their ideas to life.
               </p>
             </Card>
           </div>

@@ -1,13 +1,23 @@
+/*
+  Import Tailwind CSS base and tw-animate plugin for main utility and animation classes
+*/
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/*
+  Define a custom variant 'dark' using the :is selector for easy dark mode theming
+*/
 @custom-variant dark (&:is(.dark *));
 
+/*
+  Theme variables - shortcut CSS custom properties for easier access throughout the app
+  These map 'color-'/'font-' variables to the main CSS custom properties defined below
+*/
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
-  --font-serif: var(--font-playfair);
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-heading);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -46,90 +56,137 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
+/* Set default font family for the body using Space Grotesk */
 body {
-  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
 }
 
-.font-serif {
-  font-family: var(--font-playfair), Georgia, serif;
+/*
+  Heading font utility class using Syne for bold, creative headings.
+*/
+.font-heading {
+  font-family: var(--font-heading), system-ui, -apple-system, sans-serif;
 }
 
+/* Apply heading font to all headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), system-ui, -apple-system, sans-serif;
+}
+
+/* 
+  Light mode (default) palette and global CSS variables.
+  Colors: OKLCH for superior color rendering and warmth.
+  Comments explain each variable group and how it connects to the design system (see CLAUDE.md).
+*/
 :root {
   --radius: 0.75rem;
-  /* Warm off-white like Claude */
-  --background: oklch(0.985 0.005 85);
-  --foreground: oklch(0.2 0.02 260);
-  /* Clean white cards with subtle warmth */
+  /* Makers Lounge brand colors using OKLCH for accessible, vibrant color */
+  --ml-blue: oklch(0.5 0.2 255);
+  --ml-teal: oklch(0.6 0.15 195);
+  --ml-orange: oklch(0.7 0.18 50);
+  --ml-yellow: oklch(0.85 0.18 90);
+
+  /* UI backgrounds and surfaces */
+  --background: oklch(0.985 0.005 250); /* clean off-white */
+  --foreground: oklch(0.2 0.02 260);   /* almost-black (deep blue tone) */
+
+  /* Card/Popover - white surface with dark text */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.2 0.02 260);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.2 0.02 260);
-  /* Warm coral/terracotta primary - Claude-inspired */
-  --primary: oklch(0.65 0.18 25);
-  --primary-foreground: oklch(1 0 0);
-  /* Soft warm gray secondary */
-  --secondary: oklch(0.96 0.005 85);
+
+  /* Primary action color - Royal blue from brand */
+  --primary: oklch(0.5 0.2 255);
+  --primary-foreground: oklch(1 0 0); /* white for on-primary text */
+
+  /* Secondary/Muted background: subtle gray */
+  --secondary: oklch(0.96 0.005 250);
   --secondary-foreground: oklch(0.3 0.02 260);
-  --muted: oklch(0.96 0.005 85);
+  --muted: oklch(0.96 0.005 250);
   --muted-foreground: oklch(0.5 0.02 260);
-  /* Subtle warm accent */
-  --accent: oklch(0.95 0.02 50);
+
+  /* Accent: warm orange from logo wave */
+  --accent: oklch(0.95 0.03 50);
   --accent-foreground: oklch(0.3 0.02 260);
+
+  /* Destructive actions: red/coral */
   --destructive: oklch(0.55 0.22 25);
-  /* Subtle warm borders */
-  --border: oklch(0.92 0.01 85);
-  --input: oklch(0.92 0.01 85);
-  --ring: oklch(0.65 0.18 25);
-  /* Chart colors - warm palette */
-  --chart-1: oklch(0.65 0.18 25);
-  --chart-2: oklch(0.65 0.15 45);
-  --chart-3: oklch(0.6 0.12 180);
-  --chart-4: oklch(0.65 0.15 280);
-  --chart-5: oklch(0.7 0.12 140);
-  --sidebar: oklch(0.98 0.005 85);
+
+  /* Subtle borders and rings */
+  --border: oklch(0.92 0.01 250);
+  --input: oklch(0.92 0.01 250);
+  --ring: oklch(0.5 0.2 255);
+
+  /* Charting palette (see /matcher, /people, or data viz) */
+  --chart-1: oklch(0.5 0.2 255);
+  --chart-2: oklch(0.6 0.15 195);
+  --chart-3: oklch(0.7 0.18 50);
+  --chart-4: oklch(0.85 0.18 90);
+  --chart-5: oklch(0.55 0.15 280);
+
+  /* Sidebar-specific coloring (matches shadcn/ui sidebar, eg. nav, chat) */
+  --sidebar: oklch(0.98 0.005 250);
   --sidebar-foreground: oklch(0.2 0.02 260);
-  --sidebar-primary: oklch(0.65 0.18 25);
+  --sidebar-primary: oklch(0.5 0.2 255);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.95 0.01 85);
+  --sidebar-accent: oklch(0.95 0.02 50);
   --sidebar-accent-foreground: oklch(0.3 0.02 260);
-  --sidebar-border: oklch(0.92 0.01 85);
-  --sidebar-ring: oklch(0.65 0.18 25);
+  --sidebar-border: oklch(0.92 0.01 250);
+  --sidebar-ring: oklch(0.5 0.2 255);
 }
 
+/*
+  Dark mode overrides for all the palette variables.
+  Activated with the 'dark' class on <html> according to shadcn/ui system.
+*/
 .dark {
-  --background: oklch(0.12 0.01 285);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.16 0.015 285);
+  /* Makers Lounge brand colors for dark mode */
+  --ml-blue: oklch(0.6 0.2 255);
+  --ml-teal: oklch(0.65 0.15 195);
+  --ml-orange: oklch(0.75 0.18 50);
+  --ml-yellow: oklch(0.88 0.18 90);
+
+  --background: oklch(0.12 0.015 255);            /* dark blue canvas */
+  --foreground: oklch(0.95 0 0);                  /* bright white text */
+  --card: oklch(0.16 0.02 255);
   --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.16 0.015 285);
+  --popover: oklch(0.16 0.02 255);
   --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.65 0.2 285);
+  --primary: oklch(0.6 0.2 255);                  /* brand blue, brighter in dark mode */
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.22 0.02 285);
+  --secondary: oklch(0.22 0.02 255);
   --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.22 0.015 285);
+  --muted: oklch(0.22 0.015 255);
   --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.55 0.18 285);
+  --accent: oklch(0.7 0.18 50);                   /* warm orange accent */
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.65 0.2 25);
-  --border: oklch(1 0 0 / 8%);
+  --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.65 0.2 285);
-  --chart-1: oklch(0.65 0.2 285);
-  --chart-2: oklch(0.7 0.15 200);
-  --chart-3: oklch(0.75 0.12 150);
-  --chart-4: oklch(0.7 0.18 320);
-  --chart-5: oklch(0.65 0.15 40);
-  --sidebar: oklch(0.14 0.015 285);
+  --ring: oklch(0.6 0.2 255);
+
+  /* Chart/dataset variant - Makers Lounge palette for dark mode */
+  --chart-1: oklch(0.6 0.2 255);
+  --chart-2: oklch(0.65 0.15 195);
+  --chart-3: oklch(0.75 0.18 50);
+  --chart-4: oklch(0.88 0.18 90);
+  --chart-5: oklch(0.6 0.15 280);
+
+  --sidebar: oklch(0.14 0.02 255);
   --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.65 0.2 285);
+  --sidebar-primary: oklch(0.6 0.2 255);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.22 0.02 285);
+  --sidebar-accent: oklch(0.25 0.03 50);
   --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.65 0.2 285);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.6 0.2 255);
 }
 
+/*
+  Tailwind @layer base to apply border and outline color globally,
+  and set body background/text color from current theme variables.
+*/
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -139,7 +196,15 @@ body {
   }
 }
 
-/* Claude + Linear style utilities */
+/*
+  Custom utility classes inspired by Claude + Linear design:
+  - .glass, .glass-card: glassmorphism with blurred, transparent backgrounds and light borders/shadow
+  - .gradient-warm: subtle warm radial accent (e.g. behind avatars, highlights)
+  - .gradient-glow: animating or static glow for elements, uses an absolutely positioned pseudo-element
+  - .text-gradient: for gradient headings/logos, using background-clip & text-fill-color
+  - .gradient-wave, .gradient-wave-subtle: multi-stop gradients to match the Makers Lounge logo wave
+*/
+
 .glass {
   background: oklch(1 0 0 / 70%);
   backdrop-filter: blur(12px);
@@ -155,31 +220,57 @@ body {
 }
 
 .glass-card:hover {
+  /* Elevate glass cards when hovered for subtle interactivity */
   box-shadow: 0 2px 8px oklch(0 0 0 / 8%), 0 8px 24px oklch(0 0 0 / 5%);
 }
 
+/* Soft, warm background radial gradient utility */
 .gradient-warm {
-  background: radial-gradient(ellipse at top, oklch(0.9 0.05 25 / 40%) 0%, transparent 60%);
+  background: radial-gradient(ellipse at top, oklch(0.5 0.15 255 / 25%) 0%, transparent 60%);
 }
 
+/* Glow utility: uses a blurred pseudo-element for a glowing border */
 .gradient-glow {
   position: relative;
 }
-
 .gradient-glow::before {
   content: '';
   position: absolute;
   inset: -1px;
-  background: linear-gradient(135deg, oklch(0.65 0.18 25 / 20%), oklch(0.7 0.15 45 / 15%), transparent);
+  background: linear-gradient(135deg, oklch(0.5 0.2 255 / 20%), oklch(0.6 0.15 195 / 15%), transparent);
   border-radius: inherit;
   z-index: -1;
   filter: blur(20px);
   opacity: 0.5;
 }
 
+/* Text gradient utility: applies a linear gradient to text for modern logo/headings */
 .text-gradient {
-  background: linear-gradient(135deg, oklch(0.55 0.2 25), oklch(0.5 0.18 35));
+  background: linear-gradient(135deg, oklch(0.5 0.2 255), oklch(0.45 0.18 270));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* 
+  Makers Lounge signature wave gradient.
+  Used for hero backgrounds, logo stripes, buttons, etc.
+*/
+.gradient-wave {
+  background: linear-gradient(90deg,
+    oklch(0.5 0.2 255) 0%,
+    oklch(0.6 0.15 195) 33%,
+    oklch(0.7 0.18 50) 66%,
+    oklch(0.85 0.18 90) 100%
+  );
+}
+
+/* Subtle version of wave gradient for overlays and muted backgrounds */
+.gradient-wave-subtle {
+  background: linear-gradient(90deg,
+    oklch(0.5 0.2 255 / 10%) 0%,
+    oklch(0.6 0.15 195 / 10%) 33%,
+    oklch(0.7 0.18 50 / 10%) 66%,
+    oklch(0.85 0.18 90 / 10%) 100%
+  );
 }

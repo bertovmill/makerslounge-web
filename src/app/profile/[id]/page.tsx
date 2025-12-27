@@ -9,11 +9,13 @@ import ProjectCard from "@/components/ProjectCard";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { renderAvatar } from "@/components/AvatarPicker";
 
 interface Profile {
   id: string;
   name: string | null;
   photo_url: string | null;
+  avatar_style: string | null;
   bio: string | null;
   skills: string[] | null;
   linkedin: string | null;

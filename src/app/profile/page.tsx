@@ -7,12 +7,14 @@ import { User } from "@supabase/supabase-js";
 import ProjectCard from "@/components/ProjectCard";
 import ProjectModal from "@/components/ProjectModal";
 import SkillsInput from "@/components/SkillsInput";
+import AvatarPicker, { renderAvatar } from "@/components/AvatarPicker";
 
 interface Profile {
   id: string;
   username: string | null;
   name: string | null;
   photo_url: string | null;
+  avatar_style: string | null;
   bio: string | null;
   skills: string[] | null;
   linkedin: string | null;
@@ -43,12 +45,14 @@ export default function ProfilePage() {
     username: "",
     name: "",
     photo_url: null,
+    avatar_style: null,
     bio: "",
     skills: [],
     linkedin: "",
     twitter: "",
     website: "",
   });
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -81,6 +85,7 @@ export default function ProfilePage() {
           username: null,
           name: user.user_metadata?.full_name || user.email?.split("@")[0] || "",
           photo_url: user.user_metadata?.avatar_url || null,
+          avatar_style: null,
           bio: "",
           skills: [],
           linkedin: "",
@@ -216,9 +221,8 @@ export default function ProfilePage() {
 
           <div className="flex items-center gap-6">
             <div
-              className="w-24 h-24 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-white text-2xl font-bold overflow-hidden"
-              onClick={() => fileInputRef.current?.click()}
-              style={{ cursor: "pointer" }}
+              className="w-24 h-24 rounded-full overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={() => profile.photo_url ? fileInputRef.current?.click() : setShowAvatarPicker(true)}
             >
               {profile.photo_url ? (
                 <img
@@ -227,11 +231,11 @@ export default function ProfilePage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                profile.name?.charAt(0).toUpperCase() || "?"
+                renderAvatar(profile.avatar_style, profile.name || "", "lg")
               )}
             </div>
 
-            <div>
+            <div className="space-y-2">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -242,11 +246,35 @@ export default function ProfilePage() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="bg-[#1a1a1a] text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-[#333] transition-colors disabled:opacity-50"
+                className="block bg-[#1a1a1a] text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-[#333] transition-colors disabled:opacity-50"
               >
-                {uploading ? "Uploading..." : "Change Photo"}
+                {uploading ? "Uploading..." : "Upload Photo"}
               </button>
-              <p className="text-sm text-gray-500 mt-2">JPG, PNG. Max 5MB.</p>
+              {!profile.photo_url && (
+                <button
+                  onClick={() => setShowAvatarPicker(true)}
+                  className="block bg-gradient-to-r from-[#F4A261] to-[#E76F51] text-white px-4 py-2 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
+                >
+                  Choose Fun Avatar
+                </button>
+              )}
+              {profile.photo_url && (
+                <button
+                  onClick={async () => {
+                    setProfile({ ...profile, photo_url: null });
+                    await supabase
+                      .from("profiles")
+                      .update({ photo_url: null, updated_at: new Date().toISOString() })
+                      .eq("id", user?.id);
+                    setMessage("Photo removed!");
+                    setTimeout(() => setMessage(""), 2000);
+                  }}
+                  className="block text-sm text-gray-500 hover:text-red-500 transition-colors"
+                >
+                  Remove Photo
+                </button>
+              )}
+              <p className="text-xs text-gray-400">JPG, PNG. Max 5MB.</p>
             </div>
           </div>
         </div>
@@ -445,6 +473,24 @@ export default function ProfilePage() {
               setShowProjectModal(false);
               setEditingProject(null);
             }}
+          />
+        )}
+
+        {/* Avatar Picker Modal */}
+        {showAvatarPicker && (
+          <AvatarPicker
+            selectedAvatar={profile.avatar_style}
+            name={profile.name || ""}
+            onSelect={async (avatarId) => {
+              setProfile({ ...profile, avatar_style: avatarId });
+              if (user) {
+                await supabase
+                  .from("profiles")
+                  .update({ avatar_style: avatarId, updated_at: new Date().toISOString() })
+                  .eq("id", user.id);
+              }
+            }}
+            onClose={() => setShowAvatarPicker(false)}
           />
         )}
 

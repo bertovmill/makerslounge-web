@@ -81,22 +81,29 @@ export default function MatcherPage() {
   const handleAddContact = async (email: string, name: string, customFields?: Record<string, string>) => {
     if (!user) return;
 
+    const insertData: Record<string, unknown> = {
+      user_id: user.id,
+      email: email.toLowerCase(),
+      name,
+    };
+
+    // Only add custom_fields if provided
+    if (customFields && Object.keys(customFields).length > 0) {
+      insertData.custom_fields = customFields;
+    }
+
     const { data, error } = await supabase
       .from("matcher_contacts")
-      .insert({
-        user_id: user.id,
-        email: email.toLowerCase(),
-        name,
-        custom_fields: customFields || {},
-      })
+      .insert(insertData)
       .select()
       .single();
 
     if (error) {
+      console.error("Add contact error:", error);
       if (error.code === "23505") {
         showMessage("Contact with this email already exists");
       } else {
-        showMessage("Failed to add contact");
+        showMessage(`Failed to add contact: ${error.message || error.code || 'Unknown error'}`);
       }
       return;
     }
@@ -136,7 +143,7 @@ export default function MatcherPage() {
   const handleUpdateContact = async (id: string, updates: Partial<MatcherContact>) => {
     const { error } = await supabase
       .from("matcher_contacts")
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update(updates)
       .eq("id", id)
       .eq("user_id", user?.id);
 
