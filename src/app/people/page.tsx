@@ -112,9 +112,27 @@ function PeopleContent() {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        {/* Header */}
-        <div className="text-center mb-8">
+      {/* Hero Banner with People Photos */}
+      <div className="relative h-64 md:h-80 overflow-hidden">
+        <div className="absolute inset-0 grid grid-cols-3 gap-1">
+          <img
+            src="/makerslounge-photos/lounge-networking.jpeg"
+            alt="Networking at MakersLounge"
+            className="w-full h-full object-cover"
+          />
+          <img
+            src="/makerslounge-photos/coffee-chat.jpeg"
+            alt="Coffee chat"
+            className="w-full h-full object-cover"
+          />
+          <img
+            src="/makerslounge-photos/team-photo.jpeg"
+            alt="MakersLounge community"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-8 text-center">
           <h1 className="text-3xl md:text-4xl font-bold mb-2">
             Discover Makers
           </h1>
@@ -122,41 +140,43 @@ function PeopleContent() {
             Find and connect with talented people in the community
           </p>
         </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 py-12">
 
         {/* Search Bar */}
-        <div className="max-w-2xl mx-auto mb-6">
-          <Card className="glass-card flex items-center p-2">
-            <svg
-              className="w-5 h-5 text-muted-foreground ml-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+        <div className="max-w-3xl mx-auto mb-8">
+          <div className="relative">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search makers..."
-              className="flex-1 min-w-0 px-4 py-3 text-lg bg-transparent outline-none placeholder:text-muted-foreground"
+              className="w-full px-6 py-5 text-xl bg-card/50 backdrop-blur-sm border border-border/50 rounded-3xl outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/60"
             />
-            {(searchQuery || selectedSkills.length > 0) && (
-              <Button
-                variant="ghost"
-                size="sm"
+            {searchQuery || selectedSkills.length > 0 ? (
+              <button
                 onClick={clearFilters}
-                className="text-muted-foreground"
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
               >
                 Clear
-              </Button>
+              </button>
+            ) : (
+              <svg
+                className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/40"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
             )}
-          </Card>
+          </div>
         </div>
 
         {/* Skills Filter Pills */}

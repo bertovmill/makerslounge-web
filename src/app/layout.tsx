@@ -34,7 +34,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${spaceGrotesk.variable} ${syne.variable} font-sans antialiased bg-background text-foreground min-h-screen flex flex-col`}>
         <Navbar />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 md:ml-60">{children}</main>
         <Footer />
         <FeedbackButton />
       </body>

@@ -6,16 +6,15 @@ interface LogoProps {
 
 export default function Logo({ className = "", size = "md", showText = true }: LogoProps) {
   const sizes = {
-    sm: { icon: 32, text: "text-lg" },
-    md: { icon: 40, text: "text-xl" },
-    lg: { icon: 52, text: "text-2xl" },
+    sm: { icon: 36, text: "text-lg" },
+    md: { icon: 44, text: "text-xl" },
+    lg: { icon: 56, text: "text-2xl" },
   };
 
   const { icon, text } = sizes[size];
 
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
-      {/* Logo Icon - Rocket launching through wave colors */}
       <svg
         width={icon}
         height={icon}
@@ -24,28 +23,41 @@ export default function Logo({ className = "", size = "md", showText = true }: L
         xmlns="http://www.w3.org/2000/svg"
         className="flex-shrink-0"
       >
+        {/* Circle */}
+        <circle cx="24" cy="24" r="22" fill="white" stroke="#1a1a1a" strokeWidth="1.5" />
+
         <defs>
-          <linearGradient id="logoGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+          <clipPath id="circleClip">
+            <circle cx="24" cy="24" r="21" />
+          </clipPath>
+        </defs>
+
+        {/* Wave - blue to orange */}
+        <path
+          d="M2 30 Q14 24 24 30 Q34 36 46 30 L46 46 L2 46 Z"
+          fill="url(#waveGrad)"
+          clipPath="url(#circleClip)"
+        />
+
+        {/* Lightbulb - simple */}
+        <g transform="translate(10, 12)">
+          <ellipse cx="6" cy="7" rx="5" ry="6" fill="#F97316" />
+          <rect x="4" y="12" width="4" height="3" fill="#F97316" />
+          <ellipse cx="6" cy="6" rx="2.5" ry="3" fill="white" />
+        </g>
+
+        {/* Rocket - simple diagonal */}
+        <g transform="translate(24, 8)">
+          <path d="M6 0 L12 16 L6 13 L0 16 Z" fill="#2563EB" />
+          <circle cx="6" cy="6" r="2.5" fill="white" />
+        </g>
+
+        <defs>
+          <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#2563EB" />
             <stop offset="100%" stopColor="#F97316" />
           </linearGradient>
         </defs>
-
-        {/* Rounded square background */}
-        <rect x="2" y="2" width="44" height="44" rx="12" fill="url(#logoGradient)" />
-
-        {/* Rocket icon - clean and simple */}
-        <g fill="white">
-          {/* Rocket body */}
-          <path d="M24 8c-2 4-3 8-3 12 0 4 1.5 8 3 11 1.5-3 3-7 3-11 0-4-1-8-3-12z" />
-          {/* Rocket fins */}
-          <path d="M18 26c-2 0-4 2-5 4 2 0 4-1 6-2l-1-2z" />
-          <path d="M30 26c2 0 4 2 5 4-2 0-4-1-6-2l1-2z" />
-          {/* Rocket window */}
-          <circle cx="24" cy="18" r="3" fill="url(#logoGradient)" />
-          {/* Flame */}
-          <path d="M22 32c1 3 2 5 2 7 0-2 1-4 2-7-1 1-3 1-4 0z" opacity="0.9" />
-        </g>
       </svg>
 
       {showText && (
@@ -58,7 +70,6 @@ export default function Logo({ className = "", size = "md", showText = true }: L
   );
 }
 
-// Icon-only version for favicons
 export function LogoIcon({ size = 32 }: { size?: number }) {
   return (
     <svg
@@ -68,21 +79,33 @@ export function LogoIcon({ size = 32 }: { size?: number }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
+      <circle cx="24" cy="24" r="22" fill="white" stroke="#1a1a1a" strokeWidth="1.5" />
+
       <defs>
-        <linearGradient id="logoIconGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+        <clipPath id="iconClip">
+          <circle cx="24" cy="24" r="21" />
+        </clipPath>
+        <linearGradient id="iconWaveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#2563EB" />
           <stop offset="100%" stopColor="#F97316" />
         </linearGradient>
       </defs>
 
-      <rect x="2" y="2" width="44" height="44" rx="12" fill="url(#logoIconGradient)" />
+      <path
+        d="M2 30 Q14 24 24 30 Q34 36 46 30 L46 46 L2 46 Z"
+        fill="url(#iconWaveGrad)"
+        clipPath="url(#iconClip)"
+      />
 
-      <g fill="white">
-        <path d="M24 8c-2 4-3 8-3 12 0 4 1.5 8 3 11 1.5-3 3-7 3-11 0-4-1-8-3-12z" />
-        <path d="M18 26c-2 0-4 2-5 4 2 0 4-1 6-2l-1-2z" />
-        <path d="M30 26c2 0 4 2 5 4-2 0-4-1-6-2l1-2z" />
-        <circle cx="24" cy="18" r="3" fill="url(#logoIconGradient)" />
-        <path d="M22 32c1 3 2 5 2 7 0-2 1-4 2-7-1 1-3 1-4 0z" opacity="0.9" />
+      <g transform="translate(10, 12)">
+        <ellipse cx="6" cy="7" rx="5" ry="6" fill="#F97316" />
+        <rect x="4" y="12" width="4" height="3" fill="#F97316" />
+        <ellipse cx="6" cy="6" rx="2.5" ry="3" fill="white" />
+      </g>
+
+      <g transform="translate(24, 8)">
+        <path d="M6 0 L12 16 L6 13 L0 16 Z" fill="#2563EB" />
+        <circle cx="6" cy="6" r="2.5" fill="white" />
       </g>
     </svg>
   );

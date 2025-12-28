@@ -11,15 +11,36 @@ function WorkshopsContent() {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        {/* Header */}
-        <div className="text-center mb-10">
+      {/* Hero Banner with Workshop Photos */}
+      <div className="relative h-64 md:h-80 overflow-hidden">
+        <div className="absolute inset-0 grid grid-cols-3 gap-1">
+          <img
+            src="/makerslounge-photos/hackathon-working.jpeg"
+            alt="Makers working together"
+            className="w-full h-full object-cover"
+          />
+          <img
+            src="/makerslounge-photos/presenting-slides.jpeg"
+            alt="Workshop presentation"
+            className="w-full h-full object-cover"
+          />
+          <img
+            src="/makerslounge-photos/lounge-working.jpeg"
+            alt="Hands-on learning"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-8 text-center">
           <h1 className="text-3xl md:text-4xl font-bold mb-2">Workshops</h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
             Hands-on learning sessions led by community makers. Build real
             skills, meet fellow creators, and level up your craft.
           </p>
         </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 py-12">
 
         {/* Upcoming Workshops */}
         <section className="mb-12">

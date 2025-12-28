@@ -34,7 +34,8 @@ export default function MatcherPage() {
   const [showCSVUploader, setShowCSVUploader] = useState(false);
   const [message, setMessage] = useState("");
   const [pairs, setPairs] = useState<Pair[]>([]);
-  const [matchingCriteria, setMatchingCriteria] = useState("interests");
+  const [matchInstruction, setMatchInstruction] = useState("");
+  const [isMatching, setIsMatching] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -204,54 +205,53 @@ export default function MatcherPage() {
     setTimeout(() => setMessage(""), 3000);
   };
 
-  const generatePairs = () => {
+  const generatePairs = async () => {
     if (contacts.length < 2) {
       showMessage("Need at least 2 contacts to generate pairs");
       return;
     }
 
-    // Group contacts by their interest (case-insensitive)
-    const groups: Record<string, MatcherContact[]> = {};
-    const unmatched: MatcherContact[] = [];
+    setIsMatching(true);
+    setPairs([]);
 
-    contacts.forEach((contact) => {
-      const interest = contact.custom_fields?.[matchingCriteria]?.toLowerCase().trim();
-      if (interest) {
-        if (!groups[interest]) groups[interest] = [];
-        groups[interest].push(contact);
-      } else {
-        unmatched.push(contact);
-      }
-    });
-
-    const newPairs: Pair[] = [];
-
-    // Pair people within the same interest group
-    Object.entries(groups).forEach(([interest, members]) => {
-      for (let i = 0; i < members.length - 1; i += 2) {
-        newPairs.push({
-          person1: members[i],
-          person2: members[i + 1],
-          reason: `Both interested in ${interest}`,
-        });
-      }
-      // If odd number, add last person to unmatched
-      if (members.length % 2 === 1) {
-        unmatched.push(members[members.length - 1]);
-      }
-    });
-
-    // Pair remaining unmatched people randomly
-    for (let i = 0; i < unmatched.length - 1; i += 2) {
-      newPairs.push({
-        person1: unmatched[i],
-        person2: unmatched[i + 1],
-        reason: "Random pairing",
+    try {
+      const response = await fetch("/api/match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contacts: contacts.map((c) => ({
+            id: c.id,
+            name: c.name,
+            email: c.email,
+            custom_fields: c.custom_fields,
+          })),
+          instruction: matchInstruction || "Pair people with similar interests",
+        }),
       });
-    }
 
-    setPairs(newPairs);
-    showMessage(`Generated ${newPairs.length} pair${newPairs.length !== 1 ? "s" : ""}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate matches");
+      }
+
+      // Map the API response to our Pair format
+      const newPairs: Pair[] = data.pairs.map(
+        (p: { person1_id: string; person2_id: string; reason: string }) => ({
+          person1: contacts.find((c) => c.id === p.person1_id)!,
+          person2: contacts.find((c) => c.id === p.person2_id)!,
+          reason: p.reason,
+        })
+      ).filter((p: Pair) => p.person1 && p.person2);
+
+      setPairs(newPairs);
+      showMessage(`Generated ${newPairs.length} pair${newPairs.length !== 1 ? "s" : ""}`);
+    } catch (error) {
+      console.error("Matching error:", error);
+      showMessage(error instanceof Error ? error.message : "Failed to generate matches");
+    } finally {
+      setIsMatching(false);
+    }
   };
 
   if (loading) {
@@ -273,15 +273,53 @@ export default function MatcherPage() {
               {contacts.length} contact{contacts.length !== 1 ? "s" : ""}
             </p>
           </div>
-          <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowCSVUploader(!showCSVUploader)}
+          >
+            {showCSVUploader ? "Hide CSV Import" : "Import CSV"}
+          </Button>
+        </div>
+
+        {/* AI Matching Section */}
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border mb-6">
+          <h2 className="text-lg font-semibold mb-3">AI Matching</h2>
+
+          {/* Preset modes */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {[
+              { label: "Similar interests", instruction: "Pair people with similar interests or hobbies" },
+              { label: "Opposites attract", instruction: "Pair people with different interests so they can learn from each other" },
+              { label: "Random pairs", instruction: "Create random pairs regardless of interests" },
+              { label: "Networking mix", instruction: "Pair people who haven't met and have complementary backgrounds" },
+            ].map((preset) => (
+              <button
+                key={preset.label}
+                onClick={() => setMatchInstruction(preset.instruction)}
+                className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                  matchInstruction === preset.instruction
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border hover:border-primary/50 hover:bg-accent/50"
+                }`}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={matchInstruction}
+              onChange={(e) => setMatchInstruction(e.target.value)}
+              placeholder="Or type your own matching criteria..."
+              className="flex-1 px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
+            />
             <Button
-              variant="outline"
-              onClick={() => setShowCSVUploader(!showCSVUploader)}
+              onClick={generatePairs}
+              disabled={contacts.length < 2 || isMatching}
             >
-              {showCSVUploader ? "Hide CSV Import" : "Import CSV"}
-            </Button>
-            <Button onClick={generatePairs} disabled={contacts.length < 2}>
-              Generate Pairs
+              {isMatching ? "Matching..." : "Generate Pairs"}
             </Button>
           </div>
         </div>

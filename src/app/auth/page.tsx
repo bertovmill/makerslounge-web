@@ -34,10 +34,14 @@ export default function AuthPage() {
 
   const handleSignInWithGoogle = async () => {
     setLoading(true);
+    // Use localhost for local dev, production URL otherwise
+    const isDev = process.env.NODE_ENV === 'development';
+    const redirectUrl = isDev ? 'http://localhost:3000' : 'https://makerslounge.ca';
+
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: redirectUrl,
       },
     });
   };
