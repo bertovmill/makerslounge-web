@@ -60,7 +60,9 @@ function PeopleContent() {
       });
 
       if (!response.ok) {
-        throw new Error("Search request failed");
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        console.error("Search API error:", response.status, errorData);
+        throw new Error(`Search request failed: ${errorData.error || response.statusText}`);
       }
 
       const { results, metadata } = await response.json();

@@ -206,7 +206,7 @@ export function PublicProfileLayout({ profile, projects }: PublicProfileProps) {
                 color: 'var(--theme-fg)',
               }}
             >
-              Whiteboard
+              My Whiteboard
             </h2>
             <WhiteboardViewer data={profile.whiteboard_data} className="h-96" />
           </div>

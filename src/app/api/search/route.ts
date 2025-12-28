@@ -19,12 +19,14 @@ const AVAILABLE_SKILLS = [
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
+  console.log("[Search API] Request received");
 
   try {
     const body: SearchRequest = await request.json();
+    console.log("[Search API] Query:", body.query);
 
     // Validation
-    if (!body.query || typeof body.query !== "string") {
+    if (typeof body.query !== "string") {
       return NextResponse.json(
         { error: "Invalid query parameter" },
         { status: 400 }
@@ -133,14 +135,11 @@ Respond with ONLY a JSON object (no markdown, no explanation) in this exact form
       },
     });
   } catch (error) {
-    console.error("Search API error:", error);
+    console.error("[Search API] Error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Search failed. Please try again.";
+    console.error("[Search API] Returning error:", errorMessage);
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Search failed. Please try again.",
-      },
+      { error: errorMessage },
       { status: 500 }
     );
   }

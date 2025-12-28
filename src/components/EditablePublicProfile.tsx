@@ -11,6 +11,7 @@ import { getCoverStyle } from "@/lib/coverImages";
 import { useTheme, getThemeShadow } from "./ThemeProvider";
 import ProjectModal from "./ProjectModal";
 import { ThemeConfig } from "@/lib/themes";
+import CoverPicker from "./CoverPicker";
 import dynamic from "next/dynamic";
 
 // Dynamically import WhiteboardEditor to avoid SSR issues
@@ -78,6 +79,7 @@ export function EditablePublicProfile({
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [showCoverPicker, setShowCoverPicker] = useState(false);
 
   const coverStyle = getCoverStyle(profile.cover_image);
 
@@ -101,7 +103,7 @@ export function EditablePublicProfile({
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--theme-bg)' }}>
       {/* Cover Image with Edit Button */}
-      <div className="relative group">
+      <div className="relative group cursor-pointer" onClick={() => setShowCoverPicker(true)}>
         <div
           className="h-48 md:h-64 w-full"
           style={
@@ -110,7 +112,19 @@ export function EditablePublicProfile({
               : coverStyle
           }
         />
-        {/* Cover Edit Button - will add in future */}
+        {/* Cover Edit Button */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 flex items-center justify-center">
+          <Button
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-full"
+            variant="secondary"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Change Cover
+          </Button>
+        </div>
       </div>
 
       {/* Profile Container */}
@@ -321,7 +335,7 @@ export function EditablePublicProfile({
                 color: 'var(--theme-fg)',
               }}
             >
-              Whiteboard
+              My Whiteboard
             </h2>
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input
@@ -480,6 +494,17 @@ export function EditablePublicProfile({
             setShowProjectModal(false);
             setEditingProject(null);
           }}
+        />
+      )}
+
+      {/* Cover Picker Modal */}
+      {showCoverPicker && (
+        <CoverPicker
+          currentCover={profile.cover_image}
+          onSelect={(coverId) => {
+            onUpdateProfile({ cover_image: coverId });
+          }}
+          onClose={() => setShowCoverPicker(false)}
         />
       )}
 

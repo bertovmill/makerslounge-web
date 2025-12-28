@@ -3,7 +3,8 @@ import { Space_Grotesk, Syne } from "next/font/google";
 import "./globals.css";
 import FeedbackButton from "@/components/FeedbackButton";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import FooterWrapper from "@/components/FooterWrapper";
+import MainWrapper from "@/components/MainWrapper";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-sans",
@@ -34,8 +35,8 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${spaceGrotesk.variable} ${syne.variable} font-sans antialiased bg-background text-foreground min-h-screen flex flex-col`}>
         <Navbar />
-        <main className="flex-1 md:ml-60">{children}</main>
-        <Footer />
+        <MainWrapper>{children}</MainWrapper>
+        <FooterWrapper />
         <FeedbackButton />
       </body>
     </html>

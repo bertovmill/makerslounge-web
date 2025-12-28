@@ -278,10 +278,6 @@ export default function HomePage() {
       {/* Project Feed */}
       <section className="relative py-12 md:py-20 bg-muted/30">
         <div className="max-w-2xl mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold">Recent Projects</h2>
-          </div>
-
           {loadingProjects ? (
             <div className="text-center py-12 text-muted-foreground">Loading projects...</div>
           ) : projects.length === 0 ? (

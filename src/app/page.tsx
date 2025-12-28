@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import FeedCard from "@/components/FeedCard";
 import ProjectModal from "@/components/ProjectModal";
+import EmailSignup from "@/components/EmailSignup";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -613,6 +614,18 @@ export default function Home() {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* Email Signup Section */}
+      <section className="relative py-20 md:py-28 bg-muted/30">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Card className="glass-card p-8 md:p-12">
+            <EmailSignup
+              title="Stay in the loop"
+              description="Get updates about new events, podcast episodes, and community highlights delivered straight to your inbox."
+            />
+          </Card>
         </div>
       </section>
 

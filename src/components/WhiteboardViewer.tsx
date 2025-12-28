@@ -55,6 +55,7 @@ export default function WhiteboardViewer({
     <div className={`${className} rounded-lg overflow-hidden border border-gray-200`}>
       <Tldraw
         snapshot={data}
+        hideUi={true}
         onMount={(editor) => {
           // Make it read-only
           editor.updateInstanceState({
