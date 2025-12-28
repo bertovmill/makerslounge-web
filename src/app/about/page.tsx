@@ -13,19 +13,44 @@ export default function AboutPage() {
       </div>
 
       {/* Hero / Mission Section */}
-      <section className="relative max-w-6xl mx-auto px-4 py-20 md:py-32">
-        <div className="max-w-3xl mx-auto text-center">
-          <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-sm">
-            Our Story
-          </Badge>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 tracking-tight">
-            A place where{" "}
-            <span className="text-gradient">every maker belongs</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed">
-            MakersLounge started in Toronto with a simple idea: building is better together.
-            Whether you&apos;re a first-time creator or a seasoned builder, you&apos;re welcome here.
-          </p>
+      <section className="relative">
+        {/* Background Photos */}
+        <div className="relative h-[500px] md:h-[600px] overflow-hidden">
+          <div className="absolute inset-0 grid grid-cols-3 gap-1">
+            <img
+              src="/makerslounge-photos/lounge-networking.jpeg"
+              alt="Makers networking"
+              className="w-full h-full object-cover"
+            />
+            <img
+              src="/makerslounge-photos/hackathon-working.jpeg"
+              alt="Makers collaborating"
+              className="w-full h-full object-cover"
+            />
+            <img
+              src="/makerslounge-photos/presentation-audience.jpeg"
+              alt="Community event"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
+
+          {/* Content Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="max-w-3xl mx-auto text-center px-4">
+              <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-sm">
+                Our Story
+              </Badge>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 tracking-tight">
+                A place where{" "}
+                <span className="text-gradient">every maker belongs</span>
+              </h1>
+              <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed">
+                MakersLounge started in Toronto with a simple idea: building is better together.
+                Whether you&apos;re a first-time creator or a seasoned builder, you&apos;re welcome here.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 

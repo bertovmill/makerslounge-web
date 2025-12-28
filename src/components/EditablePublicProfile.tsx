@@ -11,6 +11,17 @@ import { getCoverStyle } from "@/lib/coverImages";
 import { useTheme, getThemeShadow } from "./ThemeProvider";
 import ProjectModal from "./ProjectModal";
 import { ThemeConfig } from "@/lib/themes";
+import dynamic from "next/dynamic";
+
+// Dynamically import WhiteboardEditor to avoid SSR issues
+const WhiteboardEditor = dynamic(() => import("./WhiteboardEditor"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-96 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center">
+      <p className="text-gray-500">Loading whiteboard editor...</p>
+    </div>
+  ),
+});
 
 interface Profile {
   id: string;
@@ -25,6 +36,8 @@ interface Profile {
   website: string | null;
   cover_image: string | null;
   theme_config: ThemeConfig | null;
+  whiteboard_data: any | null;
+  show_whiteboard: boolean | null;
 }
 
 interface Project {
@@ -296,6 +309,46 @@ export function EditablePublicProfile({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Whiteboard Section */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-4">
+            <h2
+              className="text-2xl font-bold"
+              style={{
+                fontFamily: 'var(--theme-font-heading)',
+                color: 'var(--theme-fg)',
+              }}
+            >
+              Whiteboard
+            </h2>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={profile.show_whiteboard || false}
+                onChange={(e) => {
+                  onUpdateProfile({ show_whiteboard: e.target.checked });
+                }}
+                className="rounded"
+              />
+              <span style={{ color: 'var(--theme-muted-foreground)' }}>
+                Show on public profile
+              </span>
+            </label>
+          </div>
+
+          <WhiteboardEditor
+            initialData={profile.whiteboard_data}
+            onSave={async (data) => {
+              await onUpdateProfile({ whiteboard_data: data });
+            }}
+            className="h-96"
+          />
+
+          <p className="text-xs mt-2" style={{ color: 'var(--theme-muted-foreground)' }}>
+            Use this whiteboard to share your ideas, workflows, or visual thinking. Changes auto-save every 3 seconds.
+          </p>
         </div>
 
         {/* Portfolio Section */}

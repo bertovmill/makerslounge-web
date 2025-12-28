@@ -26,6 +26,8 @@ interface Profile {
   website: string | null;
   theme_config: ThemeConfig | null;
   cover_image: string | null;
+  whiteboard_data: any | null;
+  show_whiteboard: boolean | null;
 }
 
 interface Project {
@@ -58,6 +60,8 @@ export default function ProfilePage() {
     website: "",
     theme_config: getDefaultThemeConfig(),
     cover_image: null,
+    whiteboard_data: null,
+    show_whiteboard: false,
   });
 
   const [projects, setProjects] = useState<Project[]>([]);
@@ -99,6 +103,8 @@ export default function ProfilePage() {
           website: "",
           theme_config: getDefaultThemeConfig(),
           cover_image: null,
+          whiteboard_data: null,
+          show_whiteboard: false,
         };
 
         await supabase.from("profiles").insert(newProfile);
@@ -131,14 +137,19 @@ export default function ProfilePage() {
         })
         .eq("id", user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
 
       setProfile({ ...profile, ...updates });
       setMessage("Saved!");
       setTimeout(() => setMessage(""), 2000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Update error:", error);
-      setMessage("Failed to save");
+      const errorMessage = error?.message || error?.hint || "Failed to save";
+      setMessage(errorMessage);
+      setTimeout(() => setMessage(""), 5000);
     }
   };
 

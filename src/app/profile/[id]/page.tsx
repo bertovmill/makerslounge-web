@@ -22,6 +22,8 @@ interface Profile {
   website: string | null;
   cover_image: string | null;
   theme_config: ThemeConfig | null;
+  whiteboard_data: any | null;
+  show_whiteboard: boolean | null;
 }
 
 interface Project {

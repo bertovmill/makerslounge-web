@@ -7,6 +7,17 @@ import { Card } from '@/components/ui/card';
 import { renderAvatar } from '@/components/AvatarPicker';
 import { getCoverStyle } from '@/lib/coverImages';
 import { useTheme, getThemeShadow } from '@/components/ThemeProvider';
+import dynamic from 'next/dynamic';
+
+// Dynamically import WhiteboardViewer to avoid SSR issues
+const WhiteboardViewer = dynamic(() => import('./WhiteboardViewer'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-96 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center">
+      <p className="text-gray-500">Loading whiteboard...</p>
+    </div>
+  ),
+});
 
 interface Project {
   id: string;
@@ -28,6 +39,8 @@ interface PublicProfileProps {
     twitter: string | null;
     website: string | null;
     cover_image: string | null;
+    whiteboard_data: any | null;
+    show_whiteboard: boolean | null;
   };
   projects: Project[];
 }
@@ -182,6 +195,22 @@ export function PublicProfileLayout({ profile, projects }: PublicProfileProps) {
             </div>
           </div>
         </div>
+
+        {/* Whiteboard Section - only show if enabled */}
+        {profile.show_whiteboard && profile.whiteboard_data && (
+          <div className="mb-12">
+            <h2
+              className="text-2xl font-bold mb-6"
+              style={{
+                fontFamily: 'var(--theme-font-heading)',
+                color: 'var(--theme-fg)',
+              }}
+            >
+              Whiteboard
+            </h2>
+            <WhiteboardViewer data={profile.whiteboard_data} className="h-96" />
+          </div>
+        )}
 
         {/* Portfolio Section */}
         {projects && projects.length > 0 && (

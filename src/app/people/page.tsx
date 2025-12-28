@@ -32,53 +32,60 @@ function PeopleContent() {
     searchParams.get("skills")?.split(",").filter(Boolean) || []
   );
   const [totalCount, setTotalCount] = useState(0);
+  const [searchInterpretation, setSearchInterpretation] = useState<string>("");
+  const [user, setUser] = useState<{ id: string } | null>(null);
+
+  // Get current user for similarity searches
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUser({ id: data.user.id });
+      }
+    });
+  }, []);
 
   const fetchProfiles = useCallback(async () => {
     setLoading(true);
 
     try {
-      let query = supabase
-        .from("profiles")
-        .select("id, name, photo_url, bio, skills", { count: "exact" })
-        .not("name", "is", null); // Only show profiles with names
+      // Call AI-powered search API
+      const response = await fetch("/api/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: searchQuery,
+          currentUserId: user?.id,
+          filters: { skills: selectedSkills }
+        })
+      });
 
-      if (searchQuery.trim()) {
-        query = query.or(
-          `name.ilike.%${searchQuery}%,bio.ilike.%${searchQuery}%`
-        );
+      if (!response.ok) {
+        throw new Error("Search request failed");
       }
 
-      if (selectedSkills.length > 0) {
-        query = query.overlaps("skills", selectedSkills);
-      }
+      const { results, metadata } = await response.json();
 
-      query = query.order("name", { ascending: true, nullsFirst: false });
-      query = query.limit(50);
+      // Deduplicate profiles by name (keep first occurrence)
+      const seen = new Set<string>();
+      const uniqueProfiles = (results || []).filter((profile: Profile) => {
+        const key = profile.name?.toLowerCase() || profile.id;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
 
-      const { data, count, error } = await query;
-
-      if (error) {
-        console.error("Search error:", error);
-        setProfiles([]);
-        setTotalCount(0);
-      } else {
-        // Deduplicate profiles by name (keep first occurrence)
-        const seen = new Set<string>();
-        const uniqueProfiles = (data || []).filter((profile) => {
-          const key = profile.name?.toLowerCase() || profile.id;
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
-        setProfiles(uniqueProfiles);
-        setTotalCount(uniqueProfiles.length);
-      }
+      setProfiles(uniqueProfiles);
+      setTotalCount(uniqueProfiles.length);
+      setSearchInterpretation(metadata.interpretation || "");
     } catch (err) {
-      console.error("Fetch error:", err);
+      console.error("AI search error:", err);
+      setSearchInterpretation("Search failed. Please try again.");
+      setProfiles([]);
+      setTotalCount(0);
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, selectedSkills]);
+  }, [searchQuery, selectedSkills, user?.id]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -198,10 +205,21 @@ function PeopleContent() {
           </div>
         </div>
 
+        {/* AI Interpretation */}
+        {searchInterpretation && !loading && (
+          <div className="max-w-3xl mx-auto mb-4">
+            <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-primary">AI:</span> {searchInterpretation}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Results Count */}
         <div className="text-center text-sm text-muted-foreground mb-6">
           {loading ? (
-            "Searching..."
+            <span>AI analyzing your search...</span>
           ) : (
             `${totalCount} ${totalCount === 1 ? "person" : "people"} found`
           )}
@@ -210,7 +228,10 @@ function PeopleContent() {
         {/* Results Grid */}
         {loading ? (
           <div className="flex justify-center py-12">
-            <p className="text-muted-foreground">Loading...</p>
+            <div className="text-center">
+              <p className="text-muted-foreground">AI analyzing your search...</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">This may take a few seconds</p>
+            </div>
           </div>
         ) : profiles.length === 0 ? (
           <Card className="glass-card p-12 text-center">

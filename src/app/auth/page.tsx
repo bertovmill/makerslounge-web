@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { LiquidGlassCard } from "@/components/LiquidGlass";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -78,7 +78,7 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <main className="flex-1 flex items-center justify-center p-4">
-        <Card className="p-8 max-w-sm w-full">
+        <LiquidGlassCard className="p-8 max-w-sm w-full">
           <h1 className="text-2xl font-bold mb-2">
             {isSignUp ? "Create account" : "Welcome back"}
           </h1>
@@ -151,7 +151,7 @@ export default function AuthPage() {
           {message && (
             <p className="text-sm text-center mt-2 text-muted-foreground">{message}</p>
           )}
-        </Card>
+        </LiquidGlassCard>
       </main>
     </div>
   );

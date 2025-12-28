@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
+import { LiquidGlassCard } from "@/components/LiquidGlass";
 
 interface Feedback {
   id: string;
@@ -79,9 +80,10 @@ export default function FeedbackPage() {
         ) : (
           <div className="space-y-4">
             {feedback.map((item) => (
-              <div
+              <LiquidGlassCard
                 key={item.id}
-                className={`bg-white rounded-xl p-5 border border-gray-200 ${
+                glassSize="sm"
+                className={`bg-white rounded-xl border border-gray-200 ${
                   item.completed ? "opacity-60" : ""
                 }`}
               >
@@ -121,7 +123,7 @@ export default function FeedbackPage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </LiquidGlassCard>
             ))}
           </div>
         )}

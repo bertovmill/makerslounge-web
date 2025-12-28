@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useCallback, useState } from "react";
-import { Tldraw, TLStoreSnapshot, useEditor } from "tldraw";
+import { Tldraw, useEditor } from "tldraw";
 import "tldraw/tldraw.css";
 
 interface WhiteboardEditorProps {
-  initialData: TLStoreSnapshot | null;
-  onSave: (data: TLStoreSnapshot) => Promise<void>;
+  initialData: any | null;
+  onSave: (data: any) => Promise<void>;
   className?: string;
 }
 
 // Component to handle auto-save
-function AutoSaveHandler({ onSave }: { onSave: (data: TLStoreSnapshot) => void }) {
+function AutoSaveHandler({ onSave }: { onSave: (data: any) => void }) {
   const editor = useEditor();
   const [lastSaved, setLastSaved] = useState<number>(0);
 
@@ -19,7 +19,7 @@ function AutoSaveHandler({ onSave }: { onSave: (data: TLStoreSnapshot) => void }
     // Auto-save every 3 seconds if there are changes
     const interval = setInterval(() => {
       if (editor) {
-        const snapshot = editor.store.getSnapshot();
+        const snapshot = editor.getSnapshot();
         const now = Date.now();
 
         // Only save if more than 3 seconds have passed since last save
@@ -48,7 +48,7 @@ export default function WhiteboardEditor({
     setIsMounted(true);
   }, []);
 
-  const handleSave = useCallback((data: TLStoreSnapshot) => {
+  const handleSave = useCallback((data: any) => {
     onSave(data);
   }, [onSave]);
 
