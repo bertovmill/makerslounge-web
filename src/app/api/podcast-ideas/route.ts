@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     });
 
     const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20240620",
+      model: "claude-3-7-sonnet-20250219",
       max_tokens: 1024,
       system: `You are a creative podcast consultant helping brainstorm episode ideas for the MakersLounge Podcast.
 
