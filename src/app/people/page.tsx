@@ -34,6 +34,24 @@ function PeopleContent() {
   const [totalCount, setTotalCount] = useState(0);
   const [searchInterpretation, setSearchInterpretation] = useState<string>("");
   const [user, setUser] = useState<{ id: string } | null>(null);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+  const placeholders = [
+    "Search makers...",
+    "Find a React developer...",
+    "Someone building AI apps...",
+    "Need help with design...",
+    "Looking for a co-founder...",
+    "People like me...",
+  ];
+
+  // Rotate placeholder text
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Get current user for similarity searches
   useEffect(() => {
@@ -160,8 +178,8 @@ function PeopleContent() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search makers..."
-              className="w-full px-6 py-5 text-xl bg-card/50 backdrop-blur-sm border border-border/50 rounded-3xl outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/60"
+              placeholder={placeholders[placeholderIndex]}
+              className="w-full px-6 py-5 text-xl bg-card/50 backdrop-blur-sm border border-border/50 rounded-3xl outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/60 placeholder:transition-opacity placeholder:duration-500"
             />
             {searchQuery || selectedSkills.length > 0 ? (
               <button

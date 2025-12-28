@@ -1,25 +1,29 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
 export async function POST(request: Request) {
   try {
     const { message, history } = await request.json();
 
+    if (!process.env.ANTHROPIC_API_KEY) {
+      throw new Error("ANTHROPIC_API_KEY not configured");
+    }
+
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
+
     // Build conversation history for Claude
-    const messages = [
-      ...history.map((msg: { role: string; content: string }) => ({
-        role: msg.role === "user" ? "user" : "assistant",
+    const conversationHistory: Array<{ role: "user" | "assistant"; content: string }> = history
+      .map((msg: { role: string; content: string }) => ({
+        role: msg.role === "user" ? ("user" as const) : ("assistant" as const),
         content: msg.content,
-      })),
-      {
-        role: "user",
-        content: message,
-      },
-    ];
+      }));
+
+    conversationHistory.push({
+      role: "user",
+      content: message,
+    });
 
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20241022",
@@ -37,16 +41,16 @@ When suggesting ideas:
 - Consider diverse fields: tech, hardware, AI, design, art, manufacturing, etc.
 
 Keep responses conversational and helpful.`,
-      messages: messages as any,
+      messages: conversationHistory,
     });
 
     const text = response.content[0].type === "text" ? response.content[0].text : "";
 
     return NextResponse.json({ response: text });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Podcast ideas API error:", error);
     return NextResponse.json(
-      { error: "Failed to generate ideas" },
+      { error: error?.message || "Failed to generate ideas" },
       { status: 500 }
     );
   }

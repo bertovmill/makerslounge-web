@@ -1,11 +1,11 @@
-// This line enables React Server Components to use client-side features like state and effects.
-// Required when using useState, useEffect, etc. in Next.js app directory.
 "use client";
 
-// React imports for component state and stable callbacks
-import { useState, useCallback } from "react";
-// Next.js import for client-side navigation between routes
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/lib/supabase";
 
 // Type definition for the result of uploading attendee CSV data.
 // - success: indicates whether upload succeeded
@@ -36,6 +36,15 @@ interface MatchingResult {
   };
 }
 
+interface EmailSubscription {
+  id: string;
+  email: string;
+  subscribed_to: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 const STEPS = [
   { num: 1, name: "Upload CSV", description: "Load attendee data" },
   { num: 2, name: "Pre-flight Check", description: "Validate data" },
@@ -56,8 +65,31 @@ export default function AdminPage() {
   const [matchingResult, setMatchingResult] = useState<MatchingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [apiStatus, setApiStatus] = useState<"unknown" | "connected" | "error">("unknown");
+  const [subscribers, setSubscribers] = useState<EmailSubscription[]>([]);
+  const [loadingSubscribers, setLoadingSubscribers] = useState(true);
 
   const API_URL = "http://localhost:8000";
+
+  // Fetch email subscribers on mount
+  useEffect(() => {
+    const fetchSubscribers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("email_subscriptions")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setSubscribers(data || []);
+      } catch (err) {
+        console.error("Error fetching subscribers:", err);
+      } finally {
+        setLoadingSubscribers(false);
+      }
+    };
+
+    fetchSubscribers();
+  }, []);
 
   // Test API connection on mount
   const testConnection = async () => {
@@ -195,43 +227,111 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a] text-white">
+    <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-serif font-bold mb-2">Run Matching</h1>
-        <p className="text-gray-400 mb-6">
+        <Badge variant="secondary" className="mb-4">
+          Admin Tools
+        </Badge>
+        <h1 className="text-4xl font-bold mb-2">Run Matching</h1>
+        <p className="text-muted-foreground mb-6">
           Upload your Luma CSV export and run AI-powered matching live.
         </p>
 
         {/* API Status */}
         <div className="mb-8 flex items-center gap-4">
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm ${
-            apiStatus === "connected"
-              ? "bg-green-900/50 text-green-400"
-              : apiStatus === "error"
-              ? "bg-red-900/50 text-red-400"
-              : "bg-gray-800 text-gray-400"
-          }`}>
+          <Badge
+            variant={apiStatus === "connected" ? "default" : apiStatus === "error" ? "destructive" : "secondary"}
+            className="flex items-center gap-2 px-4 py-2"
+          >
             <span className={`w-2 h-2 rounded-full ${
-              apiStatus === "connected" ? "bg-green-400" : apiStatus === "error" ? "bg-red-400" : "bg-gray-500"
+              apiStatus === "connected" ? "bg-green-400" : apiStatus === "error" ? "bg-red-400" : "bg-muted-foreground"
             }`}></span>
             {apiStatus === "connected" ? "API Connected" : apiStatus === "error" ? "API Error" : "API Status Unknown"}
-          </div>
-          <button
+          </Badge>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={testConnection}
-            className="text-sm text-gray-400 hover:text-white underline"
+            className="text-sm"
           >
             Test Connection
-          </button>
+          </Button>
         </div>
 
+        {/* Email Subscribers Section */}
+        <Card className="p-8 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">Email Subscribers</h2>
+              <p className="text-muted-foreground">
+                {subscribers.length} total subscribers
+              </p>
+            </div>
+            <Badge variant="secondary" className="text-lg px-4 py-2">
+              {subscribers.filter(s => s.is_active).length} active
+            </Badge>
+          </div>
+
+          {loadingSubscribers ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Loading subscribers...
+            </div>
+          ) : subscribers.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No subscribers yet
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-4 font-semibold">Email</th>
+                    <th className="text-left py-3 px-4 font-semibold">Subscribed To</th>
+                    <th className="text-left py-3 px-4 font-semibold">Status</th>
+                    <th className="text-left py-3 px-4 font-semibold">Joined</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subscribers.map((sub) => (
+                    <tr key={sub.id} className="border-b border-border/50 hover:bg-muted/30">
+                      <td className="py-3 px-4 font-mono text-sm">{sub.email}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex gap-1 flex-wrap">
+                          {sub.subscribed_to.map((type) => (
+                            <Badge key={type} variant="outline" className="text-xs">
+                              {type}
+                            </Badge>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge variant={sub.is_active ? "default" : "secondary"}>
+                          {sub.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-sm text-muted-foreground">
+                        {new Date(sub.created_at).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+
         {/* Progress Steps */}
-        <div className="mb-12">
+        <Card className="mb-12 p-6">
           <div className="flex items-center justify-between mb-4">
             {STEPS.map((step) => (
               <div
                 key={step.num}
                 className={`flex flex-col items-center ${
-                  currentStep >= step.num ? "text-[#F4A261]" : "text-gray-600"
+                  currentStep >= step.num ? "text-primary" : "text-muted-foreground"
                 }`}
               >
                 <div
@@ -239,8 +339,8 @@ export default function AdminPage() {
                     currentStep > step.num
                       ? "bg-green-500 text-white"
                       : currentStep === step.num
-                      ? "bg-[#F4A261] text-black"
-                      : "bg-gray-800 text-gray-500"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {currentStep > step.num ? "✓" : step.num}
@@ -253,9 +353,9 @@ export default function AdminPage() {
           {/* Status message */}
           {statusMessage && (
             <div className="text-center py-4">
-              <p className="text-[#F4A261] text-lg font-medium">{statusMessage}</p>
+              <p className="text-primary text-lg font-medium">{statusMessage}</p>
               {progressDetail && (
-                <p className="text-gray-400 text-sm mt-1">{progressDetail}</p>
+                <p className="text-muted-foreground text-sm mt-1">{progressDetail}</p>
               )}
             </div>
           )}
@@ -263,33 +363,33 @@ export default function AdminPage() {
           {/* Progress bar */}
           {running && (
             <div className="mt-4">
-              <div className="flex justify-between text-sm text-gray-400 mb-2">
+              <div className="flex justify-between text-sm text-muted-foreground mb-2">
                 <span>Progress</span>
                 <span>{progress}%</span>
               </div>
-              <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
+              <div className="h-3 bg-muted rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[#F4A261] to-green-500 transition-all duration-300 ease-out"
+                  className="h-full gradient-wave transition-all duration-300 ease-out"
                   style={{ width: `${progress}%` }}
                 />
               </div>
             </div>
           )}
-        </div>
+        </Card>
 
         {/* Error display */}
         {error && (
-          <div className="bg-red-900/50 border border-red-500 rounded-xl p-4 mb-8">
-            <p className="text-red-300">{error}</p>
-          </div>
+          <Card className="bg-destructive/10 border-destructive p-4 mb-8">
+            <p className="text-destructive">{error}</p>
+          </Card>
         )}
 
         {/* Upload Section */}
         {!matchingResult && (
-          <div className="bg-gray-900 rounded-2xl p-8 mb-8">
+          <Card className="p-8 mb-8">
             <h2 className="text-xl font-semibold mb-4">Step 1: Upload CSV</h2>
 
-            <div className="border-2 border-dashed border-gray-700 rounded-xl p-8 text-center mb-4">
+            <div className="border-2 border-dashed border-border rounded-xl p-8 text-center mb-4">
               <input
                 type="file"
                 accept=".csv"
@@ -299,10 +399,10 @@ export default function AdminPage() {
               />
               <label
                 htmlFor="csv-upload"
-                className="cursor-pointer text-gray-400 hover:text-white transition-colors"
+                className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
               >
                 {file ? (
-                  <span className="text-[#F4A261]">{file.name}</span>
+                  <span className="text-primary font-medium">{file.name}</span>
                 ) : (
                   <>
                     <span className="text-4xl block mb-2">📁</span>
@@ -313,10 +413,11 @@ export default function AdminPage() {
             </div>
 
             {file && !uploadResult && (
-              <button
+              <Button
                 onClick={handleUpload}
                 disabled={uploading}
-                className="w-full bg-[#F4A261] text-black font-semibold py-4 rounded-xl hover:bg-[#e8935a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full"
+                size="lg"
               >
                 {uploading ? (
                   <span className="flex items-center justify-center gap-3">
@@ -329,51 +430,52 @@ export default function AdminPage() {
                 ) : (
                   "Upload & Parse CSV"
                 )}
-              </button>
+              </Button>
             )}
 
             {/* Upload Result */}
             {uploadResult && (
               <div className="mt-6 space-y-4">
-                <div className="flex items-center gap-4 text-green-400">
+                <div className="flex items-center gap-4 text-green-500">
                   <span className="text-2xl">✓</span>
-                  <span>CSV parsed successfully</span>
+                  <span className="font-medium">CSV parsed successfully</span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-gray-800 rounded-xl p-4 text-center">
+                  <Card className="p-4 text-center">
                     <p className="text-3xl font-bold">{uploadResult.total_attendees}</p>
-                    <p className="text-sm text-gray-400">Total</p>
-                  </div>
-                  <div className="bg-gray-800 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-green-400">
+                    <p className="text-sm text-muted-foreground">Total</p>
+                  </Card>
+                  <Card className="p-4 text-center">
+                    <p className="text-3xl font-bold text-green-500">
                       {uploadResult.complete_profiles}
                     </p>
-                    <p className="text-sm text-gray-400">Complete</p>
-                  </div>
-                  <div className="bg-gray-800 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-yellow-400">
+                    <p className="text-sm text-muted-foreground">Complete</p>
+                  </Card>
+                  <Card className="p-4 text-center">
+                    <p className="text-3xl font-bold text-yellow-500">
                       {uploadResult.incomplete_profiles}
                     </p>
-                    <p className="text-sm text-gray-400">Incomplete</p>
-                  </div>
+                    <p className="text-sm text-muted-foreground">Incomplete</p>
+                  </Card>
                 </div>
 
                 {uploadResult.incomplete_profiles > 0 && (
-                  <div className="bg-yellow-900/30 border border-yellow-600 rounded-xl p-4">
-                    <p className="text-yellow-400 text-sm mb-2">
+                  <Card className="bg-yellow-500/10 border-yellow-500 p-4">
+                    <p className="text-yellow-600 dark:text-yellow-500 text-sm mb-2 font-medium">
                       Incomplete profiles will be skipped:
                     </p>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-muted-foreground text-sm">
                       {uploadResult.incomplete_names.join(", ")}
                     </p>
-                  </div>
+                  </Card>
                 )}
 
-                <button
+                <Button
                   onClick={handleRunMatching}
                   disabled={running}
-                  className="w-full bg-green-500 text-black font-semibold py-4 rounded-xl hover:bg-green-400 transition-colors disabled:opacity-50 text-lg"
+                  className="w-full bg-green-500 hover:bg-green-600 text-white"
+                  size="lg"
                 >
                   {running ? (
                     <span className="flex items-center justify-center gap-2">
@@ -383,82 +485,82 @@ export default function AdminPage() {
                   ) : (
                     "🚀 Run AI Matching"
                   )}
-                </button>
+                </Button>
               </div>
             )}
-          </div>
+          </Card>
         )}
 
         {/* Results Section */}
         {matchingResult && (
           <div className="space-y-8">
             {/* Success Banner */}
-            <div className="bg-green-900/50 border border-green-500 rounded-2xl p-8 text-center">
+            <Card className="bg-green-500/10 border-green-500 p-8 text-center">
               <span className="text-6xl block mb-4">🎉</span>
               <h2 className="text-3xl font-bold mb-2">Matching Complete!</h2>
-              <p className="text-green-300">
+              <p className="text-green-600 dark:text-green-400">
                 {matchingResult.total_matches} matches created across 4 rounds
               </p>
-            </div>
+            </Card>
 
             {/* Round Results */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {matchingResult.rounds.map((round) => (
-                <div
+                <Card
                   key={round.round}
-                  className={`rounded-2xl p-6 text-center ${
+                  className={`p-6 text-center ${
                     round.round === 1
-                      ? "bg-pink-500/20 border border-pink-500"
+                      ? "bg-pink-500/10 border-pink-500"
                       : round.round === 2
-                      ? "bg-orange-500/20 border border-orange-500"
+                      ? "bg-orange-500/10 border-orange-500"
                       : round.round === 3
-                      ? "bg-green-500/20 border border-green-500"
-                      : "bg-purple-500/20 border border-purple-500"
+                      ? "bg-green-500/10 border-green-500"
+                      : "bg-purple-500/10 border-purple-500"
                   }`}
                 >
                   <p className="text-4xl font-bold">{round.match_count}</p>
-                  <p className="text-sm opacity-80">Round {round.round}</p>
-                  <p className="text-xs opacity-60 capitalize">{round.type}</p>
-                </div>
+                  <p className="text-sm text-muted-foreground">Round {round.round}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{round.type}</p>
+                </Card>
               ))}
             </div>
 
             {/* Coverage & Quality */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-900 rounded-2xl p-6">
+              <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Coverage</h3>
-                <p className="text-4xl font-bold text-green-400">
+                <p className="text-4xl font-bold text-green-500">
                   {matchingResult.coverage.coverage_percentage}%
                 </p>
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   {matchingResult.coverage.total_attendees} attendees matched
                 </p>
-              </div>
-              <div className="bg-gray-900 rounded-2xl p-6">
+              </Card>
+              <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4">AI Quality Score</h3>
-                <p className="text-4xl font-bold text-[#F4A261]">
+                <p className="text-4xl font-bold text-primary">
                   {matchingResult.validation.overall_quality}
                 </p>
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   {matchingResult.validation.issues_count} issues found
                 </p>
-              </div>
+              </Card>
             </div>
 
             {/* Actions */}
             <div className="flex gap-4">
-              <Link
-                href="/"
-                className="flex-1 bg-[#F4A261] text-black font-semibold py-4 rounded-xl text-center hover:bg-[#e8935a] transition-colors"
-              >
-                View Results →
-              </Link>
-              <button
+              <Button asChild className="flex-1" size="lg">
+                <Link href="/">
+                  View Results →
+                </Link>
+              </Button>
+              <Button
+                variant="secondary"
                 onClick={handleReset}
-                className="px-8 bg-gray-800 text-white font-semibold py-4 rounded-xl hover:bg-gray-700 transition-colors"
+                size="lg"
               >
                 Reset
-              </button>
+              </Button>
             </div>
           </div>
         )}
