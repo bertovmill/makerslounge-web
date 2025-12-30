@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, forwardRef, useImperativeHandle } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { MatcherContact } from "@/app/matcher/page";
@@ -9,20 +9,29 @@ interface CSVUploaderProps {
   userId: string;
   existingEmails: string[];
   onImport: (contacts: MatcherContact[]) => void;
+  onShowPreview?: () => void;
+  onCancel?: () => void;
+}
+
+export interface CSVUploaderRef {
+  triggerFileInput: () => void;
 }
 
 interface ParsedRow {
   email: string;
   name: string;
+  customFields: Record<string, string>;
   valid: boolean;
   error?: string;
 }
 
-export default function CSVUploader({
+const CSVUploader = forwardRef<CSVUploaderRef, CSVUploaderProps>(({
   userId,
   existingEmails,
   onImport,
-}: CSVUploaderProps) {
+  onShowPreview,
+  onCancel,
+}, ref) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [parsing, setParsing] = useState(false);
@@ -32,6 +41,13 @@ export default function CSVUploader({
   const [columns, setColumns] = useState<{ email: number; name: number }>({ email: -1, name: -1 });
   const [headers, setHeaders] = useState<string[]>([]);
   const [rawRows, setRawRows] = useState<string[][]>([]);
+
+  // Expose triggerFileInput method to parent
+  useImperativeHandle(ref, () => ({
+    triggerFileInput: () => {
+      fileInputRef.current?.click();
+    }
+  }));
 
   const parseCSV = (text: string): string[][] => {
     const lines = text.split(/\r?\n/).filter(line => line.trim());
@@ -84,24 +100,47 @@ export default function CSVUploader({
   };
 
   const processRows = (rows: string[][], emailCol: number, nameCol: number): ParsedRow[] => {
+    const seenEmails = new Set<string>();
+
     return rows.map(row => {
-      const email = (row[emailCol] || "").trim().toLowerCase();
-      const name = (row[nameCol] || "").trim();
+      const email = emailCol >= 0 ? (row[emailCol] || "").trim().toLowerCase() : "";
+      const name = nameCol >= 0 ? (row[nameCol] || "").trim() : "";
 
-      if (!email) {
-        return { email, name, valid: false, error: "Missing email" };
-      }
-      if (!validateEmail(email)) {
-        return { email, name, valid: false, error: "Invalid email" };
-      }
-      if (!name) {
-        return { email, name, valid: false, error: "Missing name" };
-      }
-      if (existingEmails.includes(email)) {
-        return { email, name, valid: false, error: "Already exists" };
+      // Capture all other columns as custom fields
+      const customFields: Record<string, string> = {};
+      headers.forEach((header, index) => {
+        if (index !== emailCol && index !== nameCol && row[index]?.trim()) {
+          customFields[header] = row[index].trim();
+        }
+      });
+
+      // Validate email format only if email is provided
+      if (email && !validateEmail(email)) {
+        return { email, name, customFields, valid: false, error: "Invalid email format" };
       }
 
-      return { email, name, valid: true };
+      // Check for duplicates against existing contacts
+      if (email && existingEmails.includes(email)) {
+        return { email, name, customFields, valid: false, error: "Already exists in DB" };
+      }
+
+      // Check for duplicates within the CSV
+      if (email && seenEmails.has(email)) {
+        return { email, name, customFields, valid: false, error: "Duplicate in CSV" };
+      }
+
+      // Row is valid if it has at least email, name, or some custom fields
+      const hasData = email || name || Object.keys(customFields).length > 0;
+      if (!hasData) {
+        return { email, name, customFields, valid: false, error: "Empty row" };
+      }
+
+      // Mark this email as seen
+      if (email) {
+        seenEmails.add(email);
+      }
+
+      return { email, name, customFields, valid: true };
     });
   };
 
@@ -109,6 +148,7 @@ export default function CSVUploader({
     setError("");
     setPreview(null);
     setParsing(true);
+    onShowPreview?.();
 
     try {
       const text = await file.text();
@@ -128,13 +168,10 @@ export default function CSVUploader({
       setRawRows(dataRows);
       setColumns(detected);
 
-      if (detected.email === -1 || detected.name === -1) {
-        // Need manual column selection
-        setPreview(null);
-      } else {
-        const parsed = processRows(dataRows, detected.email, detected.name);
-        setPreview(parsed);
-      }
+      // Always show preview, even if email/name columns aren't detected
+      // Users can select them manually if needed
+      const parsed = processRows(dataRows, detected.email, detected.name);
+      setPreview(parsed);
     } catch (err) {
       console.error("Parse error:", err);
       setError("Failed to parse CSV file");
@@ -187,18 +224,19 @@ export default function CSVUploader({
     try {
       const { data, error: insertError } = await supabase
         .from("matcher_contacts")
-        .upsert(
+        .insert(
           validRows.map(r => ({
             user_id: userId,
-            email: r.email,
-            name: r.name,
-          })),
-          { onConflict: "user_id,email" }
+            email: r.email || null,
+            name: r.name || null,
+            custom_fields: Object.keys(r.customFields).length > 0 ? r.customFields : null,
+          }))
         )
         .select();
 
       if (insertError) {
-        setError("Failed to import contacts");
+        console.error("Database insert error:", insertError);
+        setError(`Failed to import contacts: ${insertError.message || insertError.code || 'Unknown error'}`);
         setImporting(false);
         return;
       }
@@ -226,6 +264,7 @@ export default function CSVUploader({
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+    onCancel?.();
   };
 
   const validCount = preview?.filter(r => r.valid).length || 0;
@@ -233,47 +272,25 @@ export default function CSVUploader({
 
   return (
     <div>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
       {error && (
         <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg mb-4 text-sm">
           {error}
         </div>
       )}
 
-      {!preview && headers.length === 0 && (
-        <>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv,text/csv"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-          <div
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className={`
-              border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors
-              ${dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}
-              ${parsing ? "opacity-50 pointer-events-none" : ""}
-            `}
-          >
-            {parsing ? (
-              <span className="text-muted-foreground">Parsing...</span>
-            ) : (
-              <>
-                <span className="text-2xl block mb-2">📄</span>
-                <span className="text-sm text-muted-foreground">
-                  Drop a CSV file here or click to browse
-                </span>
-                <p className="text-xs text-muted-foreground mt-2">
-                  CSV should have columns for email and name
-                </p>
-              </>
-            )}
-          </div>
-        </>
+      {parsing && (
+        <div className="text-center py-8">
+          <span className="text-muted-foreground">Parsing CSV...</span>
+        </div>
       )}
 
       {/* Column Selection */}
@@ -317,40 +334,113 @@ export default function CSVUploader({
       {/* Preview */}
       {preview && (
         <div className="space-y-4">
-          <div className="flex items-center gap-4 text-sm">
-            <span className="text-green-600">{validCount} valid</span>
-            {invalidCount > 0 && (
-              <span className="text-red-500">{invalidCount} invalid</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 text-sm">
+              <span className="text-green-600">{validCount} valid</span>
+              {invalidCount > 0 && (
+                <span className="text-red-500">{invalidCount} invalid</span>
+              )}
+            </div>
+            {headers.length > 2 && (
+              <div className="text-sm text-muted-foreground">
+                {headers.length - 2} additional column{headers.length - 2 !== 1 ? "s" : ""} will be imported
+              </div>
             )}
           </div>
 
-          <div className="max-h-48 overflow-y-auto border border-border rounded-lg">
+          {/* Show all column headers */}
+          {headers.length > 2 && (
+            <div className="bg-muted/30 rounded-lg p-3">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Columns to import:</p>
+              <div className="flex flex-wrap gap-1.5">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary/10 text-primary font-medium">
+                  {headers[columns.email]} (Email)
+                </span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary/10 text-primary font-medium">
+                  {headers[columns.name]} (Name)
+                </span>
+                {headers.map((header, i) => {
+                  if (i !== columns.email && i !== columns.name) {
+                    return (
+                      <span key={i} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-accent border border-border">
+                        {header}
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="max-h-64 overflow-auto border border-border rounded-lg">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 sticky top-0">
                 <tr>
-                  <th className="text-left py-2 px-3">Email</th>
-                  <th className="text-left py-2 px-3">Name</th>
-                  <th className="text-left py-2 px-3">Status</th>
+                  {headers.map((header, i) => (
+                    <th key={i} className="text-left py-2 px-3 whitespace-nowrap border-r border-border last:border-r-0">
+                      {header}
+                    </th>
+                  ))}
+                  <th className="text-left py-2 px-3 whitespace-nowrap">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {preview.slice(0, 10).map((row, i) => (
-                  <tr key={i} className={row.valid ? "" : "bg-red-50/50"}>
-                    <td className="py-2 px-3">{row.email || "—"}</td>
-                    <td className="py-2 px-3">{row.name || "—"}</td>
-                    <td className="py-2 px-3">
-                      {row.valid ? (
-                        <span className="text-green-600">Ready</span>
-                      ) : (
-                        <span className="text-red-500">{row.error}</span>
-                      )}
+                {/* Show first 5 valid rows */}
+                {preview.filter(r => r.valid).slice(0, 5).map((row, i) => (
+                  <tr key={`valid-${i}`}>
+                    {headers.map((header, headerIndex) => {
+                      let value;
+                      if (headerIndex === columns.email) {
+                        value = row.email;
+                      } else if (headerIndex === columns.name) {
+                        value = row.name;
+                      } else {
+                        value = row.customFields[header];
+                      }
+                      return (
+                        <td key={headerIndex} className="py-2 px-3 whitespace-nowrap border-r border-border last:border-r-0">
+                          {value || "—"}
+                        </td>
+                      );
+                    })}
+                    <td className="py-2 px-3 whitespace-nowrap">
+                      <span className="text-green-600 text-xs">Ready</span>
                     </td>
                   </tr>
                 ))}
-                {preview.length > 10 && (
+                {/* Show first 5 invalid rows */}
+                {preview.filter(r => !r.valid).slice(0, 5).map((row, i) => (
+                  <tr key={`invalid-${i}`} className="bg-red-50/50">
+                    {headers.map((header, headerIndex) => {
+                      let value;
+                      let isEmpty = false;
+                      if (headerIndex === columns.email) {
+                        value = row.email;
+                        isEmpty = !value;
+                      } else if (headerIndex === columns.name) {
+                        value = row.name;
+                        isEmpty = !value;
+                      } else {
+                        value = row.customFields[header];
+                      }
+                      return (
+                        <td key={headerIndex} className="py-2 px-3 whitespace-nowrap border-r border-border last:border-r-0">
+                          {value || (isEmpty ? <span className="text-red-400 italic text-xs">missing</span> : "—")}
+                        </td>
+                      );
+                    })}
+                    <td className="py-2 px-3 whitespace-nowrap">
+                      <span className="text-red-500 text-xs">{row.error}</span>
+                    </td>
+                  </tr>
+                ))}
+                {(validCount > 5 || invalidCount > 5) && (
                   <tr>
-                    <td colSpan={3} className="py-2 px-3 text-muted-foreground text-center">
-                      ... and {preview.length - 10} more rows
+                    <td colSpan={headers.length + 1} className="py-2 px-3 text-muted-foreground text-center text-xs">
+                      {validCount > 5 && `... and ${validCount - 5} more valid rows`}
+                      {validCount > 5 && invalidCount > 5 && ", "}
+                      {invalidCount > 5 && `${invalidCount - 5} more invalid rows`}
                     </td>
                   </tr>
                 )}
@@ -370,4 +460,8 @@ export default function CSVUploader({
       )}
     </div>
   );
-}
+});
+
+CSVUploader.displayName = "CSVUploader";
+
+export default CSVUploader;
