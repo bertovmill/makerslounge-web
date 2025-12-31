@@ -56,6 +56,15 @@ export default function WhiteboardViewer({
       <Tldraw
         snapshot={data}
         hideUi={true}
+        components={{
+          // Override components to hide watermark/license
+          SharePanel: null,
+          MenuPanel: null,
+          TopPanel: null,
+          HelperButtons: null,
+          DebugPanel: null,
+          DebugMenu: null,
+        }}
         onMount={(editor) => {
           // Make it read-only
           editor.updateInstanceState({

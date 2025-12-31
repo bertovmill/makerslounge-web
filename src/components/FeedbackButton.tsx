@@ -1,21 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toPng } from "html-to-image";
 import { supabase } from "@/lib/supabase";
 import ScreenshotEditor from "./ScreenshotEditor";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { User } from "@supabase/supabase-js";
 
 export default function FeedbackButton() {
   const [showModal, setShowModal] = useState(false);
   const [message, setMessage] = useState("");
-  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [capturing, setCapturing] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setCheckingAuth(false);
+    };
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const captureScreenshot = async () => {
     setCapturing(true);
@@ -83,9 +100,12 @@ export default function FeedbackButton() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return;
+    }
+
+    setLoading(true);
 
     let screenshotUrl: string | null = null;
     if (screenshot) {
@@ -94,15 +114,14 @@ export default function FeedbackButton() {
 
     await supabase.from("feedback").insert({
       message,
-      email: user?.email || email || null,
-      user_id: user?.id || null,
+      email: user.email || null,
+      user_id: user.id,
       screenshot_url: screenshotUrl,
     });
 
     setLoading(false);
     setSubmitted(true);
     setMessage("");
-    setEmail("");
     setScreenshot(null);
 
     setTimeout(() => {
@@ -110,6 +129,11 @@ export default function FeedbackButton() {
       setSubmitted(false);
     }, 2000);
   };
+
+  // Don't render anything if still checking auth or user is not authenticated
+  if (checkingAuth || !user) {
+    return null;
+  }
 
   return (
     <>
@@ -146,13 +170,6 @@ export default function FeedbackButton() {
                 </p>
 
                 <form onSubmit={handleSubmit}>
-                  <input
-                    type="email"
-                    placeholder="Your email (optional)"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-secondary border border-border rounded-xl mb-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground"
-                  />
                   <textarea
                     placeholder="What's on your mind?"
                     value={message}

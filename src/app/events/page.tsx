@@ -1,9 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import Calendar from "@/components/Calendar";
+import EventForm from "@/components/EventForm";
+
+interface Event {
+  id: string;
+  title: string;
+  description: string | null;
+  start_time: string;
+  end_time: string;
+  location: string | null;
+  image_url: string | null;
+  event_url: string | null;
+  is_all_day: boolean;
+}
 
 export default function EventsPage() {
-  const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
+  const [events, setEvents] = useState<Event[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const fetchEvents = async () => {
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .order("start_time", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching events:", error);
+    } else {
+      setEvents(data || []);
+    }
+  };
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setIsAdmin(user?.email === "bertmill19@gmail.com");
+      setLoading(false);
+    };
+
+    checkAdmin();
+    fetchEvents();
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -28,9 +71,7 @@ export default function EventsPage() {
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-8 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">
-            Events
-          </h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">Events</h1>
           <p className="text-muted-foreground">
             Join us at upcoming maker meetups, workshops, and community events
           </p>
@@ -38,70 +79,11 @@ export default function EventsPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-12">
-
-        {/* Tab Switcher */}
-        <div className="flex justify-center gap-2 mb-6">
-          <button
-            onClick={() => setActiveTab("upcoming")}
-            className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-              activeTab === "upcoming"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-card text-muted-foreground hover:bg-secondary border border-border"
-            }`}
-          >
-            Upcoming
-          </button>
-          <button
-            onClick={() => setActiveTab("past")}
-            className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-              activeTab === "past"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-card text-muted-foreground hover:bg-secondary border border-border"
-            }`}
-          >
-            Past Events
-          </button>
-        </div>
-
-        {/* Luma Calendar Embed */}
-        <div className="w-full rounded-xl overflow-hidden border border-border bg-card">
-          {activeTab === "upcoming" ? (
-            <iframe
-              key="upcoming"
-              src="https://lu.ma/embed/calendar/cal-mQ6KN9ZNyE5Rlic/events?k=c"
-              width="100%"
-              height="800"
-              frameBorder="0"
-              style={{ border: "none", background: "transparent" }}
-              allowFullScreen
-              aria-hidden="false"
-            />
-          ) : (
-            <iframe
-              key="past"
-              src="https://lu.ma/embed/calendar/cal-mQ6KN9ZNyE5Rlic/events?k=c&period=past"
-              width="100%"
-              height="800"
-              frameBorder="0"
-              style={{ border: "none", background: "transparent" }}
-              allowFullScreen
-              aria-hidden="false"
-            />
-          )}
-        </div>
-
-        {/* Direct Link */}
-        <div className="text-center mt-6">
-          <a
-            href="https://lu.ma/makerslounge"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-muted-foreground hover:text-primary transition-colors"
-          >
-            View on Luma →
-          </a>
-        </div>
+        <Calendar events={events} />
       </div>
+
+      {/* Event Form - Only visible to admin */}
+      {!loading && isAdmin && <EventForm onEventCreated={fetchEvents} />}
     </div>
   );
 }

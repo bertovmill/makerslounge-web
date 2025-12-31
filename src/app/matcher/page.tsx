@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import ContactTable from "@/components/matcher/ContactTable";
-import CSVUploader from "@/components/matcher/CSVUploader";
+import CSVUploader, { CSVUploaderRef } from "@/components/matcher/CSVUploader";
 
 export interface MatcherContact {
   id: string;
-  email: string;
-  name: string;
+  email: string | null;
+  name: string | null;
   notes: string | null;
   custom_fields: Record<string, string> | null;
   created_at: string;
@@ -36,6 +36,7 @@ export default function MatcherPage() {
   const [pairs, setPairs] = useState<Pair[]>([]);
   const [matchInstruction, setMatchInstruction] = useState("");
   const [isMatching, setIsMatching] = useState(false);
+  const csvUploaderRef = useRef<CSVUploaderRef>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -48,15 +49,8 @@ export default function MatcherPage() {
 
       setUser(user);
 
-      // Load custom columns from localStorage
-      const savedColumns = localStorage.getItem(COLUMNS_STORAGE_KEY);
-      if (savedColumns) {
-        try {
-          setColumns(JSON.parse(savedColumns));
-        } catch (e) {
-          console.error("Failed to parse saved columns:", e);
-        }
-      }
+      // Don't load columns from localStorage - start fresh
+      // Columns will be added when user imports CSV or adds them manually
 
       await fetchContacts(user.id);
       setLoading(false);
@@ -65,12 +59,8 @@ export default function MatcherPage() {
     init();
   }, [router]);
 
-  // Save columns to localStorage whenever they change
-  useEffect(() => {
-    if (columns.length > 0) {
-      localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify(columns));
-    }
-  }, [columns]);
+  // Don't persist columns to localStorage - start fresh each time
+  // (removed localStorage persistence)
 
   const fetchContacts = async (userId: string) => {
     const { data, error } = await supabase
@@ -92,8 +82,8 @@ export default function MatcherPage() {
 
     const insertData: Record<string, unknown> = {
       user_id: user.id,
-      email: email.toLowerCase(),
-      name,
+      email: email ? email.toLowerCase() : null,
+      name: name || null,
     };
 
     // Only add custom_fields if provided
@@ -109,15 +99,11 @@ export default function MatcherPage() {
 
     if (error) {
       console.error("Add contact error:", error);
-      if (error.code === "23505") {
-        showMessage("Contact with this email already exists");
-      } else {
-        showMessage(`Failed to add contact: ${error.message || error.code || 'Unknown error'}`);
-      }
+      showMessage(`Failed to add contact: ${error.message || error.code || 'Unknown error'}`);
       return;
     }
 
-    setContacts([data, ...contacts]);
+    setContacts([...contacts, data]);
   };
 
   const handleBulkAdd = useCallback(async (rows: { email: string; name: string; customFields?: Record<string, string> }[]) => {
@@ -125,14 +111,13 @@ export default function MatcherPage() {
 
     const { data, error } = await supabase
       .from("matcher_contacts")
-      .upsert(
+      .insert(
         rows.map(r => ({
           user_id: user.id,
-          email: r.email.toLowerCase(),
-          name: r.name,
-          custom_fields: r.customFields || {},
-        })),
-        { onConflict: "user_id,email" }
+          email: r.email ? r.email.toLowerCase() : null,
+          name: r.name || null,
+          custom_fields: r.customFields && Object.keys(r.customFields).length > 0 ? r.customFields : null,
+        }))
       )
       .select();
 
@@ -142,11 +127,8 @@ export default function MatcherPage() {
     }
 
     const newContacts = data || [];
-    const existingEmails = new Set(contacts.map(c => c.email));
-    const toAdd = newContacts.filter(c => !existingEmails.has(c.email));
-
-    setContacts([...toAdd, ...contacts]);
-    showMessage(`Added ${toAdd.length} contact${toAdd.length !== 1 ? "s" : ""}`);
+    setContacts([...contacts, ...newContacts]);
+    showMessage(`Added ${newContacts.length} contact${newContacts.length !== 1 ? "s" : ""}`);
   }, [user, contacts]);
 
   const handleUpdateContact = async (id: string, updates: Partial<MatcherContact>) => {
@@ -182,10 +164,24 @@ export default function MatcherPage() {
   };
 
   const handleImportContacts = async (imported: MatcherContact[]) => {
+    // Extract all unique custom field keys from imported contacts
+    const customFieldKeys = new Set<string>();
+    imported.forEach(contact => {
+      if (contact.custom_fields) {
+        Object.keys(contact.custom_fields).forEach(key => customFieldKeys.add(key));
+      }
+    });
+
+    // Add new columns that don't already exist
+    const newColumns = Array.from(customFieldKeys).filter(key => !columns.includes(key));
+    if (newColumns.length > 0) {
+      setColumns([...columns, ...newColumns]);
+    }
+
     setContacts([...imported, ...contacts.filter(c =>
       !imported.some(i => i.email === c.email)
     )]);
-    showMessage(`Imported ${imported.length} contacts!`);
+    showMessage(`Imported ${imported.length} contacts with ${newColumns.length} new columns!`);
     setShowCSVUploader(false);
   };
 
@@ -203,6 +199,34 @@ export default function MatcherPage() {
   const showMessage = (msg: string) => {
     setMessage(msg);
     setTimeout(() => setMessage(""), 3000);
+  };
+
+  const handleClearTable = async () => {
+    if (!user) return;
+
+    if (!confirm("Are you sure you want to delete all contacts? This cannot be undone.")) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("matcher_contacts")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (error) {
+        showMessage("Failed to clear table");
+        return;
+      }
+
+      setContacts([]);
+      setColumns([]);
+      setPairs([]);
+      showMessage("Table cleared successfully");
+    } catch (err) {
+      console.error("Clear error:", err);
+      showMessage("Failed to clear table");
+    }
   };
 
   const generatePairs = async () => {
@@ -266,19 +290,11 @@ export default function MatcherPage() {
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-4 py-12">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-serif font-bold">Matcher</h1>
-            <p className="text-muted-foreground mt-1">
-              {contacts.length} contact{contacts.length !== 1 ? "s" : ""}
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => setShowCSVUploader(!showCSVUploader)}
-          >
-            {showCSVUploader ? "Hide CSV Import" : "Import CSV"}
-          </Button>
+        <div className="mb-8">
+          <h1 className="text-3xl font-serif font-bold">Matcher</h1>
+          <p className="text-muted-foreground mt-1">
+            {contacts.length} contact{contacts.length !== 1 ? "s" : ""}
+          </p>
         </div>
 
         {/* AI Matching Section */}
@@ -364,20 +380,48 @@ export default function MatcherPage() {
           </div>
         )}
 
-        {/* CSV Upload (collapsible) */}
+        {/* CSV Upload */}
         {showCSVUploader && (
           <div className="bg-card rounded-2xl p-6 shadow-sm border border-border mb-6">
             <h2 className="text-lg font-semibold mb-4">Import from CSV</h2>
             <CSVUploader
+              ref={csvUploaderRef}
               userId={user?.id || ""}
               onImport={handleImportContacts}
-              existingEmails={contacts.map(c => c.email)}
+              existingEmails={contacts.map(c => c.email).filter((e): e is string => e !== null)}
+              onShowPreview={() => setShowCSVUploader(true)}
+              onCancel={() => setShowCSVUploader(false)}
             />
           </div>
         )}
 
         {/* Contacts Table */}
         <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Contacts</h2>
+            <div className="flex gap-2">
+              {contacts.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClearTable}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  Clear Table
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  csvUploaderRef.current?.triggerFileInput();
+                  setShowCSVUploader(true);
+                }}
+              >
+                Import CSV
+              </Button>
+            </div>
+          </div>
           <ContactTable
             contacts={contacts}
             columns={columns}

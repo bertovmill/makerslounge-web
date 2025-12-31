@@ -1,11 +1,7 @@
-"use client";
-
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { useState, useEffect, use } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import BlogCard from "@/components/BlogCard";
 import BlogPostContent from "@/components/BlogPostContent";
 import BlogEngagement from "@/components/BlogEngagement";
@@ -18,76 +14,60 @@ interface BlogPostPageProps {
   }>;
 }
 
-export default function BlogPostPage({ params }: BlogPostPageProps) {
-  const { slug } = use(params);
-  const post = getPostBySlug(slug);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [likeCount, setLikeCount] = useState(0);
-  const [hasLiked, setHasLiked] = useState(false);
-  const [comments, setComments] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
+  const { slug } = await params;
+  const post = await getPostBySlug(slug);
 
   if (!post) {
     notFound();
   }
 
-  useEffect(() => {
-    const fetchData = async () => {
-      // Get current user
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setCurrentUserId(user?.id || null);
+  // Fetch engagement data server-side
+  const { count: likesCount } = await supabase
+    .from("likes")
+    .select("*", { count: "exact", head: true })
+    .eq("target_type", "blog_post")
+    .eq("target_id", post.slug);
 
-      // Fetch likes count
-      const { count: likesCount } = await supabase
-        .from("likes")
-        .select("*", { count: "exact", head: true })
-        .eq("target_type", "blog_post")
-        .eq("target_id", post.slug);
+  const { data: commentsData } = await supabase
+    .from("comments")
+    .select(
+      `
+      id,
+      content,
+      created_at,
+      profiles (
+        id,
+        name,
+        photo_url
+      )
+    `
+    )
+    .eq("target_type", "blog_post")
+    .eq("target_id", post.slug)
+    .order("created_at", { ascending: false });
 
-      setLikeCount(likesCount || 0);
+  // Get current user (server-side)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-      // Check if user has liked
-      if (user) {
-        const { data: userLike } = await supabase
-          .from("likes")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("target_type", "blog_post")
-          .eq("target_id", post.slug)
-          .single();
+  // Check if user has liked this post
+  let hasLiked = false;
+  if (user) {
+    const { data: userLike } = await supabase
+      .from("likes")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("target_type", "blog_post")
+      .eq("target_id", post.slug)
+      .maybeSingle();
 
-        setHasLiked(!!userLike);
-      }
+    hasLiked = !!userLike;
+  }
 
-      // Fetch comments
-      const { data: commentsData } = await supabase
-        .from("comments")
-        .select(
-          `
-          id,
-          content,
-          created_at,
-          profiles (
-            id,
-            name,
-            photo_url
-          )
-        `
-        )
-        .eq("target_type", "blog_post")
-        .eq("target_id", post.slug)
-        .order("created_at", { ascending: false });
-
-      setComments(commentsData || []);
-      setIsLoading(false);
-    };
-
-    fetchData();
-  }, [slug]);
-
-  const allPosts = getAllPosts();
+  // Get related posts
+  const allPosts = await getAllPosts();
   const relatedPosts = allPosts
     .filter(
       (p) =>
@@ -116,10 +96,6 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
     .join("")
     .toUpperCase()
     .slice(0, 2);
-
-  const handleAuthRequired = () => {
-    window.location.href = "/profile";
-  };
 
   return (
     <div className="min-h-screen">
@@ -278,16 +254,13 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
       {/* Engagement Section */}
       <section className="relative py-8 bg-background border-y border-border">
         <div className="max-w-3xl mx-auto px-4">
-          {!isLoading && (
-            <BlogEngagement
-              postId={post.slug}
-              currentUserId={currentUserId}
-              initialLikeCount={likeCount}
-              initialHasLiked={hasLiked}
-              initialComments={comments}
-              onAuthRequired={handleAuthRequired}
-            />
-          )}
+          <BlogEngagement
+            postId={post.slug}
+            currentUserId={user?.id || null}
+            initialLikeCount={likesCount || 0}
+            initialHasLiked={hasLiked}
+            initialComments={commentsData || []}
+          />
         </div>
       </section>
 

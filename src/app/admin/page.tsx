@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
+import BlogPostsSection from "@/components/admin/BlogPostsSection";
 
 // Type definition for the result of uploading attendee CSV data.
 // - success: indicates whether upload succeeded
@@ -257,6 +258,9 @@ export default function AdminPage() {
             Test Connection
           </Button>
         </div>
+
+        {/* Blog Posts Section */}
+        <BlogPostsSection />
 
         {/* Email Subscribers Section */}
         <Card className="p-8 mb-8">

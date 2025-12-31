@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { MatcherContact } from "@/app/matcher/page";
 
 interface ContactTableProps {
@@ -31,45 +31,69 @@ export default function ContactTable({
   const [newColumnName, setNewColumnName] = useState("");
   const tableRef = useRef<HTMLDivElement>(null);
 
-  // Handle paste event on the table
+  // Cell selection state
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionStart, setSelectionStart] = useState<{ id: string; field: string } | null>(null);
+  const [selectionEnd, setSelectionEnd] = useState<{ id: string; field: string } | null>(null);
+  const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
+
+  const allFields = useMemo(() => ["email", "name", ...columns], [columns]);
+
+  // Handle paste event on the table - works like Google Sheets
   useEffect(() => {
     const handlePaste = async (e: ClipboardEvent) => {
-      if (!tableRef.current?.contains(document.activeElement)) return;
-
       const text = e.clipboardData?.getData("text");
       if (!text) return;
 
+      // Check if we're pasting within the table
+      const target = e.target as HTMLElement;
+      if (!tableRef.current?.contains(target)) return;
+
+      // Parse clipboard data into rows and cells
       const lines = text.split(/\r?\n/).filter(line => line.trim());
+
+      // Only handle multi-row or tab-separated paste
       if (lines.length > 1 || text.includes("\t")) {
         e.preventDefault();
 
+        const pastedRows = lines.map(line => {
+          // Split by tab (from spreadsheets)
+          const cells = line.split("\t").map(cell => cell.trim().replace(/^["']|["']$/g, ''));
+          return cells;
+        });
+
+        // Build new contacts from pasted data
         const rows: { email: string; name: string; customFields?: Record<string, string> }[] = [];
-        for (const line of lines) {
-          const parts = line.includes("\t") ? line.split("\t") : line.split(",");
-          if (parts.length >= 2) {
-            const trimmedParts = parts.map(p => p.trim());
-            // Find email column
-            const emailIndex = trimmedParts.findIndex(p => p.includes("@"));
-            if (emailIndex >= 0) {
-              const email = trimmedParts[emailIndex];
-              const nameIndex = emailIndex === 0 ? 1 : 0;
-              const name = trimmedParts[nameIndex] || "";
 
-              // Extra columns become custom fields
-              const customFields: Record<string, string> = {};
-              trimmedParts.forEach((val, i) => {
-                if (i !== emailIndex && i !== nameIndex && val && columns[i - 2]) {
-                  customFields[columns[i - 2]] = val;
-                }
-              });
+        for (const cells of pastedRows) {
+          if (cells.length === 0) continue;
 
-              rows.push({ email, name, customFields: Object.keys(customFields).length > 0 ? customFields : undefined });
+          // Map cells to columns in order: email, name, ...custom fields
+          const email = cells[0] || "";
+          const name = cells[1] || "";
+
+          // Remaining cells go to custom fields
+          const customFields: Record<string, string> = {};
+          for (let i = 2; i < cells.length; i++) {
+            const columnIndex = i - 2;
+            if (columnIndex < columns.length && cells[i]) {
+              customFields[columns[columnIndex]] = cells[i];
             }
+          }
+
+          // Only add if we have at least an email or name
+          if (email || name) {
+            rows.push({
+              email: email || "",
+              name: name || "",
+              customFields: Object.keys(customFields).length > 0 ? customFields : undefined
+            });
           }
         }
 
         if (rows.length > 0) {
           await onBulkAdd(rows);
+          setNewRow({ email: "", name: "" });
         }
       }
     };
@@ -78,7 +102,75 @@ export default function ContactTable({
     return () => document.removeEventListener("paste", handlePaste);
   }, [onBulkAdd, columns]);
 
+  // Update selected cells when selection range changes
+  useEffect(() => {
+    if (!selectionStart || !selectionEnd) {
+      setSelectedCells(new Set());
+      return;
+    }
+
+    const startRowIndex = contacts.findIndex(c => c.id === selectionStart.id);
+    const endRowIndex = contacts.findIndex(c => c.id === selectionEnd.id);
+    const startColIndex = allFields.indexOf(selectionStart.field);
+    const endColIndex = allFields.indexOf(selectionEnd.field);
+
+    const minRow = Math.min(startRowIndex, endRowIndex);
+    const maxRow = Math.max(startRowIndex, endRowIndex);
+    const minCol = Math.min(startColIndex, endColIndex);
+    const maxCol = Math.max(startColIndex, endColIndex);
+
+    const newSelected = new Set<string>();
+    for (let row = minRow; row <= maxRow; row++) {
+      for (let col = minCol; col <= maxCol; col++) {
+        const contact = contacts[row];
+        const field = allFields[col];
+        if (contact && field) {
+          newSelected.add(`${contact.id}-${field}`);
+        }
+      }
+    }
+    setSelectedCells(newSelected);
+  }, [selectionStart, selectionEnd, contacts, allFields]);
+
+  // Handle mouse up globally to end selection
+  useEffect(() => {
+    const handleMouseUp = () => {
+      setIsSelecting(false);
+    };
+
+    if (isSelecting) {
+      document.addEventListener("mouseup", handleMouseUp);
+      return () => document.removeEventListener("mouseup", handleMouseUp);
+    }
+  }, [isSelecting]);
+
+  const handleCellMouseDown = (e: React.MouseEvent, id: string, field: string) => {
+    // Don't start selection if already editing
+    if (editingCell) return;
+
+    // Prevent text selection
+    e.preventDefault();
+
+    setIsSelecting(true);
+    setSelectionStart({ id, field });
+    setSelectionEnd({ id, field });
+  };
+
+  const handleCellMouseEnter = (id: string, field: string) => {
+    if (isSelecting) {
+      setSelectionEnd({ id, field });
+    }
+  };
+
+  const isCellSelected = (id: string, field: string) => {
+    return selectedCells.has(`${id}-${field}`);
+  };
+
   const startEditing = (id: string, field: string, value: string) => {
+    // Clear selection when starting to edit
+    setSelectedCells(new Set());
+    setSelectionStart(null);
+    setSelectionEnd(null);
     setEditingCell({ id, field });
     setEditValue(value);
   };
@@ -116,20 +208,24 @@ export default function ContactTable({
   };
 
   const handleAddRow = async () => {
-    if (newRow.email?.trim() && newRow.name?.trim()) {
+    // Allow adding row if at least one field has data
+    const hasData = Object.values(newRow).some(v => v?.trim());
+    if (hasData) {
       const { email, name, ...rest } = newRow;
       const customFields = Object.fromEntries(
         Object.entries(rest).filter(([_, v]) => v?.trim())
       );
-      await onAdd(email.trim(), name.trim(), Object.keys(customFields).length > 0 ? customFields : undefined);
+      await onAdd(
+        email?.trim() || "",
+        name?.trim() || "",
+        Object.keys(customFields).length > 0 ? customFields : undefined
+      );
       setNewRow({ email: "", name: "" });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Delete this contact?")) {
-      await onDelete(id);
-    }
+    await onDelete(id);
   };
 
   const handleAddColumn = () => {
@@ -141,12 +237,10 @@ export default function ContactTable({
   };
 
   const getCellValue = (contact: MatcherContact, field: string): string => {
-    if (field === "email") return contact.email;
-    if (field === "name") return contact.name;
+    if (field === "email") return contact.email || "";
+    if (field === "name") return contact.name || "";
     return contact.custom_fields?.[field] || "";
   };
-
-  const allFields = ["email", "name", ...columns];
 
   return (
     <div ref={tableRef}>
@@ -216,7 +310,12 @@ export default function ContactTable({
             {contacts.map((contact) => (
               <tr key={contact.id} className="hover:bg-accent/30">
                 {allFields.map((field) => (
-                  <td key={field} className="border border-border p-0">
+                  <td
+                    key={field}
+                    className="border border-border p-0"
+                    onMouseDown={(e) => handleCellMouseDown(e, contact.id, field)}
+                    onMouseEnter={() => handleCellMouseEnter(contact.id, field)}
+                  >
                     {editingCell?.id === contact.id && editingCell.field === field ? (
                       <input
                         type={field === "email" ? "email" : "text"}
@@ -230,7 +329,9 @@ export default function ContactTable({
                     ) : (
                       <div
                         onClick={() => startEditing(contact.id, field, getCellValue(contact, field))}
-                        className="px-3 py-2 cursor-text min-h-[40px] flex items-center"
+                        className={`px-3 py-2 cursor-text min-h-[40px] flex items-center ${
+                          isCellSelected(contact.id, field) ? "bg-primary/10 ring-1 ring-primary/30" : ""
+                        }`}
                       >
                         {getCellValue(contact, field) || <span className="text-muted-foreground/30">—</span>}
                       </div>
@@ -270,7 +371,7 @@ export default function ContactTable({
               <td className="border border-border p-0">
                 <button
                   onClick={handleAddRow}
-                  disabled={!newRow.email?.trim() || !newRow.name?.trim()}
+                  disabled={!Object.values(newRow).some(v => v?.trim())}
                   className="w-full h-full px-3 py-2 text-primary hover:bg-primary/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   title="Add"
                 >

@@ -218,11 +218,9 @@ export default function HomePage() {
   return (
     <div className="min-h-screen relative">
       {/* Composer Section */}
-      <section className="relative max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6">Home</h1>
-
+      <section className="relative max-w-2xl mx-auto px-4 pt-6 pb-0">
         {/* Twitter-style composer */}
-        <Card className="p-4 border-border/40">
+        <Card className="p-5 border-border shadow-sm">
           <div className="flex gap-4">
             {/* User Avatar */}
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 via-teal-500 to-orange-500 flex items-center justify-center text-white font-bold text-lg overflow-hidden flex-shrink-0">
@@ -276,8 +274,8 @@ export default function HomePage() {
       </section>
 
       {/* Project Feed */}
-      <section className="relative py-12 md:py-20 bg-muted/30">
-        <div className="max-w-2xl mx-auto px-4">
+      <section className="relative max-w-2xl mx-auto px-4 py-6">
+        <div className="space-y-4">
           {loadingProjects ? (
             <div className="text-center py-12 text-muted-foreground">Loading projects...</div>
           ) : projects.length === 0 ? (
@@ -291,7 +289,7 @@ export default function HomePage() {
               </Button>
             </Card>
           ) : (
-            <div className="space-y-6">
+            <>
               {projects.map((project) => (
                 <FeedCard
                   key={project.id}
@@ -302,7 +300,7 @@ export default function HomePage() {
                   initialComments={project.comments}
                 />
               ))}
-            </div>
+            </>
           )}
         </div>
       </section>

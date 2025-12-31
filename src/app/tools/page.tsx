@@ -8,6 +8,9 @@ import { cn } from "@/lib/utils";
 
 export default function ToolsPage() {
   const [user, setUser] = useState<User | null>(null);
+  const [toolIdea, setToolIdea] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -35,6 +38,30 @@ export default function ToolsPage() {
       return () => clearTimeout(timer);
     }
   }, [user]);
+
+  const handleSubmitIdea = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!toolIdea.trim() || submitting) return;
+
+    setSubmitting(true);
+    try {
+      await supabase.from("feedback").insert({
+        message: `Tool Idea: ${toolIdea}`,
+        email: user?.email || null,
+        completed: false,
+      });
+
+      setSubmitted(true);
+      setToolIdea("");
+
+      // Reset success message after 5 seconds
+      setTimeout(() => setSubmitted(false), 5000);
+    } catch (error) {
+      console.error("Error submitting tool idea:", error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const tools = [
     {
@@ -74,11 +101,11 @@ export default function ToolsPage() {
   ];
 
   return (
-    <div className="min-h-screen md:ml-60">
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen">
+      <main className="max-w-6xl mx-auto px-4 sm:px-8 py-12">
         <div className="space-y-8">
           {/* Header */}
-          <div className="space-y-3">
+          <div className="space-y-3 text-center">
             <h1 className="text-4xl font-bold tracking-tight">Maker Tools</h1>
             <p className="text-lg text-muted-foreground">
               Powerful tools to help you connect, collaborate, and grow in the maker community
@@ -154,12 +181,35 @@ export default function ToolsPage() {
             <p className="text-muted-foreground mb-6">
               We're always looking to build tools that help makers succeed. Share your ideas with us!
             </p>
-            <Link
-              href="/feedback"
-              className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
-            >
-              Share Feedback
-            </Link>
+
+            {submitted ? (
+              <div className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-green-500/10 text-green-600 font-medium">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Thanks! Your idea was taken
+              </div>
+            ) : (
+              <form onSubmit={handleSubmitIdea} className="max-w-md mx-auto">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={toolIdea}
+                    onChange={(e) => setToolIdea(e.target.value)}
+                    placeholder="Describe your tool idea..."
+                    className="flex-1 px-4 py-3 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    disabled={submitting}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!toolIdea.trim() || submitting}
+                    className="px-6 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {submitting ? "Submitting..." : "Submit"}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       </main>

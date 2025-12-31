@@ -70,7 +70,6 @@ interface BlogEngagementProps {
   initialLikeCount?: number;
   initialHasLiked?: boolean;
   initialComments?: Comment[];
-  onAuthRequired?: () => void;
 }
 
 export default function BlogEngagement({
@@ -79,8 +78,10 @@ export default function BlogEngagement({
   initialLikeCount = 0,
   initialHasLiked = false,
   initialComments = [],
-  onAuthRequired,
 }: BlogEngagementProps) {
+  const handleAuthRequired = () => {
+    window.location.href = "/profile";
+  };
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [hasLiked, setHasLiked] = useState(initialHasLiked);
   const [isLiking, setIsLiking] = useState(false);
@@ -108,7 +109,7 @@ export default function BlogEngagement({
 
   const handleLike = async () => {
     if (!currentUserId) {
-      onAuthRequired?.();
+      handleAuthRequired();
       return;
     }
 
@@ -158,7 +159,7 @@ export default function BlogEngagement({
     e.preventDefault();
 
     if (!currentUserId) {
-      onAuthRequired?.();
+      handleAuthRequired();
       return;
     }
 
@@ -299,7 +300,7 @@ export default function BlogEngagement({
             </form>
           ) : (
             <button
-              onClick={onAuthRequired}
+              onClick={handleAuthRequired}
               className="w-full mb-6 py-3 text-sm text-muted-foreground hover:text-foreground bg-muted rounded-lg transition-colors"
             >
               Sign in to comment

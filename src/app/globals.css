@@ -275,13 +275,27 @@ h1, h2, h3, h4, h5, h6 {
   );
 }
 
-/* Hide tldraw watermark/license message */
-.tldraw__license {
+/* Hide tldraw watermark/license message - comprehensive coverage */
+.tldraw__license,
+.tlui-watermark,
+.tlui-watermark__link,
+[class*="watermark"],
+[class*="license"] {
   display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
-/* Alternative: hide any element containing "license" text in tldraw */
+/* Hide any links to tldraw.com or containing "license" */
+.tldraw a[href*="tldraw.com"],
+.tldraw a[href*="license"],
+[class*="tldraw"] a[href*="tldraw.com"],
 [class*="tldraw"] a[href*="license"],
-[class*="tldraw"] a[href*="tldraw.com"] {
+.tlui-button[href*="tldraw"],
+.tlui-button[href*="license"],
+button[href*="tldraw"],
+button[href*="license"] {
   display: none !important;
+  visibility: hidden !important;
 }

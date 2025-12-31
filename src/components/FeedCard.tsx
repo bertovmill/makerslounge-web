@@ -221,9 +221,9 @@ export default function FeedCard({
   };
 
   return (
-    <Card className="glass-card overflow-hidden">
+    <Card className="overflow-hidden shadow-sm border-border">
       {/* Author header */}
-      <div className="p-4 flex items-center gap-3">
+      <div className="p-5 flex items-center gap-3">
         <Link href={`/profile/${project.profiles?.id}`}>
           <div className="w-10 h-10 bg-gradient-to-br from-rose-400 to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
             {project.profiles?.photo_url ? (
@@ -248,7 +248,7 @@ export default function FeedCard({
       </div>
 
       {/* Project content */}
-      <div className="px-4 pb-3">
+      <div className="px-5 pb-4">
         <h3 className="font-semibold text-lg mb-1">{project.title}</h3>
         {project.description && (
           <p className="text-muted-foreground text-sm line-clamp-3">{project.description}</p>
@@ -272,7 +272,7 @@ export default function FeedCard({
       )}
 
       {/* Actions */}
-      <div className="p-4 border-t border-border flex items-center gap-4">
+      <div className="px-5 py-3 border-t border-border flex items-center gap-4">
         {showParticles && <LikeParticles buttonRef={likeButtonRef} />}
         <motion.button
           ref={likeButtonRef}
@@ -322,7 +322,7 @@ export default function FeedCard({
 
       {/* Comments Section */}
       {showComments && (
-        <div className="px-4 pb-4 border-t border-border">
+        <div className="px-5 pb-5 border-t border-border">
           {/* Comment Form */}
           {currentUserId ? (
             <form onSubmit={handleComment} className="flex gap-2 pt-4">
