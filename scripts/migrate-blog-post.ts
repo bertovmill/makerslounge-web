@@ -141,14 +141,6 @@ One founder told me: *"ChatGPT is like having a junior analyst, copywriter, and 
 async function migratePost() {
   console.log('Starting blog post migration...\n')
 
-  // Validate author ID
-  if (AUTHOR_ID === 'YOUR_USER_ID_HERE') {
-    console.error('❌ Error: Please update AUTHOR_ID in the script with your actual user ID')
-    console.log('\nTo get your user ID, run this query in Supabase SQL Editor:')
-    console.log('SELECT id, email FROM auth.users LIMIT 5;\n')
-    process.exit(1)
-  }
-
   // Check if post already exists
   const { data: existing } = await supabase
     .from('blog_posts')
