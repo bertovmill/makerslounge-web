@@ -4,9 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import UserCard from "@/components/UserCard";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 interface Profile {
   id: string;
@@ -32,17 +30,13 @@ function PeopleContent() {
     searchParams.get("skills")?.split(",").filter(Boolean) || []
   );
   const [totalCount, setTotalCount] = useState(0);
-  const [searchInterpretation, setSearchInterpretation] = useState<string>("");
-  const [user, setUser] = useState<{ id: string } | null>(null);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
   const placeholders = [
-    "Search makers...",
-    "Find a React developer...",
-    "Someone building AI apps...",
-    "Need help with design...",
-    "Looking for a co-founder...",
-    "People like me...",
+    "Search by name or bio...",
+    "Find React developers...",
+    "Search for designers...",
+    "Looking for marketers...",
   ];
 
   // Rotate placeholder text
@@ -53,41 +47,44 @@ function PeopleContent() {
     return () => clearInterval(interval);
   }, []);
 
-  // Get current user for similarity searches
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUser({ id: data.user.id });
-      }
-    });
-  }, []);
-
   const fetchProfiles = useCallback(async () => {
     setLoading(true);
 
     try {
-      // Call AI-powered search API
-      const response = await fetch("/api/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: searchQuery,
-          currentUserId: user?.id,
-          filters: { skills: selectedSkills }
-        })
-      });
+      let query = supabase
+        .from("profiles")
+        .select("id, name, photo_url, bio, skills");
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
-        console.error("Search API error:", response.status, errorData);
-        throw new Error(`Search request failed: ${errorData.error || response.statusText}`);
+      // Apply text search filter (name or bio)
+      if (searchQuery.trim()) {
+        const searchTerm = `%${searchQuery.trim()}%`;
+        query = query.or(`name.ilike.${searchTerm},bio.ilike.${searchTerm}`);
       }
 
-      const { results, metadata } = await response.json();
+      const { data, error } = await query.order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      let filteredProfiles = data || [];
+
+      // Filter by selected skills (client-side since skills is an array)
+      if (selectedSkills.length > 0) {
+        filteredProfiles = filteredProfiles.filter((profile) => {
+          if (!profile.skills || profile.skills.length === 0) return false;
+          // Check if profile has at least one of the selected skills (case-insensitive)
+          return selectedSkills.some((selectedSkill) =>
+            profile.skills!.some(
+              (profileSkill) =>
+                profileSkill.toLowerCase().includes(selectedSkill.toLowerCase()) ||
+                selectedSkill.toLowerCase().includes(profileSkill.toLowerCase())
+            )
+          );
+        });
+      }
 
       // Deduplicate profiles by name (keep first occurrence)
       const seen = new Set<string>();
-      const uniqueProfiles = (results || []).filter((profile: Profile) => {
+      const uniqueProfiles = filteredProfiles.filter((profile) => {
         const key = profile.name?.toLowerCase() || profile.id;
         if (seen.has(key)) return false;
         seen.add(key);
@@ -96,16 +93,14 @@ function PeopleContent() {
 
       setProfiles(uniqueProfiles);
       setTotalCount(uniqueProfiles.length);
-      setSearchInterpretation(metadata.interpretation || "");
     } catch (err) {
-      console.error("AI search error:", err);
-      setSearchInterpretation("Search failed. Please try again.");
+      console.error("Search error:", err);
       setProfiles([]);
       setTotalCount(0);
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, selectedSkills, user?.id]);
+  }, [searchQuery, selectedSkills]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -225,21 +220,10 @@ function PeopleContent() {
           </div>
         </div>
 
-        {/* AI Interpretation */}
-        {searchInterpretation && !loading && (
-          <div className="max-w-3xl mx-auto mb-4">
-            <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-primary">AI:</span> {searchInterpretation}
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Results Count */}
         <div className="text-center text-sm text-muted-foreground mb-6">
           {loading ? (
-            <span>AI analyzing your search...</span>
+            <span>Searching...</span>
           ) : (
             `${totalCount} ${totalCount === 1 ? "person" : "people"} found`
           )}
@@ -249,8 +233,7 @@ function PeopleContent() {
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="text-center">
-              <p className="text-muted-foreground">AI analyzing your search...</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">This may take a few seconds</p>
+              <p className="text-muted-foreground">Loading makers...</p>
             </div>
           </div>
         ) : profiles.length === 0 ? (

@@ -63,11 +63,13 @@ export default function ToolsPage() {
     }
   };
 
+  const isAllowedUser = user?.email === "bertmill19@gmail.com";
+
   const tools = [
     {
       name: "Matcher",
       description: "Find your perfect collaborator match based on skills and interests",
-      href: "/matcher",
+      href: isAllowedUser ? "/matcher" : "#",
       icon: (
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-8 h-8">
           <path
@@ -79,6 +81,7 @@ export default function ToolsPage() {
         </svg>
       ),
       gradient: "from-pink-500 to-rose-500",
+      comingSoon: !isAllowedUser,
     },
     // Placeholder for future tools
     {
@@ -121,9 +124,16 @@ export default function ToolsPage() {
                 className={cn(
                   "group relative overflow-hidden rounded-xl border border-border bg-card p-6 transition-all duration-300",
                   "hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1",
-                  tool.disabled && "pointer-events-none opacity-60"
+                  (tool.disabled || tool.comingSoon) && "pointer-events-none opacity-60"
                 )}
               >
+                {/* Coming Soon Badge */}
+                {tool.comingSoon && (
+                  <div className="absolute top-4 right-4 px-2 py-1 text-xs font-medium rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                    Coming Soon
+                  </div>
+                )}
+
                 {/* Gradient background on hover */}
                 <div
                   className={cn(
@@ -152,7 +162,7 @@ export default function ToolsPage() {
                   </div>
 
                   {/* Arrow indicator */}
-                  {!tool.disabled && (
+                  {!tool.disabled && !tool.comingSoon && (
                     <div className="flex items-center text-sm font-medium text-primary transition-transform duration-300 group-hover:translate-x-1">
                       Try it out
                       <svg
