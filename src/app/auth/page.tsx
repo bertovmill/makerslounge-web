@@ -1,17 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
-export default function AuthPage() {
+function AuthContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(searchParams.get("mode") === "signup");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     // Redirect if already logged in
@@ -32,7 +35,6 @@ export default function AuthPage() {
 
   const handleSignInWithGoogle = async () => {
     setLoading(true);
-    // Use localhost for local dev, production URL otherwise
     const isDev = process.env.NODE_ENV === 'development';
     const redirectUrl = isDev ? 'http://localhost:3000' : 'https://makerslounge.ca';
 
@@ -74,26 +76,61 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <main className="flex-1 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-muted/30 flex flex-col relative overflow-hidden">
+      {/* Decorative shapes */}
+      <div className="absolute top-0 left-0 w-64 h-64 md:w-96 md:h-96 -translate-x-1/3 -translate-y-1/3">
+        <svg viewBox="0 0 200 200" className="w-full h-full">
+          <path
+            d="M100,10 L120,80 L190,80 L135,120 L155,190 L100,150 L45,190 L65,120 L10,80 L80,80 Z"
+            className="fill-blue-400/20"
+          />
+        </svg>
+      </div>
+      <div className="absolute bottom-0 right-0 w-48 h-48 md:w-80 md:h-80 translate-x-1/4 translate-y-1/4">
+        <svg viewBox="0 0 200 200" className="w-full h-full">
+          <circle cx="100" cy="100" r="90" className="fill-orange-300/20" />
+        </svg>
+      </div>
+      <div className="absolute top-1/4 right-10 w-24 h-24 md:w-32 md:h-32 hidden lg:block">
+        <svg viewBox="0 0 100 100" className="w-full h-full">
+          <rect x="10" y="10" width="80" height="80" rx="20" className="fill-teal-400/15" transform="rotate(15 50 50)" />
+        </svg>
+      </div>
+
+      {/* Main content */}
+      <main className="flex-1 flex items-center justify-center p-4 relative z-10">
         <div className="w-full max-w-md">
-          <div className="bg-card border border-border/50 rounded-lg p-8 shadow-sm">
-            <div className="mb-8">
-              <h1 className="text-2xl font-semibold mb-1.5">
-                {isSignUp ? "Create account" : "Welcome back"}
+          <div className="bg-white dark:bg-card border border-border/30 rounded-2xl p-8 md:p-10 shadow-xl shadow-black/5">
+            {/* Logo */}
+            <div className="flex justify-center mb-8">
+              <Link href="/" className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-teal-500 to-orange-500 flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">M</span>
+                </div>
+                <span className="text-xl font-semibold">MakersLounge</span>
+              </Link>
+            </div>
+
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-2xl md:text-3xl font-semibold mb-2">
+                {isSignUp ? "Create your account" : "Welcome back"}
               </h1>
-              <p className="text-muted-foreground text-sm">
-                {isSignUp ? "Sign up to your account" : "Sign in to your account"}
+              <p className="text-muted-foreground">
+                {isSignUp
+                  ? "Join Toronto's maker community"
+                  : "Sign in to continue to MakersLounge"}
               </p>
             </div>
 
+            {/* Google Sign In */}
             <Button
               variant="outline"
               onClick={handleSignInWithGoogle}
               disabled={loading}
-              className="w-full mb-6 h-10 rounded-md border-border/50 hover:bg-secondary/50 justify-start"
+              className="w-full h-12 rounded-xl border-border hover:bg-muted/50 justify-center gap-3 font-medium transition-all"
             >
-              <svg className="w-4 h-4 mr-3" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -102,48 +139,94 @@ export default function AuthPage() {
               Continue with Google
             </Button>
 
-            <div className="relative mb-6">
+            {/* Divider */}
+            <div className="relative my-8">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border/50"></div>
+                <div className="w-full border-t border-border"></div>
               </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-card px-2 text-muted-foreground">or</span>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white dark:bg-card px-4 text-muted-foreground uppercase tracking-wider text-xs">or</span>
               </div>
             </div>
 
-            <form onSubmit={handleSignInWithEmail} className="space-y-4">
+            {/* Email Form */}
+            <form onSubmit={handleSignInWithEmail} className="space-y-5">
               <div>
+                <label htmlFor="email" className="block text-sm font-medium mb-2">
+                  Email
+                </label>
                 <input
+                  id="email"
                   type="email"
-                  placeholder="joey@gmail.com"
+                  placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-10 px-3 bg-background border border-border/50 rounded-md text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/60 transition-colors"
+                  className="w-full h-12 px-4 bg-muted/30 border border-border rounded-xl text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/50 transition-all"
                   required
                 />
               </div>
               <div>
-                <input
-                  type="password"
-                  placeholder="••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-10 px-3 bg-background border border-border/50 rounded-md text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/60 transition-colors"
-                  required
-                  minLength={6}
-                />
+                <label htmlFor="password" className="block text-sm font-medium mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full h-12 px-4 pr-12 bg-muted/30 border border-border rounded-xl text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/50 transition-all"
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {isSignUp && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Must be at least 6 characters
+                  </p>
+                )}
               </div>
+
+              {!isSignUp && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
+
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-10 rounded-md"
+                className="w-full h-12 rounded-xl font-medium text-base"
               >
-                {loading ? "Loading..." : isSignUp ? "Sign up" : "Sign in"}
+                {loading ? "Loading..." : isSignUp ? "Create account" : "Sign in"}
               </Button>
             </form>
 
-            <p className="text-sm text-center mt-6 text-muted-foreground">
-              {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+            {/* Toggle sign in/up */}
+            <p className="text-sm text-center mt-8 text-muted-foreground">
+              {isSignUp ? "Already have an account?" : "New to MakersLounge?"}{" "}
               <button
                 type="button"
                 onClick={() => {
@@ -156,12 +239,34 @@ export default function AuthPage() {
               </button>
             </p>
 
+            {/* Message */}
             {message && (
-              <p className="text-sm text-center mt-4 text-muted-foreground bg-secondary/50 px-3 py-2 rounded-md">{message}</p>
+              <div className="mt-6 p-4 bg-muted/50 rounded-xl border border-border">
+                <p className="text-sm text-center text-muted-foreground">{message}</p>
+              </div>
             )}
           </div>
+
+          {/* Footer */}
+          <p className="text-center text-xs text-muted-foreground mt-8">
+            By continuing, you agree to our Terms of Service and Privacy Policy
+          </p>
         </div>
       </main>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      }
+    >
+      <AuthContent />
+    </Suspense>
   );
 }

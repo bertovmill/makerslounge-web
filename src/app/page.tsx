@@ -291,12 +291,12 @@ export default function Home() {
                       <Link href="/people">Explore makers</Link>
                     </Button>
                     <Button
+                      asChild
                       variant="outline"
                       size="lg"
                       className="rounded-full px-8 py-6 text-lg border-white/20 text-white bg-white/5 backdrop-blur-sm hover:bg-white/10"
-                      onClick={handleAuthRequired}
                     >
-                      Join the community
+                      <Link href="/auth?mode=signup">Join the community</Link>
                     </Button>
                   </div>
 
@@ -531,8 +531,8 @@ export default function Home() {
                   Create a project
                 </Button>
               ) : (
-                <Button onClick={handleAuthRequired} className="rounded-full">
-                  Sign up to post
+                <Button asChild className="rounded-full">
+                  <Link href="/auth?mode=signup">Sign up to post</Link>
                 </Button>
               )}
             </Card>
@@ -645,11 +645,11 @@ export default function Home() {
                   Create your profile, share your projects, and connect with makers who share your passion for building.
                 </p>
                 <Button
+                  asChild
                   size="lg"
                   className="rounded-full px-10 py-6 text-lg bg-white text-slate-900 hover:bg-white/90 shadow-lg"
-                  onClick={handleAuthRequired}
                 >
-                  Get started — it&apos;s free
+                  <Link href="/auth?mode=signup">Get started — it&apos;s free</Link>
                 </Button>
               </div>
             </div>
