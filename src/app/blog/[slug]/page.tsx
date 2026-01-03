@@ -29,7 +29,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     .eq("target_type", "blog_post")
     .eq("target_id", post.slug);
 
-  const { data: commentsData } = await supabase
+  const { data: rawCommentsData } = await supabase
     .from("comments")
     .select(
       `
@@ -46,6 +46,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     .eq("target_type", "blog_post")
     .eq("target_id", post.slug)
     .order("created_at", { ascending: false });
+
+  // Transform comments to ensure profiles is an object, not an array
+  const commentsData = rawCommentsData?.map((comment) => ({
+    ...comment,
+    profiles: Array.isArray(comment.profiles)
+      ? comment.profiles[0] || null
+      : comment.profiles,
+  }));
 
   // Get current user (server-side)
   const {

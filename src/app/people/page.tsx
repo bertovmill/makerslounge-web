@@ -74,7 +74,7 @@ function PeopleContent() {
           // Check if profile has at least one of the selected skills (case-insensitive)
           return selectedSkills.some((selectedSkill) =>
             profile.skills!.some(
-              (profileSkill) =>
+              (profileSkill: string) =>
                 profileSkill.toLowerCase().includes(selectedSkill.toLowerCase()) ||
                 selectedSkill.toLowerCase().includes(profileSkill.toLowerCase())
             )
