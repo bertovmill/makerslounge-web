@@ -104,9 +104,7 @@ function AuthContent() {
             {/* Logo */}
             <div className="flex justify-center mb-8">
               <Link href="/" className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-teal-500 to-orange-500 flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">M</span>
-                </div>
+                <img src="/icon-512.png" alt="MakersLounge" className="w-10 h-10" />
                 <span className="text-xl font-semibold">MakersLounge</span>
               </Link>
             </div>
@@ -114,12 +112,12 @@ function AuthContent() {
             {/* Header */}
             <div className="text-center mb-8">
               <h1 className="text-2xl md:text-3xl font-semibold mb-2">
-                {isSignUp ? "Create your account" : "Welcome back"}
+                {isSignUp ? "Create your account" : "Sign in"}
               </h1>
               <p className="text-muted-foreground">
                 {isSignUp
                   ? "Join Toronto's maker community"
-                  : "Sign in to continue to MakersLounge"}
+                  : "Continue to MakersLounge"}
               </p>
             </div>
 

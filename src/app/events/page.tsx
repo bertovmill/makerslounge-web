@@ -21,6 +21,7 @@ export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
 
   const fetchEvents = async () => {
     const { data, error } = await supabase
@@ -47,6 +48,20 @@ export default function EventsPage() {
     checkAdmin();
     fetchEvents();
   }, []);
+
+  const handleEditEvent = (event: Event) => {
+    setEventToEdit(event);
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    const { error } = await supabase.from("events").delete().eq("id", eventId);
+    if (error) {
+      console.error("Error deleting event:", error);
+      alert("Failed to delete event. Please try again.");
+    } else {
+      fetchEvents();
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -79,11 +94,22 @@ export default function EventsPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-12">
-        <Calendar events={events} />
+        <Calendar
+          events={events}
+          isAdmin={isAdmin}
+          onEditEvent={handleEditEvent}
+          onDeleteEvent={handleDeleteEvent}
+        />
       </div>
 
       {/* Event Form - Only visible to admin */}
-      {!loading && isAdmin && <EventForm onEventCreated={fetchEvents} />}
+      {!loading && isAdmin && (
+        <EventForm
+          onEventCreated={fetchEvents}
+          eventToEdit={eventToEdit}
+          onCancelEdit={() => setEventToEdit(null)}
+        />
+      )}
     </div>
   );
 }

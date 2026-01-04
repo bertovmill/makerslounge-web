@@ -298,7 +298,7 @@ export default function AboutPage() {
               <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
                 <span className="text-3xl">K</span>
               </div>
-              <h3 className="font-semibold text-xl mb-1">Katy</h3>
+              <h3 className="font-semibold text-xl mb-1">Katy Rozanova</h3>
               <p className="text-primary font-medium mb-4">Co-founder</p>
               <p className="text-muted-foreground text-sm leading-relaxed">
                 Passionate about building community and connecting makers with the right people

@@ -138,7 +138,12 @@ export default function ProfilePage() {
         .eq("id", user.id);
 
       if (error) {
-        console.error("Supabase error:", error);
+        console.error("Supabase error:", {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+        });
         throw error;
       }
 
@@ -146,8 +151,14 @@ export default function ProfilePage() {
       setMessage("Saved!");
       setTimeout(() => setMessage(""), 2000);
     } catch (error: any) {
-      console.error("Update error:", error);
-      const errorMessage = error?.message || error?.hint || "Failed to save";
+      console.error("Update error:", {
+        message: error?.message,
+        details: error?.details,
+        hint: error?.hint,
+        code: error?.code,
+        full: error,
+      });
+      const errorMessage = error?.message || error?.hint || error?.details || "Failed to save";
       setMessage(errorMessage);
       setTimeout(() => setMessage(""), 5000);
     }

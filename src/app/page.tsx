@@ -231,6 +231,29 @@ export default function Home() {
 
   return (
     <div className="min-h-screen relative">
+      {/* Top header with login - for non-logged-in users */}
+      {!user && (
+        <header className="absolute top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 py-4">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2">
+              <img src="/icon-512.png" alt="MakersLounge" className="w-9 h-9" />
+              <span className="text-white font-semibold hidden sm:block">MakersLounge</span>
+            </Link>
+
+            {/* Login button */}
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="rounded-full px-5 border-white/20 text-white bg-white/5 backdrop-blur-sm hover:bg-white/10"
+            >
+              <Link href="/auth">Login</Link>
+            </Button>
+          </div>
+        </header>
+      )}
+
       {/* Hero Section for non-logged-in users */}
       {!user ? (
         <>
@@ -296,7 +319,7 @@ export default function Home() {
                       size="lg"
                       className="rounded-full px-8 py-6 text-lg border-white/20 text-white bg-white/5 backdrop-blur-sm hover:bg-white/10"
                     >
-                      <Link href="/auth?mode=signup">Join the community</Link>
+                      <Link href="/auth">Login</Link>
                     </Button>
                   </div>
 
@@ -313,7 +336,7 @@ export default function Home() {
                       ))}
                     </div>
                     <p className="text-white/60 text-sm">
-                      <span className="text-white font-semibold">80+ makers</span> already connected
+                      <span className="text-white font-semibold">400+ makers</span> already connected
                     </p>
                   </div>
                 </div>
@@ -342,7 +365,7 @@ export default function Home() {
                         </svg>
                       </div>
                       <div>
-                        <p className="text-2xl font-bold text-white">4+</p>
+                        <p className="text-2xl font-bold text-white">6</p>
                         <p className="text-white/60 text-sm">Events hosted</p>
                       </div>
                     </div>
@@ -517,6 +540,16 @@ export default function Home() {
 
       {/* Project Feed */}
       <section className="relative max-w-2xl mx-auto px-4 py-6">
+        {/* Section title for non-logged-in users */}
+        {!user && (
+          <div className="text-center mb-8">
+            <Badge variant="secondary" className="mb-3">
+              Community
+            </Badge>
+            <h2 className="text-2xl md:text-3xl font-bold">Preview community posts</h2>
+            <p className="text-muted-foreground mt-2">See what makers are building</p>
+          </div>
+        )}
         <div className="space-y-4">
           {loadingProjects ? (
             <div className="text-center py-12 text-muted-foreground">Loading projects...</div>

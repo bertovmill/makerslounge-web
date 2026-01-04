@@ -1,14 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Plus, X } from "lucide-react";
 
-interface EventFormProps {
-  onEventCreated: () => void;
+interface Event {
+  id: string;
+  title: string;
+  description: string | null;
+  start_time: string;
+  end_time: string;
+  location: string | null;
+  image_url: string | null;
+  event_url: string | null;
+  is_all_day: boolean;
 }
 
-export default function EventForm({ onEventCreated }: EventFormProps) {
+interface EventFormProps {
+  onEventCreated: () => void;
+  eventToEdit?: Event | null;
+  onCancelEdit?: () => void;
+}
+
+export default function EventForm({ onEventCreated, eventToEdit, onCancelEdit }: EventFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAllDay, setIsAllDay] = useState(false);
@@ -21,6 +35,62 @@ export default function EventForm({ onEventCreated }: EventFormProps) {
     image_url: "",
     event_url: "",
   });
+
+  const isEditing = !!eventToEdit;
+
+  // Open form and populate data when editing
+  useEffect(() => {
+    if (eventToEdit) {
+      setIsOpen(true);
+      setIsAllDay(eventToEdit.is_all_day);
+
+      // Format datetime for input fields
+      const formatForInput = (dateStr: string, isAllDay: boolean) => {
+        const date = new Date(dateStr);
+        if (isAllDay) {
+          return date.toISOString().split("T")[0];
+        }
+        // Format as local datetime
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+      };
+
+      setFormData({
+        title: eventToEdit.title,
+        description: eventToEdit.description || "",
+        start_time: formatForInput(eventToEdit.start_time, eventToEdit.is_all_day),
+        end_time: formatForInput(eventToEdit.end_time, eventToEdit.is_all_day),
+        location: eventToEdit.location || "",
+        image_url: eventToEdit.image_url || "",
+        event_url: eventToEdit.event_url || "",
+      });
+    }
+  }, [eventToEdit]);
+
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      description: "",
+      start_time: "",
+      end_time: "",
+      location: "",
+      image_url: "",
+      event_url: "",
+    });
+    setIsAllDay(false);
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    resetForm();
+    if (isEditing && onCancelEdit) {
+      onCancelEdit();
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +108,7 @@ export default function EventForm({ onEventCreated }: EventFormProps) {
         endTime = `${endDate}T23:59:59`;
       }
 
-      const { error } = await supabase.from("events").insert({
+      const eventData = {
         title: formData.title,
         description: formData.description || null,
         start_time: startTime,
@@ -47,26 +117,28 @@ export default function EventForm({ onEventCreated }: EventFormProps) {
         image_url: formData.image_url || null,
         event_url: formData.event_url || null,
         is_all_day: isAllDay,
-      });
+      };
 
-      if (error) throw error;
+      if (isEditing && eventToEdit) {
+        const { error } = await supabase
+          .from("events")
+          .update(eventData)
+          .eq("id", eventToEdit.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("events").insert(eventData);
+        if (error) throw error;
+      }
 
-      // Reset form
-      setFormData({
-        title: "",
-        description: "",
-        start_time: "",
-        end_time: "",
-        location: "",
-        image_url: "",
-        event_url: "",
-      });
-      setIsAllDay(false);
+      resetForm();
       setIsOpen(false);
+      if (isEditing && onCancelEdit) {
+        onCancelEdit();
+      }
       onEventCreated();
     } catch (error) {
-      console.error("Error creating event:", error);
-      alert("Failed to create event. Please try again.");
+      console.error("Error saving event:", error);
+      alert(`Failed to ${isEditing ? "update" : "create"} event. Please try again.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -88,9 +160,11 @@ export default function EventForm({ onEventCreated }: EventFormProps) {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-background rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-background border-b border-border p-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Create New Event</h2>
+              <h2 className="text-xl font-semibold">
+                {isEditing ? "Edit Event" : "Create New Event"}
+              </h2>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 className="p-2 hover:bg-secondary rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -230,7 +304,7 @@ export default function EventForm({ onEventCreated }: EventFormProps) {
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleClose}
                   className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-secondary transition-colors"
                 >
                   Cancel
@@ -240,7 +314,13 @@ export default function EventForm({ onEventCreated }: EventFormProps) {
                   disabled={isSubmitting}
                   className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
-                  {isSubmitting ? "Creating..." : "Create Event"}
+                  {isSubmitting
+                    ? isEditing
+                      ? "Saving..."
+                      : "Creating..."
+                    : isEditing
+                      ? "Save Changes"
+                      : "Create Event"}
                 </button>
               </div>
             </form>

@@ -22,7 +22,11 @@ export const metadata: Metadata = {
   title: "MakersLounge - Toronto's Maker Community",
   description: "Connect with makers, share projects, and grow your network in Toronto's most supportive community for builders.",
   icons: {
-    icon: "/favicon.svg",
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/icon-512.png",
   },
 };
 

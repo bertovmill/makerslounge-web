@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, MapPin, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, ExternalLink, Pencil, Trash2 } from "lucide-react";
 
 interface Event {
   id: string;
@@ -17,9 +17,12 @@ interface Event {
 
 interface CalendarProps {
   events: Event[];
+  isAdmin?: boolean;
+  onEditEvent?: (event: Event) => void;
+  onDeleteEvent?: (eventId: string) => void;
 }
 
-export default function Calendar({ events }: CalendarProps) {
+export default function Calendar({ events, isAdmin, onEditEvent, onDeleteEvent }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -201,7 +204,31 @@ export default function Calendar({ events }: CalendarProps) {
                       className="w-full h-40 object-cover rounded-lg mb-3"
                     />
                   )}
-                  <h4 className="font-semibold text-lg mb-2">{event.title}</h4>
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className="font-semibold text-lg mb-2">{event.title}</h4>
+                    {isAdmin && (
+                      <div className="flex gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => onEditEvent?.(event)}
+                          className="p-1.5 hover:bg-secondary rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+                          title="Edit event"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm("Are you sure you want to delete this event?")) {
+                              onDeleteEvent?.(event.id);
+                            }
+                          }}
+                          className="p-1.5 hover:bg-destructive/10 rounded-lg transition-colors text-muted-foreground hover:text-destructive"
+                          title="Delete event"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   {event.description && (
                     <p className="text-muted-foreground text-sm mb-3">
                       {event.description}
@@ -266,7 +293,31 @@ export default function Calendar({ events }: CalendarProps) {
                     />
                   )}
                   <div className="flex-1">
-                    <h4 className="font-semibold text-lg mb-1">{event.title}</h4>
+                    <div className="flex items-start justify-between gap-2">
+                      <h4 className="font-semibold text-lg mb-1">{event.title}</h4>
+                      {isAdmin && (
+                        <div className="flex gap-1 flex-shrink-0">
+                          <button
+                            onClick={() => onEditEvent?.(event)}
+                            className="p-1.5 hover:bg-secondary rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+                            title="Edit event"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm("Are you sure you want to delete this event?")) {
+                                onDeleteEvent?.(event.id);
+                              }
+                            }}
+                            className="p-1.5 hover:bg-destructive/10 rounded-lg transition-colors text-muted-foreground hover:text-destructive"
+                            title="Delete event"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                     {event.description && (
                       <p className="text-muted-foreground text-sm mb-2">
                         {event.description}
