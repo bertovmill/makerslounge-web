@@ -57,12 +57,31 @@ export default function Home() {
   const [isPosting, setIsPosting] = useState(false);
 
   useEffect(() => {
+    const checkOnboardingStatus = async (userId: string) => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("onboarding_completed")
+        .eq("id", userId)
+        .single();
+
+      // If logged in but not onboarded, redirect to onboarding
+      if (!profile || !profile.onboarding_completed) {
+        window.location.href = "/onboarding";
+      }
+    };
+
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
+      if (user) {
+        checkOnboardingStatus(user.id);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        checkOnboardingStatus(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -315,9 +334,9 @@ export default function Home() {
                     </Button>
                     <Button
                       asChild
-                      variant="outline"
+                      variant="ghost"
                       size="lg"
-                      className="rounded-full px-8 py-6 text-lg border-white/20 text-white bg-white/5 backdrop-blur-sm hover:bg-white/10"
+                      className="rounded-full px-8 py-6 text-lg border border-white/20 text-white bg-white/5 backdrop-blur-sm hover:bg-white/15 hover:text-white hover:border-white/30"
                     >
                       <Link href="/auth">Login</Link>
                     </Button>

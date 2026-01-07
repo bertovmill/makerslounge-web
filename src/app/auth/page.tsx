@@ -17,16 +17,31 @@ function AuthContent() {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
+    const checkOnboardingStatus = async (userId: string) => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("onboarding_completed")
+        .eq("id", userId)
+        .single();
+
+      // If no profile or not onboarded, go to onboarding
+      if (!profile || !profile.onboarding_completed) {
+        router.push("/onboarding");
+      } else {
+        router.push("/home");
+      }
+    };
+
     // Redirect if already logged in
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
-        router.push("/");
+        checkOnboardingStatus(user.id);
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        router.push("/");
+        checkOnboardingStatus(session.user.id);
       }
     });
 

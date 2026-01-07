@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { ThemedProfile } from "./ThemedProfile";
 import { Badge } from "./ui/badge";
@@ -80,8 +80,24 @@ export function EditablePublicProfile({
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showCoverPicker, setShowCoverPicker] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const coverStyle = getCoverStyle(profile.cover_image);
+
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await onPhotoUpload(file);
+    }
+    // Reset input so same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleStartEdit = (field: string, currentValue: string) => {
     setEditingField(field);
@@ -142,7 +158,14 @@ export function EditablePublicProfile({
         >
           <div className="flex flex-col md:flex-row gap-6 items-start md:items-center mb-6">
             {/* Avatar with Edit on Hover */}
-            <div className="relative group/avatar">
+            <div className="relative group/avatar" onClick={handlePhotoClick}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
               <div
                 className="w-28 h-28 md:w-36 md:h-36 rounded-2xl overflow-hidden flex-shrink-0 border-4 cursor-pointer"
                 style={{
@@ -161,7 +184,7 @@ export function EditablePublicProfile({
                 )}
               </div>
               {/* Edit overlay on hover */}
-              <div className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                 <span className="text-white text-sm font-medium">Change Photo</span>
               </div>
             </div>
@@ -365,7 +388,7 @@ export function EditablePublicProfile({
           </p>
         </div>
 
-        {/* Portfolio Section */}
+        {/* Recent Posts Section */}
         <div>
           <div className="flex items-center justify-between mb-6">
             <h2
@@ -375,7 +398,7 @@ export function EditablePublicProfile({
                 color: 'var(--theme-fg)',
               }}
             >
-              Portfolio
+              Recent Posts
             </h2>
             <Button
               onClick={() => {

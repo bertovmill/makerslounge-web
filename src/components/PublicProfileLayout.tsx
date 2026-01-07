@@ -212,7 +212,7 @@ export function PublicProfileLayout({ profile, projects }: PublicProfileProps) {
           </div>
         )}
 
-        {/* Portfolio Section */}
+        {/* Recent Posts Section */}
         {projects && projects.length > 0 && (
           <div>
             <h2
@@ -222,7 +222,7 @@ export function PublicProfileLayout({ profile, projects }: PublicProfileProps) {
                 color: 'var(--theme-fg)',
               }}
             >
-              Portfolio
+              Recent Posts
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

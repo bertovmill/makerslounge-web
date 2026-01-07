@@ -20,10 +20,11 @@ interface EventFormProps {
   onEventCreated: () => void;
   eventToEdit?: Event | null;
   onCancelEdit?: () => void;
+  embedded?: boolean;
 }
 
-export default function EventForm({ onEventCreated, eventToEdit, onCancelEdit }: EventFormProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function EventForm({ onEventCreated, eventToEdit, onCancelEdit, embedded = false }: EventFormProps) {
+  const [isOpen, setIsOpen] = useState(embedded);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAllDay, setIsAllDay] = useState(false);
   const [formData, setFormData] = useState({
@@ -144,34 +145,9 @@ export default function EventForm({ onEventCreated, eventToEdit, onCancelEdit }:
     }
   };
 
-  return (
-    <>
-      {/* Add Event Button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-6 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center gap-2 z-50"
-      >
-        <Plus className="w-6 h-6" />
-        <span className="font-medium pr-2">Add Event</span>
-      </button>
-
-      {/* Modal */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-background rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-background border-b border-border p-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">
-                {isEditing ? "Edit Event" : "Create New Event"}
-              </h2>
-              <button
-                onClick={handleClose}
-                className="p-2 hover:bg-secondary rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+  // Form content shared between embedded and modal modes
+  const formContent = (
+    <form onSubmit={handleSubmit} className={embedded ? "space-y-4" : "p-6 space-y-4"}>
               <div>
                 <label htmlFor="title" className="block text-sm font-medium mb-2">
                   Event Title *
@@ -301,29 +277,64 @@ export default function EventForm({ onEventCreated, eventToEdit, onCancelEdit }:
                 />
               </div>
 
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-secondary transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-                >
-                  {isSubmitting
-                    ? isEditing
-                      ? "Saving..."
-                      : "Creating..."
-                    : isEditing
-                      ? "Save Changes"
-                      : "Create Event"}
-                </button>
-              </div>
-            </form>
+      <div className="flex gap-3 pt-4">
+        <button
+          type="button"
+          onClick={handleClose}
+          className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-secondary transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {isSubmitting
+            ? isEditing
+              ? "Saving..."
+              : "Creating..."
+            : isEditing
+              ? "Save Changes"
+              : "Create Event"}
+        </button>
+      </div>
+    </form>
+  );
+
+  // Embedded mode: just return the form
+  if (embedded) {
+    return formContent;
+  }
+
+  // Standard mode with floating button and modal
+  return (
+    <>
+      {/* Add Event Button */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-24 right-6 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center gap-2 z-50"
+      >
+        <Plus className="w-6 h-6" />
+        <span className="font-medium pr-2">Add Event</span>
+      </button>
+
+      {/* Modal */}
+      {isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-background rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-background border-b border-border p-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold">
+                {isEditing ? "Edit Event" : "Create New Event"}
+              </h2>
+              <button
+                onClick={handleClose}
+                className="p-2 hover:bg-secondary rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {formContent}
           </div>
         </div>
       )}

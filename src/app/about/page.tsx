@@ -42,12 +42,11 @@ export default function AboutPage() {
                 Our Story
               </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 tracking-tight">
-                A place where{" "}
-                <span className="text-gradient">every maker belongs</span>
+                <span className="text-gradient">Passionate people</span> can change the world
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed">
-                MakersLounge started in Toronto with a simple idea: building is better together.
-                Whether you&apos;re a first-time creator or a seasoned builder, you&apos;re welcome here.
+                We&apos;re here to enable them through community. Whether you&apos;re a first-time creator
+                or a seasoned builder, you&apos;re welcome here.
               </p>
             </div>
           </div>

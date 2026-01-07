@@ -28,6 +28,9 @@ interface Profile {
   cover_image: string | null;
   whiteboard_data: any | null;
   show_whiteboard: boolean | null;
+  currently_building: string | null;
+  looking_for_skills: string[] | null;
+  onboarding_completed: boolean | null;
 }
 
 interface Project {
@@ -62,6 +65,9 @@ export default function ProfilePage() {
     cover_image: null,
     whiteboard_data: null,
     show_whiteboard: false,
+    currently_building: null,
+    looking_for_skills: [],
+    onboarding_completed: false,
   });
 
   const [projects, setProjects] = useState<Project[]>([]);
@@ -105,6 +111,9 @@ export default function ProfilePage() {
           cover_image: null,
           whiteboard_data: null,
           show_whiteboard: false,
+          currently_building: null,
+          looking_for_skills: [],
+          onboarding_completed: false,
         };
 
         await supabase.from("profiles").insert(newProfile);
@@ -214,6 +223,8 @@ export default function ProfilePage() {
     await handleUpdateProfile({
       username: profile.username,
       skills: profile.skills,
+      looking_for_skills: profile.looking_for_skills,
+      currently_building: profile.currently_building,
       linkedin: profile.linkedin,
       twitter: profile.twitter,
       website: profile.website,
@@ -322,12 +333,37 @@ export default function ProfilePage() {
                   </p>
                 </div>
 
-                {/* Skills */}
+                {/* Currently Building */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">Skills</label>
+                  <label className="block text-sm font-medium mb-2">Currently Building</label>
+                  <textarea
+                    value={profile.currently_building || ""}
+                    onChange={(e) => setProfile({ ...profile, currently_building: e.target.value })}
+                    className="w-full px-4 py-3 border border-border rounded-lg resize-none"
+                    placeholder="What are you currently working on?"
+                    rows={3}
+                  />
+                </div>
+
+                {/* Skills (Superpowers) */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Your Superpowers</label>
                   <SkillsInput
                     skills={profile.skills || []}
                     onChange={(skills) => setProfile({ ...profile, skills })}
+                    maxSkills={10}
+                  />
+                </div>
+
+                {/* Looking For Skills */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Skills You&apos;re Looking For</label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    What skills are you looking for in collaborators?
+                  </p>
+                  <SkillsInput
+                    skills={profile.looking_for_skills || []}
+                    onChange={(looking_for_skills) => setProfile({ ...profile, looking_for_skills })}
                     maxSkills={10}
                   />
                 </div>
