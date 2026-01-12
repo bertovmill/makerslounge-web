@@ -242,7 +242,7 @@ export default function EventPlanningPage() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* AI Chat Panel */}
         <div className="lg:col-span-2">
-          <Card className="flex flex-col h-[600px]">
+          <Card className="flex flex-col h-[calc(100vh-180px)]">
             {/* Tabs */}
             <div className="flex border-b border-border">
               <button

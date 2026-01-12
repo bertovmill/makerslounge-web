@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface Profile {
-  avatar_url?: string;
+  photo_url?: string;
   username?: string;
-  full_name?: string;
+  name?: string;
 }
 
 export default function AuthButton() {
@@ -59,7 +59,7 @@ export default function AuthButton() {
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("avatar_url, username, full_name")
+      .select("photo_url, username, name")
       .eq("id", userId)
       .single();
 
@@ -73,8 +73,8 @@ export default function AuthButton() {
   };
 
   const getInitials = () => {
-    if (profile?.full_name) {
-      return profile.full_name
+    if (profile?.name) {
+      return profile.name
         .split(" ")
         .map((n) => n[0])
         .join("")
@@ -95,14 +95,14 @@ export default function AuthButton() {
       <div className="relative" ref={menuRef}>
         <div className="flex items-center gap-3 hover:bg-accent/50 p-2 rounded-lg transition-colors cursor-pointer group">
           <Avatar className="size-9">
-            <AvatarImage src={profile?.avatar_url} alt={profile?.username || user.email || ""} />
+            <AvatarImage src={profile?.photo_url} alt={profile?.username || user.email || ""} />
             <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
               {getInitials()}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate">
-              {profile?.username || profile?.full_name || user.email?.split("@")[0]}
+              {profile?.name || profile?.username || user.email?.split("@")[0]}
             </p>
             <p className="text-xs text-muted-foreground truncate">
               {user.email}

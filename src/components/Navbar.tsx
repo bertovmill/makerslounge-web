@@ -8,11 +8,13 @@ import { User } from "@supabase/supabase-js";
 import AuthButton from "./AuthButton";
 import Logo from "./Logo";
 import { cn } from "@/lib/utils";
+import { useSidebar } from "@/context/SidebarContext";
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { collapsed, setCollapsed } = useSidebar();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -98,6 +100,16 @@ export default function Navbar() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
       </svg>
     ),
+    video: (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+      </svg>
+    ),
+    agents: (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+    ),
   };
 
   const NavLink = ({ href, children, icon }: { href: string; children: React.ReactNode; icon?: React.ReactNode }) => {
@@ -110,12 +122,14 @@ export default function Navbar() {
           "hover:bg-accent/50 hover:text-foreground",
           isActive
             ? "bg-accent text-foreground"
-            : "text-muted-foreground"
+            : "text-muted-foreground",
+          collapsed && "justify-center px-2"
         )}
         onClick={closeMenu}
+        title={collapsed ? String(children) : undefined}
       >
         {icon && <span className="w-5 h-5 flex-shrink-0">{icon}</span>}
-        {children}
+        {!collapsed && children}
       </Link>
     );
   };
@@ -123,12 +137,44 @@ export default function Navbar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex fixed left-0 top-0 h-screen w-60 border-r border-border bg-background/80 backdrop-blur-md flex-col z-50">
-        <div className="p-6">
+      <aside className={cn(
+        "hidden md:flex fixed left-0 top-0 h-screen border-r border-border bg-background/80 backdrop-blur-md flex-col z-50 transition-all duration-300",
+        collapsed ? "w-16" : "w-60"
+      )}>
+        <div className={cn("p-6 flex items-center", collapsed ? "justify-center p-4" : "justify-between")}>
           <Link href="/" className="hover:opacity-90 transition-opacity inline-block">
-            <Logo size="sm" />
+            {collapsed ? (
+              <div className="w-8 h-8 bg-gradient-to-br from-primary to-orange-400 rounded-lg" />
+            ) : (
+              <Logo size="sm" />
+            )}
           </Link>
+          {!collapsed && (
+            <button
+              onClick={() => setCollapsed(true)}
+              className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+              aria-label="Collapse sidebar"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
         </div>
+
+        {collapsed && (
+          <div className="px-3 mb-2">
+            <button
+              onClick={() => setCollapsed(false)}
+              className="w-full p-2 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground flex justify-center"
+              aria-label="Expand sidebar"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        )}
 
         <nav className="flex-1 flex flex-col gap-1 px-3 py-4">
           {user && (
@@ -139,17 +185,19 @@ export default function Navbar() {
           )}
 
           <NavLink href="/people" icon={icons.people}>People</NavLink>
+          <NavLink href="/agents" icon={icons.agents}>Agents</NavLink>
           <NavLink href="/events" icon={icons.events}>Events</NavLink>
           <NavLink href="/workshops" icon={icons.workshops}>Workshops</NavLink>
           <NavLink href="/podcast" icon={icons.podcast}>Podcast</NavLink>
           <NavLink href="/blog" icon={icons.blog}>Blog</NavLink>
-          <NavLink href="/about" icon={icons.about}>About</NavLink>
+          <NavLink href="/about" icon={icons.about}>About us</NavLink>
 
           {user && (
             <>
               <div className="my-2 border-t border-border"></div>
               <NavLink href="/profile" icon={icons.profile}>Profile</NavLink>
               <NavLink href="/tools" icon={icons.tools}>Maker Tools</NavLink>
+              <NavLink href="/video-editing" icon={icons.video}>Video Editing</NavLink>
             </>
           )}
 
@@ -162,8 +210,16 @@ export default function Navbar() {
           )}
         </nav>
 
-        <div className="p-4 border-t border-border">
-          <AuthButton />
+        <div className={cn("p-4 border-t border-border", collapsed && "flex justify-center")}>
+          {collapsed ? (
+            <Link href="/profile" className="p-2 rounded-lg hover:bg-accent transition-colors" title="Profile">
+              <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </Link>
+          ) : (
+            <AuthButton />
+          )}
         </div>
       </aside>
 
@@ -204,17 +260,19 @@ export default function Navbar() {
               )}
 
               <NavLink href="/people" icon={icons.people}>People</NavLink>
+              <NavLink href="/agents" icon={icons.agents}>Agents</NavLink>
               <NavLink href="/events" icon={icons.events}>Events</NavLink>
               <NavLink href="/workshops" icon={icons.workshops}>Workshops</NavLink>
               <NavLink href="/podcast" icon={icons.podcast}>Podcast</NavLink>
               <NavLink href="/blog" icon={icons.blog}>Blog</NavLink>
-              <NavLink href="/about" icon={icons.about}>About</NavLink>
+              <NavLink href="/about" icon={icons.about}>About us</NavLink>
 
               {user && (
                 <>
                   <div className="my-2 border-t border-border"></div>
                   <NavLink href="/profile" icon={icons.profile}>Profile</NavLink>
                   <NavLink href="/tools" icon={icons.tools}>Maker Tools</NavLink>
+                  <NavLink href="/video-editing" icon={icons.video}>Video Editing</NavLink>
                 </>
               )}
 

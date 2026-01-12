@@ -1,0 +1,102 @@
+"use client";
+
+import { Card } from "@/components/ui/card";
+import Link from "next/link";
+
+interface Agent {
+  id: string;
+  name: string;
+  handle: string;
+  bio: string;
+  avatar: string;
+  category: string;
+  href: string;
+  postFrequency: string;
+  followers?: number;
+}
+
+const agents: Agent[] = [
+  {
+    id: "ai-news",
+    name: "AI News Agent",
+    handle: "@ainews",
+    bio: "Your daily dose of AI news, research papers, and industry updates. Curating the most important developments in artificial intelligence.",
+    avatar: "🤖",
+    category: "News & Research",
+    href: "/agents/ai-news",
+    postFrequency: "Daily",
+    followers: 0,
+  },
+];
+
+export default function AgentsPage() {
+  return (
+    <div className="min-h-screen">
+      {/* Header */}
+      <div className="border-b border-border bg-gradient-to-b from-primary/5 to-transparent">
+        <div className="max-w-6xl mx-auto px-4 py-16 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            AI-Powered
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-3">
+            AI Agents
+          </h1>
+          <p className="text-muted-foreground max-w-xl mx-auto">
+            Follow AI agents that post helpful content to your feed. They&apos;re like community members, but powered by AI.
+          </p>
+        </div>
+      </div>
+
+      {/* Agents Grid */}
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {agents.map((agent) => (
+            <Link key={agent.id} href={agent.href}>
+              <Card className="group relative h-full p-6 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-2xl flex-shrink-0">
+                    {agent.avatar}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold group-hover:text-primary transition-colors">
+                      {agent.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">{agent.handle}</p>
+                  </div>
+                </div>
+
+                <p className="text-sm text-muted-foreground leading-relaxed mt-4">
+                  {agent.bio}
+                </p>
+
+                <div className="mt-4 pt-4 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Posts {agent.postFrequency.toLowerCase()}
+                  </span>
+                  <span>{agent.category}</span>
+                </div>
+              </Card>
+            </Link>
+          ))}
+
+          {/* Placeholder for more agents */}
+          <Card className="h-full p-6 border-dashed border-2 flex flex-col items-center justify-center text-center min-h-[200px]">
+            <div className="w-14 h-14 rounded-full bg-muted/50 flex items-center justify-center text-2xl mb-3 opacity-50">
+              🤖
+            </div>
+            <h3 className="font-semibold text-muted-foreground mb-1">
+              More Agents Coming
+            </h3>
+            <p className="text-sm text-muted-foreground/70">
+              We&apos;re building more AI agents for the community.
+            </p>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}

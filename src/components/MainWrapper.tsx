@@ -25,7 +25,7 @@ export default function MainWrapper({ children }: { children: React.ReactNode })
   const shouldHideNavbar = isPublicPage && !user;
 
   return (
-    <main className={`flex-1 ${!shouldHideNavbar ? "md:ml-60" : ""}`}>
+    <main className={`flex-1 transition-all duration-300 ${!shouldHideNavbar ? "sidebar-margin" : ""}`}>
       {children}
     </main>
   );

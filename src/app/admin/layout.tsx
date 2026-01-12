@@ -88,10 +88,12 @@ export default function AdminLayout({
       {/* Toggle button - always visible when sidebar is closed */}
       <button
         onClick={toggleSidebar}
-        className={cn(
-          "fixed top-3 z-50 p-2 rounded-lg bg-card border border-border shadow-sm hover:bg-muted transition-all duration-300 hidden md:flex items-center justify-center",
-          isOpen ? "left-[calc(15rem+12rem-2.5rem)]" : "left-[calc(15rem+0.5rem)]"
-        )}
+        className="fixed top-3 z-50 p-2 rounded-lg bg-card border border-border shadow-sm hover:bg-muted transition-all duration-300 hidden md:flex items-center justify-center"
+        style={{
+          left: isOpen
+            ? "calc(var(--sidebar-width, 15rem) + 12rem - 2.5rem)"
+            : "calc(var(--sidebar-width, 15rem) + 0.5rem)"
+        }}
         title={isOpen ? "Close admin menu" : "Open admin menu"}
       >
         <svg
@@ -107,9 +109,10 @@ export default function AdminLayout({
       {/* Secondary Admin Sidebar - Collapsible */}
       <aside
         className={cn(
-          "border-r border-border bg-card/95 backdrop-blur-sm fixed top-0 left-60 bottom-0 hidden md:block z-40 overflow-y-auto transition-all duration-300 ease-in-out",
+          "border-r border-border bg-card/95 backdrop-blur-sm fixed top-0 bottom-0 hidden md:block z-40 overflow-y-auto transition-all duration-300 ease-in-out",
           isOpen ? "w-48 opacity-100" : "w-0 opacity-0 overflow-hidden"
         )}
+        style={{ left: "var(--sidebar-width, 15rem)" }}
       >
         <div className="p-4 pt-6 w-48">
           <div className="flex items-center justify-between mb-4 px-3">

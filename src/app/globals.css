@@ -80,6 +80,7 @@ h1, h2, h3, h4, h5, h6 {
 */
 :root {
   --radius: 0.75rem;
+  --sidebar-width: 15rem;
   /* Makers Lounge brand colors using OKLCH for accessible, vibrant color */
   --ml-blue: oklch(0.5 0.2 255);
   --ml-teal: oklch(0.6 0.15 195);
@@ -273,6 +274,17 @@ h1, h2, h3, h4, h5, h6 {
     oklch(0.7 0.18 50 / 10%) 66%,
     oklch(0.85 0.18 90 / 10%) 100%
   );
+}
+
+/* Sidebar margin utility - responsive to sidebar collapse state */
+.sidebar-margin {
+  margin-left: 0;
+  transition: margin-left 0.3s ease;
+}
+@media (min-width: 768px) {
+  .sidebar-margin {
+    margin-left: var(--sidebar-width, 15rem);
+  }
 }
 
 /* Hide tldraw watermark/license message - comprehensive coverage */

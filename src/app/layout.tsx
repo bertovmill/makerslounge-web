@@ -5,6 +5,7 @@ import FeedbackButton from "@/components/FeedbackButton";
 import Navbar from "@/components/Navbar";
 import FooterWrapper from "@/components/FooterWrapper";
 import MainWrapper from "@/components/MainWrapper";
+import { SidebarProvider } from "@/context/SidebarContext";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-sans",
@@ -38,10 +39,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${spaceGrotesk.variable} ${syne.variable} font-sans antialiased bg-background text-foreground min-h-screen flex flex-col`}>
-        <Navbar />
-        <MainWrapper>{children}</MainWrapper>
-        <FooterWrapper />
-        <FeedbackButton />
+        <SidebarProvider>
+          <Navbar />
+          <MainWrapper>{children}</MainWrapper>
+          <FooterWrapper />
+          <FeedbackButton />
+        </SidebarProvider>
       </body>
     </html>
   );

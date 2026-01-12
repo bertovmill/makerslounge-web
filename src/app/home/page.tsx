@@ -48,6 +48,8 @@ export default function HomePage() {
   const [postTitle, setPostTitle] = useState("");
   const [postDescription, setPostDescription] = useState("");
   const [isPosting, setIsPosting] = useState(false);
+  const [pastedImages, setPastedImages] = useState<File[]>([]);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
 
   useEffect(() => {
     const checkAuthAndOnboarding = async (userId: string) => {
@@ -221,18 +223,78 @@ export default function HomePage() {
     fetchProjects();
   }, [user]);
 
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const imageFiles: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) {
+          imageFiles.push(file);
+        }
+      }
+    }
+
+    if (imageFiles.length > 0) {
+      // Add new images to existing ones
+      setPastedImages(prev => [...prev, ...imageFiles]);
+
+      // Create preview URLs for new images
+      const newPreviewUrls = imageFiles.map(file => URL.createObjectURL(file));
+      setImagePreviewUrls(prev => [...prev, ...newPreviewUrls]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    // Revoke the object URL to free memory
+    URL.revokeObjectURL(imagePreviewUrls[index]);
+
+    setPastedImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handlePost = async () => {
     if (!user || !postTitle.trim()) return;
 
     setIsPosting(true);
     try {
+      // Upload images to Supabase storage
+      const uploadedUrls: string[] = [];
+
+      for (const file of pastedImages) {
+        const fileExt = file.name.split('.').pop() || 'png';
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `projects/${user.id}/new/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('media')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          continue;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('media')
+          .getPublicUrl(filePath);
+
+        if (publicUrl) {
+          uploadedUrls.push(publicUrl);
+        }
+      }
+
       const { data: newProject, error } = await supabase
         .from("projects")
         .insert({
           user_id: user.id,
           title: postTitle.trim(),
           description: postDescription.trim() || null,
-          media_urls: [],
+          media_urls: uploadedUrls,
         })
         .select()
         .single();
@@ -256,9 +318,14 @@ export default function HomePage() {
           ...projects,
         ]);
 
+        // Cleanup preview URLs
+        imagePreviewUrls.forEach(url => URL.revokeObjectURL(url));
+
         // Reset form
         setPostTitle("");
         setPostDescription("");
+        setPastedImages([]);
+        setImagePreviewUrls([]);
       }
     } catch (error) {
       console.error("Error creating project:", error);
@@ -319,7 +386,33 @@ export default function HomePage() {
                       handlePost();
                     }
                   }}
+                  onPaste={handlePaste}
                 />
+
+                {/* Image Previews */}
+                {imagePreviewUrls.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {imagePreviewUrls.map((url, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={url}
+                          alt={`Pasted image ${index + 1}`}
+                          className="h-20 w-20 object-cover rounded-lg border border-border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Remove image"
+                        >
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Action icons */}
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/40">

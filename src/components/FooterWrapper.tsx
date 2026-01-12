@@ -26,7 +26,7 @@ export default function FooterWrapper() {
   const shouldHideNavbar = isPublicPage && !user;
 
   return (
-    <div className={!shouldHideNavbar ? "md:ml-60" : ""}>
+    <div className={`transition-all duration-300 ${!shouldHideNavbar ? "sidebar-margin" : ""}`}>
       <Footer />
     </div>
   );

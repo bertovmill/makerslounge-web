@@ -83,6 +83,38 @@ export default function ToolsPage() {
       gradient: "from-pink-500 to-rose-500",
       comingSoon: !isAllowedUser,
     },
+    {
+      name: "Video Editing",
+      description: "A suite of video editing tools to help you create and share content",
+      href: "/video-editing",
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-8 h-8">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+          />
+        </svg>
+      ),
+      gradient: "from-purple-500 to-pink-500",
+    },
+    {
+      name: "Post Scheduling",
+      description: "Organize post packages around events or themes with platform checklists",
+      href: "/post-scheduling",
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-8 h-8">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+          />
+        </svg>
+      ),
+      gradient: "from-emerald-500 to-teal-500",
+    },
     // Placeholder for future tools
     {
       name: "More Tools Coming Soon",
