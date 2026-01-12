@@ -1,16 +1,23 @@
 import { NextResponse } from "next/server";
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import type { Options } from "@anthropic-ai/claude-agent-sdk";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 // Agent's fixed user ID
 const AI_NEWS_AGENT_ID = "ai-news-agent";
 
-// Initialize Supabase with service role for server-side operations
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy initialization of Supabase client to avoid build-time errors
+let supabase: SupabaseClient | null = null;
+
+function getSupabase() {
+  if (!supabase) {
+    supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+  }
+  return supabase;
+}
 
 interface NewsItem {
   title: string;
@@ -31,7 +38,7 @@ async function postToFeed(item: NewsItem) {
     fullDescription += `\n\nSource: ${item.source_name}`;
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("projects")
     .insert({
       user_id: AI_NEWS_AGENT_ID,
