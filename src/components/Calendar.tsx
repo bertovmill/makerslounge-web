@@ -328,6 +328,7 @@ export default function Calendar({ events, isAdmin, onEditEvent, onDeleteEvent }
                         {new Date(event.start_time).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
+                          timeZone: "UTC",
                         })}{event.is_all_day ? " (All day)" : ` at ${formatTime(event.start_time)}`}
                       </div>
                       {event.location && (
