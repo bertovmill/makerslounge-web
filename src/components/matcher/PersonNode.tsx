@@ -14,11 +14,11 @@ export interface PersonNodeData {
   groupColor: string;
 }
 
-// Anthropic-inspired color palette - softer, more muted
+// Color palette for different groups - each group shares a color
 const groupColors = [
-  "#D97706", // amber
-  "#0891B2", // cyan
   "#7C3AED", // violet
+  "#0891B2", // cyan
+  "#D97706", // amber
   "#059669", // emerald
   "#DC2626", // red
   "#2563EB", // blue
@@ -30,6 +30,14 @@ export function getGroupColor(index: number): string {
   return groupColors[index % groupColors.length];
 }
 
+// Create a light tint of a hex color (for card backgrounds)
+function getLightTint(hex: string, opacity: number = 0.1): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
 function PersonNode(props: NodeProps) {
   const data = props.data as unknown as PersonNodeData;
   const initials = data.name
@@ -39,10 +47,21 @@ function PersonNode(props: NodeProps) {
     .toUpperCase()
     .slice(0, 2);
 
+  const cardBgColor = getLightTint(data.groupColor, 0.12);
+  const borderColor = getLightTint(data.groupColor, 0.25);
+
   return (
     <>
       <Handle type="target" position={Position.Top} className="!bg-transparent !border-0 !w-4 !h-4" />
-      <div className="person-node bg-white dark:bg-slate-900 rounded-2xl px-4 py-4 shadow-sm border border-slate-200 dark:border-slate-700 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow min-w-[100px]">
+      <div
+        className="person-node rounded-2xl px-4 py-4 shadow-sm cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow min-w-[100px]"
+        style={{
+          backgroundColor: cardBgColor,
+          borderWidth: 1,
+          borderStyle: 'solid',
+          borderColor: borderColor,
+        }}
+      >
         {/* Vertical layout: avatar on top, name below */}
         <div className="flex flex-col items-center gap-2">
           {/* Colored avatar */}

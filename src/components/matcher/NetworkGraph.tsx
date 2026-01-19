@@ -188,17 +188,17 @@ export default function NetworkGraph({ groups, contacts }: NetworkGraphProps) {
         {/* Legend */}
         <Panel position="bottom-left" className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm">
           <div className="text-xs font-medium mb-3 text-slate-700 dark:text-slate-300">Connection Strength</div>
-          <div className="flex flex-col gap-2 text-xs text-slate-600 dark:text-slate-400">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-0.5 rounded-full" style={{ background: "#94A3B8" }} />
+          <div className="flex flex-col gap-2.5 text-xs text-slate-600 dark:text-slate-400">
+            <div className="flex items-center gap-3">
+              <div className="w-6 rounded-full" style={{ background: "#94A3B8", height: 2 }} />
               <span>Mild</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-0.5 rounded-full" style={{ background: "#3B82F6" }} />
+            <div className="flex items-center gap-3">
+              <div className="w-6 rounded-full" style={{ background: "#94A3B8", height: 4 }} />
               <span>Medium</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-0.5 rounded-full" style={{ background: "#F97316" }} />
+            <div className="flex items-center gap-3">
+              <div className="w-6 rounded-full" style={{ background: "#94A3B8", height: 6 }} />
               <span>Strong</span>
             </div>
           </div>
