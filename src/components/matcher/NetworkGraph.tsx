@@ -38,9 +38,16 @@ interface Group {
   connections?: Connection[];
 }
 
+interface Recommendation {
+  name: string;
+  reason: string;
+  matchStrength: number;
+}
+
 interface NetworkGraphProps {
   groups: Group[];
   contacts: Contact[];
+  recommendations?: Recommendation[];
 }
 
 const nodeTypes = {
@@ -79,10 +86,19 @@ function generateGroupTheme(reason: string): string {
   return "Synergy Group";
 }
 
-function NetworkGraphInner({ groups, contacts }: NetworkGraphProps) {
+function NetworkGraphInner({ groups, contacts, recommendations = [] }: NetworkGraphProps) {
   const [layoutSeed, setLayoutSeed] = useState(0);
   const [selectedGroupIndex, setSelectedGroupIndex] = useState<number | null>(null);
   const { getNodes } = useReactFlow();
+
+  // Create a map of recommended people for quick lookup
+  const recommendedMap = useMemo(() => {
+    const map = new Map<string, { strength: number; reason: string }>();
+    recommendations.forEach((rec) => {
+      map.set(rec.name, { strength: rec.matchStrength, reason: rec.reason });
+    });
+    return map;
+  }, [recommendations]);
 
   // Convert groups to nodes and edges
   const { initialNodes, initialEdges } = useMemo(() => {
@@ -129,6 +145,8 @@ function NetworkGraphInner({ groups, contacts }: NetworkGraphProps) {
         const x = groupCenterX + actualRadius * Math.cos(memberAngle) + offsetX;
         const y = groupCenterY + actualRadius * Math.sin(memberAngle) + offsetY;
 
+        const recommendation = recommendedMap.get(memberName);
+
         nodes.push({
           id: memberName,
           type: "person",
@@ -142,6 +160,8 @@ function NetworkGraphInner({ groups, contacts }: NetworkGraphProps) {
             needsHelp: contact?.needsHelp,
             groupIndex,
             groupColor,
+            isRecommended: !!recommendation,
+            recommendationStrength: recommendation?.strength,
           },
         });
       });
@@ -164,7 +184,7 @@ function NetworkGraphInner({ groups, contacts }: NetworkGraphProps) {
     });
 
     return { initialNodes: nodes, initialEdges: edges };
-  }, [groups, contacts, layoutSeed]);
+  }, [groups, contacts, layoutSeed, recommendedMap]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);

@@ -24,6 +24,12 @@ interface Group {
   connections?: Connection[];
 }
 
+interface Recommendation {
+  name: string;
+  reason: string;
+  matchStrength: number;
+}
+
 type ViewMode = "list" | "graph";
 
 interface MatcherEvent {
@@ -49,6 +55,12 @@ export default function MatcherPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("graph");
+
+  // Recommendation chat state
+  const [recommendQuery, setRecommendQuery] = useState("");
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [recommendAnswer, setRecommendAnswer] = useState("");
+  const [isRecommending, setIsRecommending] = useState(false);
 
   // Load saved events on mount
   useEffect(() => {
@@ -245,6 +257,55 @@ export default function MatcherPage() {
     return contacts.find((c) => c.name === name);
   };
 
+  const getRecommendations = async () => {
+    if (!recommendQuery.trim() || contacts.length === 0) return;
+
+    setIsRecommending(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: recommendQuery,
+          contacts,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to get recommendations");
+      }
+
+      setRecommendations(data.recommendations);
+      setRecommendAnswer(data.answer);
+
+      // Save recommendations to event if we have one
+      if (currentEventId && userId) {
+        await supabase
+          .from("matcher_events")
+          .update({
+            last_query: recommendQuery,
+            last_recommendations: data.recommendations,
+          })
+          .eq("id", currentEventId);
+      }
+    } catch (err) {
+      console.error("Recommendation error:", err);
+      setError(err instanceof Error ? err.message : "Failed to get recommendations");
+    } finally {
+      setIsRecommending(false);
+    }
+  };
+
+  const clearRecommendations = () => {
+    setRecommendations([]);
+    setRecommendAnswer("");
+    setRecommendQuery("");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-12">
@@ -417,6 +478,95 @@ export default function MatcherPage() {
               )}
             </div>
 
+            {/* AI Recommendations Chat */}
+            {groups.length > 0 && (
+              <div className="bg-card rounded-2xl p-6 shadow-sm border border-border mb-6">
+                <h2 className="text-lg font-semibold mb-3">Who should I talk to?</h2>
+                <p className="text-muted-foreground text-sm mb-4">
+                  Ask AI to recommend people based on what you&apos;re looking for
+                </p>
+
+                <div className="flex gap-2 mb-4">
+                  <input
+                    type="text"
+                    value={recommendQuery}
+                    onChange={(e) => setRecommendQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && getRecommendations()}
+                    placeholder="e.g., I need help with fundraising, Looking for a technical co-founder..."
+                    className="flex-1 px-4 py-2 border border-border rounded-lg bg-background"
+                    disabled={isRecommending}
+                  />
+                  <Button onClick={getRecommendations} disabled={isRecommending || !recommendQuery.trim()}>
+                    {isRecommending ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Finding...
+                      </span>
+                    ) : (
+                      "Find People"
+                    )}
+                  </Button>
+                  {recommendations.length > 0 && (
+                    <Button variant="outline" onClick={clearRecommendations}>
+                      Clear
+                    </Button>
+                  )}
+                </div>
+
+                {/* AI Answer */}
+                {recommendAnswer && (
+                  <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4 mb-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-emerald-800 dark:text-emerald-200">{recommendAnswer}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Recommendation Cards */}
+                {recommendations.length > 0 && (
+                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    {recommendations.map((rec, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4"
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs font-semibold">
+                            {rec.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{rec.name}</p>
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3].map((i) => (
+                                <div
+                                  key={i}
+                                  className={`w-2 h-2 rounded-full ${
+                                    i <= rec.matchStrength ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700"
+                                  }`}
+                                />
+                              ))}
+                              <span className="text-xs text-muted-foreground ml-1">
+                                {rec.matchStrength === 3 ? "Perfect match" : rec.matchStrength === 2 ? "Good match" : "Worth exploring"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{rec.reason}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Generated Groups */}
             {groups.length > 0 && (
               <div className="bg-card rounded-2xl p-6 shadow-sm border border-border mb-6">
@@ -462,7 +612,7 @@ export default function MatcherPage() {
 
                 {/* Graph View */}
                 {viewMode === "graph" && (
-                  <NetworkGraph groups={groups} contacts={contacts} />
+                  <NetworkGraph groups={groups} contacts={contacts} recommendations={recommendations} />
                 )}
 
                 {/* List View */}
