@@ -17,7 +17,7 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import PersonNode, { getGroupColor } from "./PersonNode";
-import ConnectionEdge from "./ConnectionEdge";
+import ConnectionEdge, { EDGE_COLOR, type ConnectionEdgeData } from "./ConnectionEdge";
 import { Button } from "@/components/ui/button";
 
 interface Contact {
@@ -218,6 +218,17 @@ function NetworkGraphInner({ groups, contacts }: NetworkGraphProps) {
   const selectedGroup = selectedGroupIndex !== null ? groups[selectedGroupIndex] : null;
   const selectedGroupColor = selectedGroupIndex !== null ? getGroupColor(selectedGroupIndex) : null;
 
+  // Find selected edge for connection detail panel
+  const selectedEdge = useMemo(() => {
+    return edges.find((edge) => edge.selected) || null;
+  }, [edges]);
+
+  const selectedEdgeData = selectedEdge?.data as ConnectionEdgeData | undefined;
+
+  const handleDeselectEdge = useCallback(() => {
+    setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
+  }, [setEdges]);
+
   return (
     <div className="network-graph-container h-[700px] w-full rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-50 dark:bg-slate-950">
       <ReactFlow
@@ -334,6 +345,51 @@ function NetworkGraphInner({ groups, contacts }: NetworkGraphProps) {
               </div>
               <button
                 onClick={() => setSelectedGroupIndex(null)}
+                className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </Panel>
+        )}
+
+        {/* Selected connection detail panel */}
+        {selectedEdge && selectedEdgeData && (
+          <Panel position="bottom-right" className="max-w-sm mb-2 mr-2">
+            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500" />
+                <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  {selectedEdge.source} ↔ {selectedEdge.target}
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div
+                  className="w-1 h-full rounded-full flex-shrink-0 self-stretch min-h-[40px]"
+                  style={{ background: EDGE_COLOR }}
+                />
+                <div>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    {selectedEdgeData.reason}
+                  </p>
+                  <div className="mt-2 flex items-center gap-1.5 text-slate-500" style={{ fontSize: 10 }}>
+                    <div
+                      className="h-1 rounded-full"
+                      style={{
+                        background: EDGE_COLOR,
+                        width: selectedEdgeData.strength === 3 ? 20 : selectedEdgeData.strength === 2 ? 12 : 6
+                      }}
+                    />
+                    <span>
+                      {selectedEdgeData.strength === 3 ? "Strong" : selectedEdgeData.strength === 2 ? "Medium" : "Mild"} connection
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleDeselectEdge}
                 className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
