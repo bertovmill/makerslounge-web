@@ -14,6 +14,7 @@ export interface PersonNodeData {
   groupColor: string;
   isRecommended?: boolean;
   recommendationStrength?: number; // 1-3
+  isSelectedGroup?: boolean;
 }
 
 // Color palette for different groups - each group shares a color
@@ -54,32 +55,46 @@ function PersonNode(props: NodeProps) {
 
   const isRecommended = data.isRecommended || false;
   const strength = data.recommendationStrength || 2;
+  const isSelectedGroup = data.isSelectedGroup || false;
 
-  const cardBgColor = isRecommended
-    ? getLightTint(RECOMMEND_COLOR, 0.15)
-    : getLightTint(data.groupColor, 0.12);
-  const borderColor = isRecommended
-    ? RECOMMEND_COLOR
-    : getLightTint(data.groupColor, 0.25);
+  // Determine card styling based on state
+  let cardBgColor: string;
+  let borderColor: string;
 
-  // Glow intensity based on recommendation strength
-  const glowSize = strength === 3 ? 20 : strength === 2 ? 12 : 8;
-  const glowStyle = isRecommended
-    ? {
-        boxShadow: `0 0 ${glowSize}px ${RECOMMEND_COLOR}60, 0 0 ${glowSize * 2}px ${RECOMMEND_COLOR}30`,
-      }
-    : {};
+  if (isRecommended) {
+    cardBgColor = getLightTint(RECOMMEND_COLOR, 0.15);
+    borderColor = RECOMMEND_COLOR;
+  } else if (isSelectedGroup) {
+    cardBgColor = getLightTint(data.groupColor, 0.25); // Lighter/brighter when selected
+    borderColor = data.groupColor;
+  } else {
+    cardBgColor = getLightTint(data.groupColor, 0.12);
+    borderColor = getLightTint(data.groupColor, 0.25);
+  }
+
+  // Glow/shadow styles
+  let glowStyle = {};
+  if (isRecommended) {
+    const glowSize = strength === 3 ? 20 : strength === 2 ? 12 : 8;
+    glowStyle = {
+      boxShadow: `0 0 ${glowSize}px ${RECOMMEND_COLOR}60, 0 0 ${glowSize * 2}px ${RECOMMEND_COLOR}30`,
+    };
+  } else if (isSelectedGroup) {
+    glowStyle = {
+      boxShadow: `0 0 12px ${data.groupColor}40, 0 0 24px ${data.groupColor}20`,
+    };
+  }
 
   return (
     <>
       <Handle type="target" position={Position.Top} className="!bg-transparent !border-0 !w-4 !h-4" />
       <div
         className={`person-node rounded-2xl px-4 py-4 cursor-grab active:cursor-grabbing hover:shadow-md transition-all min-w-[100px] ${
-          isRecommended ? "ring-2 ring-emerald-500 shadow-lg" : "shadow-sm"
+          isRecommended ? "ring-2 ring-emerald-500 shadow-lg" : isSelectedGroup ? "shadow-lg" : "shadow-sm"
         }`}
         style={{
           backgroundColor: cardBgColor,
-          borderWidth: isRecommended ? 2 : 1,
+          borderWidth: isRecommended ? 2 : isSelectedGroup ? 2 : 1,
           borderStyle: 'solid',
           borderColor: borderColor,
           ...glowStyle,

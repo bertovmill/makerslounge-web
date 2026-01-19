@@ -162,6 +162,7 @@ function NetworkGraphInner({ groups, contacts, recommendations = [] }: NetworkGr
             groupColor,
             isRecommended: !!recommendation,
             recommendationStrength: recommendation?.strength,
+            isSelectedGroup: false, // Will be updated dynamically
           },
         });
       });
@@ -194,6 +195,22 @@ function NetworkGraphInner({ groups, contacts, recommendations = [] }: NetworkGr
     setNodes(initialNodes);
     setEdges(initialEdges);
   }, [initialNodes, initialEdges, setNodes, setEdges]);
+
+  // Update nodes when selected group changes
+  useMemo(() => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        const nodeGroupIndex = (node.data as { groupIndex: number }).groupIndex;
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            isSelectedGroup: selectedGroupIndex !== null && nodeGroupIndex === selectedGroupIndex,
+          },
+        };
+      })
+    );
+  }, [selectedGroupIndex, setNodes]);
 
   const handleResetLayout = useCallback(() => {
     setLayoutSeed((s) => s + 1);
@@ -269,37 +286,6 @@ function NetworkGraphInner({ groups, contacts, recommendations = [] }: NetworkGr
         }}
         proOptions={{ hideAttribution: true }}
       >
-        {/* Group boundary when selected */}
-        {selectedGroupBounds && selectedGroupColor && (
-          <svg
-            className="pointer-events-none absolute inset-0 overflow-visible"
-            style={{ zIndex: 0 }}
-          >
-            <defs>
-              <filter id="glow">
-                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-                <feMerge>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-            </defs>
-            <rect
-              x={selectedGroupBounds.minX}
-              y={selectedGroupBounds.minY}
-              width={selectedGroupBounds.width}
-              height={selectedGroupBounds.height}
-              rx={24}
-              ry={24}
-              fill={`${selectedGroupColor}10`}
-              stroke={selectedGroupColor}
-              strokeWidth={3}
-              strokeDasharray="8 4"
-              filter="url(#glow)"
-              className="transition-all duration-300"
-            />
-          </svg>
-        )}
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--border)" />
         <Controls showInteractive={false} />
 
