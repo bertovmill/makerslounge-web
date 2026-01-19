@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import AuthButton from "./AuthButton";
-import Logo from "./Logo";
+import Logo, { LogoIcon } from "./Logo";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/context/SidebarContext";
 
@@ -144,7 +144,7 @@ export default function Navbar() {
         <div className={cn("p-6 flex items-center", collapsed ? "justify-center p-4" : "justify-between")}>
           <Link href="/" className="hover:opacity-90 transition-opacity inline-block">
             {collapsed ? (
-              <div className="w-8 h-8 bg-gradient-to-br from-primary to-orange-400 rounded-lg" />
+              <LogoIcon size={32} />
             ) : (
               <Logo size="sm" />
             )}
