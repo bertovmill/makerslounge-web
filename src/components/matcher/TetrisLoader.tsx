@@ -205,7 +205,7 @@ const GRID_STATES: { x: number; y: number; color: ColorName }[][] = [
   ],
 ];
 
-const CELL_SIZE = 24;
+const CELL_SIZE = 36;
 const GRID_WIDTH = 10;
 const GRID_HEIGHT = 7;
 
@@ -243,94 +243,55 @@ export default function TetrisLoader({ message = "Finding perfect matches..." }:
 
   return (
     <div className="flex flex-col items-center justify-center py-8">
-      {/* Tetris board */}
+      {/* Tetris blocks - no background */}
       <div
-        className="relative rounded-2xl overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900"
+        className="relative"
         style={{
-          width: GRID_WIDTH * CELL_SIZE + 32,
-          height: GRID_HEIGHT * CELL_SIZE + 48,
-          padding: 16,
+          width: GRID_WIDTH * CELL_SIZE,
+          height: GRID_HEIGHT * CELL_SIZE,
         }}
       >
-        {/* Grid container */}
-        <div
-          className="relative"
-          style={{
-            width: GRID_WIDTH * CELL_SIZE,
-            height: GRID_HEIGHT * CELL_SIZE,
-          }}
-        >
-          {currentCells.map((cell) => {
-            const colorData = COLORS[cell.color];
-            const isNew = newCellKeys.has(`${cell.x}-${cell.y}`);
+        {currentCells.map((cell) => {
+          const colorData = COLORS[cell.color];
+          const isNew = newCellKeys.has(`${cell.x}-${cell.y}`);
 
-            return (
-              <div
-                key={`${cell.x}-${cell.y}`}
-                className={`absolute ${isNew ? "tetris-drop" : ""}`}
-                style={{
-                  left: cell.x * CELL_SIZE,
-                  top: cell.y * CELL_SIZE,
-                  width: CELL_SIZE,
-                  height: CELL_SIZE,
-                }}
-              >
-                <div
-                  className="absolute inset-0.5 rounded-[5px]"
-                  style={{
-                    background: `linear-gradient(135deg, ${colorData.highlight} 0%, ${colorData.color} 50%, ${colorData.shadow} 100%)`,
-                    boxShadow: `
-                      inset 2px 2px 0 ${colorData.highlight}40,
-                      inset -1px -1px 0 ${colorData.shadow}60,
-                      2px 2px 4px rgba(0,0,0,0.15)
-                    `,
-                  }}
-                >
-                  {/* Inner highlight */}
-                  <div
-                    className="absolute top-0.5 left-0.5 right-1 bottom-1 rounded-[4px] opacity-30"
-                    style={{
-                      background: `linear-gradient(135deg, white 0%, transparent 50%)`,
-                    }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Bottom platform/shelf */}
-        <div className="absolute bottom-3 left-4 right-4 h-2 rounded-full bg-gradient-to-b from-slate-300 to-slate-400 dark:from-slate-600 dark:to-slate-700 shadow-sm" />
-      </div>
-
-      {/* Loading message */}
-      <div className="mt-6 flex items-center gap-3">
-        <div className="flex gap-1">
-          <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: "#5B7FFF", animationDelay: "0ms" }} />
-          <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: "#C77DFF", animationDelay: "150ms" }} />
-          <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: "#FF9F43", animationDelay: "300ms" }} />
-        </div>
-        <p className="text-sm text-muted-foreground font-medium">{message}</p>
-      </div>
-
-      {/* Progress indicator */}
-      <div className="mt-4 flex gap-1.5">
-        {GRID_STATES.slice(1).map((_, idx) => {
-          const isActive = idx < currentState;
-          const stateColors: ColorName[] = ["cyan", "yellow", "purple", "blue", "green", "red", "orange", "cyan"];
-          const dotColor = COLORS[stateColors[idx] || "cyan"].color;
           return (
             <div
-              key={idx}
-              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${!isActive ? "bg-slate-200 dark:bg-slate-700" : ""}`}
-              style={isActive ? {
-                background: dotColor,
-                boxShadow: `0 0 8px ${dotColor}50`,
-              } : undefined}
-            />
+              key={`${cell.x}-${cell.y}`}
+              className={`absolute ${isNew ? "tetris-drop" : ""}`}
+              style={{
+                left: cell.x * CELL_SIZE,
+                top: cell.y * CELL_SIZE,
+                width: CELL_SIZE,
+                height: CELL_SIZE,
+              }}
+            >
+              <div
+                className="absolute inset-0.5 rounded-lg"
+                style={{
+                  background: `linear-gradient(135deg, ${colorData.highlight} 0%, ${colorData.color} 50%, ${colorData.shadow} 100%)`,
+                  boxShadow: `
+                    inset 2px 2px 0 ${colorData.highlight}40,
+                    inset -1px -1px 0 ${colorData.shadow}60,
+                    2px 2px 4px rgba(0,0,0,0.15)
+                  `,
+                }}
+              >
+                {/* Inner highlight */}
+                <div
+                  className="absolute top-0.5 left-0.5 right-1 bottom-1 rounded-md opacity-30"
+                  style={{
+                    background: `linear-gradient(135deg, white 0%, transparent 50%)`,
+                  }}
+                />
+              </div>
+            </div>
           );
         })}
       </div>
+
+      {/* Loading message */}
+      <p className="mt-8 text-sm text-muted-foreground font-medium">{message}</p>
     </div>
   );
 }
