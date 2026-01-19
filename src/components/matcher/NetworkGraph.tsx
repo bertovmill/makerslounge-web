@@ -7,7 +7,6 @@ import {
   Background,
   useNodesState,
   useEdgesState,
-  useReactFlow,
   ReactFlowProvider,
   type Node,
   type Edge,
@@ -48,6 +47,8 @@ interface NetworkGraphProps {
   groups: Group[];
   contacts: Contact[];
   recommendations?: Recommendation[];
+  selectedGroupIndex?: number | null;
+  onGroupSelect?: (index: number | null) => void;
 }
 
 const nodeTypes = {
@@ -59,7 +60,7 @@ const edgeTypes = {
 };
 
 // Generate a theme title from the group reason
-function generateGroupTheme(reason: string): string {
+export function generateGroupTheme(reason: string): string {
   // Extract key themes from the reason text
   const keywords = reason.toLowerCase();
   if (keywords.includes("ai") || keywords.includes("machine learning") || keywords.includes("automation")) {
@@ -86,10 +87,8 @@ function generateGroupTheme(reason: string): string {
   return "Synergy Group";
 }
 
-function NetworkGraphInner({ groups, contacts, recommendations = [] }: NetworkGraphProps) {
+function NetworkGraphInner({ groups, contacts, recommendations = [], selectedGroupIndex, onGroupSelect }: NetworkGraphProps) {
   const [layoutSeed, setLayoutSeed] = useState(0);
-  const [selectedGroupIndex, setSelectedGroupIndex] = useState<number | null>(null);
-  const { getNodes } = useReactFlow();
 
   // Create a map of recommended people for quick lookup
   const recommendedMap = useMemo(() => {
@@ -214,46 +213,17 @@ function NetworkGraphInner({ groups, contacts, recommendations = [] }: NetworkGr
 
   const handleResetLayout = useCallback(() => {
     setLayoutSeed((s) => s + 1);
-    setSelectedGroupIndex(null);
-  }, []);
+    onGroupSelect?.(null);
+  }, [onGroupSelect]);
 
   const handleNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     const groupIndex = (node.data as { groupIndex: number }).groupIndex;
-    setSelectedGroupIndex((prev) => (prev === groupIndex ? null : groupIndex));
-  }, []);
+    onGroupSelect?.(selectedGroupIndex === groupIndex ? null : groupIndex);
+  }, [onGroupSelect, selectedGroupIndex]);
 
   const handlePaneClick = useCallback(() => {
-    setSelectedGroupIndex(null);
-  }, []);
-
-  // Calculate bounding box for selected group
-  const selectedGroupBounds = useMemo(() => {
-    if (selectedGroupIndex === null) return null;
-
-    const currentNodes = getNodes();
-    const groupNodes = currentNodes.filter(
-      (n) => (n.data as { groupIndex: number }).groupIndex === selectedGroupIndex
-    );
-
-    if (groupNodes.length === 0) return null;
-
-    const padding = 40;
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-
-    groupNodes.forEach((node) => {
-      const nodeWidth = 140;
-      const nodeHeight = 100;
-      minX = Math.min(minX, node.position.x - padding);
-      minY = Math.min(minY, node.position.y - padding);
-      maxX = Math.max(maxX, node.position.x + nodeWidth + padding);
-      maxY = Math.max(maxY, node.position.y + nodeHeight + padding);
-    });
-
-    return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
-  }, [selectedGroupIndex, getNodes, nodes]);
-
-  const selectedGroup = selectedGroupIndex !== null ? groups[selectedGroupIndex] : null;
-  const selectedGroupColor = selectedGroupIndex !== null ? getGroupColor(selectedGroupIndex) : null;
+    onGroupSelect?.(null);
+  }, [onGroupSelect]);
 
   // Find selected edge for connection detail panel
   const selectedEdge = useMemo(() => {
@@ -322,44 +292,6 @@ function NetworkGraphInner({ groups, contacts, recommendations = [] }: NetworkGr
           </div>
         </Panel>
 
-        {/* Selected group theme panel */}
-        {selectedGroup && selectedGroupColor && (
-          <Panel position="top-left" className="max-w-sm">
-            <div
-              className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-xl p-4 border-2 shadow-lg"
-              style={{ borderColor: selectedGroupColor }}
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className="w-1.5 h-full rounded-full flex-shrink-0 self-stretch min-h-[60px]"
-                  style={{ background: selectedGroupColor }}
-                />
-                <div>
-                  <div
-                    className="text-sm font-semibold mb-1"
-                    style={{ color: selectedGroupColor }}
-                  >
-                    {selectedGroup.theme || generateGroupTheme(selectedGroup.reason)}
-                  </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {selectedGroup.reason}
-                  </p>
-                  <div className="mt-2 text-xs text-slate-500">
-                    {selectedGroup.members.length} members
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedGroupIndex(null)}
-                className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </Panel>
-        )}
 
         {/* Selected connection detail panel */}
         {selectedEdge && selectedEdgeData && (

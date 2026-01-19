@@ -4,7 +4,8 @@ import { useState, useCallback, useEffect } from "react";
 import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
-import NetworkGraph from "@/components/matcher/NetworkGraph";
+import NetworkGraph, { generateGroupTheme } from "@/components/matcher/NetworkGraph";
+import { getGroupColor } from "@/components/matcher/PersonNode";
 import TetrisLoader from "@/components/matcher/TetrisLoader";
 
 interface Contact {
@@ -21,6 +22,7 @@ interface Connection {
 interface Group {
   members: string[];
   reason: string;
+  theme?: string;
   connections?: Connection[];
 }
 
@@ -61,6 +63,9 @@ export default function MatcherPage() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [recommendAnswer, setRecommendAnswer] = useState("");
   const [isRecommending, setIsRecommending] = useState(false);
+
+  // Graph selection state
+  const [selectedGroupIndex, setSelectedGroupIndex] = useState<number | null>(null);
 
   // Load saved events on mount
   useEffect(() => {
@@ -612,7 +617,51 @@ export default function MatcherPage() {
 
                 {/* Graph View */}
                 {viewMode === "graph" && (
-                  <NetworkGraph groups={groups} contacts={contacts} recommendations={recommendations} />
+                  <>
+                    {/* Selected group theme panel - above the graph */}
+                    {selectedGroupIndex !== null && groups[selectedGroupIndex] && (
+                      <div
+                        className="mb-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-xl p-4 border-2 shadow-lg relative"
+                        style={{ borderColor: getGroupColor(selectedGroupIndex) }}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div
+                            className="w-1.5 h-full rounded-full flex-shrink-0 self-stretch min-h-[60px]"
+                            style={{ background: getGroupColor(selectedGroupIndex) }}
+                          />
+                          <div>
+                            <div
+                              className="text-sm font-semibold mb-1"
+                              style={{ color: getGroupColor(selectedGroupIndex) }}
+                            >
+                              {groups[selectedGroupIndex].theme || generateGroupTheme(groups[selectedGroupIndex].reason)}
+                            </div>
+                            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                              {groups[selectedGroupIndex].reason}
+                            </p>
+                            <div className="mt-2 text-xs text-slate-500">
+                              {groups[selectedGroupIndex].members.length} members
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setSelectedGroupIndex(null)}
+                          className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                    <NetworkGraph
+                      groups={groups}
+                      contacts={contacts}
+                      recommendations={recommendations}
+                      selectedGroupIndex={selectedGroupIndex}
+                      onGroupSelect={setSelectedGroupIndex}
+                    />
+                  </>
                 )}
 
                 {/* List View */}
