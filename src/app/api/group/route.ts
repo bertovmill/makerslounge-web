@@ -10,9 +10,17 @@ interface Contact {
   needsHelp?: string;
 }
 
+interface Connection {
+  from: string;
+  to: string;
+  reason: string;
+  strength: number;
+}
+
 interface GroupResult {
   members: string[];
   reason: string;
+  connections?: Connection[];
 }
 
 export async function POST(request: NextRequest) {
@@ -64,9 +72,23 @@ ${contactList}
 Return ONLY a JSON array with no markdown or explanation. Each group should have:
 - "members": array of names exactly as they appear above
 - "reason": 1-2 sentence explanation of why this group works well together
+- "connections": array of pairwise connections between members. For each meaningful connection, include:
+  - "from": name of first person
+  - "to": name of second person
+  - "reason": short (5-10 words) explanation of why these two connect well
+  - "strength": 1 (mild), 2 (medium), or 3 (strong) connection
+
+Include 2-4 connections per group, focusing on the strongest relationships.
 
 Example format:
-[{"members": ["Alice", "Bob", "Carol"], "reason": "Alice's marketing skills match Bob's needs, and Carol's startup experience complements both."}]`;
+[{
+  "members": ["Alice", "Bob", "Carol"],
+  "reason": "Alice's marketing skills match Bob's needs, and Carol's startup experience complements both.",
+  "connections": [
+    {"from": "Alice", "to": "Bob", "reason": "Alice's marketing helps Bob's launch", "strength": 3},
+    {"from": "Bob", "to": "Carol", "reason": "Both in early build phase", "strength": 2}
+  ]
+}]`;
 
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",

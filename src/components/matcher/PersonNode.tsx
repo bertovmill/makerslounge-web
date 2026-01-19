@@ -14,22 +14,24 @@ export interface PersonNodeData {
   groupColor: string;
 }
 
+// Anthropic-inspired color palette - softer, more muted
 const groupColors = [
-  "oklch(0.5 0.2 255)",   // blue
-  "oklch(0.6 0.15 195)",  // teal
-  "oklch(0.7 0.18 50)",   // orange
-  "oklch(0.85 0.18 90)",  // yellow
-  "oklch(0.55 0.15 280)", // purple
-  "oklch(0.6 0.2 150)",   // green
-  "oklch(0.65 0.18 340)", // pink
-  "oklch(0.7 0.15 30)",   // red-orange
+  "#D97706", // amber
+  "#0891B2", // cyan
+  "#7C3AED", // violet
+  "#059669", // emerald
+  "#DC2626", // red
+  "#2563EB", // blue
+  "#DB2777", // pink
+  "#65A30D", // lime
 ];
 
 export function getGroupColor(index: number): string {
   return groupColors[index % groupColors.length];
 }
 
-function PersonNode({ data }: NodeProps<PersonNodeData>) {
+function PersonNode(props: NodeProps) {
+  const data = props.data as unknown as PersonNodeData;
   const initials = data.name
     .split(" ")
     .map((n) => n[0])
@@ -40,47 +42,21 @@ function PersonNode({ data }: NodeProps<PersonNodeData>) {
   return (
     <>
       <Handle type="target" position={Position.Top} className="!bg-transparent !border-0 !w-4 !h-4" />
-      <div
-        className="person-node glass-card rounded-xl p-3 min-w-[180px] max-w-[220px] cursor-grab active:cursor-grabbing"
-        style={{
-          borderLeft: `3px solid ${data.groupColor}`,
-        }}
-      >
-        {/* Header with avatar and name */}
-        <div className="flex items-center gap-2 mb-2">
+      <div className="person-node bg-white dark:bg-slate-900 rounded-2xl px-4 py-4 shadow-sm border border-slate-200 dark:border-slate-700 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow min-w-[100px]">
+        {/* Vertical layout: avatar on top, name below */}
+        <div className="flex flex-col items-center gap-2">
+          {/* Colored avatar */}
           <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-sm"
             style={{ background: data.groupColor }}
           >
             {initials}
           </div>
-          <div className="overflow-hidden">
-            <p className="font-medium text-sm truncate">{data.name}</p>
-            {data.email && (
-              <p className="text-xs text-muted-foreground truncate">{data.email}</p>
-            )}
-          </div>
-        </div>
 
-        {/* Project */}
-        {data.project && (
-          <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-            {data.project}
+          {/* Name only - centered */}
+          <p className="font-medium text-sm text-slate-900 dark:text-slate-100 text-center leading-tight max-w-[120px]">
+            {data.name}
           </p>
-        )}
-
-        {/* Badges */}
-        <div className="flex flex-wrap gap-1">
-          {data.phase && (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary">
-              {data.phase}
-            </span>
-          )}
-          {data.skills && (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground truncate max-w-[100px]">
-              {data.skills.split(",")[0]?.trim()}
-            </span>
-          )}
         </div>
       </div>
       <Handle type="source" position={Position.Bottom} className="!bg-transparent !border-0 !w-4 !h-4" />

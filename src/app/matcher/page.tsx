@@ -4,15 +4,27 @@ import { useState, useCallback, useEffect } from "react";
 import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
+import NetworkGraph from "@/components/matcher/NetworkGraph";
+import TetrisLoader from "@/components/matcher/TetrisLoader";
 
 interface Contact {
   [key: string]: string;
 }
 
+interface Connection {
+  from: string;
+  to: string;
+  reason: string;
+  strength: number;
+}
+
 interface Group {
   members: string[];
   reason: string;
+  connections?: Connection[];
 }
+
+type ViewMode = "list" | "graph";
 
 interface MatcherEvent {
   id: string;
@@ -36,6 +48,7 @@ export default function MatcherPage() {
   const [eventName, setEventName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("graph");
 
   // Load saved events on mount
   useEffect(() => {
@@ -367,44 +380,41 @@ export default function MatcherPage() {
 
             {/* Smart Grouping */}
             <div className="bg-card rounded-2xl p-6 shadow-sm border border-border mb-6">
-              <h2 className="text-lg font-semibold mb-3">Smart Grouping</h2>
-              <p className="text-muted-foreground text-sm mb-4">
-                AI will analyze each person&apos;s skills, projects, and needs to create optimal groups
-              </p>
+              {isGrouping ? (
+                // Show Tetris loader while grouping
+                <TetrisLoader message={`Matching ${contacts.length} makers into perfect groups...`} />
+              ) : (
+                <>
+                  <h2 className="text-lg font-semibold mb-3">Smart Grouping</h2>
+                  <p className="text-muted-foreground text-sm mb-4">
+                    AI will analyze each person&apos;s skills, projects, and needs to create optimal groups
+                  </p>
 
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium">Group size:</label>
-                  <select
-                    value={groupSize}
-                    onChange={(e) => setGroupSize(Number(e.target.value))}
-                    className="px-3 py-2 border border-border rounded-lg bg-background"
-                  >
-                    <option value={2}>Pairs (2)</option>
-                    <option value={3}>Small (3)</option>
-                    <option value={4}>Medium (4)</option>
-                    <option value={5}>Large (5)</option>
-                    <option value={6}>Tables (6)</option>
-                  </select>
-                </div>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium">Group size:</label>
+                      <select
+                        value={groupSize}
+                        onChange={(e) => setGroupSize(Number(e.target.value))}
+                        className="px-3 py-2 border border-border rounded-lg bg-background"
+                      >
+                        <option value={2}>Pairs (2)</option>
+                        <option value={3}>Small (3)</option>
+                        <option value={4}>Medium (4)</option>
+                        <option value={5}>Large (5)</option>
+                        <option value={6}>Tables (6)</option>
+                      </select>
+                    </div>
 
-                <Button
-                  onClick={generateGroups}
-                  disabled={isGrouping || contacts.length < 2}
-                >
-                  {isGrouping ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      Grouping...
-                    </>
-                  ) : (
-                    "Generate Smart Groups"
-                  )}
-                </Button>
-              </div>
+                    <Button
+                      onClick={generateGroups}
+                      disabled={contacts.length < 2}
+                    >
+                      Generate Smart Groups
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Generated Groups */}
@@ -414,53 +424,110 @@ export default function MatcherPage() {
                   <h2 className="text-lg font-semibold">
                     Generated Groups ({groups.length})
                   </h2>
-                  <Button variant="outline" size="sm" onClick={() => setGroups([])}>
-                    Clear Groups
-                  </Button>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  {groups.map((group, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-muted/30 rounded-xl p-4 border border-border"
-                    >
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold">
-                          {idx + 1}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {group.members.length} members
-                        </span>
-                      </div>
-
-                      <div className="space-y-2 mb-3">
-                        {group.members.map((name, i) => {
-                          const contact = getContactByName(name);
-                          return (
-                            <div key={i} className="flex items-center gap-2">
-                              <span className="font-medium">{name}</span>
-                              {contact?.LinkedIn && (
-                                <a
-                                  href={contact.LinkedIn}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-primary text-xs hover:underline"
-                                >
-                                  LinkedIn
-                                </a>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <p className="text-sm text-muted-foreground bg-background/50 rounded-lg p-2">
-                        {group.reason}
-                      </p>
+                  <div className="flex items-center gap-2">
+                    {/* View Toggle */}
+                    <div className="flex items-center bg-muted rounded-lg p-1">
+                      <button
+                        onClick={() => setViewMode("list")}
+                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                          viewMode === "list"
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <svg className="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        List
+                      </button>
+                      <button
+                        onClick={() => setViewMode("graph")}
+                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                          viewMode === "graph"
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <svg className="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                        Graph
+                      </button>
                     </div>
-                  ))}
+                    <Button variant="outline" size="sm" onClick={() => setGroups([])}>
+                      Clear Groups
+                    </Button>
+                  </div>
                 </div>
+
+                {/* Graph View */}
+                {viewMode === "graph" && (
+                  <NetworkGraph groups={groups} contacts={contacts} />
+                )}
+
+                {/* List View */}
+                {viewMode === "list" && (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {groups.map((group, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-muted/30 rounded-xl p-4 border border-border"
+                      >
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold">
+                            {idx + 1}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {group.members.length} members
+                          </span>
+                        </div>
+
+                        <div className="space-y-2 mb-3">
+                          {group.members.map((name, i) => {
+                            const contact = getContactByName(name);
+                            return (
+                              <div key={i} className="flex items-center gap-2">
+                                <span className="font-medium">{name}</span>
+                                {contact?.LinkedIn && (
+                                  <a
+                                    href={contact.LinkedIn}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary text-xs hover:underline"
+                                  >
+                                    LinkedIn
+                                  </a>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <p className="text-sm text-muted-foreground bg-background/50 rounded-lg p-2">
+                          {group.reason}
+                        </p>
+
+                        {/* Connection chips in list view */}
+                        {group.connections && group.connections.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-border/50">
+                            <p className="text-xs text-muted-foreground mb-2">Connections:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {group.connections.map((conn, connIdx) => (
+                                <span
+                                  key={connIdx}
+                                  className="inline-flex items-center px-2 py-1 rounded-full text-[10px] bg-primary/10 text-primary"
+                                  title={conn.reason}
+                                >
+                                  {conn.from.split(" ")[0]} → {conn.to.split(" ")[0]}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

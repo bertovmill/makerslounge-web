@@ -13,23 +13,26 @@ export interface ConnectionEdgeData {
   strength: number; // 1-3, affects color intensity
 }
 
+// Cleaner, more subtle colors
 const strengthColors = {
-  1: "oklch(0.6 0.15 195)", // teal - mild
-  2: "oklch(0.5 0.2 255)",  // blue - medium
-  3: "oklch(0.7 0.18 50)",  // orange - strong
+  1: "#94A3B8", // slate-400 - mild
+  2: "#3B82F6", // blue-500 - medium
+  3: "#F97316", // orange-500 - strong
 };
 
-function ConnectionEdge({
-  id,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  data,
-  style,
-}: EdgeProps<ConnectionEdgeData>) {
+function ConnectionEdge(props: EdgeProps) {
+  const {
+    id,
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition,
+    targetPosition,
+    data,
+    style,
+  } = props;
+  const edgeData = data as unknown as ConnectionEdgeData | undefined;
   const [showTooltip, setShowTooltip] = useState(false);
 
   const [edgePath, labelX, labelY] = getBezierPath({
@@ -41,14 +44,14 @@ function ConnectionEdge({
     targetPosition,
   });
 
-  const strength = data?.strength || 2;
+  const strength = edgeData?.strength || 2;
   const edgeColor = strengthColors[strength as keyof typeof strengthColors] || strengthColors[2];
 
   // Truncate reason for display on edge
-  const truncatedReason = data?.reason
-    ? data.reason.length > 30
-      ? data.reason.slice(0, 30) + "..."
-      : data.reason
+  const truncatedReason = edgeData?.reason
+    ? edgeData.reason.length > 30
+      ? edgeData.reason.slice(0, 30) + "..."
+      : edgeData.reason
     : "";
 
   return (
@@ -83,11 +86,11 @@ function ConnectionEdge({
           </div>
 
           {/* Full tooltip on hover */}
-          {showTooltip && data?.reason && data.reason.length > 30 && (
+          {showTooltip && edgeData?.reason && edgeData.reason.length > 30 && (
             <div
               className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-3 py-2 rounded-lg text-xs bg-popover border border-border shadow-lg max-w-[250px] z-50"
             >
-              {data.reason}
+              {edgeData.reason}
             </div>
           )}
         </div>

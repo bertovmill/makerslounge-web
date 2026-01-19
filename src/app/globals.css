@@ -311,3 +311,136 @@ button[href*="license"] {
   display: none !important;
   visibility: hidden !important;
 }
+
+/* ============================================
+   Network Graph Styles (React Flow)
+   ============================================ */
+
+/* Container for the network graph */
+.network-graph-container {
+  /* Override React Flow defaults to match our design system */
+  --xy-background-color: transparent;
+  --xy-background-pattern-color: var(--border);
+  --xy-node-color: var(--foreground);
+  --xy-node-background-color: var(--card);
+  --xy-node-border-color: var(--border);
+  --xy-edge-stroke: var(--primary);
+  --xy-edge-stroke-width: 2px;
+}
+
+/* Person node styling - extends glass-card */
+.person-node {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.person-node:hover {
+  transform: translateY(-2px);
+}
+
+/* React Flow control button styling */
+.react-flow__controls {
+  box-shadow: 0 2px 8px oklch(0 0 0 / 10%);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.react-flow__controls-button {
+  background: var(--card) !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--foreground) !important;
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--muted) !important;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+
+.react-flow__controls-button svg {
+  fill: currentColor !important;
+  max-width: 14px;
+  max-height: 14px;
+}
+
+/* Edge label styling */
+.connection-edge-label {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  pointer-events: auto;
+}
+
+/* Dark mode adjustments for network graph */
+.dark .network-graph-container {
+  --xy-background-pattern-color: oklch(1 0 0 / 8%);
+}
+
+.dark .person-node.glass-card {
+  background: oklch(0.18 0.02 255 / 95%);
+  border-color: oklch(1 0 0 / 10%);
+}
+
+.dark .react-flow__controls-button {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+}
+
+/* Selection box styling */
+.react-flow__selection {
+  background: oklch(0.5 0.2 255 / 10%);
+  border: 1px dashed oklch(0.5 0.2 255 / 50%);
+}
+
+/* Mini map styling (if used later) */
+.react-flow__minimap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* Attribution hidden via proOptions but just in case */
+.react-flow__attribution {
+  display: none !important;
+}
+
+/* ============================================
+   Tetris Loader Animation
+   ============================================ */
+
+@keyframes tetris-drop {
+  0% {
+    transform: translateY(-100px);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(5px);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(-3px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.tetris-drop {
+  animation: tetris-drop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes tetris-flash {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.tetris-flash {
+  animation: tetris-flash 0.3s ease-in-out 3;
+}
