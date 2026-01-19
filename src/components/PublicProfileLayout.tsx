@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { renderAvatar } from '@/components/AvatarPicker';
 import { getCoverStyle } from '@/lib/coverImages';
 import { useTheme, getThemeShadow } from '@/components/ThemeProvider';
+import { ConnectButton } from '@/components/ConnectButton';
 import dynamic from 'next/dynamic';
 
 // Dynamically import WhiteboardViewer to avoid SSR issues
@@ -143,8 +144,9 @@ export function PublicProfileLayout({ profile, projects }: PublicProfileProps) {
                 </div>
               )}
 
-              {/* Social Links */}
-              <div className="flex flex-wrap gap-3">
+              {/* Social Links & Connect Button */}
+              <div className="flex flex-wrap items-center gap-3">
+                <ConnectButton profileId={profile.id} />
                 {profile.linkedin && (
                   <a
                     href={profile.linkedin}

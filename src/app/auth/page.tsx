@@ -50,8 +50,7 @@ function AuthContent() {
 
   const handleSignInWithGoogle = async () => {
     setLoading(true);
-    const isDev = process.env.NODE_ENV === 'development';
-    const redirectUrl = isDev ? 'http://localhost:3000' : 'https://makerslounge.ca';
+    const redirectUrl = `${window.location.origin}/home`;
 
     await supabase.auth.signInWithOAuth({
       provider: "google",

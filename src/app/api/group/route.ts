@@ -75,7 +75,7 @@ Return ONLY a JSON array with no markdown or explanation. Each group should have
 - "connections": array of pairwise connections between members. For each meaningful connection, include:
   - "from": name of first person
   - "to": name of second person
-  - "reason": short (5-10 words) explanation of why these two connect well
+  - "reason": A detailed 2-3 sentence explanation of why these two people should connect. Be specific about what each person brings to the table and how they can help each other. Mention their specific skills, projects, or needs.
   - "strength": 1 (mild), 2 (medium), or 3 (strong) connection
 
 Include 2-4 connections per group, focusing on the strongest relationships.
@@ -85,8 +85,8 @@ Example format:
   "members": ["Alice", "Bob", "Carol"],
   "reason": "Alice's marketing skills match Bob's needs, and Carol's startup experience complements both.",
   "connections": [
-    {"from": "Alice", "to": "Bob", "reason": "Alice's marketing helps Bob's launch", "strength": 3},
-    {"from": "Bob", "to": "Carol", "reason": "Both in early build phase", "strength": 2}
+    {"from": "Alice", "to": "Bob", "reason": "Alice has 5 years of B2B marketing experience and is looking to help early-stage founders. Bob is building a SaaS product and specifically mentioned needing help with go-to-market strategy. Alice could mentor Bob on positioning and launch tactics.", "strength": 3},
+    {"from": "Bob", "to": "Carol", "reason": "Both are in the early build phase of their startups, facing similar challenges around product-market fit. Carol's experience with user research could help Bob validate his assumptions, while Bob's technical background could help Carol with her app development.", "strength": 2}
   ]
 }]`;
 
