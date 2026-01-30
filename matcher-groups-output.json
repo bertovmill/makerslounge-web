@@ -1,0 +1,684 @@
+{
+  "groups": [
+    {
+      "id": 1,
+      "members": [
+        {
+          "name": "Farhan Rahman",
+          "skills": ["AI automations"],
+          "needs": ["pitching & fundraising"],
+          "project": "Flux (monitoring agents)"
+        },
+        {
+          "name": "Rahavi Selvarajan",
+          "skills": ["AI automations"],
+          "needs": ["community", "sales", "social media"],
+          "project": "Flux with Farhan"
+        },
+        {
+          "name": "Ziyin Zhao",
+          "skills": ["AI automations", "Pitching & fundraising"],
+          "needs": ["sales"],
+          "project": "Trainify"
+        },
+        {
+          "name": "Vinit Shah",
+          "skills": ["Social media", "Sales", "Community", "Recruiting"],
+          "needs": ["community"],
+          "project": "Vanhack + supply chain company"
+        }
+      ],
+      "synergies": [
+        "Ziyin provides pitching skills that Farhan needs",
+        "Vinit provides sales, social media, and community that Rahavi needs",
+        "All working on AI/tech projects with complementary needs",
+        "Farhan and Rahavi are co-founders who can learn from Ziyin's pitching expertise"
+      ]
+    },
+    {
+      "id": 2,
+      "members": [
+        {
+          "name": "Viraj Shah",
+          "skills": ["AI automations"],
+          "needs": ["web", "podcasting", "e-commerce", "sales", "accounting"],
+          "project": "coaching site"
+        },
+        {
+          "name": "Kimberly Ramos",
+          "skills": ["Accounting", "Finance", "Event planning", "Community"],
+          "needs": ["social media", "event", "podcasting"],
+          "project": null
+        },
+        {
+          "name": "Tam Le",
+          "skills": ["Web", "Mobile", "Podcasting", "Community", "Filmmaking", "Event planning"],
+          "needs": ["mobile", "web", "event", "community", "podcasting"],
+          "project": null
+        },
+        {
+          "name": "Arash Nouri",
+          "skills": ["Design", "Event", "Filmmaking", "Community", "Web", "3D design", "UX research"],
+          "needs": ["design", "community", "pitching", "recruiting", "legal", "finance"],
+          "project": "wants design studio"
+        }
+      ],
+      "synergies": [
+        "Kimberly provides accounting that Viraj needs",
+        "Tam provides web and podcasting that Viraj needs",
+        "Arash provides web that Viraj needs and Kimberly can help with finance for his studio",
+        "Tam and Arash share event planning and filmmaking interests"
+      ]
+    },
+    {
+      "id": 3,
+      "members": [
+        {
+          "name": "Miray B",
+          "skills": ["Design", "E-commerce", "Web", "Mobile"],
+          "needs": ["AI automations"],
+          "project": "Notion in Motion podcast"
+        },
+        {
+          "name": "Kachi Eloka",
+          "skills": ["AI automations", "Social media", "Filmmaking"],
+          "needs": ["accounting", "legal"],
+          "project": "Notion Ninja"
+        },
+        {
+          "name": "Declan Kintu",
+          "skills": ["AI", "Design", "Web", "Mobile", "Accounting", "Finance", "E-commerce"],
+          "needs": ["design", "web", "mobile"],
+          "project": "theGarage"
+        },
+        {
+          "name": "Asmaa Bana",
+          "skills": ["Design", "Web", "Mobile", "Pitching & fundraising"],
+          "needs": ["pitching", "legal", "AI"],
+          "project": "dental tool"
+        }
+      ],
+      "synergies": [
+        "Kachi and Declan provide AI that Miray needs",
+        "Declan provides accounting that Kachi needs",
+        "Miray provides design, web, mobile that Declan needs",
+        "All share Notion/productivity interests (Miray's podcast, Kachi's Notion Ninja)",
+        "Strong tech skills across design, web, mobile, and AI"
+      ]
+    },
+    {
+      "id": 4,
+      "members": [
+        {
+          "name": "Patrick Keenan",
+          "skills": ["Design", "Mobile", "Web"],
+          "needs": ["mobile", "community"],
+          "project": "Lantern game"
+        },
+        {
+          "name": "Bakhtawar Awan",
+          "skills": ["Web", "Podcasting", "Community"],
+          "needs": ["web dev"],
+          "project": "building Venn"
+        },
+        {
+          "name": "Joe Cho",
+          "skills": ["Event planning", "Sales", "Community"],
+          "needs": ["recruiting", "community", "pitching", "e-commerce"],
+          "project": null
+        },
+        {
+          "name": "Michael Lewski",
+          "skills": ["Sales", "Pitching", "Recruiting", "Event"],
+          "needs": ["social media", "design", "web", "mobile"],
+          "project": "Bluebelt"
+        }
+      ],
+      "synergies": [
+        "Patrick provides design, web, mobile that Michael needs",
+        "Bakhtawar provides web dev and community that Patrick needs",
+        "Michael provides recruiting, pitching that Joe needs",
+        "Joe provides community support that Bakhtawar and Patrick need",
+        "Strong community/event planning synergy across the group"
+      ]
+    },
+    {
+      "id": 5,
+      "members": [
+        {
+          "name": "Demilade",
+          "skills": ["Design", "Web"],
+          "needs": ["social media", "event", "sales", "pitching", "recruiting"],
+          "project": null
+        },
+        {
+          "name": "Scott Rollo",
+          "skills": ["Social media", "Event", "Community", "Pitching", "E-commerce"],
+          "needs": ["mobile", "design"],
+          "project": "goal tracking"
+        },
+        {
+          "name": "Asar Qadir",
+          "skills": ["Sales", "Community", "Pitching", "Event"],
+          "needs": ["social media"],
+          "project": "Harmix AI"
+        },
+        {
+          "name": "Paul Gadi",
+          "skills": ["AI", "Web", "Mobile", "Pitching", "Recruiting", "Event"],
+          "needs": ["sales", "community", "social media"],
+          "project": "robot apps"
+        }
+      ],
+      "synergies": [
+        "Scott provides social media, event, pitching that Demilade needs",
+        "Demilade provides design that Scott needs",
+        "Asar provides sales and pitching that Demilade needs",
+        "Paul provides recruiting that Demilade needs and mobile that Scott needs",
+        "Scott provides social media that Asar and Paul need"
+      ]
+    },
+    {
+      "id": 6,
+      "members": [
+        {
+          "name": "Harold Sikkema",
+          "skills": ["Web", "Design"],
+          "needs": ["design", "web"],
+          "project": "Rivvon art app"
+        },
+        {
+          "name": "Faye Fu",
+          "skills": ["Social media"],
+          "needs": ["AI automations"],
+          "project": null
+        },
+        {
+          "name": "Leyuan Yu",
+          "skills": ["AI automations", "Mentorship 5 years"],
+          "needs": ["event planning"],
+          "project": "trymoss.ai"
+        },
+        {
+          "name": "Wendy Huang",
+          "skills": ["Event", "Community", "Podcasting"],
+          "needs": ["web", "mobile", "AI"],
+          "project": null
+        }
+      ],
+      "synergies": [
+        "Leyuan provides AI that Faye and Wendy need",
+        "Harold provides web that Wendy needs",
+        "Wendy provides event planning that Leyuan needs",
+        "Leyuan's mentorship experience valuable for whole group",
+        "Harold and Wendy can collaborate on web projects"
+      ]
+    },
+    {
+      "id": 7,
+      "members": [
+        {
+          "name": "Derek Chen",
+          "skills": ["AI automations", "Web"],
+          "needs": ["sales"],
+          "project": "GEO"
+        },
+        {
+          "name": "Armin Aghayan",
+          "skills": ["E-commerce", "Sales", "Web"],
+          "needs": ["web", "AI"],
+          "project": "property management"
+        },
+        {
+          "name": "Dimitri",
+          "skills": ["Web", "Mobile", "AI"],
+          "needs": ["sales"],
+          "project": "ReviseCV.com"
+        },
+        {
+          "name": "Maggi Xu",
+          "skills": ["Community", "Sales", "Social media", "Legal", "Accounting"],
+          "needs": ["mobile"],
+          "project": "AI platform for doctors"
+        }
+      ],
+      "synergies": [
+        "Armin and Maggi provide sales that Derek and Dimitri need",
+        "Derek and Dimitri provide AI that Armin needs",
+        "Dimitri provides mobile that Maggi needs",
+        "All working on tech/AI projects with strong business focus",
+        "Maggi's legal/accounting skills add valuable business perspective"
+      ]
+    },
+    {
+      "id": 8,
+      "members": [
+        {
+          "name": "Jules Park",
+          "skills": ["Design", "AI", "Web", "Community", "Event", "Social media"],
+          "needs": ["web", "AI"],
+          "project": "nonprofit project"
+        },
+        {
+          "name": "Divsahib Singh",
+          "skills": ["AI", "Accounting/Finance", "Data Analytics"],
+          "needs": ["mobile", "sales", "community"],
+          "project": "finance dashboards"
+        },
+        {
+          "name": "Yvan Bedard",
+          "skills": ["Community Building"],
+          "needs": ["sales"],
+          "project": "woodwork/glass maker"
+        },
+        {
+          "name": "Allen Liu",
+          "skills": ["AI", "Social media", "E-commerce", "Product Management"],
+          "needs": ["web", "mobile", "AI"],
+          "project": "loafing.life"
+        }
+      ],
+      "synergies": [
+        "Jules provides web, AI, community, social media that Divsahib and Allen need",
+        "Divsahib provides AI and finance expertise that Jules can use for nonprofit",
+        "Yvan provides community building that Divsahib needs",
+        "Allen provides social media and product management perspective for all",
+        "Nonprofit and community-minded projects align well"
+      ]
+    },
+    {
+      "id": 9,
+      "members": [
+        {
+          "name": "Wen-Ching Shang",
+          "skills": ["Social media"],
+          "needs": ["web", "mobile", "design"],
+          "project": "Wellnest mindfulness"
+        },
+        {
+          "name": "Adit P",
+          "skills": ["Web", "AI", "Pitching"],
+          "needs": ["social media", "community"],
+          "project": "Agentloops"
+        },
+        {
+          "name": "Rose Ruhao Lou",
+          "skills": ["Design", "AI", "Social media", "Event", "Community"],
+          "needs": ["legal"],
+          "project": "Komorei"
+        },
+        {
+          "name": "Maria Becerra",
+          "skills": ["Community", "Social media", "Event", "Accounting", "Finance", "Pitching", "AI"],
+          "needs": ["web"],
+          "project": "AI tools reviews"
+        }
+      ],
+      "synergies": [
+        "Adit provides web that Wen-Ching and Maria need",
+        "Rose provides design that Wen-Ching needs",
+        "Wen-Ching and Rose provide social media that Adit needs",
+        "Rose and Maria provide community that Adit needs",
+        "All working on AI-related or wellness/community projects"
+      ]
+    },
+    {
+      "id": 10,
+      "members": [
+        {
+          "name": "Razy Shafiee",
+          "skills": ["Web"],
+          "needs": ["AI"],
+          "project": "stock trading AI"
+        },
+        {
+          "name": "Julien Avezou",
+          "skills": ["Web", "Mobile"],
+          "needs": ["social media", "sales", "community"],
+          "project": "reflection engine for developers"
+        },
+        {
+          "name": "Ria Prakash",
+          "skills": ["Web"],
+          "needs": ["web dev"],
+          "project": "events calendar app"
+        },
+        {
+          "name": "Benjamin Haddon",
+          "skills": ["AI", "Web", "Design", "Filmmaking", "Systems thinking/psychology"],
+          "needs": ["community"],
+          "project": null
+        }
+      ],
+      "synergies": [
+        "Benjamin provides AI that Razy needs",
+        "All three provide web skills and can help Ria with web dev",
+        "Benjamin's systems thinking/psychology fits well with Julien's reflection engine",
+        "Strong technical web/AI foundation across the group"
+      ]
+    },
+    {
+      "id": 11,
+      "members": [
+        {
+          "name": "Paola Santiago",
+          "skills": ["Web", "Social media", "AI", "Mobile", "Community", "Product Management"],
+          "needs": ["sales"],
+          "project": "consulting business"
+        },
+        {
+          "name": "Nelson Lee",
+          "skills": ["Web", "Mobile"],
+          "needs": ["social media"],
+          "project": "Love Maple"
+        },
+        {
+          "name": "Brandon Best",
+          "skills": ["Web", "Product"],
+          "needs": ["mobile"],
+          "project": "computer vision for hair follicles"
+        },
+        {
+          "name": "Ior Oliveros",
+          "skills": ["Sales"],
+          "needs": ["AI", "social media"],
+          "project": "assessment tool"
+        }
+      ],
+      "synergies": [
+        "Ior provides sales that Paola needs",
+        "Paola provides social media that Nelson and Ior need, and AI that Ior needs",
+        "Paola and Nelson provide mobile that Brandon needs",
+        "All have strong product/business focus with complementary tech skills"
+      ]
+    },
+    {
+      "id": 12,
+      "members": [
+        {
+          "name": "Fayaz Rafin",
+          "skills": ["AI", "Design", "Web", "Mobile", "E-commerce", "Product design/PM"],
+          "needs": ["sales", "community", "pitching", "legal", "recruiting"],
+          "project": null
+        },
+        {
+          "name": "Shekhar Tiruwa",
+          "skills": ["AI", "Web", "Research/AI safety"],
+          "needs": ["community"],
+          "project": null
+        },
+        {
+          "name": "Inner Flame Movement (Irina)",
+          "skills": ["Community", "Event"],
+          "needs": ["social media", "event", "pitching"],
+          "project": "women's social club"
+        },
+        {
+          "name": "Jin Choe",
+          "skills": ["Pitching", "Recruiting"],
+          "needs": ["web dev"],
+          "project": "recycled plastics"
+        }
+      ],
+      "synergies": [
+        "Jin provides pitching and recruiting that Fayaz needs",
+        "Irina provides community that Fayaz and Shekhar need",
+        "Fayaz provides web, mobile, design that Jin needs",
+        "All need community support which Irina specializes in",
+        "Interesting mix of AI/tech with sustainability and social impact"
+      ]
+    },
+    {
+      "id": 13,
+      "members": [
+        {
+          "name": "Honnesh Rohmetra",
+          "skills": ["AI", "Web", "Event", "Community"],
+          "needs": ["social media", "sales"],
+          "project": "wellbeing companion"
+        },
+        {
+          "name": "Andres Tarazona",
+          "skills": ["AI", "Web"],
+          "needs": ["web", "community"],
+          "project": "budget app"
+        },
+        {
+          "name": "Ahmed Shaikhon",
+          "skills": ["Social media", "Web", "Filmmaking", "Architectural design"],
+          "needs": ["design", "pitching", "community"],
+          "project": "architecture projects"
+        },
+        {
+          "name": "Adrianna Wasiak",
+          "skills": ["Sales", "Community", "Reflective listener"],
+          "needs": ["pitching"],
+          "project": "dating app idea"
+        }
+      ],
+      "synergies": [
+        "Ahmed provides social media that Honnesh needs",
+        "Adrianna provides sales that Honnesh needs",
+        "Honnesh provides community that Andres and Ahmed need",
+        "All working on consumer/lifestyle apps with strong community angle",
+        "Honnesh's wellbeing focus + Adrianna's reflective listening + Ahmed's creativity"
+      ]
+    },
+    {
+      "id": 14,
+      "members": [
+        {
+          "name": "Devender Butani",
+          "skills": ["Design", "Web", "Mobile", "Photography"],
+          "needs": ["social media"],
+          "project": "startup"
+        },
+        {
+          "name": "Millin Gabani",
+          "skills": ["Design", "Web", "Mobile", "Community", "Pitching", "Product"],
+          "needs": ["sales", "pitching", "finance", "social media"],
+          "project": "Workers AI"
+        },
+        {
+          "name": "Aadee Patil",
+          "skills": ["Web", "Mobile", "Pitching"],
+          "needs": ["design", "social media", "community"],
+          "project": "party to meet people"
+        },
+        {
+          "name": "Minas Adonai",
+          "skills": ["Sales", "Filmmaking"],
+          "needs": ["web dev"],
+          "project": "B2B platform for creators"
+        }
+      ],
+      "synergies": [
+        "Millin and Devender provide design that Aadee needs",
+        "Minas provides sales that Millin needs",
+        "Devender, Millin, and Aadee provide web/mobile that Minas needs",
+        "Millin provides pitching that Millin needs (reinforcement)",
+        "Strong design/web/mobile skills + sales for execution"
+      ]
+    },
+    {
+      "id": 15,
+      "members": [
+        {
+          "name": "Anthony Susevski",
+          "skills": ["AI"],
+          "needs": ["community"],
+          "project": "Kaggle competition"
+        },
+        {
+          "name": "Rajan Dasgupta",
+          "skills": ["AI"],
+          "needs": ["pitching"],
+          "project": "neural networks for motor learning"
+        },
+        {
+          "name": "Harish Kukreja",
+          "skills": ["AI"],
+          "needs": ["social media", "GTM"],
+          "project": "leveling up AI skills"
+        },
+        {
+          "name": "Vikas N",
+          "skills": ["AI", "Open data"],
+          "needs": ["AI"],
+          "project": "collecting street data"
+        }
+      ],
+      "synergies": [
+        "All four are AI specialists at similar skill levels",
+        "Can learn from each other's AI approaches (Kaggle, neural networks, street data)",
+        "Anthony needs community - this AI-focused group provides peer support",
+        "Great technical depth for AI discussions and skill sharing",
+        "Can collaborate on AI challenges together"
+      ]
+    },
+    {
+      "id": 16,
+      "members": [
+        {
+          "name": "Purva Daga",
+          "skills": ["AI", "Web", "Mobile"],
+          "needs": ["sales", "social media", "pitching"],
+          "project": "social media brand monitoring"
+        },
+        {
+          "name": "Nima Tahami",
+          "skills": ["Design", "Web", "Mobile"],
+          "needs": ["filmmaking", "community", "sales"],
+          "project": "CueClip AI video editor"
+        },
+        {
+          "name": "Kai Xie",
+          "skills": ["Mobile", "Web", "Community", "AI"],
+          "needs": ["pitching", "filmmaking"],
+          "project": "smallerworld.club/happytown.life"
+        },
+        {
+          "name": "Jagrit Acharya",
+          "skills": ["AI", "Web"],
+          "needs": ["sales"],
+          "project": "social media monitoring"
+        }
+      ],
+      "synergies": [
+        "Kai provides community that Nima needs",
+        "Nima provides design for the group",
+        "Purva and Jagrit both working on social media monitoring - can collaborate",
+        "All need sales/pitching - can learn together",
+        "Strong web/mobile/AI technical foundation"
+      ]
+    },
+    {
+      "id": 17,
+      "members": [
+        {
+          "name": "Shalin Patel",
+          "skills": ["Pitching", "Web", "Design"],
+          "needs": ["sales", "web"],
+          "project": "deep research agents for sales/GTM"
+        },
+        {
+          "name": "Mariglen Qorri",
+          "skills": ["Design", "Project management"],
+          "needs": ["web dev"],
+          "project": "real estate automations"
+        },
+        {
+          "name": "Adam Cote",
+          "skills": ["Accounting", "Finance", "Community"],
+          "needs": ["mobile"],
+          "project": "fitness app from TikTok videos"
+        },
+        {
+          "name": "Adrian Clarke",
+          "skills": ["Sales", "Community"],
+          "needs": ["design"],
+          "project": "automotive accessories idea"
+        }
+      ],
+      "synergies": [
+        "Adrian provides sales that Shalin needs",
+        "Shalin and Mariglen provide design that Adrian needs",
+        "Shalin provides web that Mariglen needs",
+        "Adam provides finance/accounting expertise for business planning",
+        "Adrian and Adam provide community support"
+      ]
+    },
+    {
+      "id": 18,
+      "members": [
+        {
+          "name": "Zain Siddiqui",
+          "skills": ["Sales", "Electronics design/3D modeling"],
+          "needs": ["filmmaking", "finance"],
+          "project": "immersive venue"
+        },
+        {
+          "name": "Allen Lu",
+          "skills": ["Design (UX/UI)", "Writing"],
+          "needs": ["social media branding"],
+          "project": "3D printed stamps"
+        },
+        {
+          "name": "Tyler Abbey",
+          "skills": ["Design", "Friendship"],
+          "needs": ["design"],
+          "project": "3D printing"
+        },
+        {
+          "name": "Ayame Ishii",
+          "skills": ["Design"],
+          "needs": ["web", "AI"],
+          "project": "news aggregation site"
+        }
+      ],
+      "synergies": [
+        "Zain's 3D modeling + Allen's 3D printed stamps + Tyler's 3D printing = strong maker synergy",
+        "Allen, Tyler, and Ayame all provide design skills",
+        "Zain provides sales perspective for commercialization",
+        "All have creative/maker mindset with hands-on projects"
+      ]
+    },
+    {
+      "id": 19,
+      "members": [
+        {
+          "name": "Pascal Thibeault",
+          "skills": ["AI automations", "Mobile", "Web", "Design", "Legal", "Community", "Recruiting"],
+          "needs": [],
+          "project": null
+        },
+        {
+          "name": "Sujen",
+          "skills": ["AI automations", "Web development"],
+          "needs": ["AI help"],
+          "project": null
+        },
+        {
+          "name": "Serhii Sharipov",
+          "skills": ["Web"],
+          "needs": ["design"],
+          "project": "squats tracker"
+        }
+      ],
+      "synergies": [
+        "Pascal has extensive skills (AI, mobile, web, design, legal, community) and no stated needs - perfect mentor for group",
+        "Pascal provides AI help that Sujen needs",
+        "Pascal provides design that Serhii needs",
+        "Sujen and Pascal can collaborate on AI/web projects",
+        "Smaller group of 3 allows for deeper connections"
+      ]
+    }
+  ],
+  "metadata": {
+    "total_attendees": 75,
+    "total_groups": 19,
+    "groups_of_4": 18,
+    "groups_of_3": 1,
+    "creation_date": "2026-01-29"
+  }
+}
