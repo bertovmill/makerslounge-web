@@ -1,35 +1,32 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import NetworkGraph, { generateGroupTheme } from "@/components/matcher/NetworkGraph";
 import { getGroupColor } from "@/components/matcher/PersonNode";
-import TetrisLoader from "@/components/matcher/TetrisLoader";
+import type { Group, StepEvent, GroupEvent, CompleteEvent } from "@/types/matcher";
 
 interface Contact {
   [key: string]: string;
-}
-
-interface Connection {
-  from: string;
-  to: string;
-  reason: string;
-  strength: number;
-}
-
-interface Group {
-  members: string[];
-  reason: string;
-  theme?: string;
-  connections?: Connection[];
 }
 
 interface Recommendation {
   name: string;
   reason: string;
   matchStrength: number;
+}
+
+interface MatcherProgress {
+  step: string;
+  phase?: string;
+  icon?: string;
+}
+
+interface ThinkingLog {
+  text: string;
+  timestamp: number;
 }
 
 type ViewMode = "list" | "graph";
@@ -66,6 +63,18 @@ export default function MatcherPage() {
 
   // Graph selection state
   const [selectedGroupIndex, setSelectedGroupIndex] = useState<number | null>(null);
+
+  // Streaming progress state
+  const [matcherProgress, setMatcherProgress] = useState<MatcherProgress | null>(null);
+  const [thinkingLogs, setThinkingLogs] = useState<ThinkingLog[]>([]);
+  const thinkingLogRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll thinking log to bottom
+  useEffect(() => {
+    if (thinkingLogRef.current) {
+      thinkingLogRef.current.scrollTop = thinkingLogRef.current.scrollHeight;
+    }
+  }, [thinkingLogs]);
 
   // Load saved events on mount
   useEffect(() => {
@@ -225,34 +234,108 @@ export default function MatcherPage() {
     setIsGrouping(true);
     setError(null);
     setGroups([]);
+    setThinkingLogs([]);
+    setMatcherProgress({ step: "Starting agent...", phase: "starting", icon: "0" });
 
     try {
-      const response = await fetch("/api/group", {
+      const response = await fetch("/api/agents/matcher", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contacts: contacts.map((c) => ({
-            name: c.name,
-            email: c.email,
-            project: c.project,
-            phase: c.phase,
-            skills: c.skills,
-            needsHelp: c.needsHelp,
-          })),
+          contacts, // Send all contact data, not just mapped fields
           groupSize,
+          stream: true,
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || "Failed to generate groups");
+        const data = await response.json();
+        throw new Error(data.error || "Failed to start matcher agent");
       }
 
-      setGroups(data.groups);
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("No response stream available");
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // Process complete SSE events from buffer
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+        let eventType = "";
+        for (const line of lines) {
+          if (line.startsWith("event: ")) {
+            eventType = line.slice(7).trim();
+          } else if (line.startsWith("data: ") && eventType) {
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              switch (eventType) {
+                case "step": {
+                  const stepData = data as StepEvent;
+                  setMatcherProgress({
+                    step: stepData.step,
+                    phase: stepData.phase,
+                    icon: stepData.icon,
+                  });
+                  break;
+                }
+                case "thinking": {
+                  setThinkingLogs((prev) => [
+                    ...prev,
+                    { text: data.text, timestamp: Date.now() },
+                  ]);
+                  break;
+                }
+                case "group": {
+                  const groupData = data as GroupEvent;
+                  setGroups((prev) => {
+                    // Only add if not already present
+                    if (prev.length <= groupData.index) {
+                      return [...prev, groupData.group];
+                    }
+                    return prev;
+                  });
+                  setMatcherProgress((prev) => ({
+                    ...prev,
+                    step: `Formed group ${groupData.index + 1}...`,
+                    icon: "4",
+                  }));
+                  break;
+                }
+                case "complete": {
+                  const completeData = data as CompleteEvent;
+                  setGroups(completeData.groups);
+                  setMatcherProgress(null);
+                  break;
+                }
+                case "error": {
+                  throw new Error(data.error);
+                }
+              }
+            } catch (parseErr) {
+              // Ignore JSON parse errors for incomplete data
+              if (parseErr instanceof Error && parseErr.message !== "Unexpected end of JSON input") {
+                console.error("SSE parse error:", parseErr);
+              }
+            }
+            eventType = "";
+          }
+        }
+      }
     } catch (err) {
       console.error("Grouping error:", err);
       setError(err instanceof Error ? err.message : "Failed to generate groups");
+      setMatcherProgress(null);
     } finally {
       setIsGrouping(false);
     }
@@ -313,88 +396,95 @@ export default function MatcherPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-serif font-bold">Matcher</h1>
-          <p className="text-muted-foreground mt-1">
-            Upload your guest list and create maker groups
+          <h1 className="text-3xl font-bold tracking-tight">Matcher</h1>
+          <p className="text-muted-foreground mt-2">
+            Upload your guest list and create maker groups with AI-powered matching
           </p>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm">
+          <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-xl mb-6 text-sm border border-destructive/20">
             {error}
           </div>
         )}
 
         {/* Upload Section */}
         {contacts.length === 0 ? (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Upload Area */}
             <div
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
-              className={`border-2 border-dashed rounded-2xl p-12 text-center transition-colors ${
+              className={`glass-card rounded-2xl p-8 sm:p-12 text-center transition-all duration-300 cursor-pointer ${
                 isDragging
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-primary/50"
+                  ? "border-2 border-primary bg-primary/5 shadow-lg shadow-primary/10"
+                  : "border border-border hover:border-primary/40 hover:shadow-lg"
               }`}
             >
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <svg
-                    className="w-8 h-8 text-primary"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                    />
-                  </svg>
+              <label htmlFor="csv-upload" className="cursor-pointer block">
+                <div className="flex flex-col items-center gap-5">
+                  <div className={`w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+                    isDragging
+                      ? "bg-primary text-white scale-110"
+                      : "bg-primary/10 text-primary"
+                  }`}>
+                    <svg
+                      className="w-10 h-10"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                      />
+                    </svg>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xl font-semibold">Drop your CSV here</p>
+                    <p className="text-muted-foreground">
+                      or click anywhere to browse files
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-4 py-2 rounded-full">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Accepts .csv files
+                  </div>
                 </div>
-                <div>
-                  <p className="text-lg font-medium">Drop your CSV here</p>
-                  <p className="text-muted-foreground text-sm mt-1">
-                    or click to browse
-                  </p>
-                </div>
-                <input
-                  type="file"
-                  accept=".csv"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  id="csv-upload"
-                />
-                <label htmlFor="csv-upload">
-                  <Button variant="outline" asChild>
-                    <span>Choose File</span>
-                  </Button>
-                </label>
-              </div>
+              </label>
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleFileSelect}
+                className="hidden"
+                id="csv-upload"
+              />
             </div>
 
             {/* Saved Events */}
             {savedEvents.length > 0 && (
-              <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+              <div className="glass-card rounded-2xl p-6">
                 <h2 className="text-lg font-semibold mb-4">Saved Events</h2>
                 <div className="space-y-2">
                   {savedEvents.map((event) => (
                     <div
                       key={event.id}
-                      className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
+                      className="flex items-center justify-between p-4 bg-muted/30 rounded-xl hover:bg-muted/50 transition-colors group"
                     >
                       <button
                         onClick={() => loadEvent(event)}
                         className="flex-1 text-left"
                       >
-                        <p className="font-medium">{event.name}</p>
+                        <p className="font-medium group-hover:text-primary transition-colors">{event.name}</p>
                         <p className="text-sm text-muted-foreground">
                           {event.contacts.length} contacts
                           {event.groups ? ` • ${event.groups.length} groups` : ""}
@@ -404,7 +494,7 @@ export default function MatcherPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => deleteEvent(event.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                       >
                         Delete
                       </Button>
@@ -417,7 +507,7 @@ export default function MatcherPage() {
         ) : (
           <>
             {/* Event Name & Save */}
-            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border mb-6">
+            <div className="glass-card rounded-2xl p-6 mb-6">
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex-1 min-w-[200px]">
                   <input
@@ -425,7 +515,7 @@ export default function MatcherPage() {
                     value={eventName}
                     onChange={(e) => setEventName(e.target.value)}
                     placeholder="Event name (e.g., MakersLounge Meetup #7)"
-                    className="w-full px-4 py-2 border border-border rounded-lg bg-background"
+                    className="w-full px-4 py-2.5 border border-border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
                   />
                 </div>
                 <div className="flex items-center gap-2">
@@ -437,7 +527,7 @@ export default function MatcherPage() {
                   </Button>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-sm text-muted-foreground mt-3">
                 {fileName ? `Uploaded: ${fileName} • ` : ""}
                 {contacts.length} contacts loaded
                 {currentEventId && " • Saved"}
@@ -445,10 +535,82 @@ export default function MatcherPage() {
             </div>
 
             {/* Smart Grouping */}
-            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border mb-6">
+            <div className="glass-card rounded-2xl p-6 mb-6">
               {isGrouping ? (
-                // Show Tetris loader while grouping
-                <TetrisLoader message={`Matching ${contacts.length} makers into perfect groups...`} />
+                // Show progress while grouping
+                <div className="space-y-4">
+                  <div>
+                      {/* Progress phases indicator */}
+                      <div className="flex items-center gap-2 mb-3">
+                        {[
+                          { num: "1", label: "Columns" },
+                          { num: "2", label: "Landscape" },
+                          { num: "3", label: "Synergies" },
+                          { num: "4", label: "Groups" },
+                          { num: "5", label: "Output" },
+                        ].map(({ num, label }) => (
+                          <div
+                            key={num}
+                            className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium transition-all ${
+                              matcherProgress?.icon === num
+                                ? "bg-primary text-white"
+                                : parseInt(matcherProgress?.icon || "0") > parseInt(num)
+                                ? "bg-primary/20 text-primary"
+                                : "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
+                              {num}
+                            </span>
+                            <span className="hidden sm:inline">{label}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Current step */}
+                      <p className="text-sm font-medium mb-2">
+                        {matcherProgress?.step || `Matching ${contacts.length} makers...`}
+                      </p>
+
+                      {/* Thinking log - scrollable area */}
+                      <div
+                        ref={thinkingLogRef}
+                        className="bg-slate-900 rounded-lg p-3 h-48 overflow-y-auto font-mono text-xs"
+                      >
+                        {thinkingLogs.length === 0 ? (
+                          <p className="text-slate-500 italic">Agent thinking...</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {thinkingLogs.map((log, idx) => (
+                              <p key={idx} className="text-slate-300 leading-relaxed">
+                                <span className="text-slate-500 mr-2">{">"}</span>
+                                {log.text}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                    {/* Show groups as they form */}
+                    {groups.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Groups formed ({groups.length}):
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {groups.map((group, idx) => (
+                            <div
+                              key={idx}
+                              className="px-2 py-1 bg-primary/10 text-primary rounded text-xs font-medium animate-in fade-in slide-in-from-bottom-1 duration-300"
+                            >
+                              {group.theme || `Group ${idx + 1}`}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <>
                   <h2 className="text-lg font-semibold mb-3">Smart Grouping</h2>
@@ -457,12 +619,12 @@ export default function MatcherPage() {
                   </p>
 
                   <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <label className="text-sm font-medium">Group size:</label>
                       <select
                         value={groupSize}
                         onChange={(e) => setGroupSize(Number(e.target.value))}
-                        className="px-3 py-2 border border-border rounded-lg bg-background"
+                        className="px-3 py-2.5 border border-border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all cursor-pointer"
                       >
                         <option value={2}>Pairs (2)</option>
                         <option value={3}>Small (3)</option>
@@ -485,8 +647,8 @@ export default function MatcherPage() {
 
             {/* AI Recommendations Chat */}
             {groups.length > 0 && (
-              <div className="bg-card rounded-2xl p-6 shadow-sm border border-border mb-6">
-                <h2 className="text-lg font-semibold mb-3">Who should I talk to?</h2>
+              <div className="glass-card rounded-2xl p-6 mb-6">
+                <h2 className="text-lg font-semibold mb-2">Who should I talk to?</h2>
                 <p className="text-muted-foreground text-sm mb-4">
                   Ask AI to recommend people based on what you&apos;re looking for
                 </p>
@@ -498,7 +660,7 @@ export default function MatcherPage() {
                     onChange={(e) => setRecommendQuery(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && getRecommendations()}
                     placeholder="e.g., I need help with fundraising, Looking for a technical co-founder..."
-                    className="flex-1 px-4 py-2 border border-border rounded-lg bg-background"
+                    className="flex-1 px-4 py-2.5 border border-border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
                     disabled={isRecommending}
                   />
                   <Button onClick={getRecommendations} disabled={isRecommending || !recommendQuery.trim()}>
@@ -574,36 +736,36 @@ export default function MatcherPage() {
 
             {/* Generated Groups */}
             {groups.length > 0 && (
-              <div className="bg-card rounded-2xl p-6 shadow-sm border border-border mb-6">
+              <div className="glass-card rounded-2xl p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">
                     Generated Groups ({groups.length})
                   </h2>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     {/* View Toggle */}
-                    <div className="flex items-center bg-muted rounded-lg p-1">
+                    <div className="flex items-center bg-muted/50 rounded-xl p-1">
                       <button
                         onClick={() => setViewMode("list")}
-                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
                           viewMode === "list"
                             ? "bg-background text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground"
                         }`}
                       >
-                        <svg className="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                         </svg>
                         List
                       </button>
                       <button
                         onClick={() => setViewMode("graph")}
-                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
                           viewMode === "graph"
                             ? "bg-background text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground"
                         }`}
                       >
-                        <svg className="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
                         Graph
@@ -670,7 +832,7 @@ export default function MatcherPage() {
                     {groups.map((group, idx) => (
                       <div
                         key={idx}
-                        className="bg-muted/30 rounded-xl p-4 border border-border"
+                        className="bg-muted/20 rounded-xl p-5 border border-border/50 hover:border-border transition-colors"
                       >
                         <div className="flex items-center gap-2 mb-3">
                           <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold">
@@ -731,13 +893,13 @@ export default function MatcherPage() {
             )}
 
             {/* Contacts Table */}
-            <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
-              <div className="px-6 py-4 border-b border-border">
+            <div className="glass-card rounded-2xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-border/50">
                 <h2 className="text-lg font-semibold">All Contacts ({contacts.length})</h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-muted/50">
+                  <thead className="bg-muted/30">
                     <tr>
                       {headers.map((header) => (
                         <th
@@ -749,9 +911,9 @@ export default function MatcherPage() {
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border">
+                  <tbody className="divide-y divide-border/50">
                     {contacts.map((contact, idx) => (
-                      <tr key={idx} className="hover:bg-muted/30">
+                      <tr key={idx} className="hover:bg-muted/20 transition-colors">
                         {headers.map((header) => (
                           <td
                             key={header}
