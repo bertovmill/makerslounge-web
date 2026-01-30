@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
-import NetworkGraph, { generateGroupTheme } from "@/components/matcher/NetworkGraph";
-import { getGroupColor } from "@/components/matcher/PersonNode";
-import type { Group, StepEvent, GroupEvent, CompleteEvent } from "@/types/matcher";
+import type { Group, StepEvent, GroupEvent, CompleteEvent, TokenUsage } from "@/types/matcher";
+import AgentWorkflow, { type AgentTurn, type ToolCall } from "@/components/matcher/AgentWorkflow";
 
 interface Contact {
   [key: string]: string;
@@ -28,8 +27,6 @@ interface ThinkingLog {
   text: string;
   timestamp: number;
 }
-
-type ViewMode = "list" | "graph";
 
 interface MatcherEvent {
   id: string;
@@ -53,7 +50,6 @@ export default function MatcherPage() {
   const [eventName, setEventName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("graph");
 
   // Recommendation chat state
   const [recommendQuery, setRecommendQuery] = useState("");
@@ -61,20 +57,12 @@ export default function MatcherPage() {
   const [recommendAnswer, setRecommendAnswer] = useState("");
   const [isRecommending, setIsRecommending] = useState(false);
 
-  // Graph selection state
-  const [selectedGroupIndex, setSelectedGroupIndex] = useState<number | null>(null);
 
   // Streaming progress state
   const [matcherProgress, setMatcherProgress] = useState<MatcherProgress | null>(null);
   const [thinkingLogs, setThinkingLogs] = useState<ThinkingLog[]>([]);
-  const thinkingLogRef = useRef<HTMLDivElement>(null);
-
-  // Auto-scroll thinking log to bottom
-  useEffect(() => {
-    if (thinkingLogRef.current) {
-      thinkingLogRef.current.scrollTop = thinkingLogRef.current.scrollHeight;
-    }
-  }, [thinkingLogs]);
+  const [tokenUsage, setTokenUsage] = useState<TokenUsage | null>(null);
+  const [agentTurns, setAgentTurns] = useState<AgentTurn[]>([]);
 
   // Load saved events on mount
   useEffect(() => {
@@ -235,6 +223,8 @@ export default function MatcherPage() {
     setError(null);
     setGroups([]);
     setThinkingLogs([]);
+    setTokenUsage(null);
+    setAgentTurns([]);
     setMatcherProgress({ step: "Starting agent...", phase: "starting", icon: "0" });
 
     try {
@@ -296,6 +286,68 @@ export default function MatcherPage() {
                   ]);
                   break;
                 }
+                case "turn_start": {
+                  const turnNum = data.turn as number;
+                  setAgentTurns((prev) => [
+                    ...prev,
+                    { turn: turnNum, toolCalls: [], timestamp: Date.now() },
+                  ]);
+                  break;
+                }
+                case "turn_thinking": {
+                  const { turn: tTurn, thinking } = data as { turn: number; thinking: string };
+                  setAgentTurns((prev) =>
+                    prev.map((t) =>
+                      t.turn === tTurn ? { ...t, thinking } : t
+                    )
+                  );
+                  break;
+                }
+                case "tool_call": {
+                  const { turn: tcTurn, id, name, input, status } = data as {
+                    turn: number;
+                    id: string;
+                    name: string;
+                    input: Record<string, unknown>;
+                    status: "running" | "complete";
+                  };
+                  setAgentTurns((prev) =>
+                    prev.map((t) =>
+                      t.turn === tcTurn
+                        ? {
+                            ...t,
+                            toolCalls: [
+                              ...t.toolCalls,
+                              { id, name, input, status, timestamp: Date.now() },
+                            ],
+                          }
+                        : t
+                    )
+                  );
+                  break;
+                }
+                case "tool_result": {
+                  const { turn: trTurn, id: trId, result } = data as {
+                    turn: number;
+                    id: string;
+                    result: unknown;
+                  };
+                  setAgentTurns((prev) =>
+                    prev.map((t) =>
+                      t.turn === trTurn
+                        ? {
+                            ...t,
+                            toolCalls: t.toolCalls.map((tc) =>
+                              tc.id === trId
+                                ? { ...tc, result, status: "complete" as const }
+                                : tc
+                            ),
+                          }
+                        : t
+                    )
+                  );
+                  break;
+                }
                 case "group": {
                   const groupData = data as GroupEvent;
                   setGroups((prev) => {
@@ -312,9 +364,16 @@ export default function MatcherPage() {
                   }));
                   break;
                 }
+                case "tokens": {
+                  setTokenUsage(data as TokenUsage);
+                  break;
+                }
                 case "complete": {
                   const completeData = data as CompleteEvent;
                   setGroups(completeData.groups);
+                  if (completeData.tokens) {
+                    setTokenUsage(completeData.tokens);
+                  }
                   setMatcherProgress(null);
                   break;
                 }
@@ -507,7 +566,7 @@ export default function MatcherPage() {
         ) : (
           <>
             {/* Event Name & Save */}
-            <div className="glass-card rounded-2xl p-6 mb-6">
+            <div className="pb-6 mb-6 border-b border-border/50">
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex-1 min-w-[200px]">
                   <input
@@ -535,7 +594,7 @@ export default function MatcherPage() {
             </div>
 
             {/* Smart Grouping */}
-            <div className="glass-card rounded-2xl p-6 mb-6">
+            <div className="pb-6 mb-6 border-b border-border/50">
               {isGrouping ? (
                 // Show progress while grouping
                 <div className="space-y-4">
@@ -543,11 +602,11 @@ export default function MatcherPage() {
                       {/* Progress phases indicator */}
                       <div className="flex items-center gap-2 mb-3">
                         {[
-                          { num: "1", label: "Columns" },
-                          { num: "2", label: "Landscape" },
-                          { num: "3", label: "Synergies" },
-                          { num: "4", label: "Groups" },
-                          { num: "5", label: "Output" },
+                          { num: "1", label: "Explore" },
+                          { num: "2", label: "Analyze" },
+                          { num: "3", label: "Propose" },
+                          { num: "4", label: "Verify" },
+                          { num: "5", label: "Submit" },
                         ].map(({ num, label }) => (
                           <div
                             key={num}
@@ -568,32 +627,28 @@ export default function MatcherPage() {
                       </div>
 
                       {/* Current step */}
-                      <p className="text-sm font-medium mb-2">
+                      <p className="text-sm font-medium mb-3">
                         {matcherProgress?.step || `Matching ${contacts.length} makers...`}
                       </p>
 
-                      {/* Thinking log - scrollable area */}
-                      <div
-                        ref={thinkingLogRef}
-                        className="bg-slate-900 rounded-lg p-3 h-48 overflow-y-auto font-mono text-xs"
-                      >
-                        {thinkingLogs.length === 0 ? (
-                          <p className="text-slate-500 italic">Agent thinking...</p>
-                        ) : (
-                          <div className="space-y-2">
-                            {thinkingLogs.map((log, idx) => (
-                              <p key={idx} className="text-slate-300 leading-relaxed">
-                                <span className="text-slate-500 mr-2">{">"}</span>
-                                {log.text}
-                              </p>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      {/* Agent Workflow Visualization */}
+                      <AgentWorkflow
+                        turns={agentTurns}
+                        currentPhase={matcherProgress?.phase || "starting"}
+                        isRunning={isGrouping}
+                      />
+
+                      {/* Token usage */}
+                      {tokenUsage && (
+                        <p className="text-[10px] text-muted-foreground/60 mt-3 text-right">
+                          {tokenUsage.input.toLocaleString()} in · {tokenUsage.output.toLocaleString()} out
+                          {tokenUsage.estimated && " ~"}
+                        </p>
+                      )}
 
                     {/* Show groups as they form */}
                     {groups.length > 0 && (
-                      <div className="mt-3">
+                      <div className="mt-4">
                         <p className="text-xs text-muted-foreground mb-2">
                           Groups formed ({groups.length}):
                         </p>
@@ -620,17 +675,17 @@ export default function MatcherPage() {
 
                   <div className="flex flex-wrap items-center gap-4">
                     <div className="flex items-center gap-3">
-                      <label className="text-sm font-medium">Group size:</label>
+                      <label className="text-sm font-medium">Split into:</label>
                       <select
                         value={groupSize}
                         onChange={(e) => setGroupSize(Number(e.target.value))}
                         className="px-3 py-2.5 border border-border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all cursor-pointer"
                       >
-                        <option value={2}>Pairs (2)</option>
-                        <option value={3}>Small (3)</option>
-                        <option value={4}>Medium (4)</option>
-                        <option value={5}>Large (5)</option>
-                        <option value={6}>Tables (6)</option>
+                        {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                          <option key={n} value={n}>
+                            {n} groups {contacts.length > 0 && `(~${Math.ceil(contacts.length / n)} each)`}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
@@ -647,7 +702,7 @@ export default function MatcherPage() {
 
             {/* AI Recommendations Chat */}
             {groups.length > 0 && (
-              <div className="glass-card rounded-2xl p-6 mb-6">
+              <div className="pb-6 mb-6 border-b border-border/50">
                 <h2 className="text-lg font-semibold mb-2">Who should I talk to?</h2>
                 <p className="text-muted-foreground text-sm mb-4">
                   Ask AI to recommend people based on what you&apos;re looking for
@@ -736,98 +791,17 @@ export default function MatcherPage() {
 
             {/* Generated Groups */}
             {groups.length > 0 && (
-              <div className="glass-card rounded-2xl p-6 mb-6">
+              <div className="pb-6 mb-6 border-b border-border/50">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">
                     Generated Groups ({groups.length})
                   </h2>
-                  <div className="flex items-center gap-3">
-                    {/* View Toggle */}
-                    <div className="flex items-center bg-muted/50 rounded-xl p-1">
-                      <button
-                        onClick={() => setViewMode("list")}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
-                          viewMode === "list"
-                            ? "bg-background text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                        </svg>
-                        List
-                      </button>
-                      <button
-                        onClick={() => setViewMode("graph")}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
-                          viewMode === "graph"
-                            ? "bg-background text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                        </svg>
-                        Graph
-                      </button>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => setGroups([])}>
-                      Clear Groups
-                    </Button>
-                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setGroups([])}>
+                    Clear Groups
+                  </Button>
                 </div>
 
-                {/* Graph View */}
-                {viewMode === "graph" && (
-                  <>
-                    {/* Selected group theme panel - above the graph */}
-                    {selectedGroupIndex !== null && groups[selectedGroupIndex] && (
-                      <div
-                        className="mb-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-xl p-4 border-2 shadow-lg relative"
-                        style={{ borderColor: getGroupColor(selectedGroupIndex) }}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div
-                            className="w-1.5 h-full rounded-full flex-shrink-0 self-stretch min-h-[60px]"
-                            style={{ background: getGroupColor(selectedGroupIndex) }}
-                          />
-                          <div>
-                            <div
-                              className="text-sm font-semibold mb-1"
-                              style={{ color: getGroupColor(selectedGroupIndex) }}
-                            >
-                              {groups[selectedGroupIndex].theme || generateGroupTheme(groups[selectedGroupIndex].reason)}
-                            </div>
-                            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                              {groups[selectedGroupIndex].reason}
-                            </p>
-                            <div className="mt-2 text-xs text-slate-500">
-                              {groups[selectedGroupIndex].members.length} members
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => setSelectedGroupIndex(null)}
-                          className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    )}
-                    <NetworkGraph
-                      groups={groups}
-                      contacts={contacts}
-                      recommendations={recommendations}
-                      selectedGroupIndex={selectedGroupIndex}
-                      onGroupSelect={setSelectedGroupIndex}
-                    />
-                  </>
-                )}
-
-                {/* List View */}
-                {viewMode === "list" && (
+                {/* Groups List */}
                   <div className="grid gap-4 md:grid-cols-2">
                     {groups.map((group, idx) => (
                       <div
@@ -888,30 +862,27 @@ export default function MatcherPage() {
                       </div>
                     ))}
                   </div>
-                )}
               </div>
             )}
 
             {/* Contacts Table */}
-            <div className="glass-card rounded-2xl overflow-hidden">
-              <div className="px-6 py-4 border-b border-border/50">
-                <h2 className="text-lg font-semibold">All Contacts ({contacts.length})</h2>
-              </div>
-              <div className="overflow-x-auto">
+            <div className="mt-8">
+              <h2 className="text-lg font-semibold mb-4">All Contacts ({contacts.length})</h2>
+              <div className="overflow-x-auto border border-border/50 rounded-lg">
                 <table className="w-full text-sm">
-                  <thead className="bg-muted/30">
+                  <thead className="bg-muted/30 border-b border-border/50">
                     <tr>
                       {headers.map((header) => (
                         <th
                           key={header}
-                          className="px-3 py-2 text-left font-medium text-muted-foreground whitespace-nowrap"
+                          className="px-3 py-2.5 text-left font-medium text-muted-foreground whitespace-nowrap"
                         >
                           {header}
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border/50">
+                  <tbody className="divide-y divide-border/30">
                     {contacts.map((contact, idx) => (
                       <tr key={idx} className="hover:bg-muted/20 transition-colors">
                         {headers.map((header) => (
