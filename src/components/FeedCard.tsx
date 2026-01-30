@@ -111,6 +111,7 @@ export default function FeedCard({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const likeButtonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -234,9 +235,12 @@ export default function FeedCard({
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this post?")) return;
+  const handleDeleteClick = () => {
+    setShowMenu(false);
+    setShowDeleteConfirm(true);
+  };
 
+  const handleConfirmDelete = async () => {
     setIsDeleting(true);
     const { error } = await supabase
       .from("projects")
@@ -248,7 +252,7 @@ export default function FeedCard({
       onDelete?.(project.id);
     }
     setIsDeleting(false);
-    setShowMenu(false);
+    setShowDeleteConfirm(false);
   };
 
   const handleSaveEdit = async () => {
@@ -348,14 +352,13 @@ export default function FeedCard({
                   Edit
                 </button>
                 <button
-                  onClick={handleDelete}
-                  disabled={isDeleting}
+                  onClick={handleDeleteClick}
                   className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  {isDeleting ? "Deleting..." : "Delete"}
+                  Delete
                 </button>
               </div>
             )}
@@ -562,6 +565,56 @@ export default function FeedCard({
           )}
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+            onClick={() => !isDeleting && setShowDeleteConfirm(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", duration: 0.3 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-background rounded-2xl shadow-xl w-full max-w-sm mx-4 overflow-hidden"
+            >
+              <div className="p-6">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-center mb-2">Delete post?</h3>
+                <p className="text-sm text-muted-foreground text-center">
+                  This action cannot be undone. This post will be permanently removed.
+                </p>
+              </div>
+              <div className="flex border-t border-border">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors border-l border-border disabled:opacity-50"
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </article>
   );
 }
