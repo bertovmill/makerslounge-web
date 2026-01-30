@@ -4,6 +4,37 @@ import type { MessageParam, ContentBlockParam, ToolResultBlockParam, ToolUseBloc
 
 export const maxDuration = 180; // 3 minutes for agentic multi-turn
 
+// Helper to delay execution
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Retry wrapper for rate limit errors
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries = 3,
+  baseDelayMs = 5000
+): Promise<T> {
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      const isRateLimit =
+        error instanceof Anthropic.RateLimitError ||
+        (error instanceof Error && error.message.includes("rate_limit"));
+
+      if (isRateLimit && attempt < maxRetries - 1) {
+        const delayMs = baseDelayMs * Math.pow(2, attempt);
+        console.log(`Rate limited, waiting ${delayMs}ms before retry ${attempt + 1}...`);
+        await delay(delayMs);
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError;
+}
+
 interface MatcherRequest {
   contacts: Contact[];
   groupSize: number;
@@ -28,11 +59,30 @@ let currentNumGroups: number = 4;
 let proposedGroups: Group[] = [];
 
 // Tool implementations
-function getAllContacts(): { contacts: Contact[]; columns: string[]; count: number } {
+function getAllContacts(): { contacts: Array<{ name: string; summary: string }>; columns: string[]; count: number } {
   const allColumns = new Set<string>();
   currentContacts.forEach((c) => Object.keys(c).forEach((k) => allColumns.add(k)));
+
+  // Return condensed contact info to reduce token usage
+  const condensedContacts = currentContacts.map((c) => {
+    const name = c.name || c.Name || Object.values(c)[0] || "Unknown";
+    // Create a brief summary of key fields
+    const keyFields = ["skills", "needs", "project", "expertise", "looking_for", "help", "interests"];
+    const summaryParts: string[] = [];
+    for (const key of Object.keys(c)) {
+      const lowerKey = key.toLowerCase();
+      if (keyFields.some(k => lowerKey.includes(k)) && c[key]) {
+        summaryParts.push(`${key}: ${c[key].slice(0, 100)}`);
+      }
+    }
+    return {
+      name,
+      summary: summaryParts.join("; ") || "No details available",
+    };
+  });
+
   return {
-    contacts: currentContacts,
+    contacts: condensedContacts,
     columns: Array.from(allColumns),
     count: currentContacts.length,
   };
@@ -381,14 +431,24 @@ Remember: ALWAYS verify your groups before submitting. If verification fails, fi
           // Send turn start event
           send("turn_start", { turn });
 
-          // Call Claude
-          const response = await anthropic.messages.create({
-            model: "claude-sonnet-4-20250514",
-            max_tokens: 8192,
-            system: SYSTEM_PROMPT,
-            tools: MATCHER_TOOLS,
-            messages,
-          });
+          // Call Claude with retry logic for rate limits
+          const response = await withRetry(
+            () =>
+              anthropic.messages.create({
+                model: "claude-sonnet-4-20250514",
+                max_tokens: 4096,
+                system: SYSTEM_PROMPT,
+                tools: MATCHER_TOOLS,
+                messages,
+              }),
+            3,
+            5000,
+          );
+
+          // Small delay between turns to avoid rate limits
+          if (turn > 1) {
+            await delay(1000);
+          }
 
           // Track token usage
           inputTokens += response.usage.input_tokens;
@@ -572,13 +632,15 @@ Start by calling get_all_contacts to see the data, then analyze, create groups, 
   while (turn < maxTurns) {
     turn++;
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 8192,
-      system: SYSTEM_PROMPT,
-      tools: MATCHER_TOOLS,
-      messages,
-    });
+    const response = await withRetry(() =>
+      anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4096,
+        system: SYSTEM_PROMPT,
+        tools: MATCHER_TOOLS,
+        messages,
+      })
+    );
 
     const toolUses: ToolUseBlock[] = [];
     const contentBlocks: ContentBlockParam[] = [];
