@@ -115,6 +115,11 @@ export default function Navbar() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
       </svg>
     ),
+    matcher: (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+      </svg>
+    ),
   };
 
   const NavLink = ({ href, children, icon }: { href: string; children: React.ReactNode; icon?: React.ReactNode }) => {
@@ -144,7 +149,7 @@ export default function Navbar() {
       {/* Desktop Sidebar */}
       <aside className={cn(
         "hidden md:flex fixed left-0 top-0 h-screen border-r border-border bg-background/80 backdrop-blur-md flex-col z-50 transition-all duration-300",
-        collapsed ? "w-16" : "w-60"
+        collapsed ? "w-16" : "w-64"
       )}>
         <div className={cn("p-6 flex items-center", collapsed ? "justify-center p-4" : "justify-between")}>
           <Link href="/home" className="hover:opacity-90 transition-opacity inline-block">
@@ -161,7 +166,8 @@ export default function Navbar() {
               aria-label="Collapse sidebar"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h18v18H3V3z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v18" />
               </svg>
             </button>
           )}
@@ -175,7 +181,8 @@ export default function Navbar() {
               aria-label="Expand sidebar"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h18v18H3V3z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v18" />
               </svg>
             </button>
           </div>
@@ -191,10 +198,8 @@ export default function Navbar() {
 
           <NavLink href="/people" icon={icons.people}>People</NavLink>
           <NavLink href="/agents" icon={icons.agents}>Agents</NavLink>
-          <NavLink href="/events" icon={icons.events}>Events</NavLink>
-          <NavLink href="/workshops" icon={icons.workshops}>Workshops</NavLink>
+          <NavLink href="/matcher" icon={icons.matcher}>Matcher</NavLink>
           <NavLink href="/podcast" icon={icons.podcast}>Podcast</NavLink>
-          <NavLink href="/blog" icon={icons.blog}>Blog</NavLink>
           <NavLink href="/about" icon={icons.about}>About us</NavLink>
 
           {user && (
@@ -203,7 +208,6 @@ export default function Navbar() {
               <NavLink href="/profile" icon={icons.profile}>Profile</NavLink>
               <NavLink href="/connections" icon={icons.connections}>Connections</NavLink>
               <NavLink href="/tools" icon={icons.tools}>Maker Tools</NavLink>
-              <NavLink href="/video-editing" icon={icons.video}>Video Editing</NavLink>
             </>
           )}
 
@@ -267,10 +271,8 @@ export default function Navbar() {
 
               <NavLink href="/people" icon={icons.people}>People</NavLink>
               <NavLink href="/agents" icon={icons.agents}>Agents</NavLink>
-              <NavLink href="/events" icon={icons.events}>Events</NavLink>
-              <NavLink href="/workshops" icon={icons.workshops}>Workshops</NavLink>
+              <NavLink href="/matcher" icon={icons.matcher}>Matcher</NavLink>
               <NavLink href="/podcast" icon={icons.podcast}>Podcast</NavLink>
-              <NavLink href="/blog" icon={icons.blog}>Blog</NavLink>
               <NavLink href="/about" icon={icons.about}>About us</NavLink>
 
               {user && (

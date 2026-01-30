@@ -63,7 +63,7 @@ export default function ToolsPage() {
     }
   };
 
-  const isAllowedUser = user?.email === "bertmill19@gmail.com";
+  const isAllowedUser = ["bertmill19@gmail.com", "hello@bertomill.ca"].includes(user?.email ?? "");
 
   const tools = [
     {

@@ -7,6 +7,7 @@ import { User } from "@supabase/supabase-js";
 import FeedCard from "@/components/FeedCard";
 import ProjectModal from "@/components/ProjectModal";
 import EmailSignup from "@/components/EmailSignup";
+import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -65,8 +66,11 @@ export default function Home() {
         .single();
 
       // If logged in but not onboarded, redirect to onboarding
+      // Otherwise redirect to home
       if (!profile || !profile.onboarding_completed) {
         window.location.href = "/onboarding";
+      } else {
+        window.location.href = "/home";
       }
     };
 
@@ -252,23 +256,33 @@ export default function Home() {
     <div className="min-h-screen relative">
       {/* Top header with login - for non-logged-in users */}
       {!user && (
-        <header className="absolute top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 py-4">
+        <header className="absolute top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 py-4 bg-[#f5f3ef]">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
-              <img src="/icon-512.png" alt="MakersLounge" className="w-9 h-9" />
-              <span className="text-white font-semibold hidden sm:block">MakersLounge</span>
+            <Link href="/" className="hover:opacity-90 transition-opacity">
+              <Logo size="sm" />
             </Link>
 
-            {/* Login button */}
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className="rounded-full px-5 border-white/20 text-white bg-white/5 backdrop-blur-sm hover:bg-white/10"
-            >
-              <Link href="/auth">Login</Link>
-            </Button>
+            {/* Nav links */}
+            <nav className="hidden md:flex items-center gap-8 text-sm text-slate-700">
+              <Link href="/people" className="hover:text-slate-900">People</Link>
+              <Link href="/events" className="hover:text-slate-900">Events</Link>
+              <Link href="/about" className="hover:text-slate-900">About</Link>
+            </nav>
+
+            {/* Auth buttons */}
+            <div className="flex items-center gap-4">
+              <Link href="/auth" className="text-sm text-slate-700 hover:text-slate-900 hidden sm:block">
+                Log In
+              </Link>
+              <Button
+                asChild
+                size="sm"
+                className="rounded-lg px-5 bg-[#e54b4b] hover:bg-[#d43d3d] text-white"
+              >
+                <Link href="/auth?mode=signup">Get Started</Link>
+              </Button>
+            </div>
           </div>
         </header>
       )}
@@ -276,143 +290,111 @@ export default function Home() {
       {/* Hero Section for non-logged-in users */}
       {!user ? (
         <>
-          {/* Full-width hero with gradient background */}
-          <section className="relative min-h-[90vh] flex items-center overflow-hidden">
-            {/* Animated gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-              {/* Grid pattern overlay */}
-              <div
-                className="absolute inset-0 opacity-[0.03]"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-                }}
-              />
-              {/* Gradient orbs */}
-              <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-blue-500/20 rounded-full blur-[120px] animate-pulse" />
-              <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-orange-500/15 rounded-full blur-[100px]" />
-              <div className="absolute top-1/2 right-1/3 w-[400px] h-[400px] bg-teal-500/10 rounded-full blur-[80px]" />
-            </div>
+          {/* Jasper-style hero with light background */}
+          <section className="relative min-h-screen flex flex-col overflow-hidden bg-[#f5f3ef]">
+            {/* Content */}
+            <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 pt-24 pb-8">
+              {/* Announcement pill */}
+              <div className="mb-8 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 bg-white shadow-sm">
+                <span className="px-2 py-0.5 text-xs font-semibold bg-[#e54b4b] text-white rounded">New!</span>
+                <span className="text-sm text-slate-700">Toronto&apos;s maker community is growing</span>
+                <svg className="w-4 h-4 text-[#e54b4b]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </div>
 
-            {/* Wave gradient accent bar */}
-            <div className="absolute top-0 left-0 right-0 h-1 gradient-wave" />
+              {/* Main headline - serif style */}
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-serif leading-[1.05] mb-6 text-slate-900 text-center max-w-5xl">
+                Where builders connect and create
+              </h1>
 
-            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-              <div className="grid lg:grid-cols-2 gap-16 items-center">
-                {/* Left content */}
-                <div className="text-center lg:text-left">
-                  <Badge
-                    variant="outline"
-                    className="mb-8 px-4 py-2 text-sm border-white/20 text-white/80 bg-white/5 backdrop-blur-sm"
-                  >
-                    Toronto&apos;s maker community
-                  </Badge>
+              {/* Subtitle */}
+              <p className="text-lg sm:text-xl text-slate-600 mb-10 text-center max-w-2xl leading-relaxed">
+                MakersLounge is the community that connects builders, accelerates collaboration, and supports makers&mdash;at scale.
+              </p>
 
-                  <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.1] mb-8 text-white tracking-tight">
-                    Where builders{" "}
-                    <span className="relative">
-                      <span className="bg-gradient-to-r from-blue-400 via-teal-400 to-orange-400 bg-clip-text text-transparent">
-                        connect
-                      </span>
-                    </span>{" "}
-                    and{" "}
-                    <span className="bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent">
-                      create
-                    </span>
-                  </h1>
-
-                  <p className="text-xl text-white/60 mb-10 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                    Share your projects, discover collaborators, and grow your network in Toronto&apos;s most supportive community for makers.
-                  </p>
-
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                    <Button
-                      asChild
-                      size="lg"
-                      className="rounded-full px-8 py-6 text-lg bg-white text-slate-900 hover:bg-white/90 shadow-lg shadow-white/10"
-                    >
-                      <Link href="/people">Explore makers</Link>
-                    </Button>
-                    <Button
-                      asChild
-                      variant="ghost"
-                      size="lg"
-                      className="rounded-full px-8 py-6 text-lg border border-white/20 text-white bg-white/5 backdrop-blur-sm hover:bg-white/15 hover:text-white hover:border-white/30"
-                    >
-                      <Link href="/auth">Login</Link>
-                    </Button>
-                  </div>
-
-                  {/* Social proof */}
-                  <div className="mt-12 flex items-center gap-6 justify-center lg:justify-start">
-                    <div className="flex -space-x-3">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <div
-                          key={i}
-                          className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-teal-500 border-2 border-slate-900 flex items-center justify-center text-white text-xs font-bold"
-                        >
-                          {String.fromCharCode(64 + i)}
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-white/60 text-sm">
-                      <span className="text-white font-semibold">400+ makers</span> already connected
-                    </p>
-                  </div>
-                </div>
-
-                {/* Right side - Event photo with floating cards */}
-                <div className="relative hidden lg:block">
-                  {/* Main image */}
-                  <div className="relative">
-                    <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/20 via-teal-500/20 to-orange-500/20 rounded-3xl blur-2xl" />
-                    <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                      <img
-                        src="/makerslounge-photos/lounge-networking.jpeg"
-                        alt="MakersLounge community event"
-                        className="w-full h-auto object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
-                    </div>
-                  </div>
-
-                  {/* Floating stat card */}
-                  <div className="absolute -bottom-6 -left-6 bg-white/10 backdrop-blur-xl rounded-2xl p-5 border border-white/20 shadow-xl">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center">
-                        <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-white">6</p>
-                        <p className="text-white/60 text-sm">Events hosted</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Floating project card */}
-                  <div className="absolute -top-4 -right-4 bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center">
-                        <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-white">Projects shared</p>
-                        <p className="text-white/60 text-xs">Weekly updates</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              {/* CTA Buttons - Jasper style */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="rounded-lg px-8 py-6 text-base font-medium border-slate-900 text-slate-900 bg-transparent hover:bg-slate-100"
+                >
+                  <Link href="/people">Explore Makers</Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  className="rounded-lg px-8 py-6 text-base font-medium bg-[#e54b4b] hover:bg-[#d43d3d] text-white"
+                >
+                  <Link href="/auth">Get Started</Link>
+                </Button>
               </div>
             </div>
 
-            {/* Scroll indicator */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/40">
-              <span className="text-xs uppercase tracking-widest">Scroll</span>
-              <div className="w-6 h-10 border-2 border-white/20 rounded-full flex justify-center pt-2">
-                <div className="w-1 h-2 bg-white/40 rounded-full animate-bounce" />
+            {/* Visual collage section */}
+            <div className="relative w-full max-w-5xl mx-auto px-4 pb-8">
+              {/* Grid background */}
+              <div className="relative rounded-2xl overflow-hidden">
+                <div
+                  className="absolute inset-0 opacity-100"
+                  style={{
+                    backgroundImage: `linear-gradient(to right, #7dd3fc 1px, transparent 1px), linear-gradient(to bottom, #7dd3fc 1px, transparent 1px)`,
+                    backgroundSize: '40px 40px',
+                    backgroundColor: '#bae6fd',
+                  }}
+                />
+
+                {/* Decorative shapes */}
+                <div className="absolute bottom-0 left-8 flex gap-2">
+                  <div className="w-16 h-16 rounded-full bg-green-800" />
+                  <div className="w-12 h-12 rounded-full bg-green-800 self-end" />
+                  <div className="w-10 h-10 rounded-full bg-green-800" />
+                </div>
+
+                {/* Yellow diagonal bars */}
+                <div className="absolute bottom-4 right-16 flex gap-2 transform rotate-[-35deg]">
+                  <div className="w-4 h-24 bg-yellow-400 rounded-full" />
+                  <div className="w-4 h-32 bg-yellow-400 rounded-full" />
+                  <div className="w-4 h-20 bg-yellow-400 rounded-full" />
+                </div>
+
+                {/* Blue bar chart */}
+                <div className="absolute bottom-0 right-8 flex items-end gap-1">
+                  <div className="w-6 h-12 bg-blue-500 rounded-t" />
+                  <div className="w-6 h-20 bg-blue-500 rounded-t" />
+                  <div className="w-6 h-16 bg-blue-500 rounded-t" />
+                  <div className="w-6 h-24 bg-blue-500 rounded-t" />
+                </div>
+
+                {/* Main content area with photo */}
+                <div className="relative flex items-end justify-center py-12 px-8 min-h-[320px]">
+                  {/* Floating stat card - left */}
+                  <div className="absolute left-8 top-1/2 -translate-y-1/2 bg-white rounded-xl p-4 shadow-lg max-w-[200px]">
+                    <div className="flex items-start gap-2">
+                      <span className="w-5 h-5 rounded-full bg-[#e54b4b] flex items-center justify-center text-white text-xs">!</span>
+                      <div>
+                        <p className="text-slate-900 font-semibold text-sm leading-tight">Connect with 400+ makers instantly</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Center photo */}
+                  <div className="relative z-10">
+                    <img
+                      src="/makerslounge-photos/lounge-networking.jpeg"
+                      alt="MakersLounge community"
+                      className="w-64 h-64 object-cover rounded-full border-4 border-white shadow-xl"
+                    />
+                  </div>
+
+                  {/* Floating stat card - right */}
+                  <div className="absolute right-16 top-8 bg-green-600 text-white rounded-xl px-4 py-2 shadow-lg">
+                    <p className="text-xs font-medium opacity-80">active members</p>
+                    <p className="text-3xl font-bold">+67%</p>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
