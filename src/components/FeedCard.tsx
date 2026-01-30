@@ -6,6 +6,33 @@ import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 
+// Helper function to convert URLs in text to clickable links
+function Linkify({ children }: { children: string }) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = children.split(urlRegex);
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.match(urlRegex)) {
+          return (
+            <a
+              key={index}
+              href={part}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline break-all"
+            >
+              {part}
+            </a>
+          );
+        }
+        return part;
+      })}
+    </>
+  );
+}
+
 function LikeParticles({
   buttonRef,
 }: {
@@ -407,7 +434,9 @@ export default function FeedCard({
           <>
             <h3 className="font-semibold text-[15px] mb-1">{project.title}</h3>
             {project.description && (
-              <p className="text-muted-foreground text-[15px] leading-relaxed whitespace-pre-wrap">{project.description}</p>
+              <p className="text-muted-foreground text-[15px] leading-relaxed whitespace-pre-wrap">
+                <Linkify>{project.description}</Linkify>
+              </p>
             )}
           </>
         )}
@@ -542,7 +571,7 @@ export default function FeedCard({
                             {comment.profiles?.name || "Anonymous"}
                           </span>
                         </Link>
-                        <span className="text-sm ml-1.5">{comment.content}</span>
+                        <span className="text-sm ml-1.5"><Linkify>{comment.content}</Linkify></span>
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-xs text-muted-foreground">
