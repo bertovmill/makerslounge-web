@@ -8,7 +8,6 @@ import { User } from "@supabase/supabase-js";
 import FeedCard from "@/components/FeedCard";
 import ProjectModal from "@/components/ProjectModal";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 
 interface Comment {
   id: string;
@@ -347,14 +346,14 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen relative">
-      <div className="max-w-6xl mx-auto px-4 pt-6 flex gap-8">
+      <div className="w-full max-w-[932px] mx-auto px-4 pt-6 flex gap-8">
         {/* Main Feed Column */}
-        <div className="flex-1 max-w-2xl">
-          {/* Composer Section */}
-          <Card className="p-5 border-border shadow-sm mb-6">
-            <div className="flex gap-4">
+        <div className="w-full max-w-[600px]">
+          {/* Composer Section - Cleaner design */}
+          <div className="pb-4 mb-2 border-b border-border/60">
+            <div className="flex gap-3">
               {/* User Avatar */}
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-400 to-orange-400 flex items-center justify-center text-white font-bold text-lg overflow-hidden flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-orange-400 flex items-center justify-center text-white font-semibold text-sm overflow-hidden flex-shrink-0">
                 {userProfile?.photo_url ? (
                   <img
                     src={userProfile.photo_url}
@@ -373,7 +372,7 @@ export default function HomePage() {
                   value={postTitle}
                   onChange={(e) => setPostTitle(e.target.value)}
                   rows={1}
-                  className="w-full bg-transparent border-none outline-none text-lg py-2 placeholder:text-muted-foreground resize-none overflow-hidden"
+                  className="w-full bg-transparent border-none outline-none text-[15px] py-1.5 placeholder:text-muted-foreground resize-none overflow-hidden"
                   style={{ minHeight: '28px' }}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
@@ -397,7 +396,7 @@ export default function HomePage() {
                         <img
                           src={url}
                           alt={`Pasted image ${index + 1}`}
-                          className="h-20 w-20 object-cover rounded-lg border border-border"
+                          className="h-20 w-20 object-cover rounded-xl border border-border/40"
                         />
                         <button
                           type="button"
@@ -414,23 +413,23 @@ export default function HomePage() {
                   </div>
                 )}
 
-                {/* Action icons */}
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/40">
-                  <div className="flex gap-2">
+                {/* Action icons - cleaner row */}
+                <div className="flex items-center justify-between mt-3">
+                  <div className="flex gap-1">
                     <button
                       onClick={() => setShowProjectModal(true)}
-                      className="w-9 h-9 rounded-full hover:bg-primary/10 flex items-center justify-center text-primary transition-colors"
+                      className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                       title="Add media"
                     >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </button>
                   </div>
 
                   <Button
                     size="sm"
-                    className="rounded-full px-6"
+                    className="rounded-full px-5 h-8"
                     onClick={handlePost}
                     disabled={!postTitle.trim() || isPosting}
                   >
@@ -439,22 +438,23 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
 
-          {/* Project Feed */}
-          <div className="space-y-4 pb-6">
+          {/* Project Feed - cleaner dividers */}
+          <div className="pb-6">
             {loadingProjects ? (
-              <div className="text-center py-12 text-muted-foreground">Loading projects...</div>
+              <div className="text-center py-12 text-muted-foreground text-sm">Loading...</div>
             ) : projects.length === 0 ? (
-              <Card className="p-8 text-center border-dashed">
-                <p className="text-muted-foreground mb-4">No projects yet. Be the first to share!</p>
+              <div className="py-12 text-center">
+                <p className="text-muted-foreground text-sm mb-4">No projects yet. Be the first to share!</p>
                 <Button
+                  variant="outline"
                   className="rounded-full"
                   onClick={() => setShowProjectModal(true)}
                 >
                   Create a project
                 </Button>
-              </Card>
+              </div>
             ) : (
               <>
                 {projects.map((project) => (
@@ -465,6 +465,14 @@ export default function HomePage() {
                     initialLikeCount={project.likeCount}
                     initialHasLiked={project.hasLiked}
                     initialComments={project.comments}
+                    onDelete={(projectId) => {
+                      setProjects(projects.filter((p) => p.id !== projectId));
+                    }}
+                    onUpdate={(projectId, title, description) => {
+                      setProjects(projects.map((p) =>
+                        p.id === projectId ? { ...p, title, description } : p
+                      ));
+                    }}
                   />
                 ))}
               </>
@@ -473,12 +481,12 @@ export default function HomePage() {
         </div>
 
         {/* Right Sidebar - Hidden on mobile */}
-        <aside className="hidden lg:block w-80 flex-shrink-0">
+        <aside className="hidden lg:block w-[300px] flex-shrink-0">
           <div className="sticky top-6 space-y-6">
-            {/* Current User Profile Card */}
-            <div className="flex items-center gap-3">
+            {/* Current User Profile */}
+            <div className="flex items-center gap-3 pb-5 border-b border-border/60">
               <Link href="/profile">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-rose-400 to-orange-400 flex items-center justify-center text-white font-bold text-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-400 to-orange-400 flex items-center justify-center text-white font-semibold overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
                   {userProfile?.photo_url ? (
                     <img
                       src={userProfile.photo_url}
@@ -492,7 +500,7 @@ export default function HomePage() {
               </Link>
               <div className="flex-1 min-w-0">
                 <Link href="/profile">
-                  <p className="font-semibold text-sm hover:underline cursor-pointer truncate">
+                  <p className="font-semibold text-[15px] hover:underline cursor-pointer truncate">
                     {userProfile?.name || "Anonymous"}
                   </p>
                 </Link>
@@ -506,12 +514,12 @@ export default function HomePage() {
             {suggestedProfiles.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Suggested for you</h3>
-                  <Link href="/people" className="text-xs text-primary hover:underline">
+                  <h3 className="text-sm font-medium text-muted-foreground">Suggested for you</h3>
+                  <Link href="/people" className="text-xs text-primary hover:underline font-medium">
                     See All
                   </Link>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {suggestedProfiles.map((profile) => {
                     const initials = profile.name
                       ?.split(" ")
@@ -523,7 +531,7 @@ export default function HomePage() {
                     return (
                       <div key={profile.id} className="flex items-center gap-3">
                         <Link href={`/profile/${profile.id}`}>
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-orange-400 flex items-center justify-center text-white font-bold text-xs overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-rose-400 to-orange-400 flex items-center justify-center text-white font-semibold text-xs overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
                             {profile.photo_url ? (
                               <img
                                 src={profile.photo_url}
@@ -537,7 +545,7 @@ export default function HomePage() {
                         </Link>
                         <div className="flex-1 min-w-0">
                           <Link href={`/profile/${profile.id}`}>
-                            <p className="font-semibold text-sm hover:underline cursor-pointer truncate">
+                            <p className="font-medium text-sm hover:underline cursor-pointer truncate">
                               {profile.name || "Anonymous"}
                             </p>
                           </Link>

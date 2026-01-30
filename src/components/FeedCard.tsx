@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 
@@ -83,6 +82,8 @@ interface FeedCardProps {
   initialHasLiked?: boolean;
   initialComments?: Comment[];
   onAuthRequired?: () => void;
+  onDelete?: (projectId: string) => void;
+  onUpdate?: (projectId: string, title: string, description: string | null) => void;
 }
 
 export default function FeedCard({
@@ -92,6 +93,8 @@ export default function FeedCard({
   initialHasLiked = false,
   initialComments = [],
   onAuthRequired,
+  onDelete,
+  onUpdate,
 }: FeedCardProps) {
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [hasLiked, setHasLiked] = useState(initialHasLiked);
@@ -101,7 +104,18 @@ export default function FeedCard({
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(project.title);
+  const [editDescription, setEditDescription] = useState(project.description || "");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
   const likeButtonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const isOwner = currentUserId === project.profiles?.id;
+
   const initials = project.profiles?.name
     ?.split(" ")
     .map((n) => n[0])
@@ -220,12 +234,70 @@ export default function FeedCard({
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this post?")) return;
+
+    setIsDeleting(true);
+    const { error } = await supabase
+      .from("projects")
+      .delete()
+      .eq("id", project.id);
+
+    if (!error) {
+      setIsDeleted(true);
+      onDelete?.(project.id);
+    }
+    setIsDeleting(false);
+    setShowMenu(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editTitle.trim()) return;
+
+    setIsSaving(true);
+    const { error } = await supabase
+      .from("projects")
+      .update({
+        title: editTitle.trim(),
+        description: editDescription.trim() || null,
+      })
+      .eq("id", project.id);
+
+    if (!error) {
+      onUpdate?.(project.id, editTitle.trim(), editDescription.trim() || null);
+      setIsEditing(false);
+    }
+    setIsSaving(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditTitle(project.title);
+    setEditDescription(project.description || "");
+    setIsEditing(false);
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showMenu]);
+
+  if (isDeleted) return null;
+
   return (
-    <Card className="overflow-hidden shadow-sm border-border">
-      {/* Author header */}
-      <div className="p-5 flex items-center gap-3">
+    <article className="py-5 border-b border-border/60 last:border-b-0">
+      {/* Author header - inline with name and time */}
+      <div className="flex items-center gap-3 mb-3">
         <Link href={`/profile/${project.profiles?.id}`}>
-          <div className="w-10 h-10 bg-gradient-to-br from-rose-400 to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
+          <div className="w-10 h-10 bg-gradient-to-br from-rose-400 to-orange-400 rounded-full flex items-center justify-center text-white font-semibold text-sm overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
             {project.profiles?.photo_url ? (
               <img
                 src={project.profiles.photo_url}
@@ -237,42 +309,125 @@ export default function FeedCard({
             )}
           </div>
         </Link>
-        <div className="flex-1">
-          <Link href={`/profile/${project.profiles?.id}`}>
-            <p className="font-semibold text-sm hover:underline cursor-pointer">
-              {project.profiles?.name || "Anonymous"}
-            </p>
-          </Link>
-          <p className="text-xs text-muted-foreground">{timeAgo(project.created_at)}</p>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <Link href={`/profile/${project.profiles?.id}`}>
+              <span className="font-semibold text-[15px] hover:underline cursor-pointer">
+                {project.profiles?.name || "Anonymous"}
+              </span>
+            </Link>
+            <span className="text-muted-foreground">·</span>
+            <span className="text-sm text-muted-foreground">{timeAgo(project.created_at)}</span>
+          </div>
         </div>
+
+        {/* Menu for owner */}
+        {isOwner && (
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+            </button>
+
+            {showMenu && (
+              <div className="absolute right-0 top-full mt-1 w-32 bg-background border border-border rounded-lg shadow-lg py-1 z-10">
+                <button
+                  onClick={() => {
+                    setIsEditing(true);
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Project content */}
-      <div className="px-5 pb-4">
-        <h3 className="font-semibold text-lg mb-1">{project.title}</h3>
-        {project.description && (
-          <p className="text-muted-foreground text-sm line-clamp-3">{project.description}</p>
+      <div className="mb-3">
+        {isEditing ? (
+          <div className="space-y-3">
+            <input
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="w-full px-3 py-2 text-[15px] font-semibold bg-muted/50 rounded-lg border border-border/40 focus:border-primary/40 focus:bg-background outline-none transition-colors"
+              placeholder="Title"
+            />
+            <textarea
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 text-[15px] bg-muted/50 rounded-lg border border-border/40 focus:border-primary/40 focus:bg-background outline-none transition-colors resize-none"
+              placeholder="Description (optional)"
+            />
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCancelEdit}
+                className="rounded-full"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSaveEdit}
+                disabled={isSaving || !editTitle.trim()}
+                className="rounded-full"
+              >
+                {isSaving ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <h3 className="font-semibold text-[15px] mb-1">{project.title}</h3>
+            {project.description && (
+              <p className="text-muted-foreground text-[15px] leading-relaxed whitespace-pre-wrap">{project.description}</p>
+            )}
+          </>
         )}
       </div>
 
       {/* Media */}
       {project.media_urls && project.media_urls.length > 0 && (
-        <div className="relative">
+        <div className="relative mb-3 rounded-xl overflow-hidden border border-border/40">
           <img
             src={project.media_urls[0]}
             alt={project.title}
-            className="w-full aspect-video object-cover"
+            className="w-full max-h-[400px] object-cover"
           />
           {project.media_urls.length > 1 && (
-            <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
+            <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full">
               +{project.media_urls.length - 1} more
             </div>
           )}
         </div>
       )}
 
-      {/* Actions */}
-      <div className="px-5 py-3 border-t border-border flex items-center gap-4">
+      {/* Actions - inline stats */}
+      <div className="flex items-center gap-6 pt-1">
         {showParticles && <LikeParticles buttonRef={likeButtonRef} />}
         <motion.button
           ref={likeButtonRef}
@@ -281,14 +436,14 @@ export default function FeedCard({
           whileTap={{ scale: 0.9 }}
           animate={hasLiked ? { scale: [1, 1.2, 1] } : {}}
           transition={{ duration: 0.2 }}
-          className={`flex items-center gap-2 text-sm transition-colors ${
+          className={`flex items-center gap-1.5 text-sm transition-colors ${
             hasLiked
               ? "text-red-500 hover:text-red-600"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <motion.svg
-            className="w-5 h-5"
+            className="w-[18px] h-[18px]"
             fill={hasLiked ? "currentColor" : "none"}
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -302,13 +457,13 @@ export default function FeedCard({
               d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
             />
           </motion.svg>
-          {likeCount > 0 ? likeCount : "Like"}
+          <span>{likeCount > 0 ? likeCount : ""}</span>
         </motion.button>
         <button
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm transition-colors"
+          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-sm transition-colors"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -316,28 +471,28 @@ export default function FeedCard({
               d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
             />
           </svg>
-          {comments.length > 0 ? `${comments.length} Comments` : "Comment"}
+          <span>{comments.length > 0 ? comments.length : ""}</span>
         </button>
       </div>
 
       {/* Comments Section */}
       {showComments && (
-        <div className="px-5 pb-5 border-t border-border">
+        <div className="mt-4 pt-4 border-t border-border/40">
           {/* Comment Form */}
           {currentUserId ? (
-            <form onSubmit={handleComment} className="flex gap-2 pt-4">
+            <form onSubmit={handleComment} className="flex gap-2">
               <input
                 type="text"
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="Write a comment..."
-                className="flex-1 px-3 py-2 text-sm bg-muted rounded-lg border-0 focus:ring-2 focus:ring-primary/20 outline-none"
+                className="flex-1 px-3 py-2 text-sm bg-muted/50 rounded-full border border-border/40 focus:border-primary/40 focus:bg-background outline-none transition-colors"
               />
               <Button
                 type="submit"
                 size="sm"
                 disabled={isSubmitting || !commentText.trim()}
-                className="rounded-lg"
+                className="rounded-full px-4"
               >
                 Post
               </Button>
@@ -345,7 +500,7 @@ export default function FeedCard({
           ) : (
             <button
               onClick={onAuthRequired}
-              className="w-full pt-4 text-sm text-muted-foreground hover:text-foreground"
+              className="w-full text-sm text-muted-foreground hover:text-foreground"
             >
               Sign in to comment
             </button>
@@ -363,9 +518,9 @@ export default function FeedCard({
                   .slice(0, 2) || "?";
 
                 return (
-                  <div key={comment.id} className="flex gap-3 group">
+                  <div key={comment.id} className="flex gap-2.5 group">
                     <Link href={`/profile/${comment.profiles?.id}`}>
-                      <div className="w-8 h-8 bg-gradient-to-br from-rose-400 to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-xs overflow-hidden flex-shrink-0">
+                      <div className="w-7 h-7 bg-gradient-to-br from-rose-400 to-orange-400 rounded-full flex items-center justify-center text-white font-semibold text-[10px] overflow-hidden flex-shrink-0">
                         {comment.profiles?.photo_url ? (
                           <img
                             src={comment.profiles.photo_url}
@@ -378,15 +533,15 @@ export default function FeedCard({
                       </div>
                     </Link>
                     <div className="flex-1 min-w-0">
-                      <div className="bg-muted rounded-lg px-3 py-2">
+                      <div className="inline">
                         <Link href={`/profile/${comment.profiles?.id}`}>
                           <span className="font-semibold text-sm hover:underline">
                             {comment.profiles?.name || "Anonymous"}
                           </span>
                         </Link>
-                        <p className="text-sm mt-0.5">{comment.content}</p>
+                        <span className="text-sm ml-1.5">{comment.content}</span>
                       </div>
-                      <div className="flex items-center gap-2 mt-1 px-1">
+                      <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-xs text-muted-foreground">
                           {timeAgo(comment.created_at)}
                         </span>
@@ -407,6 +562,6 @@ export default function FeedCard({
           )}
         </div>
       )}
-    </Card>
+    </article>
   );
 }
