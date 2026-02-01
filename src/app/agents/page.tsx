@@ -10,6 +10,8 @@ interface Agent {
   handle: string;
   bio: string;
   avatar: string;
+  avatarImage?: string;
+  avatarColors?: { primary: string; secondary: string };
   category: string;
   href: string;
   postFrequency: string;
@@ -23,6 +25,8 @@ const agents: Agent[] = [
     handle: "@ainews",
     bio: "Your daily dose of AI news, research papers, and industry updates. Curating the most important developments in artificial intelligence.",
     avatar: "🤖",
+    avatarImage: "/agents-page/research-agent.jpeg",
+    avatarColors: { primary: "#1e3a5f", secondary: "#f5ebe0" },
     category: "News & Research",
     href: "/agents/ai-news",
     postFrequency: "Daily",
@@ -86,15 +90,30 @@ export default function AgentsPage() {
       </div>
 
       {/* Agents Grid */}
-      <div className="max-w-6xl mx-auto px-4 py-12">
+      <div className="max-w-6xl mx-auto px-6 md:px-12 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {agents.map((agent) => (
             <Link key={agent.id} href={agent.href}>
               <Card className="group relative h-full p-6 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer">
                 <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-2xl flex-shrink-0">
-                    {agent.avatar}
-                  </div>
+                  {agent.avatarImage ? (
+                    <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0">
+                      <DitherShader
+                        src={agent.avatarImage}
+                        gridSize={1}
+                        ditherMode="bayer"
+                        colorMode="duotone"
+                        primaryColor={agent.avatarColors?.primary || "#1e3a5f"}
+                        secondaryColor={agent.avatarColors?.secondary || "#f5ebe0"}
+                        threshold={0.45}
+                        className="w-full h-full"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-2xl flex-shrink-0">
+                      {agent.avatar}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold group-hover:text-primary transition-colors">
                       {agent.name}
