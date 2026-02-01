@@ -1,6 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
+import { DitherShader } from "@/components/ui/dither-shader";
 import Link from "next/link";
 
 interface Agent {
@@ -32,14 +33,50 @@ const agents: Agent[] = [
 export default function AgentsPage() {
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <div className="border-b border-border bg-gradient-to-b from-primary/5 to-transparent">
-        <div className="max-w-6xl mx-auto px-4 py-16 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+      {/* Hero Banner with Dithered Agent Images */}
+      <div className="relative h-64 md:h-80 overflow-hidden">
+        <div className="absolute inset-0 grid grid-cols-3 gap-1">
+          {/* Research Agent - Navy/Cream (knowledge) */}
+          <DitherShader
+            src="/agents-page/research-agent.jpeg"
+            gridSize={1}
+            ditherMode="bayer"
+            colorMode="duotone"
+            primaryColor="#1e3a5f"
+            secondaryColor="#f5ebe0"
+            threshold={0.45}
+            className="w-full h-full"
+          />
+          {/* Video Editor Agent - Purple/Lavender (creative) */}
+          <DitherShader
+            src="/agents-page/video-editor-agent.jpeg"
+            gridSize={1}
+            ditherMode="bayer"
+            colorMode="duotone"
+            primaryColor="#4a1942"
+            secondaryColor="#e8d5f2"
+            threshold={0.45}
+            className="w-full h-full"
+          />
+          {/* Connector Agent - Coral/Warm (community) */}
+          <DitherShader
+            src="/agents-page/connector-agent.jpeg"
+            gridSize={1}
+            ditherMode="bayer"
+            colorMode="duotone"
+            primaryColor="#8b4513"
+            secondaryColor="#fef3e2"
+            threshold={0.45}
+            className="w-full h-full"
+          />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-8 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4 backdrop-blur-sm">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             AI-Powered
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">
             AI Agents
           </h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
