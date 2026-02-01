@@ -11,7 +11,8 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 async function withRetry<T>(
   fn: () => Promise<T>,
   maxRetries = 3,
-  baseDelayMs = 5000
+  baseDelayMs = 5000,
+  onRetry?: (attempt: number, delayMs: number) => void
 ): Promise<T> {
   let lastError: Error | null = null;
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -26,6 +27,7 @@ async function withRetry<T>(
       if (isRateLimit && attempt < maxRetries - 1) {
         const delayMs = baseDelayMs * Math.pow(2, attempt);
         console.log(`Rate limited, waiting ${delayMs}ms before retry ${attempt + 1}...`);
+        onRetry?.(attempt + 1, delayMs);
         await delay(delayMs);
         continue;
       }
@@ -53,124 +55,152 @@ interface VerificationResult {
   groupSizes: number[];
 }
 
-// Store contacts for tool access (request-scoped)
-let currentContacts: Contact[] = [];
-let currentNumGroups: number = 4;
-let proposedGroups: Group[] = [];
+// Request-scoped state class to avoid global state issues in serverless
+class MatcherState {
+  contacts: Contact[] = [];
+  numGroups: number = 4;
+  proposedGroups: Group[] = [];
 
-// Tool implementations
-function getAllContacts(): { contacts: Array<{ name: string; summary: string }>; columns: string[]; count: number } {
-  const allColumns = new Set<string>();
-  currentContacts.forEach((c) => Object.keys(c).forEach((k) => allColumns.add(k)));
+  constructor(contacts: Contact[], numGroups: number) {
+    this.contacts = contacts;
+    this.numGroups = numGroups;
+  }
 
-  // Return condensed contact info to reduce token usage
-  const condensedContacts = currentContacts.map((c) => {
-    const name = c.name || c.Name || Object.values(c)[0] || "Unknown";
-    // Create a brief summary of key fields
-    const keyFields = ["skills", "needs", "project", "expertise", "looking_for", "help", "interests"];
-    const summaryParts: string[] = [];
-    for (const key of Object.keys(c)) {
-      const lowerKey = key.toLowerCase();
-      if (keyFields.some(k => lowerKey.includes(k)) && c[key]) {
-        summaryParts.push(`${key}: ${c[key].slice(0, 100)}`);
+  getAllContacts(): { contacts: Array<{ name: string; summary: string }>; columns: string[]; count: number } {
+    const allColumns = new Set<string>();
+    this.contacts.forEach((c) => Object.keys(c).forEach((k) => allColumns.add(k)));
+
+    // Return condensed contact info to reduce token usage
+    const condensedContacts = this.contacts.map((c) => {
+      const name = c.name || c.Name || Object.values(c)[0] || "Unknown";
+      // Create a brief summary of key fields
+      const keyFields = ["skills", "needs", "project", "expertise", "looking_for", "help", "interests"];
+      const summaryParts: string[] = [];
+      for (const key of Object.keys(c)) {
+        const lowerKey = key.toLowerCase();
+        if (keyFields.some(k => lowerKey.includes(k)) && c[key]) {
+          summaryParts.push(`${key}: ${c[key].slice(0, 100)}`);
+        }
       }
-    }
+      return {
+        name,
+        summary: summaryParts.join("; ") || "No details available",
+      };
+    });
+
     return {
-      name,
-      summary: summaryParts.join("; ") || "No details available",
-    };
-  });
-
-  return {
-    contacts: condensedContacts,
-    columns: Array.from(allColumns),
-    count: currentContacts.length,
-  };
-}
-
-function searchContacts(criteria: { field: string; contains: string }): Contact[] {
-  return currentContacts.filter((c) => {
-    const value = c[criteria.field];
-    return value && value.toLowerCase().includes(criteria.contains.toLowerCase());
-  });
-}
-
-function getContactByName(name: string): Contact | null {
-  // Try exact match first
-  let contact = currentContacts.find(
-    (c) => c.name?.toLowerCase() === name.toLowerCase()
-  );
-  // Try partial match
-  if (!contact) {
-    contact = currentContacts.find(
-      (c) => c.name?.toLowerCase().includes(name.toLowerCase())
-    );
-  }
-  return contact || null;
-}
-
-function proposeGroups(groups: Group[]): { accepted: boolean; message: string } {
-  proposedGroups = groups;
-  return {
-    accepted: true,
-    message: `Received ${groups.length} proposed groups. Use verify_groups to check validity.`,
-  };
-}
-
-function verifyGroups(): VerificationResult {
-  const allNames = currentContacts.map((c) => c.name || "").filter(Boolean);
-  const placedNames: string[] = [];
-  const duplicates: string[] = [];
-  const groupSizes: number[] = [];
-
-  for (const group of proposedGroups) {
-    groupSizes.push(group.members.length);
-    for (const member of group.members) {
-      if (placedNames.includes(member)) {
-        duplicates.push(member);
-      }
-      placedNames.push(member);
-    }
-  }
-
-  const unplaced = allNames.filter(
-    (name) => !placedNames.some((p) => p.toLowerCase() === name.toLowerCase())
-  );
-
-  const issues: string[] = [];
-  if (duplicates.length > 0) {
-    issues.push(`Duplicate placements: ${duplicates.join(", ")}`);
-  }
-  if (unplaced.length > 0) {
-    issues.push(`Unplaced contacts: ${unplaced.join(", ")}`);
-  }
-  if (proposedGroups.length !== currentNumGroups) {
-    issues.push(
-      `Expected ${currentNumGroups} groups but got ${proposedGroups.length}`
-    );
-  }
-
-  return {
-    valid: issues.length === 0,
-    issues,
-    unplaced,
-    duplicates,
-    groupSizes,
-  };
-}
-
-function submitFinalGroups(): { success: boolean; groups: Group[] } {
-  const verification = verifyGroups();
-  if (!verification.valid) {
-    return {
-      success: false,
-      groups: [],
+      contacts: condensedContacts,
+      columns: Array.from(allColumns),
+      count: this.contacts.length,
     };
   }
-  return {
-    success: true,
-    groups: proposedGroups,
-  };
+
+  searchContacts(criteria: { field: string; contains: string }): Contact[] {
+    return this.contacts.filter((c) => {
+      const value = c[criteria.field];
+      return value && value.toLowerCase().includes(criteria.contains.toLowerCase());
+    });
+  }
+
+  getContactByName(name: string): Contact | null {
+    const getName = (c: Contact) => c.name || c.Name || Object.values(c)[0] || "";
+    // Try exact match first
+    let contact = this.contacts.find(
+      (c) => getName(c).toLowerCase() === name.toLowerCase()
+    );
+    // Try partial match
+    if (!contact) {
+      contact = this.contacts.find(
+        (c) => getName(c).toLowerCase().includes(name.toLowerCase())
+      );
+    }
+    return contact || null;
+  }
+
+  proposeGroups(groups: Group[]): { accepted: boolean; message: string } {
+    this.proposedGroups = groups;
+    return {
+      accepted: true,
+      message: `Received ${groups.length} proposed groups. Use verify_groups to check validity.`,
+    };
+  }
+
+  verifyGroups(): VerificationResult {
+    // Handle both "name" and "Name" columns, fallback to first value
+    const allNames = this.contacts.map((c) => c.name || c.Name || Object.values(c)[0] || "").filter(Boolean);
+    const placedNames: string[] = [];
+    const duplicates: string[] = [];
+    const groupSizes: number[] = [];
+
+    for (const group of this.proposedGroups) {
+      groupSizes.push(group.members.length);
+      for (const member of group.members) {
+        if (placedNames.includes(member)) {
+          duplicates.push(member);
+        }
+        placedNames.push(member);
+      }
+    }
+
+    const unplaced = allNames.filter(
+      (name) => !placedNames.some((p) => p.toLowerCase() === name.toLowerCase())
+    );
+
+    const issues: string[] = [];
+    if (duplicates.length > 0) {
+      issues.push(`Duplicate placements: ${duplicates.join(", ")}`);
+    }
+    if (unplaced.length > 0) {
+      issues.push(`Unplaced contacts: ${unplaced.join(", ")}`);
+    }
+    if (this.proposedGroups.length !== this.numGroups) {
+      issues.push(
+        `Expected ${this.numGroups} groups but got ${this.proposedGroups.length}`
+      );
+    }
+
+    return {
+      valid: issues.length === 0,
+      issues,
+      unplaced,
+      duplicates,
+      groupSizes,
+    };
+  }
+
+  submitFinalGroups(): { success: boolean; groups: Group[]; issues?: string[] } {
+    const verification = this.verifyGroups();
+    if (!verification.valid) {
+      return {
+        success: false,
+        groups: [],
+        issues: verification.issues,
+      };
+    }
+    return {
+      success: true,
+      groups: this.proposedGroups,
+    };
+  }
+
+  handleToolCall(toolName: string, toolInput: Record<string, unknown>): unknown {
+    switch (toolName) {
+      case "get_all_contacts":
+        return this.getAllContacts();
+      case "search_contacts":
+        return this.searchContacts(toolInput as { field: string; contains: string });
+      case "get_contact_by_name":
+        return this.getContactByName(toolInput.name as string);
+      case "propose_groups":
+        return this.proposeGroups((toolInput as unknown as ProposedGroups).groups);
+      case "verify_groups":
+        return this.verifyGroups();
+      case "submit_final_groups":
+        return this.submitFinalGroups();
+      default:
+        return { error: `Unknown tool: ${toolName}` };
+    }
+  }
 }
 
 // Tool definitions for the Anthropic API
@@ -255,7 +285,7 @@ const MATCHER_TOOLS: Anthropic.Tool[] = [
                     strength: { type: "number" },
                   },
                 },
-                description: "Key connections between members",
+                description: "Important connections between members. Include at least 5-8 connections per group showing who should talk to whom and why.",
               },
             },
             required: ["members", "theme", "reason"],
@@ -287,60 +317,36 @@ const MATCHER_TOOLS: Anthropic.Tool[] = [
   },
 ];
 
-// Handle tool calls
-function handleToolCall(
-  toolName: string,
-  toolInput: Record<string, unknown>
-): unknown {
-  switch (toolName) {
-    case "get_all_contacts":
-      return getAllContacts();
-    case "search_contacts":
-      return searchContacts(toolInput as { field: string; contains: string });
-    case "get_contact_by_name":
-      return getContactByName(toolInput.name as string);
-    case "propose_groups":
-      return proposeGroups((toolInput as unknown as ProposedGroups).groups);
-    case "verify_groups":
-      return verifyGroups();
-    case "submit_final_groups":
-      return submitFinalGroups();
-    default:
-      return { error: `Unknown tool: ${toolName}` };
-  }
-}
 
-const SYSTEM_PROMPT = `You are an agentic networking matchmaker for MakersLounge, a community of makers and builders.
+const SYSTEM_PROMPT = `You are an efficient networking matchmaker for MakersLounge.
 
-Your task is to create optimal groups for a networking event using a systematic, verifiable approach.
+Your task: Create optimal groups for a networking event QUICKLY.
 
-## Your Tools
-- get_all_contacts: Start here to see all attendees and available data columns
-- search_contacts: Find people by skills, needs, interests, etc.
-- get_contact_by_name: Look up specific person's details
-- propose_groups: Submit your proposed grouping
-- verify_groups: ALWAYS verify after proposing (checks for errors)
-- submit_final_groups: Submit once verified
+## Tools (use sparingly!)
+- get_all_contacts: Call ONCE to see all attendees
+- search_contacts: Use only 1-2 times if needed for specific queries
+- propose_groups: Submit your grouping
+- verify_groups: Check for errors (REQUIRED before submit)
+- submit_final_groups: Finalize (or auto-submits after verify passes)
 
-## Your Process
+## CRITICAL: Be FAST, not thorough!
+You have LIMITED turns. Follow this exact flow:
 
-1. EXPLORE: Call get_all_contacts to understand the data structure and see everyone
-2. ANALYZE: Search for patterns - common skills, complementary needs, themes
-3. STRATEGIZE: Plan your grouping approach based on synergies found
-4. CREATE: Form groups by matching complementary skills/needs
-5. PROPOSE: Call propose_groups with your grouping
-6. VERIFY: Call verify_groups to check for issues
-7. FIX: If issues found, adjust and re-propose
-8. SUBMIT: Once valid, call submit_final_groups
+1. Call get_all_contacts ONCE - you'll see everyone's name + summary
+2. Immediately create groups based on what you see (don't search extensively!)
+3. Call propose_groups with ALL people assigned
+4. Call verify_groups - if valid, you're done!
+5. If issues, fix and re-propose
 
 ## Matching Principles
 - Match people who HAVE skills with those who NEED them
 - Create diverse groups with complementary perspectives
-- Consider project phases and interests for common ground
-- Every person must be in exactly one group
-- Distribute people evenly across groups
+- Every person must be in EXACTLY one group (use exact names from contact list)
+- Distribute people evenly across the requested number of groups
+- For each group, include 5-8 specific connections showing who should talk to whom and why
 
-Be thorough. Use the tools to explore the data, verify your work, and iterate if needed.`;
+DO NOT waste turns searching. You have all the info you need from get_all_contacts.
+PROPOSE GROUPS WITHIN 3-4 TURNS.`;
 
 export async function POST(request: Request) {
   try {
@@ -361,18 +367,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // Set up request-scoped state
-    currentContacts = contacts;
-    currentNumGroups = groupSize;
-    proposedGroups = [];
-
+    // Create request-scoped state instance (avoids global state issues)
+    const state = new MatcherState(contacts, groupSize);
     const peoplePerGroup = Math.ceil(contacts.length / groupSize);
 
     if (stream) {
-      return handleStreamingRequest(contacts.length, groupSize, peoplePerGroup);
+      return handleStreamingRequest(state, contacts.length, groupSize, peoplePerGroup);
     }
 
-    return handleNonStreamingRequest(contacts.length, groupSize, peoplePerGroup);
+    return handleNonStreamingRequest(state, contacts.length, groupSize, peoplePerGroup);
   } catch (error) {
     console.error("Matcher Agent error:", error);
     return Response.json(
@@ -383,6 +386,7 @@ export async function POST(request: Request) {
 }
 
 async function handleStreamingRequest(
+  state: MatcherState,
   contactCount: number,
   numGroups: number,
   peoplePerGroup: number
@@ -392,10 +396,20 @@ async function handleStreamingRequest(
   const stream = new ReadableStream({
     async start(controller) {
       const send = (event: string, data: unknown) => {
-        controller.enqueue(
-          encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
-        );
+        try {
+          controller.enqueue(
+            encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+          );
+        } catch (e) {
+          // Controller may be closed, ignore
+          console.error("Failed to send SSE event:", e);
+        }
       };
+
+      // Send keepalive pings to prevent connection timeout
+      const keepaliveInterval = setInterval(() => {
+        send("ping", { timestamp: Date.now() });
+      }, 15000); // Every 15 seconds
 
       try {
         const anthropic = new Anthropic();
@@ -428,8 +442,8 @@ Remember: ALWAYS verify your groups before submitting. If verification fails, fi
         while (turn < maxTurns) {
           turn++;
 
-          // Send turn start event
-          send("turn_start", { turn });
+          // Send turn start event with max turns so UI can show progress
+          send("turn_start", { turn, maxTurns });
 
           // Call Claude with retry logic for rate limits
           const response = await withRetry(
@@ -443,6 +457,10 @@ Remember: ALWAYS verify your groups before submitting. If verification fails, fi
               }),
             3,
             5000,
+            (attempt, delayMs) => {
+              // Notify client about rate limit retry
+              send("thinking", { text: `Rate limited, retrying in ${Math.round(delayMs / 1000)}s (attempt ${attempt}/3)...` });
+            }
           );
 
           // Small delay between turns to avoid rate limits
@@ -482,7 +500,7 @@ Remember: ALWAYS verify your groups before submitting. If verification fails, fi
 
           // Send turn thinking if any
           if (turnThinking) {
-            send("turn_thinking", { turn, thinking: turnThinking.slice(0, 300) });
+            send("turn_thinking", { turn, thinking: turnThinking.slice(0, 500) });
           }
 
           // Add assistant response to history
@@ -531,7 +549,7 @@ Remember: ALWAYS verify your groups before submitting. If verification fails, fi
               }
 
               // Execute the tool
-              const result = handleToolCall(toolName, toolInput);
+              const result = state.handleToolCall(toolName, toolInput);
 
               // Send tool_result event (after execution)
               send("tool_result", {
@@ -547,19 +565,30 @@ Remember: ALWAYS verify your groups before submitting. If verification fails, fi
                 const verification = result as VerificationResult;
                 if (verification.valid) {
                   send("thinking", { text: "✓ Verification passed! All contacts placed correctly." });
+                  // Auto-submit if verification passes to ensure completion
+                  send("thinking", { text: "Auto-submitting verified groups..." });
+                  const submitResult = state.submitFinalGroups();
+                  if (submitResult.success) {
+                    finalGroups = submitResult.groups;
+                    submitResult.groups.forEach((group, idx) => {
+                      send("group", { group, index: idx });
+                    });
+                  }
                 } else {
                   send("thinking", { text: `⚠ Issues found: ${verification.issues.join("; ")}` });
                 }
               }
 
               if (toolName === "submit_final_groups") {
-                const submission = result as { success: boolean; groups: Group[] };
+                const submission = result as { success: boolean; groups: Group[]; issues?: string[] };
                 if (submission.success) {
                   finalGroups = submission.groups;
                   // Send each group
                   submission.groups.forEach((group, idx) => {
                     send("group", { group, index: idx });
                   });
+                } else if (submission.issues) {
+                  send("thinking", { text: `⚠ Submission failed: ${submission.issues.join("; ")}` });
                 }
               }
 
@@ -596,6 +625,7 @@ Remember: ALWAYS verify your groups before submitting. If verification fails, fi
           error: error instanceof Error ? error.message : "Unknown error",
         });
       } finally {
+        clearInterval(keepaliveInterval);
         controller.close();
       }
     },
@@ -604,13 +634,15 @@ Remember: ALWAYS verify your groups before submitting. If verification fails, fi
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
+      "Cache-Control": "no-cache, no-transform",
+      "Connection": "keep-alive",
+      "X-Accel-Buffering": "no", // Disable nginx buffering
     },
   });
 }
 
 async function handleNonStreamingRequest(
+  state: MatcherState,
   contactCount: number,
   numGroups: number,
   peoplePerGroup: number
@@ -669,10 +701,21 @@ Start by calling get_all_contacts to see the data, then analyze, create groups, 
       const toolResults: ToolResultBlockParam[] = [];
 
       for (const toolUse of toolUses) {
-        const result = handleToolCall(toolUse.name, toolUse.input as Record<string, unknown>);
+        const result = state.handleToolCall(toolUse.name, toolUse.input as Record<string, unknown>);
+
+        if (toolUse.name === "verify_groups") {
+          const verification = result as VerificationResult;
+          if (verification.valid) {
+            // Auto-submit if verification passes
+            const submitResult = state.submitFinalGroups();
+            if (submitResult.success) {
+              finalGroups = submitResult.groups;
+            }
+          }
+        }
 
         if (toolUse.name === "submit_final_groups") {
-          const submission = result as { success: boolean; groups: Group[] };
+          const submission = result as { success: boolean; groups: Group[]; issues?: string[] };
           if (submission.success) {
             finalGroups = submission.groups;
           }

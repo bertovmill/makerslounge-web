@@ -8,6 +8,8 @@ import { renderAvatar } from '@/components/AvatarPicker';
 import { getCoverStyle } from '@/lib/coverImages';
 import { useTheme, getThemeShadow } from '@/components/ThemeProvider';
 import { ConnectButton } from '@/components/ConnectButton';
+import ValuePortfolioSection from './ValuePortfolioSection';
+import { ValuePortfolioItem } from './ValuePortfolioModal';
 import dynamic from 'next/dynamic';
 
 // Dynamically import WhiteboardViewer to avoid SSR issues
@@ -44,6 +46,7 @@ interface PublicProfileProps {
     show_whiteboard: boolean | null;
   };
   projects: Project[];
+  valuePortfolio?: ValuePortfolioItem[];
 }
 
 /**
@@ -52,7 +55,7 @@ interface PublicProfileProps {
  * Unified themed layout for public profile pages.
  * Works for both /profile/[id] and /p/[username] routes.
  */
-export function PublicProfileLayout({ profile, projects }: PublicProfileProps) {
+export function PublicProfileLayout({ profile, projects, valuePortfolio = [] }: PublicProfileProps) {
   const { theme } = useTheme();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
@@ -212,6 +215,15 @@ export function PublicProfileLayout({ profile, projects }: PublicProfileProps) {
             </h2>
             <WhiteboardViewer data={profile.whiteboard_data} className="h-96" />
           </div>
+        )}
+
+        {/* Value Portfolio Section - only show if has items */}
+        {valuePortfolio && valuePortfolio.length > 0 && (
+          <ValuePortfolioSection
+            items={valuePortfolio}
+            userId={profile.id}
+            isEditable={false}
+          />
         )}
 
         {/* Recent Posts Section */}

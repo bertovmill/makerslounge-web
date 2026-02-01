@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MakersLounge Newsletter Banner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #f5f5f5;
+      padding: 40px;
+    }
+
+    .banner {
+      width: 1100px;
+      height: 220px;
+      background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+      border-radius: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle background pattern */
+    .banner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: radial-gradient(circle at 20% 80%, rgba(232, 121, 87, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(78, 205, 196, 0.08) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .logo-icon {
+      width: 70px;
+      height: 70px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo-text {
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo-text .makers {
+      color: #E87957; /* Coral/terracotta primary */
+    }
+
+    .logo-text .lounge {
+      color: #1a1a1a;
+    }
+
+    /* Alternative banner styles below */
+    .banner-dark {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    }
+
+    .banner-dark::before {
+      background-image: radial-gradient(circle at 20% 80%, rgba(232, 121, 87, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(78, 205, 196, 0.1) 0%, transparent 50%);
+    }
+
+    .banner-dark .logo-text .lounge {
+      color: #ffffff;
+    }
+
+    /* Container for multiple options */
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    .option-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .option-label {
+      font-size: 14px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .download-btn {
+      background: #E87957;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .download-btn:hover {
+      background: #d66a4a;
+    }
+
+    .download-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="options">
+    <!-- Light Banner -->
+    <div>
+      <div class="option-header">
+        <span class="option-label">Light Version (1100x220)</span>
+        <button class="download-btn" onclick="downloadBanner('banner-light', 'makerslounge-banner-light.png')">
+          Download PNG
+        </button>
+      </div>
+      <div class="banner" id="banner-light">
+        <img src="/icon-512.png" alt="MakersLounge" class="logo-icon" crossorigin="anonymous">
+        <div class="logo-text">
+          <span class="makers">Makers</span><span class="lounge">Lounge</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dark Banner -->
+    <div>
+      <div class="option-header">
+        <span class="option-label">Dark Version (1100x220)</span>
+        <button class="download-btn" onclick="downloadBanner('banner-dark', 'makerslounge-banner-dark.png')">
+          Download PNG
+        </button>
+      </div>
+      <div class="banner banner-dark" id="banner-dark">
+        <img src="/icon-512.png" alt="MakersLounge" class="logo-icon" crossorigin="anonymous">
+        <div class="logo-text">
+          <span class="makers">Makers</span><span class="lounge">Lounge</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function downloadBanner(elementId, filename) {
+      const element = document.getElementById(elementId);
+      const button = event.target;
+
+      button.disabled = true;
+      button.textContent = 'Generating...';
+
+      try {
+        const canvas = await html2canvas(element, {
+          scale: 2, // Higher resolution
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: null,
+        });
+
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (err) {
+        console.error('Error generating PNG:', err);
+        alert('Error generating PNG. Try taking a screenshot instead.');
+      }
+
+      button.disabled = false;
+      button.textContent = 'Download PNG';
+    }
+  </script>
+</body>
+</html>

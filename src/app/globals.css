@@ -452,3 +452,30 @@ button[href*="license"] {
 .tetris-flash {
   animation: tetris-flash 0.3s ease-in-out 3;
 }
+
+/* ============================================
+   Makers Lounge Loader Animation
+   ============================================ */
+
+@keyframes loader-pulse {
+  0%, 100% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.9;
+  }
+  25% {
+    transform: scale(1.05) translate(2px, -2px);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.95) translate(-2px, 2px);
+    opacity: 0.8;
+  }
+  75% {
+    transform: scale(1.02) translate(1px, -1px);
+    opacity: 1;
+  }
+}
+
+.animate-loader-pulse {
+  animation: loader-pulse 2s ease-in-out infinite;
+}

@@ -12,6 +12,8 @@ import { useTheme, getThemeShadow } from "./ThemeProvider";
 import ProjectModal from "./ProjectModal";
 import { ThemeConfig } from "@/lib/themes";
 import CoverPicker from "./CoverPicker";
+import ValuePortfolioSection from "./ValuePortfolioSection";
+import { ValuePortfolioItem } from "./ValuePortfolioModal";
 import dynamic from "next/dynamic";
 
 // Dynamically import WhiteboardEditor to avoid SSR issues
@@ -52,8 +54,10 @@ interface Project {
 interface EditablePublicProfileProps {
   profile: Profile;
   projects: Project[];
+  valuePortfolio?: ValuePortfolioItem[];
   onUpdateProfile: (updates: Partial<Profile>) => Promise<void>;
   onUpdateProjects: (projects: Project[]) => void;
+  onUpdateValuePortfolio?: (items: ValuePortfolioItem[]) => void;
   onPhotoUpload: (file: File) => Promise<void>;
   onAvatarSelect: (style: string) => Promise<void>;
 }
@@ -66,8 +70,10 @@ interface EditablePublicProfileProps {
 export function EditablePublicProfile({
   profile,
   projects,
+  valuePortfolio = [],
   onUpdateProfile,
   onUpdateProjects,
+  onUpdateValuePortfolio,
   onPhotoUpload,
   onAvatarSelect,
 }: EditablePublicProfileProps) {
@@ -387,6 +393,14 @@ export function EditablePublicProfile({
             Use this whiteboard to share your ideas, workflows, or visual thinking. Changes auto-save every 3 seconds.
           </p>
         </div>
+
+        {/* Value Portfolio Section */}
+        <ValuePortfolioSection
+          items={valuePortfolio}
+          userId={profile.id}
+          isEditable={true}
+          onUpdateItems={onUpdateValuePortfolio}
+        />
 
         {/* Recent Posts Section */}
         <div>

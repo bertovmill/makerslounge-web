@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import type { Group, StepEvent, GroupEvent, CompleteEvent, TokenUsage } from "@/types/matcher";
 import AgentWorkflow, { type AgentTurn, type ToolCall } from "@/components/matcher/AgentWorkflow";
+import LoaderIcon from "@/components/matcher/LoaderIcon";
 
 interface Contact {
   [key: string]: string;
@@ -63,6 +64,8 @@ export default function MatcherPage() {
   const [thinkingLogs, setThinkingLogs] = useState<ThinkingLog[]>([]);
   const [tokenUsage, setTokenUsage] = useState<TokenUsage | null>(null);
   const [agentTurns, setAgentTurns] = useState<AgentTurn[]>([]);
+  const [turnProgress, setTurnProgress] = useState<{ current: number; max: number } | null>(null);
+  const [selectedStep, setSelectedStep] = useState<string | null>(null);
 
   // Load saved events on mount
   useEffect(() => {
@@ -225,7 +228,15 @@ export default function MatcherPage() {
     setThinkingLogs([]);
     setTokenUsage(null);
     setAgentTurns([]);
+    setTurnProgress(null);
+    setSelectedStep(null);
     setMatcherProgress({ step: "Starting agent...", phase: "starting", icon: "0" });
+
+    // Create an abort controller with a 3.5-minute timeout (slightly longer than server's 3 min)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 210000); // 3.5 minutes
 
     try {
       const response = await fetch("/api/agents/matcher", {
@@ -236,6 +247,7 @@ export default function MatcherPage() {
           groupSize,
           stream: true,
         }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -270,6 +282,10 @@ export default function MatcherPage() {
               const data = JSON.parse(line.slice(6));
 
               switch (eventType) {
+                case "ping": {
+                  // Keepalive ping from server - ignore silently
+                  break;
+                }
                 case "step": {
                   const stepData = data as StepEvent;
                   setMatcherProgress({
@@ -288,6 +304,8 @@ export default function MatcherPage() {
                 }
                 case "turn_start": {
                   const turnNum = data.turn as number;
+                  const maxTurns = (data.maxTurns as number) || 20;
+                  setTurnProgress({ current: turnNum, max: maxTurns });
                   setAgentTurns((prev) => [
                     ...prev,
                     { turn: turnNum, toolCalls: [], timestamp: Date.now() },
@@ -393,9 +411,14 @@ export default function MatcherPage() {
       }
     } catch (err) {
       console.error("Grouping error:", err);
-      setError(err instanceof Error ? err.message : "Failed to generate groups");
+      if (err instanceof Error && err.name === "AbortError") {
+        setError("Request timed out. The agent took too long to respond. Please try again.");
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to generate groups");
+      }
       setMatcherProgress(null);
     } finally {
+      clearTimeout(timeoutId);
       setIsGrouping(false);
     }
   };
@@ -599,37 +622,81 @@ export default function MatcherPage() {
                 // Show progress while grouping
                 <div className="space-y-4">
                   <div>
-                      {/* Progress phases indicator */}
-                      <div className="flex items-center gap-2 mb-3">
-                        {[
-                          { num: "1", label: "Explore" },
-                          { num: "2", label: "Analyze" },
-                          { num: "3", label: "Propose" },
-                          { num: "4", label: "Verify" },
-                          { num: "5", label: "Submit" },
-                        ].map(({ num, label }) => (
-                          <div
-                            key={num}
-                            className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium transition-all ${
-                              matcherProgress?.icon === num
-                                ? "bg-primary text-white"
-                                : parseInt(matcherProgress?.icon || "0") > parseInt(num)
-                                ? "bg-primary/20 text-primary"
-                                : "bg-muted text-muted-foreground"
-                            }`}
-                          >
-                            <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
-                              {num}
+                      {/* Turn counter */}
+                      {turnProgress && (
+                        <div className="text-xs text-muted-foreground mb-2">
+                          Turn {turnProgress.current}/{turnProgress.max}
+                          {turnProgress.current > 10 && (
+                            <span className="text-amber-500 ml-2">
+                              (approaching limit)
                             </span>
-                            <span className="hidden sm:inline">{label}</span>
-                          </div>
-                        ))}
+                          )}
+                        </div>
+                      )}
+                      {/* Progress phases indicator with animated loader */}
+                      <div className="flex flex-wrap items-center gap-2 mb-3">
+                        {[
+                          { num: "1", label: "Explore", description: "Reading all contact data to understand who's attending, their skills, projects, and what they're looking for." },
+                          { num: "2", label: "Analyze", description: "Finding patterns and synergies — who has skills others need, complementary interests, and potential collaboration opportunities." },
+                          { num: "3", label: "Propose", description: "Creating balanced groups by matching complementary skills and needs, ensuring diverse perspectives in each group." },
+                          { num: "4", label: "Verify", description: "Checking that everyone is assigned to exactly one group, no duplicates, and group sizes are balanced." },
+                          { num: "5", label: "Submit", description: "Finalizing the verified groups and preparing the results for display." },
+                        ].map(({ num, label, description }) => {
+                          const isActive = matcherProgress?.icon === num;
+                          const isComplete = parseInt(matcherProgress?.icon || "0") > parseInt(num);
+                          const isSelected = selectedStep === num;
+                          return (
+                            <div key={num} className="flex items-center gap-1">
+                              {/* Show loader icon next to active step */}
+                              {isActive && (
+                                <LoaderIcon size="sm" className="mr-1" />
+                              )}
+                              <button
+                                onClick={() => setSelectedStep(isSelected ? null : num)}
+                                className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium transition-all cursor-pointer hover:scale-105 ${
+                                  isActive
+                                    ? "bg-primary text-white"
+                                    : isComplete
+                                    ? "bg-primary/20 text-primary"
+                                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                } ${isSelected ? "ring-2 ring-primary ring-offset-1" : ""}`}
+                              >
+                                <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
+                                  {num}
+                                </span>
+                                <span className="hidden sm:inline">{label}</span>
+                              </button>
+                            </div>
+                          );
+                        })}
                       </div>
 
-                      {/* Current step */}
-                      <p className="text-sm font-medium mb-3">
-                        {matcherProgress?.step || `Matching ${contacts.length} makers...`}
-                      </p>
+                      {/* Step explanation panel - shows for selected OR active step */}
+                      {(() => {
+                        const showStep = selectedStep || matcherProgress?.icon;
+                        if (!showStep || showStep === "0") return null;
+                        const stepInfo: Record<string, { label: string; description: string }> = {
+                          "1": { label: "Explore", description: "Reading all contact data to understand who's attending, their skills, projects, and what they're looking for." },
+                          "2": { label: "Analyze", description: "Finding patterns and synergies — who has skills others need, complementary interests, and potential collaboration opportunities." },
+                          "3": { label: "Propose", description: "Creating balanced groups by matching complementary skills and needs, ensuring diverse perspectives in each group." },
+                          "4": { label: "Verify", description: "Checking that everyone is assigned to exactly one group, no duplicates, and group sizes are balanced." },
+                          "5": { label: "Submit", description: "Finalizing the verified groups and preparing the results for display." },
+                        };
+                        const info = stepInfo[showStep];
+                        if (!info) return null;
+                        return (
+                          <div className="mb-3 p-3 bg-muted/50 rounded-lg border border-border/50 animate-in fade-in slide-in-from-top-1 duration-200">
+                            <div className="flex items-start gap-2">
+                              <span className="text-primary font-medium text-sm shrink-0">
+                                {info.label}:
+                              </span>
+                              <p className="text-sm text-muted-foreground">
+                                {info.description}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       {/* Agent Workflow Visualization */}
                       <AgentWorkflow
@@ -638,30 +705,17 @@ export default function MatcherPage() {
                         isRunning={isGrouping}
                       />
 
-                      {/* Token usage */}
-                      {tokenUsage && (
-                        <p className="text-[10px] text-muted-foreground/60 mt-3 text-right">
-                          {tokenUsage.input.toLocaleString()} in · {tokenUsage.output.toLocaleString()} out
-                          {tokenUsage.estimated && " ~"}
-                        </p>
-                      )}
-
                     {/* Show groups as they form */}
                     {groups.length > 0 && (
-                      <div className="mt-4">
-                        <p className="text-xs text-muted-foreground mb-2">
-                          Groups formed ({groups.length}):
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {groups.map((group, idx) => (
-                            <div
-                              key={idx}
-                              className="px-2 py-1 bg-primary/10 text-primary rounded text-xs font-medium animate-in fade-in slide-in-from-bottom-1 duration-300"
-                            >
-                              {group.theme || `Group ${idx + 1}`}
-                            </div>
-                          ))}
-                        </div>
+                      <div className="mt-4 flex flex-wrap gap-1.5">
+                        {groups.map((group, idx) => (
+                          <div
+                            key={idx}
+                            className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 rounded-full text-xs font-medium animate-in fade-in slide-in-from-bottom-1 duration-300"
+                          >
+                            {group.theme || `Group ${idx + 1}`}
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>

@@ -6,28 +6,76 @@ interface SkillsInputProps {
   skills: string[];
   onChange: (skills: string[]) => void;
   maxSkills?: number;
+  showQuickSelect?: boolean;
+  mode?: "skills" | "looking_for";
 }
 
+// Quick-select categories for your superpowers/skills
+const SKILLS_CATEGORIES = [
+  {
+    label: "Tech",
+    skills: ["AI/ML", "Web Dev", "Mobile Dev", "Backend", "Frontend", "DevOps", "Data Science", "Blockchain"],
+  },
+  {
+    label: "Creative",
+    skills: ["Design", "UX/UI", "Video", "Photography", "Writing", "Music", "Animation", "Branding"],
+  },
+  {
+    label: "Business",
+    skills: ["Marketing", "Sales", "Growth", "Product", "Strategy", "Finance", "Operations", "Fundraising"],
+  },
+  {
+    label: "Other",
+    skills: ["Community", "Podcasting", "Public Speaking", "Consulting", "Research", "Education"],
+  },
+];
+
+// Quick-select categories for who you want to meet
+const LOOKING_FOR_CATEGORIES = [
+  {
+    label: "Builders",
+    skills: ["Technical Co-founder", "Developer", "Designer", "Engineer", "No-code Builder"],
+  },
+  {
+    label: "Business",
+    skills: ["Business Co-founder", "Marketer", "Sales Expert", "Growth Hacker", "Ops/Finance"],
+  },
+  {
+    label: "Creators",
+    skills: ["Content Creator", "Copywriter", "Video Producer", "Podcaster", "Community Builder"],
+  },
+  {
+    label: "Advisors",
+    skills: ["Mentor", "Investor", "Industry Expert", "Startup Advisor", "Domain Expert"],
+  },
+];
+
+// Flat list for autocomplete (combines both)
 const SKILL_SUGGESTIONS = [
-  "AI", "Machine Learning", "Web Dev", "Mobile Dev", "Design", "UX/UI",
-  "Marketing", "Sales", "Finance", "E-commerce", "Community", "Podcasting",
-  "Product", "Data Science", "Blockchain", "Growth", "Content", "Video",
-  "Writing", "Photography", "Music", "Gaming", "Health", "Education"
+  ...SKILLS_CATEGORIES.flatMap((cat) => cat.skills),
+  ...LOOKING_FOR_CATEGORIES.flatMap((cat) => cat.skills),
 ];
 
 export default function SkillsInput({
   skills,
   onChange,
   maxSkills = 10,
+  showQuickSelect = true,
+  mode = "skills",
 }: SkillsInputProps) {
   const [input, setInput] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const categories = mode === "looking_for" ? LOOKING_FOR_CATEGORIES : SKILLS_CATEGORIES;
 
   const filteredSuggestions = SKILL_SUGGESTIONS.filter(
     (s) =>
       s.toLowerCase().includes(input.toLowerCase()) &&
       !skills.includes(s)
   );
+
+  const isSelected = (skill: string) => skills.includes(skill);
+  const canAddMore = skills.length < maxSkills;
 
   const addSkill = (skill: string) => {
     const trimmed = skill.trim();
@@ -110,6 +158,46 @@ export default function SkillsInput({
       <p className="text-xs text-gray-400 mt-1">
         {skills.length}/{maxSkills} skills - Press Enter or comma to add
       </p>
+
+      {/* Quick-select pills */}
+      {showQuickSelect && (
+        <div className="mt-4 space-y-3">
+          {categories.map((category) => (
+            <div key={category.label}>
+              <p className="text-xs font-medium text-gray-500 mb-1.5">{category.label}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {category.skills.map((skill) => {
+                  const selected = isSelected(skill);
+                  return (
+                    <button
+                      key={skill}
+                      type="button"
+                      onClick={() => {
+                        if (selected) {
+                          removeSkill(skill);
+                        } else if (canAddMore) {
+                          addSkill(skill);
+                        }
+                      }}
+                      disabled={!selected && !canAddMore}
+                      className={`px-3 py-1.5 text-sm rounded-full border transition-all ${
+                        selected
+                          ? "bg-[#F4A261]/20 border-[#F4A261] text-[#c77f4a]"
+                          : "bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                      }`}
+                    >
+                      {selected && (
+                        <span className="mr-1">✓</span>
+                      )}
+                      {skill}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

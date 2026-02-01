@@ -24,7 +24,6 @@ function AuthContent() {
         .eq("id", userId)
         .single();
 
-      // If no profile or not onboarded, go to onboarding
       if (!profile || !profile.onboarding_completed) {
         router.push("/onboarding");
       } else {
@@ -32,7 +31,6 @@ function AuthContent() {
       }
     };
 
-    // Redirect if already logged in
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         checkOnboardingStatus(user.id);
@@ -90,48 +88,80 @@ function AuthContent() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30 flex flex-col relative overflow-hidden">
-      {/* Decorative shapes */}
-      <div className="absolute top-0 left-0 w-64 h-64 md:w-96 md:h-96 -translate-x-1/3 -translate-y-1/3">
-        <svg viewBox="0 0 200 200" className="w-full h-full">
-          <path
-            d="M100,10 L120,80 L190,80 L135,120 L155,190 L100,150 L45,190 L65,120 L10,80 L80,80 Z"
-            className="fill-blue-400/20"
-          />
-        </svg>
-      </div>
-      <div className="absolute bottom-0 right-0 w-48 h-48 md:w-80 md:h-80 translate-x-1/4 translate-y-1/4">
-        <svg viewBox="0 0 200 200" className="w-full h-full">
-          <circle cx="100" cy="100" r="90" className="fill-orange-300/20" />
-        </svg>
-      </div>
-      <div className="absolute top-1/4 right-10 w-24 h-24 md:w-32 md:h-32 hidden lg:block">
-        <svg viewBox="0 0 100 100" className="w-full h-full">
-          <rect x="10" y="10" width="80" height="80" rx="20" className="fill-teal-400/15" transform="rotate(15 50 50)" />
-        </svg>
-      </div>
+    <div className="min-h-screen flex">
+      {/* Left side - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] bg-gradient-to-br from-primary/90 via-primary to-primary/80 relative overflow-hidden">
+        {/* Decorative shapes */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-white/10 rounded-full blur-2xl" />
 
-      {/* Main content */}
-      <main className="flex-1 flex items-center justify-center p-4 relative z-10">
-        <div className="w-full max-w-md">
-          <div className="bg-white dark:bg-card border border-border/30 rounded-2xl p-8 md:p-10 shadow-xl shadow-black/5">
-            {/* Logo */}
-            <div className="flex justify-center mb-8">
-              <Link href="/" className="flex items-center gap-2">
-                <img src="/icon-512.png" alt="MakersLounge" className="w-10 h-10" />
-                <span className="text-xl font-semibold">MakersLounge</span>
-              </Link>
+          {/* Floating shapes */}
+          <svg className="absolute top-32 right-20 w-16 h-16 text-white/20" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="currentColor" />
+          </svg>
+          <svg className="absolute bottom-40 left-20 w-20 h-20 text-white/15" viewBox="0 0 100 100">
+            <rect x="10" y="10" width="80" height="80" rx="20" fill="currentColor" transform="rotate(15 50 50)" />
+          </svg>
+          <svg className="absolute top-1/3 right-1/3 w-12 h-12 text-white/25" viewBox="0 0 100 100">
+            <polygon points="50,10 90,90 10,90" fill="currentColor" />
+          </svg>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20 text-white">
+          <Link href="/" className="flex items-center gap-3 mb-12">
+            <img src="/icon-512.png" alt="MakersLounge" className="w-12 h-12 rounded-xl shadow-lg" />
+            <span className="text-2xl font-semibold">MakersLounge</span>
+          </Link>
+
+          <h1 className="text-4xl xl:text-5xl font-bold leading-tight mb-6">
+            Where makers<br />
+            <span className="text-white/90">connect & build</span>
+          </h1>
+
+          <p className="text-lg xl:text-xl text-white/80 max-w-md mb-10 leading-relaxed">
+            Join Toronto&apos;s community of builders, creators, and entrepreneurs.
+            Share your projects, find collaborators, and grow together.
+          </p>
+
+          {/* Social proof */}
+          <div className="flex items-center gap-6">
+            <div className="flex -space-x-3">
+              <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center text-sm font-medium">JD</div>
+              <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center text-sm font-medium">AK</div>
+              <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center text-sm font-medium">MR</div>
+              <div className="w-10 h-10 rounded-full bg-white/30 border-2 border-white/30 flex items-center justify-center text-sm font-medium">+</div>
             </div>
+            <p className="text-white/70 text-sm">
+              Join 100+ makers already building
+            </p>
+          </div>
+        </div>
+      </div>
 
+      {/* Right side - Auth Form */}
+      <div className="flex-1 flex flex-col bg-background">
+        {/* Mobile header */}
+        <div className="lg:hidden p-6 flex items-center justify-center border-b border-border/50">
+          <Link href="/" className="flex items-center gap-2">
+            <img src="/icon-512.png" alt="MakersLounge" className="w-8 h-8" />
+            <span className="text-lg font-semibold">MakersLounge</span>
+          </Link>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
+          <div className="w-full max-w-sm">
             {/* Header */}
             <div className="text-center mb-8">
-              <h1 className="text-2xl md:text-3xl font-semibold mb-2">
-                {isSignUp ? "Create your account" : "Sign in"}
-              </h1>
+              <h2 className="text-2xl sm:text-3xl font-semibold mb-2">
+                {isSignUp ? "Create account" : "Welcome back"}
+              </h2>
               <p className="text-muted-foreground">
                 {isSignUp
-                  ? "Join Toronto's maker community"
-                  : "Continue to MakersLounge"}
+                  ? "Start your maker journey today"
+                  : "Sign in to continue to MakersLounge"}
               </p>
             </div>
 
@@ -140,7 +170,7 @@ function AuthContent() {
               variant="outline"
               onClick={handleSignInWithGoogle}
               disabled={loading}
-              className="w-full h-12 rounded-xl border-border hover:bg-muted/50 justify-center gap-3 font-medium transition-all"
+              className="w-full h-12 rounded-xl border-border/60 hover:bg-muted/50 hover:border-border justify-center gap-3 font-medium transition-all"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -152,19 +182,19 @@ function AuthContent() {
             </Button>
 
             {/* Divider */}
-            <div className="relative my-8">
+            <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border"></div>
+                <div className="w-full border-t border-border/60"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white dark:bg-card px-4 text-muted-foreground uppercase tracking-wider text-xs">or</span>
+                <span className="bg-background px-4 text-muted-foreground">or</span>
               </div>
             </div>
 
             {/* Email Form */}
-            <form onSubmit={handleSignInWithEmail} className="space-y-5">
+            <form onSubmit={handleSignInWithEmail} className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium mb-2">
+                <label htmlFor="email" className="block text-sm font-medium mb-1.5 text-foreground/80">
                   Email
                 </label>
                 <input
@@ -173,22 +203,22 @@ function AuthContent() {
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-12 px-4 bg-muted/30 border border-border rounded-xl text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/50 transition-all"
+                  className="w-full h-12 px-4 bg-muted/40 border border-border/60 rounded-xl text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/60 transition-all"
                   required
                 />
               </div>
               <div>
-                <label htmlFor="password" className="block text-sm font-medium mb-2">
+                <label htmlFor="password" className="block text-sm font-medium mb-1.5 text-foreground/80">
                   Password
                 </label>
                 <div className="relative">
                   <input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full h-12 px-4 pr-12 bg-muted/30 border border-border rounded-xl text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/50 transition-all"
+                    className="w-full h-12 px-4 pr-12 bg-muted/40 border border-border/60 rounded-xl text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/60 transition-all"
                     required
                     minLength={6}
                   />
@@ -210,7 +240,7 @@ function AuthContent() {
                   </button>
                 </div>
                 {isSignUp && (
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="text-xs text-muted-foreground mt-1.5">
                     Must be at least 6 characters
                   </p>
                 )}
@@ -220,7 +250,7 @@ function AuthContent() {
                 <div className="flex justify-end">
                   <button
                     type="button"
-                    className="text-sm text-primary hover:underline"
+                    className="text-sm text-primary hover:underline font-medium"
                   >
                     Forgot password?
                   </button>
@@ -230,14 +260,14 @@ function AuthContent() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 rounded-xl font-medium text-base"
+                className="w-full h-12 rounded-xl font-medium text-base mt-2"
               >
                 {loading ? "Loading..." : isSignUp ? "Create account" : "Sign in"}
               </Button>
             </form>
 
             {/* Toggle sign in/up */}
-            <p className="text-sm text-center mt-8 text-muted-foreground">
+            <p className="text-sm text-center mt-6 text-muted-foreground">
               {isSignUp ? "Already have an account?" : "New to MakersLounge?"}{" "}
               <button
                 type="button"
@@ -253,18 +283,20 @@ function AuthContent() {
 
             {/* Message */}
             {message && (
-              <div className="mt-6 p-4 bg-muted/50 rounded-xl border border-border">
+              <div className="mt-4 p-3 bg-muted/50 rounded-xl border border-border/60">
                 <p className="text-sm text-center text-muted-foreground">{message}</p>
               </div>
             )}
           </div>
+        </div>
 
-          {/* Footer */}
-          <p className="text-center text-xs text-muted-foreground mt-8">
+        {/* Footer */}
+        <div className="p-6 text-center">
+          <p className="text-xs text-muted-foreground">
             By continuing, you agree to our Terms of Service and Privacy Policy
           </p>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
@@ -273,8 +305,11 @@ export default function AuthPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-muted/30 flex items-center justify-center">
-          <p className="text-muted-foreground">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
         </div>
       }
     >

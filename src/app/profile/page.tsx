@@ -9,6 +9,8 @@ import { EditablePublicProfile } from "@/components/EditablePublicProfile";
 import { ThemePicker } from "@/components/ThemePicker";
 import AvatarPicker from "@/components/AvatarPicker";
 import SkillsInput from "@/components/SkillsInput";
+import ValuePortfolioSection from "@/components/ValuePortfolioSection";
+import { ValuePortfolioItem } from "@/components/ValuePortfolioModal";
 import { ThemeConfig, getDefaultThemeConfig } from "@/lib/themes";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -71,6 +73,7 @@ export default function ProfilePage() {
   });
 
   const [projects, setProjects] = useState<Project[]>([]);
+  const [valuePortfolio, setValuePortfolio] = useState<ValuePortfolioItem[]>([]);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
@@ -128,6 +131,15 @@ export default function ProfilePage() {
         .order("created_at", { ascending: false });
 
       setProjects(projectsData || []);
+
+      // Fetch value portfolio items
+      const { data: portfolioData } = await supabase
+        .from("value_portfolio")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      setValuePortfolio(portfolioData || []);
       setLoading(false);
     };
 
@@ -269,8 +281,10 @@ export default function ProfilePage() {
         <EditablePublicProfile
           profile={profile}
           projects={projects}
+          valuePortfolio={valuePortfolio}
           onUpdateProfile={handleUpdateProfile}
           onUpdateProjects={setProjects}
+          onUpdateValuePortfolio={setValuePortfolio}
           onPhotoUpload={handlePhotoUploadFromFile}
           onAvatarSelect={handleAvatarSelect}
         />

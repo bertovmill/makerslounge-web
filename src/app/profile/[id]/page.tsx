@@ -6,6 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { ThemedProfile } from "@/components/ThemedProfile";
 import { PublicProfileLayout } from "@/components/PublicProfileLayout";
+import { ValuePortfolioItem } from "@/components/ValuePortfolioModal";
 import { Button } from "@/components/ui/button";
 import { ThemeConfig } from "@/lib/themes";
 
@@ -39,6 +40,7 @@ export default function PublicProfilePage() {
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [valuePortfolio, setValuePortfolio] = useState<ValuePortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -65,6 +67,15 @@ export default function PublicProfilePage() {
         .order("created_at", { ascending: false });
 
       setProjects(projectsData || []);
+
+      // Fetch value portfolio
+      const { data: portfolioData } = await supabase
+        .from("value_portfolio")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      setValuePortfolio(portfolioData || []);
       setLoading(false);
     };
 
@@ -95,7 +106,7 @@ export default function PublicProfilePage() {
 
   return (
     <ThemedProfile themeConfig={profile.theme_config}>
-      <PublicProfileLayout profile={profile} projects={projects} />
+      <PublicProfileLayout profile={profile} projects={projects} valuePortfolio={valuePortfolio} />
     </ThemedProfile>
   );
 }

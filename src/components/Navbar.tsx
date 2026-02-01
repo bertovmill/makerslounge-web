@@ -120,6 +120,16 @@ export default function Navbar() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
       </svg>
     ),
+    docs: (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+    broadcast: (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.828a5 5 0 010-7.072m7.072 0a5 5 0 010 7.072M13 12a1 1 0 11-2 0 1 1 0 012 0z" />
+      </svg>
+    ),
   };
 
   const NavLink = ({ href, children, icon }: { href: string; children: React.ReactNode; icon?: React.ReactNode }) => {
@@ -201,6 +211,8 @@ export default function Navbar() {
           <NavLink href="/matcher" icon={icons.matcher}>Matcher</NavLink>
           <NavLink href="/podcast" icon={icons.podcast}>Podcast</NavLink>
           <NavLink href="/about" icon={icons.about}>About us</NavLink>
+          <NavLink href="/docs" icon={icons.docs}>Docs</NavLink>
+          <NavLink href="/broadcast" icon={icons.broadcast}>Broadcast <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">Beta</span></NavLink>
 
           {user && (
             <>
@@ -274,6 +286,8 @@ export default function Navbar() {
               <NavLink href="/matcher" icon={icons.matcher}>Matcher</NavLink>
               <NavLink href="/podcast" icon={icons.podcast}>Podcast</NavLink>
               <NavLink href="/about" icon={icons.about}>About us</NavLink>
+              <NavLink href="/docs" icon={icons.docs}>Docs</NavLink>
+              <NavLink href="/broadcast" icon={icons.broadcast}>Broadcast <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">Beta</span></NavLink>
 
               {user && (
                 <>
