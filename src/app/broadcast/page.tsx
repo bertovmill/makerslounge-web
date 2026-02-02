@@ -2,12 +2,20 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 
 type Status = "idea" | "in_progress" | "published";
+
+interface BroadcastAccount {
+  id: string;
+  name: string;
+  type: "personal" | "business";
+  avatar_url: string | null;
+}
 
 interface BroadcastIdea {
   id: string;
@@ -16,7 +24,25 @@ interface BroadcastIdea {
   media_urls: string[];
   status: Status;
   created_at: string;
+  account_id: string | null;
+  channels: string[];
+  account?: BroadcastAccount;
 }
+
+interface CustomChannel {
+  id: string;
+  name: string;
+  icon: string;
+}
+
+const DEFAULT_CHANNELS = [
+  { id: "x", name: "X", icon: "𝕏" },
+  { id: "linkedin", name: "LinkedIn", icon: "in" },
+  { id: "instagram", name: "Instagram", icon: "📷" },
+  { id: "youtube", name: "YouTube", icon: "▶" },
+  { id: "tiktok", name: "TikTok", icon: "♪" },
+  { id: "threads", name: "Threads", icon: "@" },
+] as const;
 
 const COLUMNS: { id: Status; title: string; color: string }[] = [
   { id: "idea", title: "Ideas", color: "bg-blue-500/20 border-blue-500/30" },
@@ -36,7 +62,20 @@ export default function BroadcastPage() {
   const [saving, setSaving] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<Status | null>(null);
+  const [accounts, setAccounts] = useState<BroadcastAccount[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const [newAccountName, setNewAccountName] = useState("");
+  const [newAccountType, setNewAccountType] = useState<"personal" | "business">("business");
+  const [customChannels, setCustomChannels] = useState<CustomChannel[]>([]);
+  const [showChannelModal, setShowChannelModal] = useState(false);
+  const [newChannelName, setNewChannelName] = useState("");
+  const [newChannelIcon, setNewChannelIcon] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Combine default and custom channels
+  const allChannels = [...DEFAULT_CHANNELS, ...customChannels];
 
   // Check auth and load ideas
   useEffect(() => {
@@ -49,7 +88,7 @@ export default function BroadcastPage() {
         return;
       }
 
-      await loadIdeas();
+      await Promise.all([loadIdeas(), loadAccounts(), loadCustomChannels()]);
       setLoading(false);
     };
 
@@ -68,15 +107,101 @@ export default function BroadcastPage() {
   const loadIdeas = async () => {
     const { data, error } = await supabase
       .from("broadcast_ideas")
-      .select("*")
+      .select("*, account:broadcast_accounts(*)")
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error loading ideas:", error);
+      console.error("Error loading ideas:", error.message, error.code, error.details, error.hint);
       return;
     }
 
     setIdeas(data || []);
+  };
+
+  const loadAccounts = async () => {
+    const { data, error } = await supabase
+      .from("broadcast_accounts")
+      .select("*")
+      .order("type", { ascending: true });
+
+    if (error) {
+      console.error("Error loading accounts:", error.message, error.code, error.details, error.hint);
+      return;
+    }
+
+    setAccounts(data || []);
+  };
+
+  const handleAddAccount = async () => {
+    if (!newAccountName.trim() || !user) return;
+
+    const { data, error } = await supabase
+      .from("broadcast_accounts")
+      .insert({
+        user_id: user.id,
+        name: newAccountName,
+        type: newAccountType,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating account:", error.message, error.code, error.details, error.hint);
+      return;
+    }
+
+    setAccounts([...accounts, data]);
+    setSelectedAccountId(data.id);
+    setNewAccountName("");
+    setNewAccountType("business");
+    setShowAccountModal(false);
+  };
+
+  const loadCustomChannels = async () => {
+    const { data, error } = await supabase
+      .from("broadcast_channels")
+      .select("*")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Error loading custom channels:", error.message, error.code, error.details, error.hint);
+      return;
+    }
+
+    setCustomChannels(data || []);
+  };
+
+  const handleAddChannel = async () => {
+    if (!newChannelName.trim() || !newChannelIcon.trim() || !user) return;
+
+    const { data, error } = await supabase
+      .from("broadcast_channels")
+      .insert({
+        user_id: user.id,
+        name: newChannelName,
+        icon: newChannelIcon,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating channel:", error.message, error.code, error.details, error.hint);
+      return;
+    }
+
+    setCustomChannels([...customChannels, data]);
+    setSelectedChannels([...selectedChannels, data.id]);
+    setNewChannelName("");
+    setNewChannelIcon("");
+    setShowChannelModal(false);
+  };
+
+  const toggleChannel = (channelId: string) => {
+    setSelectedChannels((prev) =>
+      prev.includes(channelId)
+        ? prev.filter((id) => id !== channelId)
+        : [...prev, channelId]
+    );
   };
 
   const handleAddIdea = async () => {
@@ -121,14 +246,16 @@ export default function BroadcastPage() {
         notes: newNotes,
         media_urls: uploadedUrls,
         status: "idea",
+        account_id: selectedAccountId,
+        channels: selectedChannels,
       })
-      .select()
+      .select("*, account:broadcast_accounts(*)")
       .single();
 
     setSaving(false);
 
     if (error) {
-      console.error("Error creating idea:", error);
+      console.error("Error creating idea:", error.message, error.code, error.details, error.hint);
       return;
     }
 
@@ -136,6 +263,8 @@ export default function BroadcastPage() {
     setNewTitle("");
     setNewNotes("");
     setNewMedia([]);
+    setSelectedAccountId(null);
+    setSelectedChannels([]);
     setShowModal(false);
   };
 
@@ -228,19 +357,30 @@ export default function BroadcastPage() {
     <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <h1 className="text-3xl font-bold">Broadcast</h1>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
-              Beta
-            </span>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <h1 className="text-3xl font-bold">Broadcast</h1>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
+                Beta
+              </span>
+            </div>
+            <p className="text-muted-foreground">
+              Capture content ideas, develop them, and track what you&apos;ve published.
+            </p>
           </div>
-          <p className="text-muted-foreground">
-            Capture content ideas, develop them, and track what you&apos;ve published.
-          </p>
+
+          <Link href="/broadcast/build">
+            <Button className="gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              Build Content
+            </Button>
+          </Link>
         </div>
 
-        {/* Kanban Board */}
+        {/* Ideas Board */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {COLUMNS.map((column) => {
             const columnIdeas = ideas.filter((idea) => idea.status === column.id);
@@ -287,6 +427,30 @@ export default function BroadcastPage() {
                           </svg>
                         </button>
                       </div>
+
+                      {/* Account & Channels */}
+                      {(idea.account || (idea.channels && idea.channels.length > 0)) && (
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          {idea.account && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted text-xs">
+                              {idea.account.type === "personal" ? "👤" : "🏢"}
+                              {idea.account.name}
+                            </span>
+                          )}
+                          {idea.channels?.map((channelId) => {
+                            const channel = allChannels.find((c) => c.id === channelId);
+                            return channel ? (
+                              <span
+                                key={channelId}
+                                className="inline-flex items-center px-1.5 py-0.5 rounded bg-muted/50 text-xs"
+                                title={channel.name}
+                              >
+                                {channel.icon}
+                              </span>
+                            ) : null;
+                          })}
+                        </div>
+                      )}
 
                       {idea.notes && (
                         <p className="text-xs text-muted-foreground mt-2 line-clamp-3">
@@ -339,11 +503,12 @@ export default function BroadcastPage() {
       {/* Floating Action Button */}
       <button
         onClick={() => setShowModal(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center justify-center"
+        className="fixed bottom-24 right-6 z-50 group flex items-center gap-2 h-12 px-4 rounded-full bg-foreground text-background shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 transition-transform duration-200 group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
+        <span className="text-sm font-medium pr-1">New Idea</span>
       </button>
 
       {/* Add Idea Modal */}
@@ -375,6 +540,69 @@ export default function BroadcastPage() {
                   placeholder="What's your idea?"
                   className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
+              </div>
+
+              {/* Account */}
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Account</label>
+                <div className="flex gap-2">
+                  <select
+                    value={selectedAccountId || ""}
+                    onChange={(e) => setSelectedAccountId(e.target.value || null)}
+                    className="flex-1 px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    <option value="">No account selected</option>
+                    {accounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.type === "personal" ? "👤" : "🏢"} {account.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowAccountModal(true)}
+                    className="px-3 py-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
+                    title="Add account"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Channels */}
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Channels</label>
+                <div className="flex flex-wrap gap-2">
+                  {allChannels.map((channel) => (
+                    <button
+                      key={channel.id}
+                      type="button"
+                      onClick={() => toggleChannel(channel.id)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-sm font-medium border transition-all",
+                        selectedChannels.includes(channel.id)
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background border-border hover:border-primary/50"
+                      )}
+                    >
+                      <span className="mr-1">{channel.icon}</span>
+                      {channel.name}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setShowChannelModal(true)}
+                    className="px-3 py-1.5 rounded-full text-sm font-medium border border-dashed border-border hover:border-primary/50 transition-all flex items-center gap-1"
+                    title="Add custom channel"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add
+                  </button>
+                </div>
               </div>
 
               {/* Notes */}
@@ -447,6 +675,148 @@ export default function BroadcastPage() {
               </Button>
               <Button onClick={handleAddIdea} disabled={!newTitle.trim() || saving}>
                 {saving ? "Saving..." : "Create Idea"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Account Modal */}
+      {showAccountModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-background border border-border rounded-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="text-lg font-semibold">Add Account</h2>
+              <button
+                onClick={() => setShowAccountModal(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Account Name</label>
+                <input
+                  type="text"
+                  value={newAccountName}
+                  onChange={(e) => setNewAccountName(e.target.value)}
+                  placeholder="e.g., My Business or Personal"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Account Type</label>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setNewAccountType("personal")}
+                    className={cn(
+                      "flex-1 p-3 rounded-lg border-2 transition-all text-left",
+                      newAccountType === "personal"
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                    )}
+                  >
+                    <span className="text-xl mb-1 block">👤</span>
+                    <span className="font-medium text-sm">Personal</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">Your personal brand</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewAccountType("business")}
+                    className={cn(
+                      "flex-1 p-3 rounded-lg border-2 transition-all text-left",
+                      newAccountType === "business"
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                    )}
+                  >
+                    <span className="text-xl mb-1 block">🏢</span>
+                    <span className="font-medium text-sm">Business</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">A company or project</p>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
+              <Button variant="outline" onClick={() => setShowAccountModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddAccount} disabled={!newAccountName.trim()}>
+                Add Account
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Channel Modal */}
+      {showChannelModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-background border border-border rounded-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="text-lg font-semibold">Add Channel</h2>
+              <button
+                onClick={() => setShowChannelModal(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Channel Name</label>
+                <input
+                  type="text"
+                  value={newChannelName}
+                  onChange={(e) => setNewChannelName(e.target.value)}
+                  placeholder="e.g., Newsletter, Blog, Podcast"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Icon (emoji)</label>
+                <input
+                  type="text"
+                  value={newChannelIcon}
+                  onChange={(e) => setNewChannelIcon(e.target.value)}
+                  placeholder="e.g., 📧, 📝, 🎙️"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  maxLength={4}
+                />
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  Pick an emoji to represent this channel
+                </p>
+              </div>
+
+              {/* Preview */}
+              {newChannelName && newChannelIcon && (
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">Preview</label>
+                  <div className="inline-flex px-3 py-1.5 rounded-full text-sm font-medium border border-border bg-background">
+                    <span className="mr-1">{newChannelIcon}</span>
+                    {newChannelName}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
+              <Button variant="outline" onClick={() => setShowChannelModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddChannel} disabled={!newChannelName.trim() || !newChannelIcon.trim()}>
+                Add Channel
               </Button>
             </div>
           </div>
