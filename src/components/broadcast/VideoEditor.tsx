@@ -260,15 +260,29 @@ export function VideoEditor({ className }: VideoEditorProps) {
     if (!playerRef) return;
     if (isPlaying) {
       playerRef.pause();
+      // Also pause the native video
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
     } else {
       playerRef.play();
+      // Also play the native video
+      if (videoRef.current) {
+        videoRef.current.play();
+      }
     }
   }, [playerRef, isPlaying]);
 
   const seekTo = useCallback((frame: number) => {
     if (!playerRef) return;
     playerRef.seekTo(frame);
-  }, [playerRef]);
+
+    // Also seek the native video element
+    if (videoRef.current) {
+      const timeInSeconds = frame / fps + trimStart;
+      videoRef.current.currentTime = timeInSeconds;
+    }
+  }, [playerRef, fps, trimStart]);
 
   const [videoWarning, setVideoWarning] = useState<string | null>(null);
 
