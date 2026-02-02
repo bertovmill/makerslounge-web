@@ -110,12 +110,27 @@ export function VideoEditor({ className }: VideoEditorProps) {
   const [playbackRate, setPlaybackRate] = useState(1);
   const [muted, setMuted] = useState(false);
 
+  // Trim controls
+  const [trimStart, setTrimStart] = useState(0); // in seconds
+  const [trimEnd, setTrimEnd] = useState(0); // in seconds (0 = no trim)
+  const [originalDuration, setOriginalDuration] = useState(0); // original video duration
+
   // Timeline state
   const [tracks, setTracks] = useState<TimelineTrack[]>([]);
   const [selectedClip, setSelectedClip] = useState<TimelineClip | null>(null);
 
   const fps = 30;
-  const durationInFrames = duration * fps;
+
+  // Calculate effective duration based on trim
+  const effectiveDuration = trimEnd > trimStart ? trimEnd - trimStart : duration;
+  const durationInFrames = Math.round(effectiveDuration * fps);
+
+  // Update duration when trim values change
+  useEffect(() => {
+    if (trimEnd > trimStart) {
+      setDuration(trimEnd - trimStart);
+    }
+  }, [trimStart, trimEnd]);
 
   // Update tracks when video is added
   useEffect(() => {
@@ -278,8 +293,12 @@ export function VideoEditor({ className }: VideoEditorProps) {
     const video = document.createElement("video");
     video.preload = "metadata";
     video.onloadedmetadata = () => {
-      const videoDuration = Math.ceil(video.duration);
-      setDuration(Math.min(videoDuration, 60));
+      const videoDuration = video.duration;
+      const maxDuration = Math.min(videoDuration, 60);
+      setOriginalDuration(videoDuration);
+      setDuration(maxDuration);
+      setTrimStart(0);
+      setTrimEnd(videoDuration);
       // Check if video has valid dimensions (indicates codec support)
       if (video.videoWidth === 0 || video.videoHeight === 0) {
         setVideoWarning("Video codec not supported by browser. Please convert to MP4 (H.264).");
@@ -318,6 +337,9 @@ export function VideoEditor({ className }: VideoEditorProps) {
     setVideoSrc(null);
     setVideoFileName(null);
     setVideoWarning(null);
+    setTrimStart(0);
+    setTrimEnd(0);
+    setOriginalDuration(0);
   }, [videoSrc]);
 
   // Export video function
@@ -564,6 +586,172 @@ export function VideoEditor({ className }: VideoEditorProps) {
     }
   }, [duration, transcriptionSupported]);
 
+  // Helper function to extract audio from video as WebM
+  const extractAudioFromVideo = useCallback(async (videoElement: HTMLVideoElement): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      try {
+        // Create audio context
+        const audioContext = new AudioContext();
+        const source = audioContext.createMediaElementSource(videoElement);
+        const destination = audioContext.createMediaStreamDestination();
+        source.connect(destination);
+        source.connect(audioContext.destination);
+
+        // Use MediaRecorder to capture audio
+        const mediaRecorder = new MediaRecorder(destination.stream, {
+          mimeType: "audio/webm;codecs=opus",
+        });
+
+        const chunks: Blob[] = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+            chunks.push(e.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(chunks, { type: "audio/webm" });
+          audioContext.close();
+          resolve(audioBlob);
+        };
+
+        mediaRecorder.onerror = (e) => {
+          audioContext.close();
+          reject(e);
+        };
+
+        // Start recording
+        mediaRecorder.start();
+
+        // Play the video to capture audio
+        videoElement.currentTime = 0;
+        videoElement.muted = false;
+        videoElement.play();
+
+        // Stop when video ends or after duration
+        const stopRecording = () => {
+          if (mediaRecorder.state === "recording") {
+            mediaRecorder.stop();
+            videoElement.pause();
+            videoElement.muted = true;
+          }
+        };
+
+        videoElement.onended = stopRecording;
+        setTimeout(stopRecording, (duration + 1) * 1000);
+
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }, [duration]);
+
+  // OpenAI Whisper transcription
+  const handleWhisperTranscribe = useCallback(async () => {
+    if (!videoSrc) return;
+
+    setIsTranscribing(true);
+
+    try {
+      const fileName = videoFileName?.toLowerCase() || "";
+
+      // Fetch the video blob
+      const response = await fetch(videoSrc);
+      const videoBlob = await response.blob();
+
+      // Determine the appropriate format for Whisper
+      // Supported: flac, m4a, mp3, mp4, mpeg, mpga, oga, ogg, wav, webm
+      let extension = "mp4"; // Default to mp4
+      let mimeType = "video/mp4";
+
+      if (fileName.endsWith(".mov")) {
+        // MOV files often use same codecs as MP4, try renaming
+        extension = "mp4";
+        mimeType = "video/mp4";
+      } else if (fileName.endsWith(".webm")) {
+        extension = "webm";
+        mimeType = "video/webm";
+      } else if (fileName.endsWith(".mp3")) {
+        extension = "mp3";
+        mimeType = "audio/mp3";
+      } else if (fileName.endsWith(".wav")) {
+        extension = "wav";
+        mimeType = "audio/wav";
+      } else if (fileName.endsWith(".m4a")) {
+        extension = "m4a";
+        mimeType = "audio/m4a";
+      } else if (fileName.endsWith(".ogg") || fileName.endsWith(".oga")) {
+        extension = "ogg";
+        mimeType = "audio/ogg";
+      } else if (fileName.endsWith(".flac")) {
+        extension = "flac";
+        mimeType = "audio/flac";
+      } else if (fileName.endsWith(".mp4") || fileName.endsWith(".m4v")) {
+        extension = "mp4";
+        mimeType = "video/mp4";
+      }
+
+      // Create file with proper extension
+      const audioFile = new File([videoBlob], `audio.${extension}`, { type: mimeType });
+
+      // Try transcription
+      const formData = new FormData();
+      formData.append("audio", audioFile);
+      formData.append("language", "en");
+
+      let transcribeResponse = await fetch("/api/transcribe", {
+        method: "POST",
+        body: formData,
+      });
+
+      let result = await transcribeResponse.json();
+
+      // If failed due to format, try extracting audio
+      if (!transcribeResponse.ok && result.error?.includes("Invalid file format") && videoRef.current) {
+        console.log("Falling back to audio extraction...");
+
+        // Extract audio from video
+        const audioBlob = await extractAudioFromVideo(videoRef.current);
+        const extractedFile = new File([audioBlob], "audio.webm", { type: "audio/webm" });
+
+        const retryFormData = new FormData();
+        retryFormData.append("audio", extractedFile);
+        retryFormData.append("language", "en");
+
+        transcribeResponse = await fetch("/api/transcribe", {
+          method: "POST",
+          body: retryFormData,
+        });
+
+        result = await transcribeResponse.json();
+      }
+
+      if (!transcribeResponse.ok) {
+        throw new Error(result.error || "Transcription failed");
+      }
+
+      // Set the captions from the API response
+      if (result.captions && result.captions.length > 0) {
+        setCaptions(result.captions);
+        setCaptionText(result.text || "");
+        setShowCaptions(true);
+      } else if (result.text) {
+        // Fallback to auto-generating captions from text
+        setCaptionText(result.text);
+        const newCaptions = createAutoCaptions(result.text, duration * 1000, 4);
+        setCaptions(newCaptions);
+        setShowCaptions(true);
+      }
+
+      setIsTranscribing(false);
+    } catch (error) {
+      console.error("Whisper transcription failed:", error);
+      setIsTranscribing(false);
+      alert(error instanceof Error ? error.message : "Transcription failed. Please try again.");
+    }
+  }, [videoSrc, videoFileName, duration, extractAudioFromVideo]);
+
   const accentColors = [
     { value: "#3b82f6", label: "Blue" },
     { value: "#8b5cf6", label: "Purple" },
@@ -778,18 +966,34 @@ export function VideoEditor({ className }: VideoEditorProps) {
                     zIndex: 1,
                   }}
                   autoPlay={isPlaying}
-                  loop
                   muted={muted}
                   playsInline
                   ref={(el) => {
                     // Store ref for export
                     (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = el;
-                    // Handle playback state
+                    // Handle playback state and trim
                     if (el) {
                       el.volume = volume;
                       el.playbackRate = playbackRate;
+
+                      // Handle trim bounds
+                      if (trimStart > 0 && el.currentTime < trimStart) {
+                        el.currentTime = trimStart;
+                      }
+                      if (trimEnd > 0 && el.currentTime >= trimEnd) {
+                        el.currentTime = trimStart; // Loop back to start
+                      }
+
+                      // Playback control
                       if (isPlaying && el.paused) el.play();
                       if (!isPlaying && !el.paused) el.pause();
+
+                      // Handle looping within trim bounds
+                      el.ontimeupdate = () => {
+                        if (trimEnd > 0 && el.currentTime >= trimEnd) {
+                          el.currentTime = trimStart;
+                        }
+                      };
                     }
                   }}
                 />
@@ -1029,6 +1233,114 @@ export function VideoEditor({ className }: VideoEditorProps) {
                         ))}
                       </div>
                     </div>
+
+                    {/* Trim Controls */}
+                    {originalDuration > 0 && (
+                      <div className="border-t border-gray-200 pt-3 mt-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs font-medium text-gray-700">Trim Video</label>
+                          <span className="text-xs text-gray-500">
+                            {(trimEnd - trimStart).toFixed(1)}s
+                          </span>
+                        </div>
+
+                        {/* Trim Range Slider */}
+                        <div className="relative h-8 mb-3">
+                          {/* Track background */}
+                          <div className="absolute inset-x-0 top-3 h-2 bg-gray-200 rounded-full" />
+
+                          {/* Selected range */}
+                          <div
+                            className="absolute top-3 h-2 bg-primary rounded-full"
+                            style={{
+                              left: `${(trimStart / originalDuration) * 100}%`,
+                              right: `${100 - (trimEnd / originalDuration) * 100}%`,
+                            }}
+                          />
+
+                          {/* Start handle */}
+                          <input
+                            type="range"
+                            min={0}
+                            max={originalDuration}
+                            step={0.1}
+                            value={trimStart}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              if (val < trimEnd - 0.5) setTrimStart(val);
+                            }}
+                            className="absolute inset-x-0 top-0 h-8 opacity-0 cursor-pointer z-10"
+                          />
+
+                          {/* End handle */}
+                          <input
+                            type="range"
+                            min={0}
+                            max={originalDuration}
+                            step={0.1}
+                            value={trimEnd}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              if (val > trimStart + 0.5) setTrimEnd(val);
+                            }}
+                            className="absolute inset-x-0 top-0 h-8 opacity-0 cursor-pointer z-20"
+                            style={{ pointerEvents: "none" }}
+                          />
+
+                          {/* Handle indicators */}
+                          <div
+                            className="absolute top-1 w-4 h-6 bg-white border-2 border-primary rounded cursor-ew-resize shadow-sm"
+                            style={{ left: `calc(${(trimStart / originalDuration) * 100}% - 8px)` }}
+                          />
+                          <div
+                            className="absolute top-1 w-4 h-6 bg-white border-2 border-primary rounded cursor-ew-resize shadow-sm"
+                            style={{ left: `calc(${(trimEnd / originalDuration) * 100}% - 8px)` }}
+                          />
+                        </div>
+
+                        {/* Time inputs */}
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1">
+                            <label className="text-xs text-gray-400 block mb-1">Start</label>
+                            <input
+                              type="number"
+                              min={0}
+                              max={trimEnd - 0.5}
+                              step={0.1}
+                              value={trimStart.toFixed(1)}
+                              onChange={(e) => setTrimStart(Math.max(0, Number(e.target.value)))}
+                              className="w-full px-2 py-1 text-xs bg-gray-50 border border-gray-200 rounded text-center"
+                            />
+                          </div>
+                          <span className="text-gray-400 mt-4">—</span>
+                          <div className="flex-1">
+                            <label className="text-xs text-gray-400 block mb-1">End</label>
+                            <input
+                              type="number"
+                              min={trimStart + 0.5}
+                              max={originalDuration}
+                              step={0.1}
+                              value={trimEnd.toFixed(1)}
+                              onChange={(e) => setTrimEnd(Math.min(originalDuration, Number(e.target.value)))}
+                              className="w-full px-2 py-1 text-xs bg-gray-50 border border-gray-200 rounded text-center"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Reset button */}
+                        {(trimStart > 0 || trimEnd < originalDuration) && (
+                          <button
+                            onClick={() => {
+                              setTrimStart(0);
+                              setTrimEnd(originalDuration);
+                            }}
+                            className="w-full mt-2 py-1.5 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                          >
+                            Reset Trim
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <button
@@ -1156,21 +1468,25 @@ export function VideoEditor({ className }: VideoEditorProps) {
                   )}
                 </div>
 
-                {/* Auto-Transcribe */}
+                {/* Auto-Transcribe with OpenAI Whisper */}
                 {videoSrc && (
-                  <div className="border-t border-gray-200 pt-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-gray-500">Auto-Transcribe</span>
-                      {!transcriptionSupported && (
-                        <span className="text-xs text-amber-600">Chrome only</span>
-                      )}
+                  <div className="border-t border-gray-200 pt-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-gray-700">Auto-Transcribe</span>
+                      <span className="text-xs text-green-600 flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        AI Powered
+                      </span>
                     </div>
+
+                    {/* OpenAI Whisper - Primary Option */}
                     <Button
                       size="sm"
-                      variant="outline"
-                      onClick={handleTranscribe}
-                      disabled={isTranscribing || !transcriptionSupported}
-                      className="w-full gap-2"
+                      onClick={handleWhisperTranscribe}
+                      disabled={isTranscribing}
+                      className="w-full gap-2 bg-primary hover:bg-primary/90"
                     >
                       {isTranscribing ? (
                         <>
@@ -1178,20 +1494,33 @@ export function VideoEditor({ className }: VideoEditorProps) {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                           </svg>
-                          Transcribing...
+                          Transcribing with Whisper...
                         </>
                       ) : (
                         <>
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                           </svg>
-                          Transcribe Audio
+                          Transcribe with AI
                         </>
                       )}
                     </Button>
-                    <p className="text-xs text-gray-400 mt-2">
-                      Uses browser speech recognition. For best results, use clear audio.
+                    <p className="text-xs text-gray-500">
+                      Uses OpenAI Whisper for accurate transcription with word-level timestamps.
                     </p>
+
+                    {/* Browser fallback - Secondary Option */}
+                    {transcriptionSupported && (
+                      <div className="pt-2">
+                        <button
+                          onClick={handleTranscribe}
+                          disabled={isTranscribing}
+                          className="text-xs text-gray-500 hover:text-gray-700 underline"
+                        >
+                          Or use browser speech recognition (Chrome)
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
