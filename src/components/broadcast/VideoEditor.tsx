@@ -342,43 +342,67 @@ export function VideoEditor({ className }: VideoEditorProps) {
     setOriginalDuration(0);
   }, [videoSrc]);
 
-  // Export video function - renders the edited timeline with clips
-  // Uses real-time playback approach for correct timing
+  // Export video - simple approach: play video and capture via canvas
   const handleExport = useCallback(async () => {
-    if (!previewContainerRef.current) return;
+    if (!videoSrc && !title && !caption) {
+      alert("Nothing to export. Add a video or text first.");
+      return;
+    }
 
     setIsExporting(true);
     setExportProgress(0);
 
     try {
-      // Create a canvas to composite video and overlays
-      const canvas = document.createElement("canvas");
-      canvas.width = aspectRatio.width;
-      canvas.height = aspectRatio.height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Could not get canvas context");
-
-      // Get the video element if present
-      const videoElement = videoRef.current;
-
-      // Get video clips from tracks (sorted by startFrame)
+      // Get video clips info
       const videoTrack = tracks.find(t => t.type === "video");
       const videoClips = videoTrack?.clips.slice().sort((a, b) => a.startFrame - b.startFrame) || [];
 
-      // Calculate total duration from timeline clips
-      const totalFrames = videoClips.length > 0
-        ? Math.max(...videoClips.map(c => c.endFrame))
-        : durationInFrames;
+      // For now, export the first clip only (simple case)
+      // TODO: Support multiple clips with server-side FFmpeg
+      const clip = videoClips[0];
+      if (!clip && !title && !caption) {
+        throw new Error("No content to export");
+      }
 
-      const totalDurationSeconds = totalFrames / fps;
+      // Calculate duration
+      const clipDuration = clip ? (clip.endFrame - clip.startFrame) / fps : 5;
+      const sourceStartTime = clip ? (clip.sourceOffset ?? 0) / fps : 0;
 
-      // Set up MediaRecorder
-      const stream = canvas.captureStream(fps);
+      // Create export video element
+      const exportVideo = document.createElement("video");
+      exportVideo.src = videoSrc || "";
+      exportVideo.muted = true;
+      exportVideo.playsInline = true;
+      exportVideo.crossOrigin = "anonymous";
 
-      const mimeType = exportFormat === "webm" ? "video/webm;codecs=vp9" : "video/webm";
+      // Wait for video to load
+      await new Promise<void>((resolve, reject) => {
+        exportVideo.onloadeddata = () => resolve();
+        exportVideo.onerror = () => reject(new Error("Failed to load video"));
+        if (exportVideo.readyState >= 2) resolve();
+      });
+
+      // Set start position
+      exportVideo.currentTime = sourceStartTime;
+      await new Promise<void>(resolve => {
+        exportVideo.onseeked = () => resolve();
+        setTimeout(resolve, 500); // Fallback
+      });
+
+      // Create canvas for compositing
+      const canvas = document.createElement("canvas");
+      canvas.width = aspectRatio.width;
+      canvas.height = aspectRatio.height;
+      const ctx = canvas.getContext("2d")!;
+
+      // Set up MediaRecorder on canvas stream
+      const stream = canvas.captureStream(30);
+      const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
+        ? "video/webm;codecs=vp9"
+        : "video/webm";
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported(mimeType) ? mimeType : "video/webm",
-        videoBitsPerSecond: 8000000, // 8 Mbps
+        mimeType,
+        videoBitsPerSecond: 5000000,
       });
 
       const chunks: Blob[] = [];
@@ -386,7 +410,8 @@ export function VideoEditor({ className }: VideoEditorProps) {
         if (e.data.size > 0) chunks.push(e.data);
       };
 
-      mediaRecorder.onstop = () => {
+      // Handle export completion
+      const exportComplete = () => {
         const blob = new Blob(chunks, { type: "video/webm" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -401,60 +426,60 @@ export function VideoEditor({ className }: VideoEditorProps) {
         setExportProgress(100);
       };
 
+      mediaRecorder.onstop = exportComplete;
+
       // Start recording
-      mediaRecorder.start();
+      mediaRecorder.start(100); // Collect data every 100ms
 
-      // Track export start time for real-time sync
-      const exportStartTime = performance.now();
-      let currentClipIndex = 0;
-      let clipStartTime = 0;
+      // Start video playback
+      const startTime = performance.now();
+      const endTime = sourceStartTime + clipDuration;
 
-      // Real-time render loop - syncs with actual elapsed time
-      const renderFrame = () => {
-        const elapsed = (performance.now() - exportStartTime) / 1000;
-        const currentFrame = Math.floor(elapsed * fps);
+      // Play the video
+      await exportVideo.play();
 
-        // Check if we're done
-        if (elapsed >= totalDurationSeconds || currentFrame >= totalFrames) {
+      // Render loop - draw video to canvas while playing
+      const renderLoop = () => {
+        const elapsed = (performance.now() - startTime) / 1000;
+        const currentVideoTime = exportVideo.currentTime;
+
+        // Check if done
+        if (currentVideoTime >= endTime || elapsed >= clipDuration + 0.5) {
+          exportVideo.pause();
           mediaRecorder.stop();
-          if (videoElement) videoElement.pause();
-          setExportProgress(100);
           return;
         }
 
-        // Find which clip covers this time
-        const activeClip = videoClips.find(
-          clip => currentFrame >= clip.startFrame && currentFrame < clip.endFrame
-        );
-
-        // Clear canvas
-        ctx.fillStyle = backgroundColor;
+        // Draw video frame
+        ctx.fillStyle = "#000000";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Draw video frame if there's an active clip
-        if (activeClip && videoElement) {
-          // Calculate the source video time for this frame
-          const frameWithinClip = currentFrame - activeClip.startFrame;
-          const sourceFrame = (activeClip.sourceOffset ?? 0) + frameWithinClip;
-          const sourceTime = sourceFrame / fps;
+        if (exportVideo.readyState >= 2) {
+          // Calculate scaling to cover canvas while maintaining aspect ratio
+          const videoAspect = exportVideo.videoWidth / exportVideo.videoHeight;
+          const canvasAspect = canvas.width / canvas.height;
 
-          // Update video position if needed (don't wait, just set it)
-          if (Math.abs(videoElement.currentTime - sourceTime) > 0.1) {
-            videoElement.currentTime = sourceTime;
+          let drawWidth, drawHeight, drawX, drawY;
+          if (videoAspect > canvasAspect) {
+            drawHeight = canvas.height;
+            drawWidth = drawHeight * videoAspect;
+            drawX = (canvas.width - drawWidth) / 2;
+            drawY = 0;
+          } else {
+            drawWidth = canvas.width;
+            drawHeight = drawWidth / videoAspect;
+            drawX = 0;
+            drawY = (canvas.height - drawHeight) / 2;
           }
 
-          // Draw the video frame
-          if (videoElement.readyState >= 2) {
-            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-          }
+          ctx.drawImage(exportVideo, drawX, drawY, drawWidth, drawHeight);
         }
 
         // Draw text overlays
         if (title || caption) {
-          if (activeClip && videoElement) {
-            ctx.fillStyle = `rgba(0, 0, 0, ${overlayOpacity})`;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-          }
+          // Overlay for text readability
+          ctx.fillStyle = `rgba(0, 0, 0, ${overlayOpacity})`;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
 
           ctx.textAlign = "center";
           ctx.fillStyle = "#ffffff";
@@ -466,51 +491,32 @@ export function VideoEditor({ className }: VideoEditorProps) {
           if (overlayPosition === "bottom") yPos = canvas.height - 150;
 
           if (title) {
-            const titleSize = videoElement ? 56 : 72;
-            ctx.font = `bold ${titleSize}px system-ui, -apple-system, sans-serif`;
+            ctx.font = `bold 56px system-ui, -apple-system, sans-serif`;
             ctx.fillText(title, canvas.width / 2, yPos);
           }
 
           if (caption) {
-            const captionSize = videoElement ? 28 : 32;
-            ctx.font = `${captionSize}px system-ui, -apple-system, sans-serif`;
+            ctx.font = `28px system-ui, -apple-system, sans-serif`;
             ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
             ctx.fillText(caption, canvas.width / 2, yPos + 60);
           }
+          ctx.shadowBlur = 0;
         }
 
-        // Draw progress bar
-        const progress = elapsed / totalDurationSeconds;
-        ctx.shadowColor = "transparent";
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
-        ctx.fillRect(40, canvas.height - 44, canvas.width - 80, 4);
-        ctx.fillStyle = accentColor;
-        ctx.fillRect(40, canvas.height - 44, (canvas.width - 80) * progress, 4);
+        // Update progress
+        setExportProgress(Math.round((elapsed / clipDuration) * 100));
 
-        setExportProgress(Math.round(progress * 100));
-
-        // Continue rendering at ~60fps for smooth capture
-        requestAnimationFrame(renderFrame);
+        requestAnimationFrame(renderLoop);
       };
 
-      // Start video playback
-      if (videoElement && videoClips.length > 0) {
-        const firstClip = videoClips[0];
-        const startTime = (firstClip.sourceOffset ?? 0) / fps;
-        videoElement.currentTime = startTime;
-        videoElement.muted = true; // Mute during export to avoid audio issues
-      }
-
-      // Start rendering
-      renderFrame();
+      renderLoop();
 
     } catch (error) {
       console.error("Export failed:", error);
       setIsExporting(false);
-      alert("Export failed. Please try again.");
+      alert(`Export failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
-  }, [aspectRatio, fps, durationInFrames, tracks, title, caption, backgroundColor, accentColor, overlayPosition, overlayOpacity, exportFormat]);
+  }, [aspectRatio, fps, tracks, videoSrc, title, caption, overlayPosition, overlayOpacity]);
 
   // Generate captions from text input
   const handleGenerateCaptions = useCallback(() => {
