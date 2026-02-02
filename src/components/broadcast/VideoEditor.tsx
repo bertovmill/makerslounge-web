@@ -132,46 +132,13 @@ export function VideoEditor({ className }: VideoEditorProps) {
     }
   }, [trimStart, trimEnd]);
 
-  // Update tracks when video is added
+  // Update tracks when video is removed (track creation is in handleFileSelect)
   useEffect(() => {
-    setTracks((currentTracks) => {
-      const hasVideoTrack = currentTracks.some(t => t.type === "video");
-
-      if (videoSrc && !hasVideoTrack) {
-        // Add video track with sourceOffset tracking where in the source video this clip starts
-        return [{
-          id: generateId(),
-          type: "video" as const,
-          name: videoFileName || "Video",
-          clips: [{
-            id: generateId(),
-            type: "video" as const,
-            name: videoFileName || "Video Clip",
-            startFrame: 0,
-            endFrame: durationInFrames,
-            color: "#3b82f6",
-            sourceOffset: Math.round(trimStart * fps), // Track source video position
-          }],
-        }, ...currentTracks.filter(t => t.type !== "video")];
-      } else if (!videoSrc && hasVideoTrack) {
-        // Remove video track
-        return currentTracks.filter(t => t.type !== "video");
-      } else if (videoSrc && hasVideoTrack) {
-        // Only update track name, NOT clip positions (those are managed by edit operations)
-        return currentTracks.map(t => {
-          if (t.type === "video") {
-            return {
-              ...t,
-              name: videoFileName || "Video",
-              // Don't modify clips here - let split/delete manage them
-            };
-          }
-          return t;
-        });
-      }
-      return currentTracks;
-    });
-  }, [videoSrc, videoFileName, durationInFrames]);
+    if (!videoSrc) {
+      // Remove video track when video is removed
+      setTracks(currentTracks => currentTracks.filter(t => t.type !== "video"));
+    }
+  }, [videoSrc]);
 
   // Update tracks when title/caption changes
   useEffect(() => {
@@ -310,6 +277,28 @@ export function VideoEditor({ className }: VideoEditorProps) {
       setDuration(maxDuration);
       setTrimStart(0);
       setTrimEnd(videoDuration);
+
+      // Create video track with correct duration NOW that we know it
+      const videoFrames = Math.round(videoDuration * fps);
+      setTracks(currentTracks => {
+        // Remove any existing video track and add new one with correct duration
+        const nonVideoTracks = currentTracks.filter(t => t.type !== "video");
+        return [{
+          id: generateId(),
+          type: "video" as const,
+          name: file.name || "Video",
+          clips: [{
+            id: generateId(),
+            type: "video" as const,
+            name: file.name || "Video Clip",
+            startFrame: 0,
+            endFrame: videoFrames,
+            color: "#3b82f6",
+            sourceOffset: 0,
+          }],
+        }, ...nonVideoTracks];
+      });
+
       // Check if video has valid dimensions (indicates codec support)
       if (video.videoWidth === 0 || video.videoHeight === 0) {
         setVideoWarning("Video codec not supported by browser. Please convert to MP4 (H.264).");
@@ -319,7 +308,7 @@ export function VideoEditor({ className }: VideoEditorProps) {
       setVideoWarning("Could not load video. Try converting to MP4 (H.264).");
     };
     video.src = url;
-  }, []);
+  }, [fps]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
