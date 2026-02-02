@@ -38,6 +38,8 @@ interface TimelineProps {
   isPlaying?: boolean;
   onPlayPause?: () => void;
   onAddTrack?: (type: LayerType) => void;
+  onSplitClip?: () => void;
+  canSplitClip?: boolean;
 }
 
 // Helper to format time
@@ -256,6 +258,8 @@ export function Timeline({
   isPlaying,
   onPlayPause,
   onAddTrack,
+  onSplitClip,
+  canSplitClip,
 }: TimelineProps) {
   const timelineRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -373,6 +377,24 @@ export function Timeline({
           <div className="text-sm text-gray-700 font-mono tabular-nums bg-gray-100 px-2 py-1 rounded">
             {formatTime(currentFrame, fps)}
           </div>
+
+          {/* Split clip button */}
+          <button
+            onClick={onSplitClip}
+            disabled={!canSplitClip}
+            className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium transition-colors",
+              canSplitClip
+                ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-gray-50 text-gray-300 cursor-not-allowed"
+            )}
+            title={canSplitClip ? "Split clip at playhead (S)" : "Select a clip and position playhead inside it to split"}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            Split
+          </button>
         </div>
 
         <div className="flex items-center gap-3">

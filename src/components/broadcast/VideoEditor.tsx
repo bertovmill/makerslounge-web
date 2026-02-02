@@ -514,6 +514,74 @@ export function VideoEditor({ className }: VideoEditorProps) {
     setShowCaptions(false);
   }, []);
 
+  // Split a clip at the current playhead position
+  const handleSplitClip = useCallback(() => {
+    if (!selectedClip) return;
+
+    // Check if playhead is within the selected clip
+    if (currentFrame <= selectedClip.startFrame || currentFrame >= selectedClip.endFrame) {
+      return; // Playhead must be inside the clip to split
+    }
+
+    // Find the track containing this clip
+    const trackWithClip = tracks.find(t => t.clips.some(c => c.id === selectedClip.id));
+    if (!trackWithClip) return;
+
+    // Create two new clips from the split
+    const firstClip: TimelineClip = {
+      ...selectedClip,
+      id: generateId(),
+      name: `${selectedClip.name} (1)`,
+      endFrame: currentFrame,
+    };
+
+    const secondClip: TimelineClip = {
+      ...selectedClip,
+      id: generateId(),
+      name: `${selectedClip.name} (2)`,
+      startFrame: currentFrame,
+    };
+
+    // Update tracks with the new clips
+    const newTracks = tracks.map(track => {
+      if (track.id !== trackWithClip.id) return track;
+
+      const clipIndex = track.clips.findIndex(c => c.id === selectedClip.id);
+      if (clipIndex === -1) return track;
+
+      const newClips = [...track.clips];
+      newClips.splice(clipIndex, 1, firstClip, secondClip);
+
+      return { ...track, clips: newClips };
+    });
+
+    setTracks(newTracks);
+    setSelectedClip(secondClip); // Select the second clip after split
+  }, [selectedClip, currentFrame, tracks]);
+
+  // Check if split is possible (playhead is within selected clip)
+  const canSplitClip = !!(selectedClip &&
+    currentFrame > selectedClip.startFrame &&
+    currentFrame < selectedClip.endFrame);
+
+  // Keyboard shortcut for split (S key)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (e.key.toLowerCase() === 's' && !e.metaKey && !e.ctrlKey && canSplitClip) {
+        e.preventDefault();
+        handleSplitClip();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [canSplitClip, handleSplitClip]);
+
   // Browser-based transcription using Web Speech API
   const handleTranscribe = useCallback(async () => {
     if (!videoRef.current || !transcriptionSupported) return;
@@ -1582,6 +1650,8 @@ export function VideoEditor({ className }: VideoEditorProps) {
         selectedClipId={selectedClip?.id}
         isPlaying={isPlaying}
         onPlayPause={togglePlayback}
+        onSplitClip={handleSplitClip}
+        canSplitClip={canSplitClip}
         onAddTrack={(type) => {
           const trackColors: Record<string, string> = {
             text: "#8b5cf6",
