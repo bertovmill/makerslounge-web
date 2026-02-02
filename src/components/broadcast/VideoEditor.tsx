@@ -578,7 +578,48 @@ export function VideoEditor({ className }: VideoEditorProps) {
     currentFrame > selectedClip.startFrame &&
     currentFrame < selectedClip.endFrame);
 
-  // Keyboard shortcut for split (S key)
+  // Delete a clip and ripple remaining clips to close the gap
+  const handleDeleteClip = useCallback(() => {
+    if (!selectedClip) return;
+
+    // Find the track containing this clip
+    const trackWithClip = tracks.find(t => t.clips.some(c => c.id === selectedClip.id));
+    if (!trackWithClip) return;
+
+    const clipToDelete = selectedClip;
+    const clipDuration = clipToDelete.endFrame - clipToDelete.startFrame;
+
+    // Update tracks: remove clip and shift subsequent clips
+    const newTracks = tracks.map(track => {
+      if (track.id !== trackWithClip.id) return track;
+
+      // Filter out the deleted clip
+      const remainingClips = track.clips.filter(c => c.id !== clipToDelete.id);
+
+      // Ripple: shift all clips that start after the deleted clip
+      const shiftedClips = remainingClips.map(clip => {
+        if (clip.startFrame >= clipToDelete.endFrame) {
+          // This clip is after the deleted one, shift it left
+          return {
+            ...clip,
+            startFrame: clip.startFrame - clipDuration,
+            endFrame: clip.endFrame - clipDuration,
+          };
+        }
+        return clip;
+      });
+
+      return { ...track, clips: shiftedClips };
+    });
+
+    setTracks(newTracks);
+    setSelectedClip(null); // Clear selection after delete
+  }, [selectedClip, tracks]);
+
+  // Check if delete is possible (a clip is selected)
+  const canDeleteClip = !!selectedClip;
+
+  // Keyboard shortcuts for split (S key) and delete (Delete/Backspace)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger if typing in an input
@@ -586,15 +627,22 @@ export function VideoEditor({ className }: VideoEditorProps) {
         return;
       }
 
+      // Split: S key
       if (e.key.toLowerCase() === 's' && !e.metaKey && !e.ctrlKey && canSplitClip) {
         e.preventDefault();
         handleSplitClip();
+      }
+
+      // Delete: Delete or Backspace key
+      if ((e.key === 'Delete' || e.key === 'Backspace') && canDeleteClip) {
+        e.preventDefault();
+        handleDeleteClip();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [canSplitClip, handleSplitClip]);
+  }, [canSplitClip, handleSplitClip, canDeleteClip, handleDeleteClip]);
 
   // Browser-based transcription using Web Speech API
   const handleTranscribe = useCallback(async () => {
@@ -1666,6 +1714,8 @@ export function VideoEditor({ className }: VideoEditorProps) {
         onPlayPause={togglePlayback}
         onSplitClip={handleSplitClip}
         canSplitClip={canSplitClip}
+        onDeleteClip={handleDeleteClip}
+        canDeleteClip={canDeleteClip}
         onAddTrack={(type) => {
           const trackColors: Record<string, string> = {
             text: "#8b5cf6",
