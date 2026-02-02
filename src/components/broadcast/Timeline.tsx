@@ -265,6 +265,7 @@ export function Timeline({
   const [zoom, setZoom] = useState(1);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [showAddTrackMenu, setShowAddTrackMenu] = useState(false);
+  const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false);
 
   // Pixels per frame based on zoom
   const basePixelsPerFrame = 4;
@@ -341,6 +342,36 @@ export function Timeline({
       container.scrollLeft = playheadPosition - 100;
     }
   }, [isPlaying, playheadPosition, scrollLeft]);
+
+  // Handle playhead dragging
+  const handlePlayheadMouseDown = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDraggingPlayhead(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isDraggingPlayhead) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!timelineRef.current) return;
+      const rect = timelineRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left + scrollLeft - 160; // Account for track header width
+      const frame = Math.round(x / pixelsPerFrame);
+      onSeek(Math.max(0, Math.min(frame, durationInFrames)));
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingPlayhead(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDraggingPlayhead, pixelsPerFrame, scrollLeft, durationInFrames, onSeek]);
 
   return (
     <div className="flex flex-col border-t border-gray-200 bg-white flex-shrink-0" style={{ maxHeight: "280px" }}>
@@ -540,14 +571,30 @@ export function Timeline({
 
           {/* Playhead */}
           <div
-            className="absolute top-0 bottom-0 w-px bg-primary z-30 pointer-events-none"
+            className="absolute top-0 bottom-0 w-px bg-primary z-30"
             style={{ left: playheadPosition + 160 }}
           >
-            {/* Playhead handle */}
-            <div className="absolute -top-1 -left-2 w-4 h-4 bg-primary rounded-sm transform rotate-45" />
-            <div className="absolute -top-1 -left-2 w-4 h-4 flex items-center justify-center">
-              <div className="w-2 h-2 bg-white rounded-full" />
+            {/* Playhead handle - draggable */}
+            <div
+              className={cn(
+                "absolute -top-1 -left-3 w-6 h-6 cursor-ew-resize group",
+                isDraggingPlayhead && "cursor-grabbing"
+              )}
+              onMouseDown={handlePlayheadMouseDown}
+            >
+              {/* Diamond shape */}
+              <div className={cn(
+                "absolute top-1 left-1 w-4 h-4 bg-primary rounded-sm transform rotate-45 transition-transform",
+                "group-hover:scale-110",
+                isDraggingPlayhead && "scale-110"
+              )} />
+              {/* Center dot */}
+              <div className="absolute top-1 left-1 w-4 h-4 flex items-center justify-center">
+                <div className="w-2 h-2 bg-white rounded-full" />
+              </div>
             </div>
+            {/* Line extends below for visibility */}
+            <div className="absolute top-5 bottom-0 left-0 w-px bg-primary pointer-events-none" />
           </div>
         </div>
       </div>
