@@ -8,6 +8,8 @@ import { createAutoCaptions } from "./Captions";
 import type { Caption } from "@remotion/captions";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { fetchFile, toBlobURL } from "@ffmpeg/util";
 
 type TextAnimation = "none" | "fade" | "typewriter" | "word-highlight" | "slide-up" | "scale";
 type ActiveTool = "text" | "music" | "captions" | "brand" | "layout" | "uploads" | null;
@@ -342,10 +344,52 @@ export function VideoEditor({ className }: VideoEditorProps) {
     setOriginalDuration(0);
   }, [videoSrc]);
 
-  // Export video - simple approach: play video and capture via canvas
+  // FFmpeg instance ref
+  const ffmpegRef = useRef<FFmpeg | null>(null);
+  const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
+  const [ffmpegLoading, setFfmpegLoading] = useState(false);
+
+  // Load FFmpeg WASM
+  const loadFFmpeg = useCallback(async () => {
+    if (ffmpegRef.current && ffmpegLoaded) return ffmpegRef.current;
+    if (ffmpegLoading) return null;
+
+    setFfmpegLoading(true);
+    try {
+      const ffmpeg = new FFmpeg();
+
+      // Load FFmpeg with CDN URLs for the WASM files
+      const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm";
+
+      ffmpeg.on("progress", ({ progress }) => {
+        // Progress is 0-1, convert to percentage
+        setExportProgress(Math.round(30 + progress * 60)); // 30-90% range for actual processing
+      });
+
+      ffmpeg.on("log", ({ message }) => {
+        console.log("[FFmpeg]", message);
+      });
+
+      await ffmpeg.load({
+        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
+        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
+      });
+
+      ffmpegRef.current = ffmpeg;
+      setFfmpegLoaded(true);
+      setFfmpegLoading(false);
+      return ffmpeg;
+    } catch (error) {
+      console.error("Failed to load FFmpeg:", error);
+      setFfmpegLoading(false);
+      throw new Error("Failed to load video processing engine. Please try again.");
+    }
+  }, [ffmpegLoaded, ffmpegLoading]);
+
+  // Export video using browser-based FFmpeg (ffmpeg.wasm)
   const handleExport = useCallback(async () => {
-    if (!videoSrc && !title && !caption) {
-      alert("Nothing to export. Add a video or text first.");
+    if (!videoSrc) {
+      alert("No video to export. Please upload a video first.");
       return;
     }
 
@@ -357,166 +401,147 @@ export function VideoEditor({ className }: VideoEditorProps) {
       const videoTrack = tracks.find(t => t.type === "video");
       const videoClips = videoTrack?.clips.slice().sort((a, b) => a.startFrame - b.startFrame) || [];
 
-      // For now, export the first clip only (simple case)
-      // TODO: Support multiple clips with server-side FFmpeg
-      const clip = videoClips[0];
-      if (!clip && !title && !caption) {
-        throw new Error("No content to export");
+      if (videoClips.length === 0) {
+        throw new Error("No clips to export");
       }
 
-      // Calculate duration
-      const clipDuration = clip ? (clip.endFrame - clip.startFrame) / fps : 5;
-      const sourceStartTime = clip ? (clip.sourceOffset ?? 0) / fps : 0;
+      setExportProgress(5);
 
-      // Create export video element
-      const exportVideo = document.createElement("video");
-      exportVideo.src = videoSrc || "";
-      exportVideo.muted = true;
-      exportVideo.playsInline = true;
-      exportVideo.crossOrigin = "anonymous";
+      // Load FFmpeg if not already loaded
+      const ffmpeg = await loadFFmpeg();
+      if (!ffmpeg) {
+        throw new Error("Failed to initialize video processor");
+      }
 
-      // Wait for video to load
-      await new Promise<void>((resolve, reject) => {
-        exportVideo.onloadeddata = () => resolve();
-        exportVideo.onerror = () => reject(new Error("Failed to load video"));
-        if (exportVideo.readyState >= 2) resolve();
-      });
+      setExportProgress(15);
 
-      // Set start position
-      exportVideo.currentTime = sourceStartTime;
-      await new Promise<void>(resolve => {
-        exportVideo.onseeked = () => resolve();
-        setTimeout(resolve, 500); // Fallback
-      });
+      // Fetch the video file
+      const videoResponse = await fetch(videoSrc);
+      const videoData = await videoResponse.arrayBuffer();
 
-      // Create canvas for compositing
-      const canvas = document.createElement("canvas");
-      canvas.width = aspectRatio.width;
-      canvas.height = aspectRatio.height;
-      const ctx = canvas.getContext("2d")!;
+      setExportProgress(25);
 
-      // Set up MediaRecorder on canvas stream
-      const stream = canvas.captureStream(30);
-      const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
-        ? "video/webm;codecs=vp9"
-        : "video/webm";
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType,
-        videoBitsPerSecond: 5000000,
-      });
+      // Write input file to FFmpeg virtual filesystem
+      const inputFileName = "input.mp4";
+      await ffmpeg.writeFile(inputFileName, new Uint8Array(videoData));
 
-      const chunks: Blob[] = [];
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
-      };
+      setExportProgress(30);
 
-      // Handle export completion
-      const exportComplete = () => {
-        const blob = new Blob(chunks, { type: "video/webm" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `export-${Date.now()}.webm`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        setIsExporting(false);
-        setShowExportModal(false);
-        setExportProgress(100);
-      };
+      // Process based on number of clips
+      if (videoClips.length === 1) {
+        // Single clip - simple trim
+        const clip = videoClips[0];
+        const startTime = (clip.sourceOffset ?? 0) / fps;
+        const duration = (clip.endFrame - clip.startFrame) / fps;
 
-      mediaRecorder.onstop = exportComplete;
+        await ffmpeg.exec([
+          "-i", inputFileName,
+          "-ss", startTime.toString(),
+          "-t", duration.toString(),
+          "-c:v", "libx264",
+          "-preset", "fast",
+          "-crf", "23",
+          "-c:a", "aac",
+          "-b:a", "128k",
+          "-movflags", "+faststart",
+          "-y",
+          "output.mp4"
+        ]);
+      } else {
+        // Multiple clips - trim each and concatenate
+        const clipFileNames: string[] = [];
 
-      // Start recording
-      mediaRecorder.start(100); // Collect data every 100ms
+        for (let i = 0; i < videoClips.length; i++) {
+          const clip = videoClips[i];
+          const startTime = (clip.sourceOffset ?? 0) / fps;
+          const duration = (clip.endFrame - clip.startFrame) / fps;
+          const clipFileName = `clip_${i}.mp4`;
 
-      // Start video playback
-      const startTime = performance.now();
-      const endTime = sourceStartTime + clipDuration;
+          await ffmpeg.exec([
+            "-i", inputFileName,
+            "-ss", startTime.toString(),
+            "-t", duration.toString(),
+            "-c:v", "libx264",
+            "-preset", "fast",
+            "-crf", "23",
+            "-c:a", "aac",
+            "-b:a", "128k",
+            "-y",
+            clipFileName
+          ]);
 
-      // Play the video
-      await exportVideo.play();
-
-      // Render loop - draw video to canvas while playing
-      const renderLoop = () => {
-        const elapsed = (performance.now() - startTime) / 1000;
-        const currentVideoTime = exportVideo.currentTime;
-
-        // Check if done
-        if (currentVideoTime >= endTime || elapsed >= clipDuration + 0.5) {
-          exportVideo.pause();
-          mediaRecorder.stop();
-          return;
+          clipFileNames.push(clipFileName);
+          setExportProgress(30 + Math.round((i + 1) / videoClips.length * 40)); // 30-70%
         }
 
-        // Draw video frame
-        ctx.fillStyle = "#000000";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Create concat file
+        const concatContent = clipFileNames.map(f => `file '${f}'`).join("\n");
+        await ffmpeg.writeFile("concat.txt", concatContent);
 
-        if (exportVideo.readyState >= 2) {
-          // Calculate scaling to cover canvas while maintaining aspect ratio
-          const videoAspect = exportVideo.videoWidth / exportVideo.videoHeight;
-          const canvasAspect = canvas.width / canvas.height;
+        setExportProgress(75);
 
-          let drawWidth, drawHeight, drawX, drawY;
-          if (videoAspect > canvasAspect) {
-            drawHeight = canvas.height;
-            drawWidth = drawHeight * videoAspect;
-            drawX = (canvas.width - drawWidth) / 2;
-            drawY = 0;
-          } else {
-            drawWidth = canvas.width;
-            drawHeight = drawWidth / videoAspect;
-            drawX = 0;
-            drawY = (canvas.height - drawHeight) / 2;
+        // Concatenate clips
+        await ffmpeg.exec([
+          "-f", "concat",
+          "-safe", "0",
+          "-i", "concat.txt",
+          "-c", "copy",
+          "-movflags", "+faststart",
+          "-y",
+          "output.mp4"
+        ]);
+
+        // Clean up clip files
+        for (const clipFile of clipFileNames) {
+          try {
+            await ffmpeg.deleteFile(clipFile);
+          } catch {
+            // Ignore cleanup errors
           }
-
-          ctx.drawImage(exportVideo, drawX, drawY, drawWidth, drawHeight);
         }
-
-        // Draw text overlays
-        if (title || caption) {
-          // Overlay for text readability
-          ctx.fillStyle = `rgba(0, 0, 0, ${overlayOpacity})`;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-          ctx.textAlign = "center";
-          ctx.fillStyle = "#ffffff";
-          ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-          ctx.shadowBlur = 10;
-
-          let yPos = canvas.height / 2;
-          if (overlayPosition === "top") yPos = 120;
-          if (overlayPosition === "bottom") yPos = canvas.height - 150;
-
-          if (title) {
-            ctx.font = `bold 56px system-ui, -apple-system, sans-serif`;
-            ctx.fillText(title, canvas.width / 2, yPos);
-          }
-
-          if (caption) {
-            ctx.font = `28px system-ui, -apple-system, sans-serif`;
-            ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-            ctx.fillText(caption, canvas.width / 2, yPos + 60);
-          }
-          ctx.shadowBlur = 0;
+        try {
+          await ffmpeg.deleteFile("concat.txt");
+        } catch {
+          // Ignore
         }
+      }
 
-        // Update progress
-        setExportProgress(Math.round((elapsed / clipDuration) * 100));
+      setExportProgress(90);
 
-        requestAnimationFrame(renderLoop);
-      };
+      // Read the output file
+      const outputData = await ffmpeg.readFile("output.mp4");
 
-      renderLoop();
+      // Clean up
+      try {
+        await ffmpeg.deleteFile(inputFileName);
+        await ffmpeg.deleteFile("output.mp4");
+      } catch {
+        // Ignore cleanup errors
+      }
+
+      setExportProgress(95);
+
+      // Create download - handle FFmpeg FileData type
+      const outputBlob = new Blob([outputData as unknown as BlobPart], { type: "video/mp4" });
+      const url = URL.createObjectURL(outputBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `export-${Date.now()}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setExportProgress(100);
+      setIsExporting(false);
+      setShowExportModal(false);
 
     } catch (error) {
       console.error("Export failed:", error);
       setIsExporting(false);
       alert(`Export failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
-  }, [aspectRatio, fps, tracks, videoSrc, title, caption, overlayPosition, overlayOpacity]);
+  }, [fps, tracks, videoSrc, loadFFmpeg]);
 
   // Generate captions from text input
   const handleGenerateCaptions = useCallback(() => {

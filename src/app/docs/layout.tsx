@@ -32,6 +32,7 @@ const docsNavigation = [
       { title: "Setting Up Your Profile", href: "/docs/guides/profile-setup" },
       { title: "Using the Matcher", href: "/docs/guides/matcher" },
       { title: "Finding Collaborators", href: "/docs/guides/collaborators" },
+      { title: "Agent Security", href: "/docs/guides/agent-security" },
     ],
   },
   {
