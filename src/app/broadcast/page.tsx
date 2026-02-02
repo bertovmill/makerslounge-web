@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
 
 type Status = "idea" | "in_progress" | "published";
 
@@ -10,9 +13,9 @@ interface BroadcastIdea {
   id: string;
   title: string;
   notes: string;
-  mediaUrls: string[];
+  media_urls: string[];
   status: Status;
-  createdAt: Date;
+  created_at: string;
 }
 
 const COLUMNS: { id: Status; title: string; color: string }[] = [
@@ -22,28 +25,114 @@ const COLUMNS: { id: Status; title: string; color: string }[] = [
 ];
 
 export default function BroadcastPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [ideas, setIdeas] = useState<BroadcastIdea[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newNotes, setNewNotes] = useState("");
   const [newMedia, setNewMedia] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<Status | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleAddIdea = () => {
-    if (!newTitle.trim()) return;
+  // Check auth and load ideas
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
 
-    const idea: BroadcastIdea = {
-      id: crypto.randomUUID(),
-      title: newTitle,
-      notes: newNotes,
-      mediaUrls: newMedia,
-      status: "idea",
-      createdAt: new Date(),
+      if (!user) {
+        router.push("/auth");
+        return;
+      }
+
+      await loadIdeas();
+      setLoading(false);
     };
 
-    setIdeas([...ideas, idea]);
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (!session?.user) {
+        router.push("/auth");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router]);
+
+  const loadIdeas = async () => {
+    const { data, error } = await supabase
+      .from("broadcast_ideas")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error loading ideas:", error);
+      return;
+    }
+
+    setIdeas(data || []);
+  };
+
+  const handleAddIdea = async () => {
+    if (!newTitle.trim() || !user) return;
+
+    setSaving(true);
+
+    // Upload media files to Supabase Storage
+    const uploadedUrls: string[] = [];
+    for (const mediaData of newMedia) {
+      try {
+        // Convert base64 to blob
+        const response = await fetch(mediaData);
+        const blob = await response.blob();
+        const ext = blob.type.split("/")[1] || "png";
+        const fileName = `${user.id}/${crypto.randomUUID()}.${ext}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("broadcast-media")
+          .upload(fileName, blob);
+
+        if (uploadError) {
+          console.error("Upload error:", uploadError);
+          continue;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("broadcast-media")
+          .getPublicUrl(fileName);
+
+        uploadedUrls.push(publicUrl);
+      } catch (err) {
+        console.error("Error uploading media:", err);
+      }
+    }
+
+    const { data, error } = await supabase
+      .from("broadcast_ideas")
+      .insert({
+        user_id: user.id,
+        title: newTitle,
+        notes: newNotes,
+        media_urls: uploadedUrls,
+        status: "idea",
+      })
+      .select()
+      .single();
+
+    setSaving(false);
+
+    if (error) {
+      console.error("Error creating idea:", error);
+      return;
+    }
+
+    setIdeas([data, ...ideas]);
     setNewTitle("");
     setNewNotes("");
     setNewMedia([]);
@@ -79,27 +168,61 @@ export default function BroadcastPage() {
     setDragOverColumn(null);
   };
 
-  const handleDrop = (e: React.DragEvent, newStatus: Status) => {
+  const handleDrop = async (e: React.DragEvent, newStatus: Status) => {
     e.preventDefault();
     setDragOverColumn(null);
 
     if (!draggedId) return;
 
+    // Optimistic update
     setIdeas((prev) =>
       prev.map((idea) =>
         idea.id === draggedId ? { ...idea, status: newStatus } : idea
       )
     );
+
+    // Update in database
+    const { error } = await supabase
+      .from("broadcast_ideas")
+      .update({ status: newStatus })
+      .eq("id", draggedId);
+
+    if (error) {
+      console.error("Error updating status:", error);
+      // Revert on error
+      await loadIdeas();
+    }
+
     setDraggedId(null);
   };
 
-  const handleDeleteIdea = (id: string) => {
+  const handleDeleteIdea = async (id: string) => {
+    // Optimistic delete
     setIdeas((prev) => prev.filter((idea) => idea.id !== id));
+
+    const { error } = await supabase
+      .from("broadcast_ideas")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error deleting idea:", error);
+      // Revert on error
+      await loadIdeas();
+    }
   };
 
   const removeMedia = (index: number) => {
     setNewMedia((prev) => prev.filter((_, i) => i !== index));
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-6">
@@ -171,24 +294,24 @@ export default function BroadcastPage() {
                         </p>
                       )}
 
-                      {idea.mediaUrls.length > 0 && (
+                      {idea.media_urls && idea.media_urls.length > 0 && (
                         <div className="mt-3 flex gap-2 overflow-x-auto">
-                          {idea.mediaUrls.slice(0, 3).map((url, i) => (
+                          {idea.media_urls.slice(0, 3).map((url, i) => (
                             <div
                               key={i}
                               className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0 bg-muted"
                             >
-                              {url.startsWith("data:video") ? (
+                              {url.includes("video") ? (
                                 <video src={url} className="w-full h-full object-cover" />
                               ) : (
                                 <img src={url} alt="" className="w-full h-full object-cover" />
                               )}
                             </div>
                           ))}
-                          {idea.mediaUrls.length > 3 && (
+                          {idea.media_urls.length > 3 && (
                             <div className="w-16 h-16 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
                               <span className="text-xs text-muted-foreground">
-                                +{idea.mediaUrls.length - 3}
+                                +{idea.media_urls.length - 3}
                               </span>
                             </div>
                           )}
@@ -196,7 +319,7 @@ export default function BroadcastPage() {
                       )}
 
                       <div className="mt-3 text-xs text-muted-foreground">
-                        {idea.createdAt.toLocaleDateString()}
+                        {new Date(idea.created_at).toLocaleDateString()}
                       </div>
                     </div>
                   ))}
@@ -322,8 +445,8 @@ export default function BroadcastPage() {
               <Button variant="outline" onClick={() => setShowModal(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleAddIdea} disabled={!newTitle.trim()}>
-                Create Idea
+              <Button onClick={handleAddIdea} disabled={!newTitle.trim() || saving}>
+                {saving ? "Saving..." : "Create Idea"}
               </Button>
             </div>
           </div>
