@@ -354,6 +354,7 @@ export function VideoEditor({ className }: VideoEditorProps) {
   }, [videoSrc]);
 
   // Export video function - renders the edited timeline with clips
+  // Uses real-time playback approach for correct timing
   const handleExport = useCallback(async () => {
     if (!previewContainerRef.current) return;
 
@@ -380,11 +381,10 @@ export function VideoEditor({ className }: VideoEditorProps) {
         ? Math.max(...videoClips.map(c => c.endFrame))
         : durationInFrames;
 
+      const totalDurationSeconds = totalFrames / fps;
+
       // Set up MediaRecorder
       const stream = canvas.captureStream(fps);
-
-      // Note: Audio sync with edited clips is complex, skipping for now
-      // TODO: Implement proper audio stitching for edited clips
 
       const mimeType = exportFormat === "webm" ? "video/webm;codecs=vp9" : "video/webm";
       const mediaRecorder = new MediaRecorder(stream, {
@@ -415,19 +415,27 @@ export function VideoEditor({ className }: VideoEditorProps) {
       // Start recording
       mediaRecorder.start();
 
-      // Render frames using timeline clips
-      let frameCount = 0;
+      // Track export start time for real-time sync
+      const exportStartTime = performance.now();
+      let currentClipIndex = 0;
+      let clipStartTime = 0;
 
-      const renderFrame = async () => {
-        if (frameCount >= totalFrames) {
+      // Real-time render loop - syncs with actual elapsed time
+      const renderFrame = () => {
+        const elapsed = (performance.now() - exportStartTime) / 1000;
+        const currentFrame = Math.floor(elapsed * fps);
+
+        // Check if we're done
+        if (elapsed >= totalDurationSeconds || currentFrame >= totalFrames) {
           mediaRecorder.stop();
           if (videoElement) videoElement.pause();
+          setExportProgress(100);
           return;
         }
 
-        // Find which clip covers this frame
+        // Find which clip covers this time
         const activeClip = videoClips.find(
-          clip => frameCount >= clip.startFrame && frameCount < clip.endFrame
+          clip => currentFrame >= clip.startFrame && currentFrame < clip.endFrame
         );
 
         // Clear canvas
@@ -437,23 +445,13 @@ export function VideoEditor({ className }: VideoEditorProps) {
         // Draw video frame if there's an active clip
         if (activeClip && videoElement) {
           // Calculate the source video time for this frame
-          const frameWithinClip = frameCount - activeClip.startFrame;
+          const frameWithinClip = currentFrame - activeClip.startFrame;
           const sourceFrame = (activeClip.sourceOffset ?? 0) + frameWithinClip;
           const sourceTime = sourceFrame / fps;
 
-          // Seek to the correct position in source video
-          if (Math.abs(videoElement.currentTime - sourceTime) > 0.05) {
+          // Update video position if needed (don't wait, just set it)
+          if (Math.abs(videoElement.currentTime - sourceTime) > 0.1) {
             videoElement.currentTime = sourceTime;
-            // Wait for seek to complete
-            await new Promise<void>(resolve => {
-              const onSeeked = () => {
-                videoElement.removeEventListener('seeked', onSeeked);
-                resolve();
-              };
-              videoElement.addEventListener('seeked', onSeeked);
-              // Timeout fallback
-              setTimeout(resolve, 100);
-            });
           }
 
           // Draw the video frame
@@ -464,7 +462,6 @@ export function VideoEditor({ className }: VideoEditorProps) {
 
         // Draw text overlays
         if (title || caption) {
-          // Dark overlay for text readability (if video)
           if (activeClip && videoElement) {
             ctx.fillStyle = `rgba(0, 0, 0, ${overlayOpacity})`;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -475,19 +472,16 @@ export function VideoEditor({ className }: VideoEditorProps) {
           ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
           ctx.shadowBlur = 10;
 
-          // Calculate position
           let yPos = canvas.height / 2;
           if (overlayPosition === "top") yPos = 120;
           if (overlayPosition === "bottom") yPos = canvas.height - 150;
 
-          // Draw title
           if (title) {
             const titleSize = videoElement ? 56 : 72;
             ctx.font = `bold ${titleSize}px system-ui, -apple-system, sans-serif`;
             ctx.fillText(title, canvas.width / 2, yPos);
           }
 
-          // Draw caption
           if (caption) {
             const captionSize = videoElement ? 28 : 32;
             ctx.font = `${captionSize}px system-ui, -apple-system, sans-serif`;
@@ -497,7 +491,7 @@ export function VideoEditor({ className }: VideoEditorProps) {
         }
 
         // Draw progress bar
-        const progress = frameCount / totalFrames;
+        const progress = elapsed / totalDurationSeconds;
         ctx.shadowColor = "transparent";
         ctx.shadowBlur = 0;
         ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
@@ -505,17 +499,18 @@ export function VideoEditor({ className }: VideoEditorProps) {
         ctx.fillStyle = accentColor;
         ctx.fillRect(40, canvas.height - 44, (canvas.width - 80) * progress, 4);
 
-        frameCount++;
-        setExportProgress(Math.round((frameCount / totalFrames) * 100));
+        setExportProgress(Math.round(progress * 100));
 
-        // Render next frame immediately (no delay) for faster export
-        // The captureStream will handle frame rate
-        requestAnimationFrame(() => renderFrame());
+        // Continue rendering at ~60fps for smooth capture
+        requestAnimationFrame(renderFrame);
       };
 
-      // Pause video during export (we'll seek manually)
-      if (videoElement) {
-        videoElement.pause();
+      // Start video playback
+      if (videoElement && videoClips.length > 0) {
+        const firstClip = videoClips[0];
+        const startTime = (firstClip.sourceOffset ?? 0) / fps;
+        videoElement.currentTime = startTime;
+        videoElement.muted = true; // Mute during export to avoid audio issues
       }
 
       // Start rendering
@@ -526,7 +521,7 @@ export function VideoEditor({ className }: VideoEditorProps) {
       setIsExporting(false);
       alert("Export failed. Please try again.");
     }
-  }, [aspectRatio, fps, durationInFrames, tracks, videoSrc, title, caption, backgroundColor, accentColor, overlayPosition, overlayOpacity, exportFormat]);
+  }, [aspectRatio, fps, durationInFrames, tracks, title, caption, backgroundColor, accentColor, overlayPosition, overlayOpacity, exportFormat]);
 
   // Generate captions from text input
   const handleGenerateCaptions = useCallback(() => {
