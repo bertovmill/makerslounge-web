@@ -138,7 +138,7 @@ export function VideoEditor({ className }: VideoEditorProps) {
       const hasVideoTrack = currentTracks.some(t => t.type === "video");
 
       if (videoSrc && !hasVideoTrack) {
-        // Add video track
+        // Add video track with sourceOffset tracking where in the source video this clip starts
         return [{
           id: generateId(),
           type: "video" as const,
@@ -150,6 +150,7 @@ export function VideoEditor({ className }: VideoEditorProps) {
             startFrame: 0,
             endFrame: durationInFrames,
             color: "#3b82f6",
+            sourceOffset: Math.round(trimStart * fps), // Track source video position
           }],
         }, ...currentTracks.filter(t => t.type !== "video")];
       } else if (!videoSrc && hasVideoTrack) {
@@ -356,7 +357,7 @@ export function VideoEditor({ className }: VideoEditorProps) {
     setOriginalDuration(0);
   }, [videoSrc]);
 
-  // Export video function
+  // Export video function - renders the edited timeline with clips
   const handleExport = useCallback(async () => {
     if (!previewContainerRef.current) return;
 
@@ -374,26 +375,22 @@ export function VideoEditor({ className }: VideoEditorProps) {
       // Get the video element if present
       const videoElement = videoRef.current;
 
+      // Get video clips from tracks (sorted by startFrame)
+      const videoTrack = tracks.find(t => t.type === "video");
+      const videoClips = videoTrack?.clips.slice().sort((a, b) => a.startFrame - b.startFrame) || [];
+
+      // Calculate total duration from timeline clips
+      const totalFrames = videoClips.length > 0
+        ? Math.max(...videoClips.map(c => c.endFrame))
+        : durationInFrames;
+
       // Set up MediaRecorder
       const stream = canvas.captureStream(fps);
 
-      // Add audio track if video has audio
-      if (videoElement && !muted) {
-        try {
-          const audioCtx = new AudioContext();
-          const source = audioCtx.createMediaElementSource(videoElement);
-          const destination = audioCtx.createMediaStreamDestination();
-          source.connect(destination);
-          source.connect(audioCtx.destination); // Keep audio playing
-          destination.stream.getAudioTracks().forEach(track => {
-            stream.addTrack(track);
-          });
-        } catch {
-          console.log("Could not capture audio, exporting video only");
-        }
-      }
+      // Note: Audio sync with edited clips is complex, skipping for now
+      // TODO: Implement proper audio stitching for edited clips
 
-      const mimeType = exportFormat === "webm" ? "video/webm;codecs=vp9" : "video/webm"; // Browser support
+      const mimeType = exportFormat === "webm" ? "video/webm;codecs=vp9" : "video/webm";
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported(mimeType) ? mimeType : "video/webm",
         videoBitsPerSecond: 8000000, // 8 Mbps
@@ -422,43 +419,57 @@ export function VideoEditor({ className }: VideoEditorProps) {
       // Start recording
       mediaRecorder.start();
 
-      // Reset video to start if present
-      if (videoElement) {
-        videoElement.currentTime = 0;
-        videoElement.play();
-      }
-
-      // Also reset Remotion player
-      if (playerRef) {
-        playerRef.seekTo(0);
-        playerRef.play();
-      }
-
-      // Render frames
-      const totalFrames = durationInFrames;
+      // Render frames using timeline clips
       let frameCount = 0;
 
-      const renderFrame = () => {
+      const renderFrame = async () => {
         if (frameCount >= totalFrames) {
           mediaRecorder.stop();
           if (videoElement) videoElement.pause();
-          if (playerRef) playerRef.pause();
           return;
         }
+
+        // Find which clip covers this frame
+        const activeClip = videoClips.find(
+          clip => frameCount >= clip.startFrame && frameCount < clip.endFrame
+        );
 
         // Clear canvas
         ctx.fillStyle = backgroundColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Draw video frame if present
-        if (videoElement && videoElement.readyState >= 2) {
-          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        // Draw video frame if there's an active clip
+        if (activeClip && videoElement) {
+          // Calculate the source video time for this frame
+          const frameWithinClip = frameCount - activeClip.startFrame;
+          const sourceFrame = (activeClip.sourceOffset ?? 0) + frameWithinClip;
+          const sourceTime = sourceFrame / fps;
+
+          // Seek to the correct position in source video
+          if (Math.abs(videoElement.currentTime - sourceTime) > 0.05) {
+            videoElement.currentTime = sourceTime;
+            // Wait for seek to complete
+            await new Promise<void>(resolve => {
+              const onSeeked = () => {
+                videoElement.removeEventListener('seeked', onSeeked);
+                resolve();
+              };
+              videoElement.addEventListener('seeked', onSeeked);
+              // Timeout fallback
+              setTimeout(resolve, 100);
+            });
+          }
+
+          // Draw the video frame
+          if (videoElement.readyState >= 2) {
+            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+          }
         }
 
         // Draw text overlays
         if (title || caption) {
           // Dark overlay for text readability (if video)
-          if (videoElement) {
+          if (activeClip && videoElement) {
             ctx.fillStyle = `rgba(0, 0, 0, ${overlayOpacity})`;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
           }
@@ -491,6 +502,8 @@ export function VideoEditor({ className }: VideoEditorProps) {
 
         // Draw progress bar
         const progress = frameCount / totalFrames;
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
         ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
         ctx.fillRect(40, canvas.height - 44, canvas.width - 80, 4);
         ctx.fillStyle = accentColor;
@@ -499,9 +512,14 @@ export function VideoEditor({ className }: VideoEditorProps) {
         frameCount++;
         setExportProgress(Math.round((frameCount / totalFrames) * 100));
 
-        // Schedule next frame
-        requestAnimationFrame(renderFrame);
+        // Schedule next frame (use setTimeout for more reliable timing)
+        setTimeout(() => renderFrame(), 1000 / fps);
       };
+
+      // Pause video during export (we'll seek manually)
+      if (videoElement) {
+        videoElement.pause();
+      }
 
       // Start rendering
       renderFrame();
@@ -511,7 +529,7 @@ export function VideoEditor({ className }: VideoEditorProps) {
       setIsExporting(false);
       alert("Export failed. Please try again.");
     }
-  }, [aspectRatio, fps, durationInFrames, videoSrc, title, caption, backgroundColor, accentColor, overlayPosition, overlayOpacity, muted, playerRef, exportFormat]);
+  }, [aspectRatio, fps, durationInFrames, tracks, videoSrc, title, caption, backgroundColor, accentColor, overlayPosition, overlayOpacity, exportFormat]);
 
   // Generate captions from text input
   const handleGenerateCaptions = useCallback(() => {
@@ -541,12 +559,16 @@ export function VideoEditor({ className }: VideoEditorProps) {
     const trackWithClip = tracks.find(t => t.clips.some(c => c.id === selectedClip.id));
     if (!trackWithClip) return;
 
+    // Calculate how far into the clip the split occurs
+    const splitOffset = currentFrame - selectedClip.startFrame;
+
     // Create two new clips from the split
     const firstClip: TimelineClip = {
       ...selectedClip,
       id: generateId(),
       name: `${selectedClip.name} (1)`,
       endFrame: currentFrame,
+      // First clip keeps the same sourceOffset
     };
 
     const secondClip: TimelineClip = {
@@ -554,6 +576,8 @@ export function VideoEditor({ className }: VideoEditorProps) {
       id: generateId(),
       name: `${selectedClip.name} (2)`,
       startFrame: currentFrame,
+      // Second clip's sourceOffset is original offset + split position
+      sourceOffset: (selectedClip.sourceOffset ?? 0) + splitOffset,
     };
 
     // Update tracks with the new clips
@@ -1824,12 +1848,26 @@ export function VideoEditor({ className }: VideoEditorProps) {
 
                 <div>
                   <label className="text-sm font-medium text-gray-700 block mb-1.5">Duration</label>
-                  <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {duration} seconds ({fps} fps)
-                  </div>
+                  {(() => {
+                    // Calculate edited duration from timeline clips
+                    const videoTrack = tracks.find(t => t.type === "video");
+                    const videoClips = videoTrack?.clips || [];
+                    const editedFrames = videoClips.length > 0
+                      ? Math.max(...videoClips.map(c => c.endFrame))
+                      : durationInFrames;
+                    const editedDuration = editedFrames / fps;
+                    return (
+                      <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {editedDuration.toFixed(1)} seconds ({fps} fps)
+                        {videoClips.length > 1 && (
+                          <span className="text-xs text-primary">• {videoClips.length} clips</span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 

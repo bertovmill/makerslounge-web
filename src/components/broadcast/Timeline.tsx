@@ -14,6 +14,8 @@ export interface TimelineClip {
   endFrame: number;
   color: string;
   data?: Record<string, unknown>;
+  // For video clips: the frame offset in the source video where this clip starts
+  sourceOffset?: number;
 }
 
 export interface TimelineTrack {
