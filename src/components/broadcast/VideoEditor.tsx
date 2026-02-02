@@ -157,17 +157,13 @@ export function VideoEditor({ className }: VideoEditorProps) {
         // Remove video track
         return currentTracks.filter(t => t.type !== "video");
       } else if (videoSrc && hasVideoTrack) {
-        // Update existing video track duration
+        // Only update track name, NOT clip positions (those are managed by edit operations)
         return currentTracks.map(t => {
           if (t.type === "video") {
             return {
               ...t,
               name: videoFileName || "Video",
-              clips: t.clips.map(c => ({
-                ...c,
-                name: videoFileName || "Video Clip",
-                endFrame: durationInFrames,
-              })),
+              // Don't modify clips here - let split/delete manage them
             };
           }
           return t;
@@ -512,8 +508,9 @@ export function VideoEditor({ className }: VideoEditorProps) {
         frameCount++;
         setExportProgress(Math.round((frameCount / totalFrames) * 100));
 
-        // Schedule next frame (use setTimeout for more reliable timing)
-        setTimeout(() => renderFrame(), 1000 / fps);
+        // Render next frame immediately (no delay) for faster export
+        // The captureStream will handle frame rate
+        requestAnimationFrame(() => renderFrame());
       };
 
       // Pause video during export (we'll seek manually)
