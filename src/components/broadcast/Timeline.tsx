@@ -373,6 +373,32 @@ export function Timeline({
     };
   }, [isDraggingPlayhead, pixelsPerFrame, scrollLeft, durationInFrames, onSeek]);
 
+  // Handle pinch-to-zoom on trackpad
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    // ctrlKey is true for pinch gestures on Mac trackpad
+    if (e.ctrlKey) {
+      e.preventDefault();
+      // deltaY is negative when pinching out (zoom in), positive when pinching in (zoom out)
+      const zoomDelta = -e.deltaY * 0.01;
+      setZoom(prevZoom => Math.max(0.25, Math.min(4, prevZoom + zoomDelta)));
+    }
+  }, []);
+
+  // Also need to prevent default on the native wheel event to stop page zoom
+  useEffect(() => {
+    const timeline = timelineRef.current;
+    if (!timeline) return;
+
+    const preventZoom = (e: WheelEvent) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+      }
+    };
+
+    timeline.addEventListener('wheel', preventZoom, { passive: false });
+    return () => timeline.removeEventListener('wheel', preventZoom);
+  }, []);
+
   return (
     <div className="flex flex-col border-t border-gray-200 bg-white flex-shrink-0" style={{ maxHeight: "280px" }}>
       {/* Timeline Controls */}
@@ -473,6 +499,7 @@ export function Timeline({
         ref={timelineRef}
         className="flex-1 overflow-x-auto overflow-y-auto"
         onScroll={handleScroll}
+        onWheel={handleWheel}
         style={{ minHeight: "120px" }}
       >
         <div className="relative" style={{ minWidth: timelineWidth + 160, width: "100%" }}>
