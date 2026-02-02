@@ -7,9 +7,10 @@ import {
   interpolate,
   spring,
   Sequence,
-  Img,
 } from "remotion";
 import { Video } from "@remotion/media";
+import type { Caption } from "@remotion/captions";
+import { CaptionsOverlay, CaptionStyle } from "./Captions";
 
 // Text animation types
 type TextAnimation = "none" | "fade" | "typewriter" | "word-highlight" | "slide-up" | "scale";
@@ -184,6 +185,10 @@ export interface VideoCompositionProps {
   trimEnd?: number;
   playbackRate?: number;
   muted?: boolean;
+  // Captions support
+  captions?: Caption[];
+  captionStyle?: Partial<CaptionStyle>;
+  showCaptions?: boolean;
 }
 
 export const VideoComposition: React.FC<VideoCompositionProps> = ({
@@ -202,6 +207,9 @@ export const VideoComposition: React.FC<VideoCompositionProps> = ({
   trimEnd,
   playbackRate = 1,
   muted = false,
+  captions = [],
+  captionStyle,
+  showCaptions = false,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -308,6 +316,17 @@ export const VideoComposition: React.FC<VideoCompositionProps> = ({
             </Sequence>
           )}
         </div>
+      )}
+
+      {/* Captions Overlay */}
+      {showCaptions && captions.length > 0 && (
+        <CaptionsOverlay
+          captions={captions}
+          style={{
+            highlightColor: accentColor,
+            ...captionStyle,
+          }}
+        />
       )}
 
       {/* Progress bar */}

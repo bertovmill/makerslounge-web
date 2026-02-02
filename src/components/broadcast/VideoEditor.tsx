@@ -4,11 +4,14 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { Player, PlayerRef } from "@remotion/player";
 import { VideoComposition } from "./VideoComposition";
 import { Timeline, TimelineTrack, TimelineClip } from "./Timeline";
+import { createAutoCaptions } from "./Captions";
+import type { Caption } from "@remotion/captions";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 type TextAnimation = "none" | "fade" | "typewriter" | "word-highlight" | "slide-up" | "scale";
 type ActiveTool = "text" | "music" | "captions" | "brand" | "layout" | "uploads" | null;
+type CaptionPosition = "top" | "center" | "bottom";
 
 // Generate unique IDs
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -51,6 +54,21 @@ export function VideoEditor({ className }: VideoEditorProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [exportFormat, setExportFormat] = useState<"webm" | "mp4">("webm");
+
+  // Captions State
+  const [captions, setCaptions] = useState<Caption[]>([]);
+  const [showCaptions, setShowCaptions] = useState(false);
+  const [captionPosition, setCaptionPosition] = useState<CaptionPosition>("bottom");
+  const [captionText, setCaptionText] = useState("");
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [transcriptionSupported, setTranscriptionSupported] = useState(false);
+
+  // Check for Web Speech API support
+  useEffect(() => {
+    setTranscriptionSupported(
+      typeof window !== "undefined" && "webkitSpeechRecognition" in window
+    );
+  }, []);
 
   // Subscribe to player events
   useEffect(() => {
@@ -459,6 +477,93 @@ export function VideoEditor({ className }: VideoEditorProps) {
     }
   }, [aspectRatio, fps, durationInFrames, videoSrc, title, caption, backgroundColor, accentColor, overlayPosition, overlayOpacity, muted, playerRef, exportFormat]);
 
+  // Generate captions from text input
+  const handleGenerateCaptions = useCallback(() => {
+    if (!captionText.trim()) return;
+    const newCaptions = createAutoCaptions(captionText, duration * 1000, 4);
+    setCaptions(newCaptions);
+    setShowCaptions(true);
+  }, [captionText, duration]);
+
+  // Clear captions
+  const handleClearCaptions = useCallback(() => {
+    setCaptions([]);
+    setCaptionText("");
+    setShowCaptions(false);
+  }, []);
+
+  // Browser-based transcription using Web Speech API
+  const handleTranscribe = useCallback(async () => {
+    if (!videoRef.current || !transcriptionSupported) return;
+
+    setIsTranscribing(true);
+    const video = videoRef.current;
+
+    try {
+      // Use Web Speech API for transcription
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      if (!SpeechRecognition) {
+        throw new Error("Speech recognition not supported");
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+
+      const transcriptParts: { text: string; timestamp: number }[] = [];
+      let currentTranscript = "";
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onresult = (event: any) => {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i];
+          if (result.isFinal) {
+            transcriptParts.push({
+              text: result[0].transcript,
+              timestamp: video.currentTime * 1000,
+            });
+            currentTranscript += result[0].transcript + " ";
+            setCaptionText(currentTranscript.trim());
+          }
+        }
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        setIsTranscribing(false);
+      };
+
+      recognition.onend = () => {
+        setIsTranscribing(false);
+        // Generate captions from transcription
+        if (currentTranscript.trim()) {
+          const newCaptions = createAutoCaptions(currentTranscript.trim(), duration * 1000, 4);
+          setCaptions(newCaptions);
+          setShowCaptions(true);
+        }
+      };
+
+      // Start video playback and recognition
+      video.currentTime = 0;
+      video.muted = false;
+      await video.play();
+      recognition.start();
+
+      // Stop after video ends or duration
+      setTimeout(() => {
+        recognition.stop();
+        video.pause();
+      }, duration * 1000 + 1000);
+
+    } catch (error) {
+      console.error("Transcription failed:", error);
+      setIsTranscribing(false);
+    }
+  }, [duration, transcriptionSupported]);
+
   const accentColors = [
     { value: "#3b82f6", label: "Blue" },
     { value: "#8b5cf6", label: "Purple" },
@@ -707,6 +812,9 @@ export function VideoEditor({ className }: VideoEditorProps) {
                     volume,
                     playbackRate,
                     muted,
+                    captions,
+                    showCaptions,
+                    captionStyle: { position: captionPosition },
                   }}
                   durationInFrames={durationInFrames}
                   fps={fps}
@@ -971,11 +1079,138 @@ export function VideoEditor({ className }: VideoEditorProps) {
               </div>
             )}
 
-            {(activeTool === "music" || activeTool === "captions" || activeTool === "brand") && (
+            {activeTool === "captions" && (
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-900">Captions</h3>
+
+                {/* Toggle Captions */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Show Captions</span>
+                  <button
+                    onClick={() => setShowCaptions(!showCaptions)}
+                    className={cn(
+                      "relative w-10 h-6 rounded-full transition-colors",
+                      showCaptions ? "bg-primary" : "bg-gray-200"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "absolute top-1 w-4 h-4 rounded-full bg-white transition-transform shadow-sm",
+                        showCaptions ? "translate-x-5" : "translate-x-1"
+                      )}
+                    />
+                  </button>
+                </div>
+
+                {/* Caption Position */}
+                {showCaptions && (
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-2">Position</label>
+                    <div className="flex gap-1">
+                      {(["top", "center", "bottom"] as const).map((pos) => (
+                        <button
+                          key={pos}
+                          onClick={() => setCaptionPosition(pos)}
+                          className={cn(
+                            "flex-1 py-2 text-xs rounded-lg border transition-all capitalize",
+                            captionPosition === pos
+                              ? "bg-primary text-white border-primary"
+                              : "bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300"
+                          )}
+                        >
+                          {pos}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="border-t border-gray-200 pt-4">
+                  <label className="text-xs text-gray-500 block mb-1.5">Caption Text</label>
+                  <textarea
+                    value={captionText}
+                    onChange={(e) => setCaptionText(e.target.value)}
+                    placeholder="Enter caption text or use auto-transcribe..."
+                    rows={4}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-200 resize-none"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={handleGenerateCaptions}
+                    disabled={!captionText.trim()}
+                    className="flex-1"
+                  >
+                    Generate
+                  </Button>
+                  {captions.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleClearCaptions}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
+
+                {/* Auto-Transcribe */}
+                {videoSrc && (
+                  <div className="border-t border-gray-200 pt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-gray-500">Auto-Transcribe</span>
+                      {!transcriptionSupported && (
+                        <span className="text-xs text-amber-600">Chrome only</span>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleTranscribe}
+                      disabled={isTranscribing || !transcriptionSupported}
+                      className="w-full gap-2"
+                    >
+                      {isTranscribing ? (
+                        <>
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Transcribing...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                          </svg>
+                          Transcribe Audio
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-xs text-gray-400 mt-2">
+                      Uses browser speech recognition. For best results, use clear audio.
+                    </p>
+                  </div>
+                )}
+
+                {/* Caption Stats */}
+                {captions.length > 0 && (
+                  <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Captions:</span>
+                      <span className="font-medium">{captions.length} segments</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {(activeTool === "music" || activeTool === "brand") && (
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
                 <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3 text-gray-500">
                   {activeTool === "music" && tools.find(t => t.id === "music")?.icon}
-                  {activeTool === "captions" && tools.find(t => t.id === "captions")?.icon}
                   {activeTool === "brand" && tools.find(t => t.id === "brand")?.icon}
                 </div>
                 <p className="text-sm text-gray-600 capitalize">{activeTool}</p>
