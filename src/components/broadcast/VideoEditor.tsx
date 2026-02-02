@@ -9,7 +9,6 @@ import type { Caption } from "@remotion/captions";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile, toBlobURL } from "@ffmpeg/util";
 
 type TextAnimation = "none" | "fade" | "typewriter" | "word-highlight" | "slide-up" | "scale";
 type ActiveTool = "text" | "music" | "captions" | "brand" | "layout" | "uploads" | null;
@@ -358,8 +357,8 @@ export function VideoEditor({ className }: VideoEditorProps) {
     try {
       const ffmpeg = new FFmpeg();
 
-      // Load FFmpeg with CDN URLs for the WASM files
-      const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm";
+      // Use jsdelivr CDN which has better CORS support
+      const baseURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm";
 
       ffmpeg.on("progress", ({ progress }) => {
         // Progress is 0-1, convert to percentage
@@ -370,9 +369,10 @@ export function VideoEditor({ className }: VideoEditorProps) {
         console.log("[FFmpeg]", message);
       });
 
+      // Load with direct URLs - no blob conversion needed
       await ffmpeg.load({
-        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
-        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
+        coreURL: `${baseURL}/ffmpeg-core.js`,
+        wasmURL: `${baseURL}/ffmpeg-core.wasm`,
       });
 
       ffmpegRef.current = ffmpeg;
