@@ -38,11 +38,19 @@ export function VideoEditor({ className }: VideoEditorProps) {
   const [currentFrame, setCurrentFrame] = useState(0);
   const [playerRef, setPlayerRef] = useState<PlayerRef | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // UI State
   const [activeTool, setActiveTool] = useState<ActiveTool>("text");
   const [aspectRatio, setAspectRatio] = useState(ASPECT_RATIOS[0]);
   const [showAspectMenu, setShowAspectMenu] = useState(false);
+
+  // Export State
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportFormat, setExportFormat] = useState<"webm" | "mp4">("webm");
 
   // Subscribe to player events
   useEffect(() => {
@@ -294,6 +302,163 @@ export function VideoEditor({ className }: VideoEditorProps) {
     setVideoWarning(null);
   }, [videoSrc]);
 
+  // Export video function
+  const handleExport = useCallback(async () => {
+    if (!previewContainerRef.current) return;
+
+    setIsExporting(true);
+    setExportProgress(0);
+
+    try {
+      // Create a canvas to composite video and overlays
+      const canvas = document.createElement("canvas");
+      canvas.width = aspectRatio.width;
+      canvas.height = aspectRatio.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Could not get canvas context");
+
+      // Get the video element if present
+      const videoElement = videoRef.current;
+
+      // Set up MediaRecorder
+      const stream = canvas.captureStream(fps);
+
+      // Add audio track if video has audio
+      if (videoElement && !muted) {
+        try {
+          const audioCtx = new AudioContext();
+          const source = audioCtx.createMediaElementSource(videoElement);
+          const destination = audioCtx.createMediaStreamDestination();
+          source.connect(destination);
+          source.connect(audioCtx.destination); // Keep audio playing
+          destination.stream.getAudioTracks().forEach(track => {
+            stream.addTrack(track);
+          });
+        } catch {
+          console.log("Could not capture audio, exporting video only");
+        }
+      }
+
+      const mimeType = exportFormat === "webm" ? "video/webm;codecs=vp9" : "video/webm"; // Browser support
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported(mimeType) ? mimeType : "video/webm",
+        videoBitsPerSecond: 8000000, // 8 Mbps
+      });
+
+      const chunks: Blob[] = [];
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: "video/webm" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `export-${Date.now()}.webm`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setIsExporting(false);
+        setShowExportModal(false);
+        setExportProgress(100);
+      };
+
+      // Start recording
+      mediaRecorder.start();
+
+      // Reset video to start if present
+      if (videoElement) {
+        videoElement.currentTime = 0;
+        videoElement.play();
+      }
+
+      // Also reset Remotion player
+      if (playerRef) {
+        playerRef.seekTo(0);
+        playerRef.play();
+      }
+
+      // Render frames
+      const totalFrames = durationInFrames;
+      let frameCount = 0;
+
+      const renderFrame = () => {
+        if (frameCount >= totalFrames) {
+          mediaRecorder.stop();
+          if (videoElement) videoElement.pause();
+          if (playerRef) playerRef.pause();
+          return;
+        }
+
+        // Clear canvas
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw video frame if present
+        if (videoElement && videoElement.readyState >= 2) {
+          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        }
+
+        // Draw text overlays
+        if (title || caption) {
+          // Dark overlay for text readability (if video)
+          if (videoElement) {
+            ctx.fillStyle = `rgba(0, 0, 0, ${overlayOpacity})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
+
+          ctx.textAlign = "center";
+          ctx.fillStyle = "#ffffff";
+          ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+          ctx.shadowBlur = 10;
+
+          // Calculate position
+          let yPos = canvas.height / 2;
+          if (overlayPosition === "top") yPos = 120;
+          if (overlayPosition === "bottom") yPos = canvas.height - 150;
+
+          // Draw title
+          if (title) {
+            const titleSize = videoElement ? 56 : 72;
+            ctx.font = `bold ${titleSize}px system-ui, -apple-system, sans-serif`;
+            ctx.fillText(title, canvas.width / 2, yPos);
+          }
+
+          // Draw caption
+          if (caption) {
+            const captionSize = videoElement ? 28 : 32;
+            ctx.font = `${captionSize}px system-ui, -apple-system, sans-serif`;
+            ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+            ctx.fillText(caption, canvas.width / 2, yPos + 60);
+          }
+        }
+
+        // Draw progress bar
+        const progress = frameCount / totalFrames;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+        ctx.fillRect(40, canvas.height - 44, canvas.width - 80, 4);
+        ctx.fillStyle = accentColor;
+        ctx.fillRect(40, canvas.height - 44, (canvas.width - 80) * progress, 4);
+
+        frameCount++;
+        setExportProgress(Math.round((frameCount / totalFrames) * 100));
+
+        // Schedule next frame
+        requestAnimationFrame(renderFrame);
+      };
+
+      // Start rendering
+      renderFrame();
+
+    } catch (error) {
+      console.error("Export failed:", error);
+      setIsExporting(false);
+      alert("Export failed. Please try again.");
+    }
+  }, [aspectRatio, fps, durationInFrames, videoSrc, title, caption, backgroundColor, accentColor, overlayPosition, overlayOpacity, muted, playerRef, exportFormat]);
+
   const accentColors = [
     { value: "#3b82f6", label: "Blue" },
     { value: "#8b5cf6", label: "Purple" },
@@ -401,7 +566,11 @@ export function VideoEditor({ className }: VideoEditorProps) {
           <Button variant="outline" size="sm">
             Share
           </Button>
-          <Button size="sm" className="bg-primary hover:bg-primary/90">
+          <Button
+            size="sm"
+            className="bg-primary hover:bg-primary/90"
+            onClick={() => setShowExportModal(true)}
+          >
             Export
           </Button>
         </div>
@@ -478,6 +647,7 @@ export function VideoEditor({ className }: VideoEditorProps) {
             </div>
           ) : (
             <div
+              ref={previewContainerRef}
               className="rounded-lg overflow-hidden border border-gray-300 shadow-xl bg-black relative flex items-center justify-center"
               style={{
                 aspectRatio: `${aspectRatio.width}/${aspectRatio.height}`,
@@ -507,6 +677,9 @@ export function VideoEditor({ className }: VideoEditorProps) {
                   muted={muted}
                   playsInline
                   ref={(el) => {
+                    // Store ref for export
+                    (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = el;
+                    // Handle playback state
                     if (el) {
                       el.volume = volume;
                       el.playbackRate = playbackRate;
@@ -867,6 +1040,153 @@ export function VideoEditor({ className }: VideoEditorProps) {
           setTracks([...tracks, newTrack]);
         }}
       />
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Export Video</h2>
+              <button
+                onClick={() => !isExporting && setShowExportModal(false)}
+                className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                disabled={isExporting}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4 space-y-4">
+              {/* Export Preview */}
+              <div className="aspect-video bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+                {videoSrc ? (
+                  <video
+                    src={videoSrc}
+                    className="w-full h-full object-cover"
+                    muted
+                  />
+                ) : (
+                  <div className="text-center text-gray-400">
+                    <svg className="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <p className="text-sm">Preview</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Export Settings */}
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Format</label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setExportFormat("webm")}
+                      className={cn(
+                        "flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-all",
+                        exportFormat === "webm"
+                          ? "bg-primary text-white border-primary"
+                          : "bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300"
+                      )}
+                    >
+                      WebM
+                    </button>
+                    <button
+                      onClick={() => setExportFormat("mp4")}
+                      className={cn(
+                        "flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-all",
+                        exportFormat === "mp4"
+                          ? "bg-primary text-white border-primary"
+                          : "bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300"
+                      )}
+                    >
+                      MP4
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {exportFormat === "webm"
+                      ? "WebM: Best browser compatibility"
+                      : "MP4: Note - browser export produces WebM, convert after download for MP4"}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Resolution</label>
+                  <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    {aspectRatio.width} × {aspectRatio.height} ({aspectRatio.value})
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Duration</label>
+                  <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {duration} seconds ({fps} fps)
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              {isExporting && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Exporting...</span>
+                    <span className="text-gray-900 font-medium">{exportProgress}%</span>
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all duration-300"
+                      style={{ width: `${exportProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 bg-gray-50">
+              <Button
+                variant="outline"
+                onClick={() => setShowExportModal(false)}
+                disabled={isExporting}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleExport}
+                disabled={isExporting}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {isExporting ? (
+                  <>
+                    <svg className="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    Export Video
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
