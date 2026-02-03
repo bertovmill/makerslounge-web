@@ -7,7 +7,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 export async function POST(request: NextRequest) {
   try {
-    const { content, platform, scheduledFor, ideaId } = await request.json();
+    const { content, platform, scheduledFor, ideaId, mediaUrls } = await request.json();
 
     if (!content) {
       return NextResponse.json(
@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
         platform: platform || "x",
         scheduled_for: scheduledDate.toISOString(),
         idea_id: ideaId || null,
+        media_urls: mediaUrls || [],
         status: "pending",
       })
       .select()

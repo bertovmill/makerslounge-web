@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     // Post based on platform
     let result;
     if (post.platform === "x") {
-      result = await postToX(post.user_id, post.content);
+      result = await postToX(post.user_id, post.content, post.media_urls || []);
     } else {
       return NextResponse.json(
         { error: `Platform ${post.platform} not supported yet` },

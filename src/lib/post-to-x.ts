@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { uploadMultipleMediaToX } from "./x-media-upload";
 
 const X_CLIENT_ID = process.env.X_CLIENT_ID;
 const X_CLIENT_SECRET = process.env.X_CLIENT_SECRET;
@@ -42,13 +43,27 @@ export interface PostToXResult {
   error?: string;
 }
 
-export async function postToX(userId: string, text: string): Promise<PostToXResult> {
+export async function postToX(
+  userId: string,
+  text: string,
+  mediaUrls?: string[]
+): Promise<PostToXResult> {
   if (!text || text.length === 0) {
     return { success: false, error: "Tweet text is required" };
   }
 
   if (text.length > 280) {
     return { success: false, error: "Tweet exceeds 280 character limit" };
+  }
+
+  // Upload media if provided
+  let mediaIds: string[] | undefined;
+  if (mediaUrls && mediaUrls.length > 0) {
+    const mediaResult = await uploadMultipleMediaToX(userId, mediaUrls);
+    if (!mediaResult.success) {
+      return { success: false, error: mediaResult.error || "Failed to upload media" };
+    }
+    mediaIds = mediaResult.mediaIds;
   }
 
   // Get X connection using service role
@@ -96,6 +111,12 @@ export async function postToX(userId: string, text: string): Promise<PostToXResu
     accessToken = newTokens.access_token;
   }
 
+  // Build tweet payload
+  const tweetPayload: { text: string; media?: { media_ids: string[] } } = { text };
+  if (mediaIds && mediaIds.length > 0) {
+    tweetPayload.media = { media_ids: mediaIds };
+  }
+
   // Post tweet
   const tweetResponse = await fetch("https://api.twitter.com/2/tweets", {
     method: "POST",
@@ -103,7 +124,7 @@ export async function postToX(userId: string, text: string): Promise<PostToXResu
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify(tweetPayload),
   });
 
   if (!tweetResponse.ok) {

@@ -124,6 +124,9 @@ export default function BroadcastPage() {
   const [isScheduling, setIsScheduling] = useState(false);
   const [scheduleSuccess, setScheduleSuccess] = useState<string | null>(null);
 
+  // Media Selection State
+  const [selectedMediaUrls, setSelectedMediaUrls] = useState<string[]>([]);
+
   // Edit Idea Modal State
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingIdea, setEditingIdea] = useState<BroadcastIdea | null>(null);
@@ -296,7 +299,10 @@ export default function BroadcastPage() {
       const response = await fetch("/api/auth/x/post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: generatedContent }),
+        body: JSON.stringify({
+          text: generatedContent,
+          mediaUrls: selectedMediaUrls.length > 0 ? selectedMediaUrls : undefined,
+        }),
       });
 
       const data = await response.json();
@@ -338,6 +344,7 @@ export default function BroadcastPage() {
           platform: generateChannel,
           scheduledFor: scheduledFor.toISOString(),
           ideaId: selectedIdea?.id,
+          mediaUrls: selectedMediaUrls.length > 0 ? selectedMediaUrls : undefined,
         }),
       });
 
@@ -619,6 +626,7 @@ export default function BroadcastPage() {
     setScheduleDate("");
     setScheduleTime("");
     setShowScheduleModal(false);
+    setSelectedMediaUrls([]);
     setShowGenerateModal(true);
   };
 
@@ -1782,6 +1790,71 @@ export default function BroadcastPage() {
                   <div className="bg-muted/30 border border-border rounded-lg p-4">
                     <pre className="whitespace-pre-wrap text-sm font-sans">{generatedContent}</pre>
                   </div>
+
+                  {/* Media Selection */}
+                  {selectedIdea?.media_urls && selectedIdea.media_urls.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium">Attach Media</label>
+                      <p className="text-xs text-muted-foreground">Select images/videos from your idea to include (max 4 images or 1 video)</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedIdea.media_urls.map((url, i) => {
+                          const isSelected = selectedMediaUrls.includes(url);
+                          const isVideo = url.toLowerCase().match(/\.(mp4|mov|avi|webm)(\?|$)/);
+                          return (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => {
+                                if (isSelected) {
+                                  setSelectedMediaUrls(prev => prev.filter(u => u !== url));
+                                } else {
+                                  // If selecting a video, clear other selections (only 1 video allowed)
+                                  if (isVideo) {
+                                    setSelectedMediaUrls([url]);
+                                  } else {
+                                    // Max 4 images
+                                    if (selectedMediaUrls.length < 4) {
+                                      setSelectedMediaUrls(prev => [...prev, url]);
+                                    }
+                                  }
+                                }
+                              }}
+                              className={cn(
+                                "relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all",
+                                isSelected
+                                  ? "border-primary ring-2 ring-primary/30"
+                                  : "border-transparent hover:border-primary/50"
+                              )}
+                            >
+                              {isVideo ? (
+                                <video src={url} className="w-full h-full object-cover" />
+                              ) : (
+                                <img src={url} alt="" className="w-full h-full object-cover" />
+                              )}
+                              {isSelected && (
+                                <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                  <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </div>
+                              )}
+                              {isVideo && (
+                                <div className="absolute bottom-0.5 right-0.5 bg-black/70 text-white text-[8px] px-1 rounded">
+                                  VIDEO
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {selectedMediaUrls.length > 0 && (
+                        <p className="text-xs text-primary">
+                          {selectedMediaUrls.length} media selected
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-muted-foreground">
                       Character count: {generatedContent.length}
