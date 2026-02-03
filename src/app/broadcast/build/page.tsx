@@ -66,27 +66,27 @@ export default function BuildPage() {
   }
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
+        <div className="mb-4 sm:mb-6">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2">
             <Link
               href="/broadcast"
-              className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              className="p-1.5 sm:p-2 -ml-1 sm:-ml-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </Link>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-bold">Build</h1>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
+                <h1 className="text-xl sm:text-3xl font-bold">Build</h1>
+                <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
                   Beta
                 </span>
               </div>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground text-xs sm:text-sm">
                 Create videos, images, and text content for your broadcasts.
               </p>
             </div>
@@ -94,18 +94,18 @@ export default function BuildPage() {
         </div>
 
         {/* Content Type Selector */}
-        <div className="mb-6">
-          <div className="inline-flex items-center p-1 rounded-lg bg-muted/50 border border-border">
+        <div className="mb-4 sm:mb-6">
+          <div className="inline-flex items-center p-0.5 sm:p-1 rounded-lg bg-muted/50 border border-border">
             <button
               onClick={() => setContentType("video")}
               className={cn(
-                "px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 flex items-center gap-2",
+                "px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 flex items-center gap-1.5 sm:gap-2",
                 contentType === "video"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
               Video
@@ -113,13 +113,13 @@ export default function BuildPage() {
             <button
               onClick={() => setContentType("image")}
               className={cn(
-                "px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 flex items-center gap-2",
+                "px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 flex items-center gap-1.5 sm:gap-2",
                 contentType === "image"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               Image
@@ -127,13 +127,13 @@ export default function BuildPage() {
             <button
               onClick={() => setContentType("text")}
               className={cn(
-                "px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 flex items-center gap-2",
+                "px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 flex items-center gap-1.5 sm:gap-2",
                 contentType === "text"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               Text
@@ -148,25 +148,26 @@ export default function BuildPage() {
 
           {/* Image Editor */}
           {contentType === "image" && (
-            <div className="min-h-[600px] flex flex-col">
-              <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium">Image Editor</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-600 dark:text-purple-400">
+            <div className="min-h-[400px] sm:min-h-[600px] flex flex-col">
+              <div className="flex items-center justify-between p-2 sm:p-4 border-b border-border bg-muted/30">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <span className="text-xs sm:text-sm font-medium">Image Editor</span>
+                  <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-600 dark:text-purple-400">
                     Canvas
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>1080 × 1080</span>
+                <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+                  <span className="hidden sm:inline">1080 × 1080</span>
+                  <span className="sm:hidden">1080²</span>
                   <span>•</span>
                   <span>PNG</span>
                 </div>
               </div>
 
               {/* Canvas Area */}
-              <div className="flex-1 bg-[#1a1a1a] flex">
-                {/* Tools Sidebar */}
-                <div className="w-14 border-r border-border bg-muted/30 p-2 flex flex-col gap-1">
+              <div className="flex-1 bg-[#1a1a1a] flex flex-col sm:flex-row">
+                {/* Tools Sidebar - Horizontal on mobile */}
+                <div className="flex sm:flex-col sm:w-14 border-b sm:border-b-0 sm:border-r border-border bg-muted/30 p-1.5 sm:p-2 gap-1 overflow-x-auto sm:overflow-x-visible justify-center sm:justify-start">
                   {[
                     { icon: "M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z", label: "Draw" },
                     { icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z", label: "Image" },
@@ -193,8 +194,8 @@ export default function BuildPage() {
                   </div>
                 </div>
 
-                {/* Properties Panel */}
-                <div className="w-64 border-l border-border bg-muted/30 p-4">
+                {/* Properties Panel - Hidden on mobile, show as bottom sheet or expandable */}
+                <div className="hidden sm:block w-64 border-l border-border bg-muted/30 p-4">
                   <h3 className="text-sm font-medium mb-4">Properties</h3>
                   <div className="space-y-4">
                     <div>
@@ -220,27 +221,38 @@ export default function BuildPage() {
                     </div>
                   </div>
                 </div>
+                {/* Mobile Properties - Color swatches below canvas */}
+                <div className="sm:hidden flex items-center gap-2 p-2 border-t border-border bg-muted/30">
+                  <label className="text-xs text-muted-foreground">BG:</label>
+                  {["#ffffff", "#f3f4f6", "#1f2937", "#3b82f6", "#10b981"].map((color) => (
+                    <button
+                      key={color}
+                      className="w-6 h-6 rounded border border-border"
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           )}
 
           {/* Text Editor */}
           {contentType === "text" && (
-            <div className="min-h-[600px] flex flex-col">
-              <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium">Text Editor</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-600 dark:text-green-400">
+            <div className="min-h-[400px] sm:min-h-[600px] flex flex-col">
+              <div className="flex items-center justify-between p-2 sm:p-4 border-b border-border bg-muted/30">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <span className="text-xs sm:text-sm font-medium">Text Editor</span>
+                  <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-green-500/20 text-green-600 dark:text-green-400">
                     Rich Text
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">Preview</Button>
+                  <Button variant="outline" size="sm" className="text-xs sm:text-sm h-7 sm:h-9 px-2 sm:px-3">Preview</Button>
                 </div>
               </div>
 
               {/* Toolbar */}
-              <div className="flex items-center gap-1 p-2 border-b border-border bg-muted/20">
+              <div className="flex items-center gap-0.5 sm:gap-1 p-1.5 sm:p-2 border-b border-border bg-muted/20 overflow-x-auto">
                 {[
                   { icon: "M6 12h8m-8 4h12M6 8h12", label: "Paragraph" },
                   { icon: "M4 6h16M4 12h8m-8 6h16", label: "Heading" },
@@ -249,14 +261,14 @@ export default function BuildPage() {
                   { icon: "M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1", label: "Link" },
                   { icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z", label: "Image" },
                 ].map((tool, i) => (
-                  <button key={i} className="p-2 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" title={tool.label}>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <button key={i} className="p-1.5 sm:p-2 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground flex-shrink-0" title={tool.label}>
+                    <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={tool.icon} />
                     </svg>
                   </button>
                 ))}
-                <div className="w-px h-6 bg-border mx-2" />
-                <select className="px-2 py-1 rounded border border-border bg-background text-sm">
+                <div className="w-px h-5 sm:h-6 bg-border mx-1 sm:mx-2 flex-shrink-0" />
+                <select className="px-1.5 sm:px-2 py-1 rounded border border-border bg-background text-xs sm:text-sm flex-shrink-0">
                   <option>Paragraph</option>
                   <option>Heading 1</option>
                   <option>Heading 2</option>
@@ -265,15 +277,15 @@ export default function BuildPage() {
               </div>
 
               {/* Editor Content */}
-              <div className="flex-1 p-8">
-                <div className="max-w-3xl mx-auto prose prose-neutral dark:prose-invert">
+              <div className="flex-1 p-4 sm:p-8">
+                <div className="max-w-3xl mx-auto prose prose-neutral dark:prose-invert prose-sm sm:prose-base">
                   <div
                     contentEditable
-                    className="min-h-[400px] focus:outline-none"
+                    className="min-h-[200px] sm:min-h-[400px] focus:outline-none"
                     suppressContentEditableWarning
                   >
-                    <h1 className="text-3xl font-bold text-foreground">Start writing...</h1>
-                    <p className="text-muted-foreground">
+                    <h1 className="text-xl sm:text-3xl font-bold text-foreground">Start writing...</h1>
+                    <p className="text-muted-foreground text-sm sm:text-base">
                       Create blog posts, newsletters, social media captions, and more.
                       Use the toolbar above to format your text.
                     </p>
@@ -282,9 +294,9 @@ export default function BuildPage() {
               </div>
 
               {/* Word Count */}
-              <div className="flex items-center justify-between p-3 border-t border-border bg-muted/30 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between p-2 sm:p-3 border-t border-border bg-muted/30 text-[10px] sm:text-xs text-muted-foreground">
                 <span>0 words • 0 characters</span>
-                <span>Last saved: Never</span>
+                <span className="hidden sm:inline">Last saved: Never</span>
               </div>
             </div>
           )}

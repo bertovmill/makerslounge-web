@@ -50,6 +50,10 @@ export function VideoEditor({ className }: VideoEditorProps) {
   const [aspectRatio, setAspectRatio] = useState(ASPECT_RATIOS[0]);
   const [showAspectMenu, setShowAspectMenu] = useState(false);
 
+  // Mobile UI State
+  const [showLeftPanel, setShowLeftPanel] = useState(false);
+  const [showMobileTools, setShowMobileTools] = useState(false);
+
   // Export State
   const [showExportModal, setShowExportModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -963,19 +967,28 @@ export function VideoEditor({ className }: VideoEditorProps) {
   ];
 
   return (
-    <div className={cn("h-[calc(100vh-200px)] min-h-[600px] flex flex-col bg-gray-50 rounded-xl overflow-hidden border border-border shadow-sm", className)}>
+    <div className={cn("h-[calc(100vh-200px)] min-h-[400px] md:min-h-[600px] flex flex-col bg-gray-50 rounded-xl overflow-hidden border border-border shadow-sm", className)}>
       {/* Top Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <button className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors">
+      <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 border-b border-gray-200 bg-white">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1 sm:gap-2">
+            {/* Mobile: Toggle left panel */}
+            <button
+              onClick={() => setShowLeftPanel(!showLeftPanel)}
+              className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors md:hidden"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <button className="hidden md:block p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </button>
-            <span className="text-sm font-medium text-gray-900">Untitled Project</span>
+            <span className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[100px] sm:max-w-none">Untitled Project</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="hidden sm:flex items-center gap-1">
             <button className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
@@ -989,14 +1002,14 @@ export function VideoEditor({ className }: VideoEditorProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           {/* Aspect Ratio Selector */}
           <div className="relative">
             <button
               onClick={() => setShowAspectMenu(!showAspectMenu)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-200 text-sm text-gray-700 transition-colors"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-200 text-xs sm:text-sm text-gray-700 transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
               </svg>
               {aspectRatio.value}
@@ -1022,12 +1035,12 @@ export function VideoEditor({ className }: VideoEditorProps) {
             )}
           </div>
 
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="hidden sm:inline-flex">
             Share
           </Button>
           <Button
             size="sm"
-            className="bg-primary hover:bg-primary/90"
+            className="bg-primary hover:bg-primary/90 text-xs sm:text-sm px-2 sm:px-3"
             onClick={() => setShowExportModal(true)}
           >
             Export
@@ -1036,9 +1049,52 @@ export function VideoEditor({ className }: VideoEditorProps) {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden min-h-0">
-        {/* Left Panel - Script/Transcript */}
-        <div className="w-80 border-r border-gray-200 bg-white flex flex-col">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0 relative">
+        {/* Mobile Left Panel Overlay */}
+        {showLeftPanel && (
+          <div className="absolute inset-0 z-40 md:hidden" onClick={() => setShowLeftPanel(false)}>
+            <div className="absolute inset-0 bg-black/50" />
+            <div
+              className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-3 border-b border-gray-200">
+                <span className="text-sm font-medium text-gray-900">Script</span>
+                <button
+                  onClick={() => setShowLeftPanel(false)}
+                  className="p-1.5 rounded hover:bg-gray-100 text-gray-500"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-3 space-y-3 overflow-y-auto" style={{ maxHeight: "calc(100vh - 200px)" }}>
+                <div className="flex items-start gap-3">
+                  <span className="text-xs text-gray-400 font-mono pt-1">00:00</span>
+                  <div className="flex-1">
+                    <span className="text-xs font-medium text-primary mb-1 block">Title</span>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      {title || <span className="text-gray-400 italic">Add a title...</span>}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-xs text-gray-400 font-mono pt-1">00:01</span>
+                  <div className="flex-1">
+                    <span className="text-xs font-medium text-purple-500 mb-1 block">Caption</span>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      {caption || <span className="text-gray-400 italic">Add a caption...</span>}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Desktop Left Panel - Script/Transcript */}
+        <div className="hidden md:flex w-80 border-r border-gray-200 bg-white flex-col">
           <div className="p-3 border-b border-gray-200">
             <div className="relative">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1090,7 +1146,7 @@ export function VideoEditor({ className }: VideoEditorProps) {
         {/* Center - Video Preview */}
         <div
           className={cn(
-            "flex-1 flex items-center justify-center p-4 bg-gray-100 transition-colors min-h-0 min-w-0",
+            "flex-1 flex items-center justify-center p-2 sm:p-4 bg-gray-100 transition-colors min-h-0 min-w-0",
             isDragging && "bg-primary/10"
           )}
           onDrop={handleDrop}
@@ -1200,8 +1256,166 @@ export function VideoEditor({ className }: VideoEditorProps) {
           )}
         </div>
 
-        {/* Right Panel - Tool Properties */}
-        <div className="w-72 border-l border-gray-200 bg-white flex">
+        {/* Mobile Tool Bar - Fixed at bottom of preview area */}
+        <div className="md:hidden absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30">
+          {/* Tool Icons Row */}
+          <div className="flex items-center justify-around px-2 py-1.5 border-b border-gray-100">
+            {tools.map((tool) => (
+              <button
+                key={tool.id}
+                onClick={() => {
+                  setActiveTool(tool.id);
+                  setShowMobileTools(true);
+                }}
+                className={cn(
+                  "flex flex-col items-center justify-center p-2 rounded-lg transition-colors min-w-[48px]",
+                  activeTool === tool.id
+                    ? "bg-primary/10 text-primary"
+                    : "text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+                )}
+              >
+                {tool.icon}
+                <span className="text-[9px] mt-0.5">{tool.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Mobile Tool Properties - Bottom Sheet */}
+        {showMobileTools && (
+          <div className="md:hidden fixed inset-0 z-50" onClick={() => setShowMobileTools(false)}>
+            <div className="absolute inset-0 bg-black/50" />
+            <div
+              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl max-h-[70vh] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Handle */}
+              <div className="flex justify-center py-2">
+                <div className="w-10 h-1 bg-gray-300 rounded-full" />
+              </div>
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 pb-2 border-b border-gray-200">
+                <h3 className="text-sm font-medium text-gray-900 capitalize">{activeTool}</h3>
+                <button
+                  onClick={() => setShowMobileTools(false)}
+                  className="p-1.5 rounded hover:bg-gray-100 text-gray-500"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              {/* Content - Same as desktop but in mobile sheet */}
+              <div className="flex-1 overflow-y-auto p-4">
+                {/* Render tool content based on activeTool - duplicated for mobile */}
+                {activeTool === "text" && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-xs text-gray-500 block mb-1.5">Title</label>
+                      <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="Add title..."
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-200"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 block mb-1.5">Caption</label>
+                      <textarea
+                        value={caption}
+                        onChange={(e) => setCaption(e.target.value)}
+                        placeholder="Add caption..."
+                        rows={3}
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-200 resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 block mb-2">Accent Color</label>
+                      <div className="flex gap-2 flex-wrap">
+                        {accentColors.map((color) => (
+                          <button
+                            key={color.value}
+                            onClick={() => setAccentColor(color.value)}
+                            className={cn(
+                              "w-8 h-8 rounded-full border-2 transition-all",
+                              accentColor === color.value ? "border-gray-900 scale-110" : "border-gray-200"
+                            )}
+                            style={{ backgroundColor: color.value }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {activeTool === "uploads" && (
+                  <div className="space-y-4">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="video/*"
+                      onChange={handleInputChange}
+                      className="hidden"
+                    />
+                    {videoSrc ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                          <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-xs text-gray-700 truncate flex-1">{videoFileName}</span>
+                          <button onClick={removeVideo} className="p-1 hover:bg-gray-100 rounded">
+                            <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {[0.5, 1, 1.5, 2].map((rate) => (
+                            <button
+                              key={rate}
+                              onClick={() => setPlaybackRate(rate)}
+                              className={cn(
+                                "flex-1 py-1.5 text-xs rounded border transition-all",
+                                playbackRate === rate
+                                  ? "bg-primary text-white border-primary"
+                                  : "bg-gray-50 border-gray-200 text-gray-600"
+                              )}
+                            >
+                              {rate}x
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary/50 transition-colors text-center"
+                      >
+                        <svg className="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <span className="text-sm text-gray-500">Tap to upload</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+                {(activeTool === "music" || activeTool === "brand" || activeTool === "layout" || activeTool === "captions") && (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3 text-gray-500">
+                      {tools.find(t => t.id === activeTool)?.icon}
+                    </div>
+                    <p className="text-sm text-gray-600 capitalize">{activeTool}</p>
+                    <p className="text-xs text-gray-400 mt-1">Coming soon</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Desktop Right Panel - Tool Properties */}
+        <div className="hidden md:flex w-72 border-l border-gray-200 bg-white">
           {/* Properties Panel */}
           <div className="flex-1 overflow-y-auto p-4">
             {activeTool === "text" && (
@@ -1714,7 +1928,7 @@ export function VideoEditor({ className }: VideoEditorProps) {
             )}
           </div>
 
-          {/* Vertical Tool Icons */}
+          {/* Vertical Tool Icons - Desktop Only */}
           <div className="w-14 border-l border-gray-200 bg-gray-50 py-3 flex flex-col items-center gap-1">
             {tools.map((tool) => (
               <button
@@ -1735,6 +1949,9 @@ export function VideoEditor({ className }: VideoEditorProps) {
           </div>
         </div>
       </div>
+
+      {/* Spacer for mobile tool bar */}
+      <div className="h-14 md:hidden flex-shrink-0" />
 
       {/* Multi-Layer Timeline */}
       <Timeline

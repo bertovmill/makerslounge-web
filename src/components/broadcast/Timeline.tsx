@@ -272,6 +272,17 @@ export function Timeline({
   const [scrollLeft, setScrollLeft] = useState(0);
   const [showAddTrackMenu, setShowAddTrackMenu] = useState(false);
   const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false);
+  const [trackHeaderWidth, setTrackHeaderWidth] = useState(160);
+
+  // Track viewport width for responsive track header
+  useEffect(() => {
+    const updateWidth = () => {
+      setTrackHeaderWidth(window.innerWidth < 640 ? 100 : 160);
+    };
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, []);
 
   // Pixels per frame based on zoom
   const basePixelsPerFrame = 4;
@@ -341,13 +352,13 @@ export function Timeline({
   useEffect(() => {
     if (!isPlaying || !timelineRef.current) return;
     const container = timelineRef.current;
-    const containerWidth = container.clientWidth - 160; // Account for track headers
+    const containerWidth = container.clientWidth - trackHeaderWidth;
     const playheadRelative = playheadPosition - scrollLeft;
 
     if (playheadRelative > containerWidth - 50) {
       container.scrollLeft = playheadPosition - 100;
     }
-  }, [isPlaying, playheadPosition, scrollLeft]);
+  }, [isPlaying, playheadPosition, scrollLeft, trackHeaderWidth]);
 
   // Handle playhead dragging
   const handlePlayheadMouseDown = useCallback((e: React.MouseEvent) => {
@@ -361,7 +372,7 @@ export function Timeline({
     const handleMouseMove = (e: MouseEvent) => {
       if (!timelineRef.current) return;
       const rect = timelineRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left + scrollLeft - 160; // Account for track header width
+      const x = e.clientX - rect.left + scrollLeft - trackHeaderWidth;
       const frame = Math.round(x / pixelsPerFrame);
       onSeek(Math.max(0, Math.min(frame, durationInFrames)));
     };
@@ -377,7 +388,7 @@ export function Timeline({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isDraggingPlayhead, pixelsPerFrame, scrollLeft, durationInFrames, onSeek]);
+  }, [isDraggingPlayhead, pixelsPerFrame, scrollLeft, durationInFrames, onSeek, trackHeaderWidth]);
 
   // Handle pinch-to-zoom on trackpad
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -408,28 +419,28 @@ export function Timeline({
   return (
     <div className="flex flex-col border-t border-gray-200 bg-white flex-shrink-0" style={{ maxHeight: "280px" }}>
       {/* Timeline Controls */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between px-2 sm:px-4 py-2 border-b border-gray-200 bg-gray-50">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           {/* Play/Pause */}
           <button
             onClick={onPlayPause}
-            className="p-2 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors"
+            className="p-1.5 sm:p-2 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors"
           >
             {isPlaying ? (
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
               </svg>
             ) : (
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
               </svg>
             )}
           </button>
 
-          {/* Skip to start */}
+          {/* Skip to start - hidden on very small screens */}
           <button
             onClick={() => onSeek(0)}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
+            className="hidden xs:block p-1.5 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
@@ -437,16 +448,16 @@ export function Timeline({
           </button>
 
           {/* Time display */}
-          <div className="text-sm text-gray-700 font-mono tabular-nums bg-gray-100 px-2 py-1 rounded">
+          <div className="text-xs sm:text-sm text-gray-700 font-mono tabular-nums bg-gray-100 px-1.5 sm:px-2 py-1 rounded">
             {formatTime(currentFrame, fps)}
           </div>
 
-          {/* Split clip button */}
+          {/* Split clip button - hidden on mobile */}
           <button
             onClick={onSplitClip}
             disabled={!canSplitClip}
             className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium transition-colors",
+              "hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium transition-colors",
               canSplitClip
                 ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 : "bg-gray-50 text-gray-300 cursor-not-allowed"
@@ -459,12 +470,12 @@ export function Timeline({
             Split
           </button>
 
-          {/* Delete clip button */}
+          {/* Delete clip button - hidden on mobile */}
           <button
             onClick={onDeleteClip}
             disabled={!canDeleteClip}
             className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium transition-colors",
+              "hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium transition-colors",
               canDeleteClip
                 ? "bg-gray-100 text-red-600 hover:bg-red-50 hover:text-red-700"
                 : "bg-gray-50 text-gray-300 cursor-not-allowed"
@@ -478,9 +489,9 @@ export function Timeline({
           </button>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Zoom controls */}
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-3">
+          {/* Zoom controls - simplified on mobile */}
+          <div className="hidden sm:flex items-center gap-2">
             <button
               onClick={() => setZoom(Math.max(0.25, zoom - 0.25))}
               className="p-1 rounded hover:bg-gray-200 text-gray-500 transition-colors"
@@ -504,7 +515,7 @@ export function Timeline({
           <button
             onClick={() => {
               if (timelineRef.current) {
-                const containerWidth = timelineRef.current.clientWidth - 160;
+                const containerWidth = timelineRef.current.clientWidth - trackHeaderWidth;
                 setZoom(containerWidth / (durationInFrames * basePixelsPerFrame));
               }
             }}
@@ -524,12 +535,12 @@ export function Timeline({
         className="flex-1 overflow-x-auto overflow-y-auto"
         onScroll={handleScroll}
         onWheel={handleWheel}
-        style={{ minHeight: "120px" }}
+        style={{ minHeight: "100px" }}
       >
-        <div className="relative" style={{ minWidth: timelineWidth + 160, width: "100%" }}>
+        <div className="relative" style={{ minWidth: timelineWidth + trackHeaderWidth, width: "100%" }}>
           {/* Time Ruler */}
           <div className="sticky top-0 z-20 flex">
-            <div className="w-40 flex-shrink-0 bg-gray-50 border-r border-b border-gray-200" />
+            <div className="flex-shrink-0 bg-gray-50 border-r border-b border-gray-200" style={{ width: trackHeaderWidth }} />
             <div className="flex-1 relative">
               <TimeRuler durationInFrames={durationInFrames} fps={fps} pixelsPerFrame={pixelsPerFrame} />
             </div>
@@ -537,17 +548,18 @@ export function Timeline({
 
           {/* Tracks */}
           <div className="relative">
-            {tracks.map((track, index) => (
-              <div key={track.id} className="flex h-12 border-b border-gray-100">
-                {/* Track Header */}
-                <div className="w-40 flex-shrink-0 bg-gray-50 border-r border-gray-200 px-2 flex items-center gap-2">
-                  <div className={cn("p-1.5 rounded", TRACK_CONFIG[track.type].bgColor)}>
+            {tracks.map((track) => (
+              <div key={track.id} className="flex h-10 sm:h-12 border-b border-gray-100">
+                {/* Track Header - Narrower on mobile */}
+                <div className="flex-shrink-0 bg-gray-50 border-r border-gray-200 px-1.5 sm:px-2 flex items-center gap-1 sm:gap-2" style={{ width: trackHeaderWidth }}>
+                  <div className={cn("p-1 sm:p-1.5 rounded", TRACK_CONFIG[track.type].bgColor)}>
                     <span style={{ color: TRACK_CONFIG[track.type].color }}>
                       {TRACK_CONFIG[track.type].icon}
                     </span>
                   </div>
-                  <span className="text-xs font-medium text-gray-700 truncate flex-1">{track.name}</span>
-                  <div className="flex items-center gap-0.5">
+                  <span className="text-[10px] sm:text-xs font-medium text-gray-700 truncate flex-1">{track.name}</span>
+                  {/* Track controls - hidden on very small screens */}
+                  <div className="hidden sm:flex items-center gap-0.5">
                     <button
                       className={cn(
                         "p-1 rounded hover:bg-gray-200 transition-colors",
@@ -614,16 +626,16 @@ export function Timeline({
 
             {/* Empty state for no tracks */}
             {tracks.length === 0 && (
-              <div className="flex items-center justify-center h-24 text-gray-400 text-sm">
+              <div className="flex items-center justify-center h-20 sm:h-24 text-gray-400 text-xs sm:text-sm px-4 text-center">
                 No tracks yet. Upload a video or add text to get started.
               </div>
             )}
           </div>
 
-          {/* Playhead */}
+          {/* Playhead - adjusted for responsive track header width */}
           <div
             className="absolute top-0 bottom-0 w-px bg-primary z-30"
-            style={{ left: playheadPosition + 160 }}
+            style={{ left: playheadPosition + trackHeaderWidth }}
           >
             {/* Playhead handle - draggable */}
             <div
@@ -651,23 +663,24 @@ export function Timeline({
       </div>
 
       {/* Add Track Button */}
-      <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
+      <div className="px-2 sm:px-4 py-1.5 sm:py-2 border-t border-gray-200 bg-gray-50">
         <div className="relative">
           <button
             onClick={() => setShowAddTrackMenu(!showAddTrackMenu)}
-            className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded transition-colors"
+            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Add Track
+            <span className="hidden xs:inline">Add Track</span>
+            <span className="xs:hidden">Add</span>
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
           {showAddTrackMenu && (
-            <div className="absolute bottom-full left-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px] z-50">
+            <div className="absolute bottom-full left-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[140px] sm:min-w-[160px] z-50">
               {([
                 { type: "text" as LayerType, label: "Text Overlay", description: "Add titles, captions" },
                 { type: "audio" as LayerType, label: "Audio Track", description: "Add music, voiceover" },
@@ -679,16 +692,16 @@ export function Timeline({
                     onAddTrack?.(item.type);
                     setShowAddTrackMenu(false);
                   }}
-                  className="w-full px-3 py-2 text-left hover:bg-gray-100 transition-colors flex items-center gap-3"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left hover:bg-gray-100 transition-colors flex items-center gap-2 sm:gap-3"
                 >
-                  <div className={cn("p-1.5 rounded", TRACK_CONFIG[item.type].bgColor)}>
+                  <div className={cn("p-1 sm:p-1.5 rounded", TRACK_CONFIG[item.type].bgColor)}>
                     <span style={{ color: TRACK_CONFIG[item.type].color }}>
                       {TRACK_CONFIG[item.type].icon}
                     </span>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-gray-900">{item.label}</div>
-                    <div className="text-xs text-gray-500">{item.description}</div>
+                    <div className="text-xs sm:text-sm font-medium text-gray-900">{item.label}</div>
+                    <div className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">{item.description}</div>
                   </div>
                 </button>
               ))}

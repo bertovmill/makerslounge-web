@@ -35,6 +35,22 @@ interface CustomChannel {
   icon: string;
 }
 
+interface SocialConnection {
+  id: string;
+  platform: string;
+  platform_username: string;
+  platform_name: string;
+  platform_avatar_url: string | null;
+}
+
+// Platforms that can be connected
+const CONNECTABLE_PLATFORMS = [
+  { id: "x", name: "X", icon: "𝕏", available: true },
+  { id: "linkedin", name: "LinkedIn", icon: "in", available: false },
+  { id: "instagram", name: "Instagram", icon: "📷", available: false },
+  { id: "threads", name: "Threads", icon: "@", available: false },
+] as const;
+
 const DEFAULT_CHANNELS = [
   { id: "x", name: "X", icon: "𝕏" },
   { id: "linkedin", name: "LinkedIn", icon: "in" },
@@ -88,6 +104,11 @@ export default function BroadcastPage() {
   const [debugInfo, setDebugInfo] = useState<{ request: unknown; response: unknown } | null>(null);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
 
+  // Social Connections State
+  const [socialConnections, setSocialConnections] = useState<SocialConnection[]>([]);
+  const [isPostingToX, setIsPostingToX] = useState(false);
+  const [postToXSuccess, setPostToXSuccess] = useState<string | null>(null);
+
   // Edit Idea Modal State
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingIdea, setEditingIdea] = useState<BroadcastIdea | null>(null);
@@ -114,7 +135,7 @@ export default function BroadcastPage() {
         return;
       }
 
-      await Promise.all([loadIdeas(), loadAccounts(), loadCustomChannels()]);
+      await Promise.all([loadIdeas(), loadAccounts(), loadCustomChannels(), loadSocialConnections()]);
       setLoading(false);
     };
 
@@ -195,6 +216,80 @@ export default function BroadcastPage() {
     }
 
     setCustomChannels(data || []);
+  };
+
+  const loadSocialConnections = async () => {
+    const { data, error } = await supabase
+      .from("social_connections")
+      .select("id, platform, platform_username, platform_name, platform_avatar_url")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Error loading social connections:", error.message, error.code, error.details, error.hint);
+      return;
+    }
+
+    setSocialConnections(data || []);
+  };
+
+  const handleConnectX = () => {
+    window.location.href = "/api/auth/x/authorize";
+  };
+
+  const handleDisconnectX = async () => {
+    if (!confirm("Are you sure you want to disconnect your X account?")) return;
+
+    try {
+      const response = await fetch("/api/auth/x/disconnect", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        setSocialConnections((prev) => prev.filter((c) => c.platform !== "x"));
+      } else {
+        alert("Failed to disconnect X account");
+      }
+    } catch (error) {
+      console.error("Disconnect error:", error);
+      alert("Failed to disconnect X account");
+    }
+  };
+
+  const handlePostToX = async () => {
+    if (!generatedContent || generatedContent.length > 280) {
+      alert("Content must be 280 characters or less to post to X");
+      return;
+    }
+
+    const xConnection = socialConnections.find((c) => c.platform === "x");
+    if (!xConnection) {
+      alert("Please connect your X account first");
+      return;
+    }
+
+    setIsPostingToX(true);
+    setPostToXSuccess(null);
+
+    try {
+      const response = await fetch("/api/auth/x/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: generatedContent }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to post");
+      }
+
+      setPostToXSuccess(data.url);
+    } catch (error) {
+      console.error("Post to X error:", error);
+      alert(error instanceof Error ? error.message : "Failed to post to X");
+    } finally {
+      setIsPostingToX(false);
+    }
   };
 
   const handleAddChannel = async () => {
@@ -446,6 +541,7 @@ export default function BroadcastPage() {
     setWebSources([]);
     setDebugInfo(null);
     setShowDebugInfo(false);
+    setPostToXSuccess(null);
     setShowGenerateModal(true);
   };
 
@@ -575,14 +671,68 @@ export default function BroadcastPage() {
             </p>
           </div>
 
-          <Link href="/broadcast/build">
-            <Button className="gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-              Build Content
-            </Button>
-          </Link>
+          <div className="flex items-center gap-3">
+            {/* Connected Accounts */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border">
+              <span className="text-xs text-muted-foreground mr-1">Connected:</span>
+              {CONNECTABLE_PLATFORMS.map((platform) => {
+                const connection = socialConnections.find((c) => c.platform === platform.id);
+                const isConnected = !!connection;
+
+                return (
+                  <div key={platform.id} className="relative group">
+                    {isConnected ? (
+                      <button
+                        onClick={() => platform.id === "x" && handleDisconnectX()}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-background border border-green-500/30 hover:border-red-500/50 transition-colors"
+                        title={`Connected as @${connection.platform_username}`}
+                      >
+                        {connection.platform_avatar_url ? (
+                          <img
+                            src={connection.platform_avatar_url}
+                            alt=""
+                            className="w-4 h-4 rounded-full"
+                          />
+                        ) : (
+                          <span className="text-sm">{platform.icon}</span>
+                        )}
+                        <span className="text-xs text-green-600">@{connection.platform_username}</span>
+                        <svg className="w-3 h-3 text-muted-foreground group-hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => platform.id === "x" && platform.available && handleConnectX()}
+                        disabled={!platform.available}
+                        className={cn(
+                          "flex items-center gap-1.5 px-2 py-1 rounded-md border transition-colors",
+                          platform.available
+                            ? "bg-background border-border hover:border-primary/50 cursor-pointer"
+                            : "bg-muted/30 border-border/50 cursor-not-allowed opacity-50"
+                        )}
+                        title={platform.available ? `Connect ${platform.name}` : "Coming soon"}
+                      >
+                        <span className="text-sm">{platform.icon}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {platform.available ? "Connect" : "Soon"}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <Link href="/broadcast/build">
+              <Button className="gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                Build Content
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Ideas Board */}
@@ -1470,14 +1620,64 @@ export default function BroadcastPage() {
                   <div className="bg-muted/30 border border-border rounded-lg p-4">
                     <pre className="whitespace-pre-wrap text-sm font-sans">{generatedContent}</pre>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Character count: {generatedContent.length}
-                    {generateChannel === "x" && (
-                      <span className={generatedContent.length > 280 ? " text-destructive" : " text-green-600"}>
-                        {" "}({generatedContent.length > 280 ? "over" : "within"} 280 limit)
-                      </span>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Character count: {generatedContent.length}
+                      {generateChannel === "x" && (
+                        <span className={generatedContent.length > 280 ? " text-destructive" : " text-green-600"}>
+                          {" "}({generatedContent.length > 280 ? "over" : "within"} 280 limit)
+                        </span>
+                      )}
+                    </p>
+
+                    {/* Post to X button */}
+                    {generateChannel === "x" && generatedContent.length <= 280 && (
+                      <div className="flex items-center gap-2">
+                        {postToXSuccess ? (
+                          <a
+                            href={postToXSuccess}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-green-500/20 text-green-600 hover:bg-green-500/30 transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Posted! View on X
+                          </a>
+                        ) : socialConnections.find((c) => c.platform === "x") ? (
+                          <button
+                            onClick={handlePostToX}
+                            disabled={isPostingToX}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-black text-white hover:bg-black/80 transition-colors disabled:opacity-50"
+                          >
+                            {isPostingToX ? (
+                              <>
+                                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                                Posting...
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-sm">𝕏</span>
+                                Post to X
+                              </>
+                            )}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleConnectX}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-border hover:border-primary/50 transition-colors"
+                          >
+                            <span className="text-sm">𝕏</span>
+                            Connect X to Post
+                          </button>
+                        )}
+                      </div>
                     )}
-                  </p>
+                  </div>
 
                   {/* Debug Info Panel */}
                   {showDebugInfo && debugInfo && (
