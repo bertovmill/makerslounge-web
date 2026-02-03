@@ -117,6 +117,13 @@ export default function BroadcastPage() {
   const [isPostingToX, setIsPostingToX] = useState(false);
   const [postToXSuccess, setPostToXSuccess] = useState<string | null>(null);
 
+  // Scheduling State
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [scheduleSuccess, setScheduleSuccess] = useState<string | null>(null);
+
   // Edit Idea Modal State
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingIdea, setEditingIdea] = useState<BroadcastIdea | null>(null);
@@ -304,6 +311,51 @@ export default function BroadcastPage() {
       alert(error instanceof Error ? error.message : "Failed to post to X");
     } finally {
       setIsPostingToX(false);
+    }
+  };
+
+  const handleSchedulePost = async () => {
+    if (!generatedContent || !scheduleDate || !scheduleTime) {
+      alert("Please select a date and time for scheduling");
+      return;
+    }
+
+    const scheduledFor = new Date(`${scheduleDate}T${scheduleTime}`);
+    if (scheduledFor <= new Date()) {
+      alert("Scheduled time must be in the future");
+      return;
+    }
+
+    setIsScheduling(true);
+    setScheduleSuccess(null);
+
+    try {
+      const response = await fetch("/api/schedule-post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: generatedContent,
+          platform: generateChannel,
+          scheduledFor: scheduledFor.toISOString(),
+          ideaId: selectedIdea?.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to schedule");
+      }
+
+      setScheduleSuccess(scheduledFor.toLocaleString());
+      setShowScheduleModal(false);
+      setScheduleDate("");
+      setScheduleTime("");
+    } catch (error) {
+      console.error("Schedule error:", error);
+      alert(error instanceof Error ? error.message : "Failed to schedule post");
+    } finally {
+      setIsScheduling(false);
     }
   };
 
@@ -563,6 +615,10 @@ export default function BroadcastPage() {
     setPostToXSuccess(null);
     setRefinementPrompt("");
     setConversationHistory([]);
+    setScheduleSuccess(null);
+    setScheduleDate("");
+    setScheduleTime("");
+    setShowScheduleModal(false);
     setShowGenerateModal(true);
   };
 
@@ -1736,10 +1792,17 @@ export default function BroadcastPage() {
                       )}
                     </p>
 
-                    {/* Post to X button */}
+                    {/* Post/Schedule buttons */}
                     {generateChannel === "x" && generatedContent.length <= 280 && (
                       <div className="flex items-center gap-2">
-                        {postToXSuccess ? (
+                        {scheduleSuccess ? (
+                          <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-600">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Scheduled for {scheduleSuccess}
+                          </span>
+                        ) : postToXSuccess ? (
                           <a
                             href={postToXSuccess}
                             target="_blank"
@@ -1752,26 +1815,37 @@ export default function BroadcastPage() {
                             Posted! View on X
                           </a>
                         ) : socialConnections.find((c) => c.platform === "x") ? (
-                          <button
-                            onClick={handlePostToX}
-                            disabled={isPostingToX}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-black text-white hover:bg-black/80 transition-colors disabled:opacity-50"
-                          >
-                            {isPostingToX ? (
-                              <>
-                                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                </svg>
-                                Posting...
-                              </>
-                            ) : (
-                              <>
-                                <span className="text-sm">𝕏</span>
-                                Post to X
-                              </>
-                            )}
-                          </button>
+                          <>
+                            <button
+                              onClick={() => setShowScheduleModal(true)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-border hover:border-primary/50 transition-colors"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Schedule
+                            </button>
+                            <button
+                              onClick={handlePostToX}
+                              disabled={isPostingToX}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-black text-white hover:bg-black/80 transition-colors disabled:opacity-50"
+                            >
+                              {isPostingToX ? (
+                                <>
+                                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                  </svg>
+                                  Posting...
+                                </>
+                              ) : (
+                                <>
+                                  <span className="text-sm">𝕏</span>
+                                  Post Now
+                                </>
+                              )}
+                            </button>
+                          </>
                         ) : (
                           <button
                             onClick={handleConnectX}
@@ -1784,6 +1858,69 @@ export default function BroadcastPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Schedule Modal */}
+                  {showScheduleModal && (
+                    <div className="mt-4 p-4 border border-border rounded-lg bg-muted/30">
+                      <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Schedule Post
+                      </h4>
+                      <div className="flex gap-3 mb-3">
+                        <div className="flex-1">
+                          <label className="block text-xs text-muted-foreground mb-1">Date</label>
+                          <input
+                            type="date"
+                            value={scheduleDate}
+                            onChange={(e) => setScheduleDate(e.target.value)}
+                            min={new Date().toISOString().split("T")[0]}
+                            className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-xs text-muted-foreground mb-1">Time</label>
+                          <input
+                            type="time"
+                            value={scheduleTime}
+                            onChange={(e) => setScheduleTime(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => setShowScheduleModal(false)}
+                          className="px-3 py-1.5 rounded-lg text-sm font-medium border border-border hover:bg-muted transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSchedulePost}
+                          disabled={isScheduling || !scheduleDate || !scheduleTime}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                        >
+                          {isScheduling ? (
+                            <>
+                              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                              Scheduling...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Schedule Post
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Debug Info Panel */}
                   {showDebugInfo && debugInfo && (
