@@ -1,55 +1,55 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 
-interface WebSearchResult {
+interface WebSource {
   title: string;
   url: string;
-  snippet: string;
+  cited_text?: string;
 }
 
-async function performWebSearch(query: string): Promise<WebSearchResult[]> {
-  try {
-    const tavilyApiKey = process.env.TAVILY_API_KEY;
-    if (!tavilyApiKey) {
-      console.log("Tavily API key not configured, skipping web search");
-      return [];
+// Extract text content and citations from the response
+function extractContentAndSources(response: Anthropic.Message): {
+  content: string;
+  sources: WebSource[];
+  webSearchUsed: boolean;
+} {
+  let content = "";
+  const sources: WebSource[] = [];
+  let webSearchUsed = false;
+  const seenUrls = new Set<string>();
+
+  for (const block of response.content) {
+    if (block.type === "text") {
+      content += block.text;
+
+      // Extract citations if present
+      if ("citations" in block && Array.isArray(block.citations)) {
+        for (const citation of block.citations) {
+          if (
+            citation.type === "web_search_result_location" &&
+            citation.url &&
+            !seenUrls.has(citation.url)
+          ) {
+            seenUrls.add(citation.url);
+            sources.push({
+              title: citation.title || "Source",
+              url: citation.url,
+              cited_text: citation.cited_text || undefined,
+            });
+          }
+        }
+      }
+    } else if (block.type === "server_tool_use" && block.name === "web_search") {
+      webSearchUsed = true;
     }
-
-    const response = await fetch("https://api.tavily.com/search", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        api_key: tavilyApiKey,
-        query,
-        search_depth: "basic",
-        include_answer: false,
-        include_raw_content: false,
-        max_results: 5,
-      }),
-    });
-
-    if (!response.ok) {
-      console.error("Tavily search failed");
-      return [];
-    }
-
-    const data = await response.json();
-    return data.results.map((r: { title: string; url: string; content: string }) => ({
-      title: r.title,
-      url: r.url,
-      snippet: r.content.slice(0, 300),
-    }));
-  } catch (error) {
-    console.error("Web search error:", error);
-    return [];
   }
+
+  return { content: content.trim(), sources, webSearchUsed };
 }
 
 export async function POST(request: Request) {
   try {
-    const { title, notes, channel, tone, channelName, useWebSearch, searchQuery } = await request.json();
+    const { title, notes, channel, tone, channelName, mediaType, useWebSearch, searchQuery } = await request.json();
 
     if (!title) {
       return NextResponse.json(
@@ -65,26 +65,6 @@ export async function POST(request: Request) {
     const anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,
     });
-
-    // Perform web search if enabled
-    let webSearchResults: WebSearchResult[] = [];
-    let webSearchContext = "";
-
-    if (useWebSearch) {
-      const query = searchQuery || title;
-      webSearchResults = await performWebSearch(query);
-
-      if (webSearchResults.length > 0) {
-        webSearchContext = `\n\n## Recent Web Research
-Here are some current, relevant findings from the web to inform your post:
-
-${webSearchResults.map((r, i) => `${i + 1}. **${r.title}**
-   ${r.snippet}
-   Source: ${r.url}`).join("\n\n")}
-
-Use these insights to make the post more current, relevant, and informed. You can reference trends, statistics, or recent developments mentioned above. Don't explicitly cite sources in the post unless it's natural to do so.`;
-      }
-    }
 
     // Define channel-specific guidelines
     const channelGuidelines: Record<string, string> = {
@@ -176,8 +156,26 @@ Use these insights to make the post more current, relevant, and informed. You ca
 
     const selectedChannel = channel || "default";
     const selectedTone = tone || "casual";
+    const selectedMediaType = mediaType || "none";
     const guidelines = getChannelGuidelines(selectedChannel, channelName);
     const toneGuide = toneGuidelines[selectedTone] || toneGuidelines.casual;
+
+    // Media type guidance
+    const mediaGuidelines: Record<string, string> = {
+      none: "",
+      image: "\n- This post will include an image, so write copy that complements visual content\n- Consider referencing what might be shown in the image\n- The text should work together with the visual, not repeat it",
+      video: "\n- This post will include a video, so write copy that hooks viewers to watch\n- Tease the content of the video without giving everything away\n- Include a reason to watch or key takeaway",
+      carousel: "\n- This post will include multiple images/slides (carousel)\n- Write copy that encourages swiping through\n- Consider teasing the value across the slides",
+    };
+    const mediaGuide = mediaGuidelines[selectedMediaType] || "";
+
+    // Build system prompt - adjust based on whether web search is enabled
+    const webSearchInstructions = useWebSearch
+      ? `\n- IMPORTANT: Use the web_search tool to find current, relevant information about the topic before writing the post
+- Search for recent news, trends, statistics, or developments related to the topic
+- Use the search results to make the post more current, relevant, and informed
+- Don't explicitly cite sources in the post unless it's natural to do so`
+      : "";
 
     const systemPrompt = `You are an expert content creator and social media strategist. Your job is to transform rough ideas and notes into polished, ready-to-post content.
 
@@ -189,32 +187,49 @@ Important:
 - Transform the user's rough idea into a polished, engaging post
 - Keep the original intent and message
 - Make it sound natural, not AI-generated
-- Don't add information that wasn't implied in the original idea${useWebSearch ? " (unless informed by the web research provided)" : ""}
-- If the notes contain specific details, incorporate them naturally${useWebSearch ? "\n- If web research is provided, use it to make the post more current, relevant, and informed" : ""}
+- If the notes contain specific details, incorporate them naturally${webSearchInstructions}${mediaGuide}
 
 Output only the final post content - no explanations, no "here's your post", just the content itself.`;
 
-    const userPrompt = `Transform this idea into a ready-to-post ${selectedChannel === "default" ? "social media post" : selectedChannel + " post"}:
+    const mediaTypeLabel = selectedMediaType !== "none" ? ` (with ${selectedMediaType})` : "";
+    const searchHint = useWebSearch && searchQuery ? `\n\nSearch topic hint: ${searchQuery}` : "";
+    const userPrompt = `Transform this idea into a ready-to-post ${selectedChannel === "default" ? "social media post" : selectedChannel + " post"}${mediaTypeLabel}:
 
 Title/Topic: ${title}
-${notes ? `\nNotes/Context: ${notes}` : ""}${webSearchContext}`;
+${notes ? `\nNotes/Context: ${notes}` : ""}${searchHint}`;
 
-    const response = await anthropic.messages.create({
+    // Build request options - use explicit type for web search tool compatibility
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const requestOptions: any = {
       model: "claude-sonnet-4-20250514",
       max_tokens: 1000,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
-    });
+    };
 
-    const generatedContent =
-      response.content[0].type === "text" ? response.content[0].text : "";
+    // Add web search tool if enabled
+    if (useWebSearch) {
+      requestOptions.tools = [
+        {
+          type: "web_search_20250305",
+          name: "web_search",
+          max_uses: 3,
+        },
+      ];
+    }
+
+    const response = await anthropic.messages.create(requestOptions);
+
+    // Extract content and sources from response
+    const { content: generatedContent, sources, webSearchUsed } = extractContentAndSources(response);
 
     return NextResponse.json({
-      content: generatedContent.trim(),
+      content: generatedContent,
       channel: selectedChannel,
       tone: selectedTone,
-      webSearchUsed: useWebSearch && webSearchResults.length > 0,
-      sources: webSearchResults.length > 0 ? webSearchResults.map(r => ({ title: r.title, url: r.url })) : undefined,
+      mediaType: selectedMediaType,
+      webSearchUsed,
+      sources: sources.length > 0 ? sources : undefined,
       // Debug info for viewing the API call
       debug: {
         request: {
@@ -222,6 +237,7 @@ ${notes ? `\nNotes/Context: ${notes}` : ""}${webSearchContext}`;
           max_tokens: 1000,
           system: systemPrompt,
           messages: [{ role: "user", content: userPrompt }],
+          tools: useWebSearch ? [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }] : undefined,
         },
         response: {
           id: response.id,

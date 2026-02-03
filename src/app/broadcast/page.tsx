@@ -93,8 +93,11 @@ export default function BroadcastPage() {
   // Generate Post Modal State
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [selectedIdea, setSelectedIdea] = useState<BroadcastIdea | null>(null);
+  const [generateIdeaTitle, setGenerateIdeaTitle] = useState("");
+  const [generateIdeaNotes, setGenerateIdeaNotes] = useState("");
   const [generateChannel, setGenerateChannel] = useState<string>("x");
   const [generateTone, setGenerateTone] = useState<string>("casual");
+  const [generateMediaType, setGenerateMediaType] = useState<string>("none");
   const [generatedContent, setGeneratedContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -103,6 +106,11 @@ export default function BroadcastPage() {
   const [webSources, setWebSources] = useState<{ title: string; url: string }[]>([]);
   const [debugInfo, setDebugInfo] = useState<{ request: unknown; response: unknown } | null>(null);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
+
+  // Refinement State
+  const [refinementPrompt, setRefinementPrompt] = useState("");
+  const [isRefining, setIsRefining] = useState(false);
+  const [conversationHistory, setConversationHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
 
   // Social Connections State
   const [socialConnections, setSocialConnections] = useState<SocialConnection[]>([]);
@@ -135,8 +143,14 @@ export default function BroadcastPage() {
         return;
       }
 
-      await Promise.all([loadIdeas(), loadAccounts(), loadCustomChannels(), loadSocialConnections()]);
+      // Set loading false immediately after auth check - data loads in background
       setLoading(false);
+
+      // Load data in parallel but don't block the UI
+      loadIdeas();
+      loadAccounts();
+      loadCustomChannels();
+      loadSocialConnections();
     };
 
     checkAuth();
@@ -149,7 +163,8 @@ export default function BroadcastPage() {
     });
 
     return () => subscription.unsubscribe();
-  }, [router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadIdeas = async () => {
     const { data, error } = await supabase
@@ -468,7 +483,7 @@ export default function BroadcastPage() {
 
   // Generate post content
   const handleGeneratePost = async () => {
-    if (!selectedIdea) return;
+    if (!selectedIdea || !generateIdeaTitle.trim()) return;
 
     setIsGenerating(true);
     setGeneratedContent("");
@@ -483,11 +498,12 @@ export default function BroadcastPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: selectedIdea.title,
-          notes: selectedIdea.notes,
+          title: generateIdeaTitle,
+          notes: generateIdeaNotes,
           channel: generateChannel,
           tone: generateTone,
           channelName: channelName,
+          mediaType: generateMediaType,
           useWebSearch: useWebSearch,
           searchQuery: customSearchQuery || undefined,
         }),
@@ -528,6 +544,8 @@ export default function BroadcastPage() {
   // Open generate modal for an idea
   const openGenerateModal = (idea: BroadcastIdea) => {
     setSelectedIdea(idea);
+    setGenerateIdeaTitle(idea.title);
+    setGenerateIdeaNotes(idea.notes || "");
     // Pre-select channel if the idea has one
     if (idea.channels && idea.channels.length > 0) {
       setGenerateChannel(idea.channels[0]);
@@ -535,6 +553,7 @@ export default function BroadcastPage() {
       setGenerateChannel("x");
     }
     setGenerateTone("casual");
+    setGenerateMediaType("none");
     setGeneratedContent("");
     setUseWebSearch(false);
     setCustomSearchQuery("");
@@ -542,7 +561,49 @@ export default function BroadcastPage() {
     setDebugInfo(null);
     setShowDebugInfo(false);
     setPostToXSuccess(null);
+    setRefinementPrompt("");
+    setConversationHistory([]);
     setShowGenerateModal(true);
+  };
+
+  // Handle post refinement
+  const handleRefinePost = async (quickAction?: string) => {
+    const prompt = quickAction || refinementPrompt;
+    if (!prompt.trim() || !generatedContent) return;
+
+    setIsRefining(true);
+
+    try {
+      const response = await fetch("/api/refine-post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          originalIdea: {
+            title: generateIdeaTitle,
+            notes: generateIdeaNotes,
+          },
+          currentContent: generatedContent,
+          refinementRequest: prompt,
+          channel: generateChannel,
+          tone: generateTone,
+          conversationHistory: conversationHistory,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to refine");
+      }
+
+      setGeneratedContent(data.content);
+      setConversationHistory(data.conversationHistory || []);
+      setRefinementPrompt("");
+    } catch (error) {
+      console.error("Refine error:", error);
+    } finally {
+      setIsRefining(false);
+    }
   };
 
   // Open edit modal for an idea
@@ -1429,13 +1490,27 @@ export default function BroadcastPage() {
             </div>
 
             <div className="p-4 space-y-4">
-              {/* Original Idea Preview */}
-              <div className="bg-muted/50 rounded-lg p-4">
-                <label className="block text-xs font-medium text-muted-foreground mb-1">Your Idea</label>
-                <h3 className="font-medium">{selectedIdea.title}</h3>
-                {selectedIdea.notes && (
-                  <p className="text-sm text-muted-foreground mt-1">{selectedIdea.notes}</p>
-                )}
+              {/* Editable Idea */}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">Your Idea</label>
+                  <input
+                    type="text"
+                    value={generateIdeaTitle}
+                    onChange={(e) => setGenerateIdeaTitle(e.target.value)}
+                    placeholder="What's your idea?"
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
+                  />
+                </div>
+                <div>
+                  <textarea
+                    value={generateIdeaNotes}
+                    onChange={(e) => setGenerateIdeaNotes(e.target.value)}
+                    placeholder="Add notes or context..."
+                    rows={2}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm text-muted-foreground resize-none"
+                  />
+                </div>
               </div>
 
               {/* Channel Selection */}
@@ -1501,6 +1576,37 @@ export default function BroadcastPage() {
                 </div>
               </div>
 
+              {/* Media Type Selection */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Includes Media</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: "none", name: "Text Only", emoji: "📝" },
+                    { id: "image", name: "Image", emoji: "🖼️" },
+                    { id: "video", name: "Video", emoji: "🎬" },
+                    { id: "carousel", name: "Carousel", emoji: "📸" },
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setGenerateMediaType(m.id)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-sm font-medium border transition-all",
+                        generateMediaType === m.id
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background border-border hover:border-primary/50"
+                      )}
+                    >
+                      <span className="mr-1">{m.emoji}</span>
+                      {m.name}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  Let the AI know if you plan to attach media to your post
+                </p>
+              </div>
+
               {/* Web Search Toggle */}
               <div className="border border-border rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between">
@@ -1534,7 +1640,7 @@ export default function BroadcastPage() {
                       type="text"
                       value={customSearchQuery}
                       onChange={(e) => setCustomSearchQuery(e.target.value)}
-                      placeholder={`Search for: "${selectedIdea?.title || "your topic"}"`}
+                      placeholder={`Search for: "${generateIdeaTitle || "your topic"}"`}
                       className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
@@ -1547,7 +1653,7 @@ export default function BroadcastPage() {
               {/* Generate Button */}
               <Button
                 onClick={handleGeneratePost}
-                disabled={isGenerating}
+                disabled={isGenerating || !generateIdeaTitle.trim()}
                 className="w-full gap-2"
               >
                 {isGenerating ? (
@@ -1745,6 +1851,69 @@ export default function BroadcastPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Refinement Section */}
+                  <div className="mt-4 pt-4 border-t border-border space-y-3">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      <span className="text-sm font-medium">Refine</span>
+                      {conversationHistory.length > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          ({Math.floor(conversationHistory.length / 2)} refinement{Math.floor(conversationHistory.length / 2) !== 1 ? "s" : ""})
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { label: "Shorter", prompt: "Make it shorter and more concise" },
+                        { label: "Longer", prompt: "Expand on the key points with more detail" },
+                        { label: "More casual", prompt: "Make it more casual and conversational" },
+                        { label: "More professional", prompt: "Make it more professional and polished" },
+                        { label: "Add hook", prompt: "Add a stronger hook at the beginning" },
+                        { label: "Remove emojis", prompt: "Remove all emojis" },
+                      ].map((action) => (
+                        <button
+                          key={action.label}
+                          onClick={() => handleRefinePost(action.prompt)}
+                          disabled={isRefining}
+                          className="px-2.5 py-1 text-xs rounded-full border border-border hover:border-primary/50 hover:bg-muted/50 transition-colors disabled:opacity-50"
+                        >
+                          {action.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Custom Refinement Input */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={refinementPrompt}
+                        onChange={(e) => setRefinementPrompt(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && !isRefining && handleRefinePost()}
+                        placeholder="Ask for specific changes..."
+                        className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        disabled={isRefining}
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => handleRefinePost()}
+                        disabled={isRefining || !refinementPrompt.trim()}
+                      >
+                        {isRefining ? (
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                        ) : (
+                          "Refine"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

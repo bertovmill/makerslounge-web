@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase-server";
 import { cookies } from "next/headers";
 
 // X OAuth 2.0 configuration
@@ -45,19 +45,9 @@ export async function GET() {
     }
 
     // Verify user is authenticated
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-    const cookieStore = await cookies();
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          cookie: cookieStore.toString(),
-        },
-      },
-    });
-
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+    const cookieStore = await cookies();
 
     if (!user) {
       return NextResponse.json(
