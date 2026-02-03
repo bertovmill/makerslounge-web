@@ -74,6 +74,32 @@ export default function BroadcastPage() {
   const [newChannelIcon, setNewChannelIcon] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Generate Post Modal State
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [selectedIdea, setSelectedIdea] = useState<BroadcastIdea | null>(null);
+  const [generateChannel, setGenerateChannel] = useState<string>("x");
+  const [generateTone, setGenerateTone] = useState<string>("casual");
+  const [generatedContent, setGeneratedContent] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [useWebSearch, setUseWebSearch] = useState(false);
+  const [customSearchQuery, setCustomSearchQuery] = useState("");
+  const [webSources, setWebSources] = useState<{ title: string; url: string }[]>([]);
+  const [debugInfo, setDebugInfo] = useState<{ request: unknown; response: unknown } | null>(null);
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
+
+  // Edit Idea Modal State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingIdea, setEditingIdea] = useState<BroadcastIdea | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [editAccountId, setEditAccountId] = useState<string | null>(null);
+  const [editChannels, setEditChannels] = useState<string[]>([]);
+  const [isAdjusting, setIsAdjusting] = useState(false);
+  const [adjustResult, setAdjustResult] = useState("");
+  const [customAiPrompt, setCustomAiPrompt] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+
   // Combine default and custom channels
   const allChannels = [...DEFAULT_CHANNELS, ...customChannels];
 
@@ -345,6 +371,185 @@ export default function BroadcastPage() {
     setNewMedia((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Generate post content
+  const handleGeneratePost = async () => {
+    if (!selectedIdea) return;
+
+    setIsGenerating(true);
+    setGeneratedContent("");
+    setWebSources([]);
+
+    // Find the channel name for custom channels
+    const channelInfo = allChannels.find((c) => c.id === generateChannel);
+    const channelName = channelInfo?.name;
+
+    try {
+      const response = await fetch("/api/generate-post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: selectedIdea.title,
+          notes: selectedIdea.notes,
+          channel: generateChannel,
+          tone: generateTone,
+          channelName: channelName,
+          useWebSearch: useWebSearch,
+          searchQuery: customSearchQuery || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate");
+      }
+
+      setGeneratedContent(data.content);
+      if (data.sources) {
+        setWebSources(data.sources);
+      }
+      if (data.debug) {
+        setDebugInfo(data.debug);
+      }
+    } catch (error) {
+      console.error("Generate error:", error);
+      setGeneratedContent("Error generating content. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Copy to clipboard
+  const handleCopyContent = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedContent);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error("Copy failed:", err);
+    }
+  };
+
+  // Open generate modal for an idea
+  const openGenerateModal = (idea: BroadcastIdea) => {
+    setSelectedIdea(idea);
+    // Pre-select channel if the idea has one
+    if (idea.channels && idea.channels.length > 0) {
+      setGenerateChannel(idea.channels[0]);
+    } else {
+      setGenerateChannel("x");
+    }
+    setGenerateTone("casual");
+    setGeneratedContent("");
+    setUseWebSearch(false);
+    setCustomSearchQuery("");
+    setWebSources([]);
+    setDebugInfo(null);
+    setShowDebugInfo(false);
+    setShowGenerateModal(true);
+  };
+
+  // Open edit modal for an idea
+  const openEditModal = (idea: BroadcastIdea) => {
+    setEditingIdea(idea);
+    setEditTitle(idea.title);
+    setEditNotes(idea.notes || "");
+    setEditAccountId(idea.account_id);
+    setEditChannels(idea.channels || []);
+    setAdjustResult("");
+    setCustomAiPrompt("");
+    setShowEditModal(true);
+  };
+
+  // Handle AI adjustment
+  const handleAiAdjust = async (action: string) => {
+    setIsAdjusting(true);
+    setAdjustResult("");
+
+    try {
+      const response = await fetch("/api/adjust-idea", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editTitle,
+          notes: editNotes,
+          action,
+          customPrompt: action === "custom" ? customAiPrompt : undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to adjust");
+      }
+
+      setAdjustResult(data.result);
+    } catch (error) {
+      console.error("Adjust error:", error);
+      setAdjustResult("Error processing request. Please try again.");
+    } finally {
+      setIsAdjusting(false);
+    }
+  };
+
+  // Apply AI suggestion to notes
+  const applyToNotes = () => {
+    setEditNotes(adjustResult);
+    setAdjustResult("");
+  };
+
+  // Apply first line as title (for improve_title action)
+  const applyAsTitle = (text: string) => {
+    // Remove numbering if present (e.g., "1. " or "1) ")
+    const cleanTitle = text.replace(/^\d+[\.\)]\s*/, "").trim();
+    setEditTitle(cleanTitle);
+  };
+
+  // Save edited idea
+  const handleSaveEdit = async () => {
+    if (!editingIdea || !editTitle.trim()) return;
+
+    setSavingEdit(true);
+
+    const { error } = await supabase
+      .from("broadcast_ideas")
+      .update({
+        title: editTitle,
+        notes: editNotes,
+        account_id: editAccountId,
+        channels: editChannels,
+      })
+      .eq("id", editingIdea.id);
+
+    setSavingEdit(false);
+
+    if (error) {
+      console.error("Error saving idea:", error);
+      return;
+    }
+
+    // Update local state
+    setIdeas((prev) =>
+      prev.map((idea) =>
+        idea.id === editingIdea.id
+          ? { ...idea, title: editTitle, notes: editNotes, account_id: editAccountId, channels: editChannels }
+          : idea
+      )
+    );
+
+    setShowEditModal(false);
+  };
+
+  // Toggle channel in edit mode
+  const toggleEditChannel = (channelId: string) => {
+    setEditChannels((prev) =>
+      prev.includes(channelId)
+        ? prev.filter((id) => id !== channelId)
+        : [...prev, channelId]
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -411,21 +616,39 @@ export default function BroadcastPage() {
                       key={idea.id}
                       draggable
                       onDragStart={(e) => handleDragStart(e, idea.id)}
+                      onClick={() => openEditModal(idea)}
                       className={cn(
-                        "bg-background border border-border rounded-lg p-4 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-all",
-                        draggedId === idea.id && "opacity-50"
+                        "bg-background border border-border rounded-lg p-4 cursor-pointer hover:shadow-md hover:border-primary/30 transition-all",
+                        draggedId === idea.id && "opacity-50 cursor-grabbing"
                       )}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <h3 className="font-medium text-sm">{idea.title}</h3>
-                        <button
-                          onClick={() => handleDeleteIdea(idea.id)}
-                          className="text-muted-foreground hover:text-destructive transition-colors p-1 -m-1"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openGenerateModal(idea);
+                            }}
+                            className="text-muted-foreground hover:text-primary transition-colors p-1 -m-1"
+                            title="Generate post"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteIdea(idea.id);
+                            }}
+                            className="text-muted-foreground hover:text-destructive transition-colors p-1 -m-1"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
 
                       {/* Account & Channels */}
@@ -817,6 +1040,528 @@ export default function BroadcastPage() {
               </Button>
               <Button onClick={handleAddChannel} disabled={!newChannelName.trim() || !newChannelIcon.trim()}>
                 Add Channel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Idea Modal */}
+      {showEditModal && editingIdea && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-background border border-border rounded-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="text-lg font-semibold">Edit Idea</h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left: Edit Fields */}
+                <div className="space-y-4">
+                  {/* Title */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">Title</label>
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      placeholder="What's your idea?"
+                      className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">Notes</label>
+                    <textarea
+                      value={editNotes}
+                      onChange={(e) => setEditNotes(e.target.value)}
+                      placeholder="Add your notes, ideas, or context..."
+                      rows={6}
+                      className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                    />
+                  </div>
+
+                  {/* Account */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">Account</label>
+                    <select
+                      value={editAccountId || ""}
+                      onChange={(e) => setEditAccountId(e.target.value || null)}
+                      className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                      <option value="">No account selected</option>
+                      {accounts.map((account) => (
+                        <option key={account.id} value={account.id}>
+                          {account.type === "personal" ? "👤" : "🏢"} {account.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Channels */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">Channels</label>
+                    <div className="flex flex-wrap gap-2">
+                      {allChannels.map((channel) => (
+                        <button
+                          key={channel.id}
+                          type="button"
+                          onClick={() => toggleEditChannel(channel.id)}
+                          className={cn(
+                            "px-2.5 py-1 rounded-full text-xs font-medium border transition-all",
+                            editChannels.includes(channel.id)
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background border-border hover:border-primary/50"
+                          )}
+                        >
+                          <span className="mr-1">{channel.icon}</span>
+                          {channel.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: AI Tools */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">AI Adjust</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: "expand", label: "Expand", icon: "📝", desc: "Add more details" },
+                        { id: "improve_title", label: "Better Titles", icon: "✨", desc: "Generate options" },
+                        { id: "clarify", label: "Clarify", icon: "🎯", desc: "Make it clearer" },
+                        { id: "shorten", label: "Shorten", icon: "✂️", desc: "Condense it" },
+                        { id: "angles", label: "Find Angles", icon: "💡", desc: "Different perspectives" },
+                        { id: "brainstorm", label: "Brainstorm", icon: "🧠", desc: "Related ideas" },
+                      ].map((action) => (
+                        <button
+                          key={action.id}
+                          onClick={() => handleAiAdjust(action.id)}
+                          disabled={isAdjusting}
+                          className="flex items-start gap-2 p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/50 transition-all text-left disabled:opacity-50"
+                        >
+                          <span className="text-lg">{action.icon}</span>
+                          <div>
+                            <div className="text-sm font-medium">{action.label}</div>
+                            <div className="text-xs text-muted-foreground">{action.desc}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Custom Prompt */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">Custom Prompt</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={customAiPrompt}
+                        onChange={(e) => setCustomAiPrompt(e.target.value)}
+                        placeholder="Ask AI to do something specific..."
+                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => handleAiAdjust("custom")}
+                        disabled={isAdjusting || !customAiPrompt.trim()}
+                      >
+                        {isAdjusting ? "..." : "Go"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* AI Result */}
+                  {(isAdjusting || adjustResult) && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-medium">AI Suggestion</label>
+                        {adjustResult && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={applyToNotes}
+                              className="text-xs px-2 py-1 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                            >
+                              Apply to Notes
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="bg-muted/30 border border-border rounded-lg p-3 max-h-[200px] overflow-y-auto">
+                        {isAdjusting ? (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            Thinking...
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {adjustResult.split("\n").map((line, i) => {
+                              // Check if line looks like a title suggestion (numbered)
+                              const isTitleOption = /^\d+[\.\)]/.test(line.trim());
+                              return line.trim() ? (
+                                <div key={i} className="flex items-start gap-2">
+                                  <p className="text-sm flex-1">{line}</p>
+                                  {isTitleOption && (
+                                    <button
+                                      onClick={() => applyAsTitle(line)}
+                                      className="text-xs px-2 py-0.5 rounded bg-muted hover:bg-primary/10 hover:text-primary transition-colors flex-shrink-0"
+                                    >
+                                      Use
+                                    </button>
+                                  )}
+                                </div>
+                              ) : null;
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-4 border-t border-border">
+              <Button
+                variant="outline"
+                onClick={() => openGenerateModal(editingIdea)}
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Generate Post
+              </Button>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setShowEditModal(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveEdit} disabled={!editTitle.trim() || savingEdit}>
+                  {savingEdit ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Generate Post Modal */}
+      {showGenerateModal && selectedIdea && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-background border border-border rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <h2 className="text-lg font-semibold">Generate Post</h2>
+              </div>
+              <button
+                onClick={() => setShowGenerateModal(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              {/* Original Idea Preview */}
+              <div className="bg-muted/50 rounded-lg p-4">
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Your Idea</label>
+                <h3 className="font-medium">{selectedIdea.title}</h3>
+                {selectedIdea.notes && (
+                  <p className="text-sm text-muted-foreground mt-1">{selectedIdea.notes}</p>
+                )}
+              </div>
+
+              {/* Channel Selection */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Platform</label>
+                <div className="flex flex-wrap gap-2">
+                  {allChannels.map((channel) => (
+                    <button
+                      key={channel.id}
+                      type="button"
+                      onClick={() => setGenerateChannel(channel.id)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-sm font-medium border transition-all",
+                        generateChannel === channel.id
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background border-border hover:border-primary/50"
+                      )}
+                    >
+                      <span className="mr-1">{channel.icon}</span>
+                      {channel.name}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setShowChannelModal(true)}
+                    className="px-3 py-1.5 rounded-full text-sm font-medium border border-dashed border-border hover:border-primary/50 transition-all flex items-center gap-1"
+                    title="Add custom channel"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              {/* Tone Selection */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Tone</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: "casual", name: "Casual", emoji: "😊" },
+                    { id: "professional", name: "Professional", emoji: "💼" },
+                    { id: "educational", name: "Educational", emoji: "📚" },
+                    { id: "inspiring", name: "Inspiring", emoji: "✨" },
+                    { id: "humorous", name: "Humorous", emoji: "😄" },
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setGenerateTone(t.id)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-sm font-medium border transition-all",
+                        generateTone === t.id
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background border-border hover:border-primary/50"
+                      )}
+                    >
+                      <span className="mr-1">{t.emoji}</span>
+                      {t.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Web Search Toggle */}
+              <div className="border border-border rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                    </svg>
+                    <span className="text-sm font-medium">Web Research</span>
+                  </div>
+                  <button
+                    onClick={() => setUseWebSearch(!useWebSearch)}
+                    className={cn(
+                      "relative w-11 h-6 rounded-full transition-colors",
+                      useWebSearch ? "bg-primary" : "bg-muted"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "absolute top-1 w-4 h-4 rounded-full bg-white transition-transform shadow-sm",
+                        useWebSearch ? "translate-x-6" : "translate-x-1"
+                      )}
+                    />
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Search the web for current trends, news, and context to inform your post
+                </p>
+                {useWebSearch && (
+                  <div>
+                    <input
+                      type="text"
+                      value={customSearchQuery}
+                      onChange={(e) => setCustomSearchQuery(e.target.value)}
+                      placeholder={`Search for: "${selectedIdea?.title || "your topic"}"`}
+                      className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Leave empty to search using your idea title
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Generate Button */}
+              <Button
+                onClick={handleGeneratePost}
+                disabled={isGenerating}
+                className="w-full gap-2"
+              >
+                {isGenerating ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    {useWebSearch ? "Researching & Generating..." : "Generating..."}
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    {useWebSearch ? "Research & Generate" : "Generate Post"}
+                  </>
+                )}
+              </Button>
+
+              {/* Generated Content */}
+              {generatedContent && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <label className="block text-sm font-medium">Generated Content</label>
+                      {debugInfo && (
+                        <button
+                          onClick={() => setShowDebugInfo(!showDebugInfo)}
+                          className={cn(
+                            "p-1 rounded transition-colors",
+                            showDebugInfo
+                              ? "bg-primary/10 text-primary"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          )}
+                          title="View API call details"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      onClick={handleCopyContent}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
+                        copySuccess
+                          ? "bg-green-500/20 text-green-600"
+                          : "bg-muted hover:bg-muted/80"
+                      )}
+                    >
+                      {copySuccess ? (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          Copy
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <div className="bg-muted/30 border border-border rounded-lg p-4">
+                    <pre className="whitespace-pre-wrap text-sm font-sans">{generatedContent}</pre>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Character count: {generatedContent.length}
+                    {generateChannel === "x" && (
+                      <span className={generatedContent.length > 280 ? " text-destructive" : " text-green-600"}>
+                        {" "}({generatedContent.length > 280 ? "over" : "within"} 280 limit)
+                      </span>
+                    )}
+                  </p>
+
+                  {/* Debug Info Panel */}
+                  {showDebugInfo && debugInfo && (
+                    <div className="mt-4 border border-border rounded-lg overflow-hidden">
+                      <div className="bg-muted/50 px-3 py-2 border-b border-border">
+                        <span className="text-xs font-medium text-muted-foreground">API Call Details</span>
+                      </div>
+                      <div className="divide-y divide-border">
+                        {/* Request */}
+                        <div className="p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-medium text-primary">Request</span>
+                            <button
+                              onClick={() => navigator.clipboard.writeText(JSON.stringify(debugInfo.request, null, 2))}
+                              className="text-xs text-muted-foreground hover:text-foreground"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                          <pre className="text-xs bg-background rounded p-2 overflow-x-auto max-h-[200px] overflow-y-auto">
+                            {JSON.stringify(debugInfo.request, null, 2)}
+                          </pre>
+                        </div>
+                        {/* Response */}
+                        <div className="p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-medium text-green-600">Response</span>
+                            <button
+                              onClick={() => navigator.clipboard.writeText(JSON.stringify(debugInfo.response, null, 2))}
+                              className="text-xs text-muted-foreground hover:text-foreground"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                          <pre className="text-xs bg-background rounded p-2 overflow-x-auto max-h-[200px] overflow-y-auto">
+                            {JSON.stringify(debugInfo.response, null, 2)}
+                          </pre>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Web Sources */}
+                  {webSources.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <div className="flex items-center gap-2 mb-2">
+                        <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                        </svg>
+                        <span className="text-xs font-medium text-muted-foreground">Sources Used</span>
+                      </div>
+                      <div className="space-y-1">
+                        {webSources.map((source, i) => (
+                          <a
+                            key={i}
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-xs text-primary hover:underline truncate"
+                          >
+                            <span className="text-muted-foreground">{i + 1}.</span>
+                            {source.title}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between p-4 border-t border-border">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setGeneratedContent("");
+                  handleGeneratePost();
+                }}
+                disabled={isGenerating || !generatedContent}
+              >
+                Regenerate
+              </Button>
+              <Button variant="outline" onClick={() => setShowGenerateModal(false)}>
+                Close
               </Button>
             </div>
           </div>
