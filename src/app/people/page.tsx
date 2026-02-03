@@ -231,10 +231,14 @@ function PeopleContent() {
 
         {/* Results Grid */}
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="text-center">
-              <p className="text-muted-foreground">Loading makers...</p>
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+              <div key={i} className="rounded-xl border border-border/50 p-4 space-y-3">
+                <div className="w-16 h-16 rounded-full bg-muted animate-pulse mx-auto" />
+                <div className="h-4 bg-muted rounded animate-pulse w-3/4 mx-auto" />
+                <div className="h-3 bg-muted rounded animate-pulse w-1/2 mx-auto" />
+              </div>
+            ))}
           </div>
         ) : profiles.length === 0 ? (
           <Card className="glass-card p-12 text-center">
@@ -260,15 +264,57 @@ function PeopleContent() {
   );
 }
 
+function PeoplePageSkeleton() {
+  return (
+    <div className="min-h-screen">
+      {/* Hero Banner skeleton */}
+      <div className="relative h-64 md:h-80 overflow-hidden">
+        <div className="absolute inset-0 bg-muted animate-pulse" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-8 text-center">
+          <div className="h-10 bg-muted rounded animate-pulse w-64 mx-auto mb-2" />
+          <div className="h-5 bg-muted rounded animate-pulse w-80 mx-auto" />
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        {/* Search Bar skeleton */}
+        <div className="max-w-3xl mx-auto mb-8">
+          <div className="h-16 bg-muted/50 rounded-3xl animate-pulse" />
+        </div>
+
+        {/* Skills Filter Pills skeleton */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <div className="flex flex-wrap justify-center gap-2">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="h-10 w-24 bg-muted rounded-full animate-pulse" />
+            ))}
+          </div>
+        </div>
+
+        {/* Results Count skeleton */}
+        <div className="text-center mb-6">
+          <div className="h-4 bg-muted rounded animate-pulse w-32 mx-auto" />
+        </div>
+
+        {/* Results Grid skeleton */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+            <div key={i} className="rounded-xl border border-border/50 p-4 space-y-3">
+              <div className="w-16 h-16 rounded-full bg-muted animate-pulse mx-auto" />
+              <div className="h-4 bg-muted rounded animate-pulse w-3/4 mx-auto" />
+              <div className="h-3 bg-muted rounded animate-pulse w-1/2 mx-auto" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PeoplePage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      }
-    >
+    <Suspense fallback={<PeoplePageSkeleton />}>
       <PeopleContent />
     </Suspense>
   );
