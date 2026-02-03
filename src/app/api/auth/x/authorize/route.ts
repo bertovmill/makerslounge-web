@@ -46,14 +46,14 @@ export async function GET() {
 
     // Verify user is authenticated
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     const cookieStore = await cookies();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "You must be logged in to connect X" },
-        { status: 401 }
-      );
+      console.error("X OAuth auth check failed:", authError?.message || "No user session");
+      // Redirect to auth page instead of JSON error for better UX
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      return NextResponse.redirect(`${appUrl}/auth?redirect=/broadcast`);
     }
 
     // Generate PKCE values
