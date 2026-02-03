@@ -39,6 +39,7 @@ interface Project {
 export default function HomePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [userProfile, setUserProfile] = useState<{ id: string; name: string | null; photo_url: string | null; username?: string | null } | null>(null);
   const [suggestedProfiles, setSuggestedProfiles] = useState<{ id: string; name: string | null; photo_url: string | null; username?: string | null }[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -75,6 +76,7 @@ export default function HomePage() {
           setUser(user);
         }
       }
+      setAuthChecked(true);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -333,8 +335,58 @@ export default function HomePage() {
     }
   };
 
-  if (!user) {
-    return null; // Will redirect
+  if (!authChecked || !user) {
+    // Show loading skeleton while checking auth
+    return (
+      <div className="min-h-screen relative">
+        <div className="w-full max-w-[932px] mx-auto px-4 pt-6 flex gap-8">
+          <div className="w-full max-w-[600px]">
+            {/* Composer skeleton */}
+            <div className="pb-4 mb-2 border-b border-border/60">
+              <div className="flex gap-3">
+                <div className="w-10 h-10 rounded-full bg-muted animate-pulse flex-shrink-0" />
+                <div className="flex-1 space-y-3">
+                  <div className="h-7 bg-muted rounded animate-pulse w-3/4" />
+                  <div className="flex justify-between items-center">
+                    <div className="w-8 h-8 bg-muted rounded-full animate-pulse" />
+                    <div className="w-16 h-8 bg-muted rounded-full animate-pulse" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Feed skeleton */}
+            <div className="space-y-6 pt-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="space-y-3">
+                  <div className="flex gap-3">
+                    <div className="w-10 h-10 rounded-full bg-muted animate-pulse" />
+                    <div className="space-y-2 flex-1">
+                      <div className="h-4 bg-muted rounded animate-pulse w-1/4" />
+                      <div className="h-3 bg-muted rounded animate-pulse w-1/6" />
+                    </div>
+                  </div>
+                  <div className="h-4 bg-muted rounded animate-pulse w-full" />
+                  <div className="h-4 bg-muted rounded animate-pulse w-2/3" />
+                  <div className="h-48 bg-muted rounded-xl animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Sidebar skeleton - hidden on mobile */}
+          <aside className="hidden lg:block w-[300px] flex-shrink-0">
+            <div className="sticky top-6 space-y-6">
+              <div className="flex items-center gap-3 pb-5 border-b border-border/60">
+                <div className="w-12 h-12 rounded-full bg-muted animate-pulse" />
+                <div className="space-y-2 flex-1">
+                  <div className="h-4 bg-muted rounded animate-pulse w-2/3" />
+                  <div className="h-3 bg-muted rounded animate-pulse w-1/2" />
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    );
   }
 
   const userInitials = userProfile?.name
