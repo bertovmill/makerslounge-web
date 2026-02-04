@@ -46,7 +46,7 @@ interface SocialConnection {
 // Platforms that can be connected
 const CONNECTABLE_PLATFORMS = [
   { id: "x", name: "X", icon: "𝕏", available: true },
-  { id: "linkedin", name: "LinkedIn", icon: "in", available: false },
+  { id: "linkedin", name: "LinkedIn", icon: "in", available: true },
   { id: "instagram", name: "Instagram", icon: "📷", available: false },
   { id: "threads", name: "Threads", icon: "@", available: false },
 ] as const;
@@ -116,6 +116,8 @@ export default function BroadcastPage() {
   const [socialConnections, setSocialConnections] = useState<SocialConnection[]>([]);
   const [isPostingToX, setIsPostingToX] = useState(false);
   const [postToXSuccess, setPostToXSuccess] = useState<string | null>(null);
+  const [isPostingToLinkedIn, setIsPostingToLinkedIn] = useState(false);
+  const [postToLinkedInSuccess, setPostToLinkedInSuccess] = useState<string | null>(null);
 
   // Scheduling State
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -277,6 +279,69 @@ export default function BroadcastPage() {
     } catch (error) {
       console.error("Disconnect error:", error);
       alert("Failed to disconnect X account");
+    }
+  };
+
+  const handleConnectLinkedIn = () => {
+    window.location.href = "/api/auth/linkedin/authorize";
+  };
+
+  const handleDisconnectLinkedIn = async () => {
+    if (!confirm("Are you sure you want to disconnect your LinkedIn account?")) return;
+
+    try {
+      const response = await fetch("/api/auth/linkedin/disconnect", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        setSocialConnections((prev) => prev.filter((c) => c.platform !== "linkedin"));
+      } else {
+        alert("Failed to disconnect LinkedIn account");
+      }
+    } catch (error) {
+      console.error("Disconnect error:", error);
+      alert("Failed to disconnect LinkedIn account");
+    }
+  };
+
+  const handlePostToLinkedIn = async () => {
+    if (!generatedContent || generatedContent.length > 3000) {
+      alert("Content must be 3,000 characters or less to post to LinkedIn");
+      return;
+    }
+
+    const linkedInConnection = socialConnections.find((c) => c.platform === "linkedin");
+    if (!linkedInConnection) {
+      alert("Please connect your LinkedIn account first");
+      return;
+    }
+
+    setIsPostingToLinkedIn(true);
+    setPostToLinkedInSuccess(null);
+
+    try {
+      const response = await fetch("/api/auth/linkedin/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: generatedContent,
+          imageUrl: selectedMediaUrls.length > 0 ? selectedMediaUrls[0] : undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to post");
+      }
+
+      setPostToLinkedInSuccess(data.url);
+    } catch (error) {
+      console.error("Post to LinkedIn error:", error);
+      alert(error instanceof Error ? error.message : "Failed to post to LinkedIn");
+    } finally {
+      setIsPostingToLinkedIn(false);
     }
   };
 
@@ -620,6 +685,7 @@ export default function BroadcastPage() {
     setDebugInfo(null);
     setShowDebugInfo(false);
     setPostToXSuccess(null);
+    setPostToLinkedInSuccess(null);
     setRefinementPrompt("");
     setConversationHistory([]);
     setScheduleSuccess(null);
@@ -808,7 +874,10 @@ export default function BroadcastPage() {
                   <div key={platform.id} className="relative group">
                     {isConnected ? (
                       <button
-                        onClick={() => platform.id === "x" && handleDisconnectX()}
+                        onClick={() => {
+                          if (platform.id === "x") handleDisconnectX();
+                          if (platform.id === "linkedin") handleDisconnectLinkedIn();
+                        }}
                         className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-background border border-green-500/30 hover:border-red-500/50 transition-colors"
                         title={`Connected as @${connection.platform_username}`}
                       >
@@ -828,7 +897,11 @@ export default function BroadcastPage() {
                       </button>
                     ) : (
                       <button
-                        onClick={() => platform.id === "x" && platform.available && handleConnectX()}
+                        onClick={() => {
+                          if (!platform.available) return;
+                          if (platform.id === "x") handleConnectX();
+                          if (platform.id === "linkedin") handleConnectLinkedIn();
+                        }}
                         disabled={!platform.available}
                         className={cn(
                           "flex items-center gap-1.5 px-2 py-1 rounded-md border transition-colors",
@@ -1863,6 +1936,11 @@ export default function BroadcastPage() {
                           {" "}({generatedContent.length > 280 ? "over" : "within"} 280 limit)
                         </span>
                       )}
+                      {generateChannel === "linkedin" && (
+                        <span className={generatedContent.length > 3000 ? " text-destructive" : " text-green-600"}>
+                          {" "}({generatedContent.length > 3000 ? "over" : "within"} 3,000 limit)
+                        </span>
+                      )}
                     </p>
 
                     {/* Post/Schedule buttons */}
@@ -1926,6 +2004,54 @@ export default function BroadcastPage() {
                           >
                             <span className="text-sm">𝕏</span>
                             Connect X to Post
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* LinkedIn Post buttons */}
+                    {generateChannel === "linkedin" && generatedContent.length <= 3000 && (
+                      <div className="flex items-center gap-2">
+                        {postToLinkedInSuccess ? (
+                          <a
+                            href={postToLinkedInSuccess}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-green-500/20 text-green-600 hover:bg-green-500/30 transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Posted! View on LinkedIn
+                          </a>
+                        ) : socialConnections.find((c) => c.platform === "linkedin") ? (
+                          <button
+                            onClick={handlePostToLinkedIn}
+                            disabled={isPostingToLinkedIn}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-[#0A66C2] text-white hover:bg-[#0A66C2]/80 transition-colors disabled:opacity-50"
+                          >
+                            {isPostingToLinkedIn ? (
+                              <>
+                                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                                Posting...
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-sm font-bold">in</span>
+                                Post Now
+                              </>
+                            )}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleConnectLinkedIn}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-border hover:border-[#0A66C2]/50 transition-colors"
+                          >
+                            <span className="text-sm font-bold">in</span>
+                            Connect LinkedIn to Post
                           </button>
                         )}
                       </div>
