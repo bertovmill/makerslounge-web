@@ -8,7 +8,7 @@ import {
   spring,
   Sequence,
 } from "remotion";
-import { Video } from "@remotion/media";
+import { Audio, Video } from "@remotion/media";
 import type { Caption } from "@remotion/captions";
 import { CaptionsOverlay, CaptionStyle } from "./Captions";
 
@@ -189,6 +189,9 @@ export interface VideoCompositionProps {
   captions?: Caption[];
   captionStyle?: Partial<CaptionStyle>;
   showCaptions?: boolean;
+  // TTS audio
+  audioSrc?: string | null;
+  audioVolume?: number;
 }
 
 export const VideoComposition: React.FC<VideoCompositionProps> = ({
@@ -210,6 +213,8 @@ export const VideoComposition: React.FC<VideoCompositionProps> = ({
   captions = [],
   captionStyle,
   showCaptions = false,
+  audioSrc = null,
+  audioVolume = 1,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -327,6 +332,11 @@ export const VideoComposition: React.FC<VideoCompositionProps> = ({
             ...captionStyle,
           }}
         />
+      )}
+
+      {/* TTS Audio */}
+      {audioSrc && (
+        <Audio src={audioSrc} volume={audioVolume} />
       )}
 
       {/* Progress bar */}

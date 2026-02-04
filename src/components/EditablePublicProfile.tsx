@@ -14,6 +14,7 @@ import { ThemeConfig } from "@/lib/themes";
 import CoverPicker from "./CoverPicker";
 import ValuePortfolioSection from "./ValuePortfolioSection";
 import { ValuePortfolioItem } from "./ValuePortfolioModal";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 
 // Dynamically import WhiteboardEditor to avoid SSR issues
@@ -51,10 +52,17 @@ interface Project {
   media_urls: string[] | null;
 }
 
+interface ConnectionCounts {
+  connections: number;
+  pendingReceived: number;
+  pendingSent: number;
+}
+
 interface EditablePublicProfileProps {
   profile: Profile;
   projects: Project[];
   valuePortfolio?: ValuePortfolioItem[];
+  connectionCounts?: ConnectionCounts;
   onUpdateProfile: (updates: Partial<Profile>) => Promise<void>;
   onUpdateProjects: (projects: Project[]) => void;
   onUpdateValuePortfolio?: (items: ValuePortfolioItem[]) => void;
@@ -71,6 +79,7 @@ export function EditablePublicProfile({
   profile,
   projects,
   valuePortfolio = [],
+  connectionCounts,
   onUpdateProfile,
   onUpdateProjects,
   onUpdateValuePortfolio,
@@ -350,6 +359,29 @@ export function EditablePublicProfile({
                   </a>
                 )}
               </div>
+
+              {/* Connection Stats - LinkedIn style */}
+              {connectionCounts && (
+                <Link
+                  href="/connections"
+                  className="inline-flex items-center gap-1 mt-3 text-sm hover:underline"
+                  style={{ color: 'var(--theme-accent)' }}
+                >
+                  <span className="font-semibold">{connectionCounts.connections}</span>
+                  <span style={{ color: 'var(--theme-muted-foreground)' }}>
+                    {connectionCounts.connections === 1 ? 'connection' : 'connections'}
+                  </span>
+                  {connectionCounts.pendingReceived > 0 && (
+                    <>
+                      <span style={{ color: 'var(--theme-muted-foreground)' }}>&middot;</span>
+                      <span className="font-semibold">{connectionCounts.pendingReceived}</span>
+                      <span style={{ color: 'var(--theme-muted-foreground)' }}>
+                        pending {connectionCounts.pendingReceived === 1 ? 'request' : 'requests'}
+                      </span>
+                    </>
+                  )}
+                </Link>
+              )}
             </div>
           </div>
         </div>

@@ -235,7 +235,7 @@ function SettingsContent() {
                           month: "long", day: "numeric", year: "numeric",
                         })}
                       </span>{" "}
-                      &middot; $30/mo
+                      &middot; $5/mo
                     </p>
                   ) : null}
                 </div>
@@ -266,7 +266,7 @@ function SettingsContent() {
                 onClick={handleUpgrade}
                 disabled={premiumLoading}
               >
-                {premiumLoading ? "Redirecting..." : "Upgrade to Premium — $30/mo"}
+                {premiumLoading ? "Redirecting..." : "Upgrade to Premium — $5/mo"}
               </Button>
             </div>
           )}

@@ -9,6 +9,8 @@ import type { Caption } from "@remotion/captions";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { VideoAgentChat } from "./VideoAgentChat";
+import type { VideoSuggestion } from "@/lib/parseVideoSuggestions";
 
 type TextAnimation = "none" | "fade" | "typewriter" | "word-highlight" | "slide-up" | "scale";
 type ActiveTool = "text" | "music" | "captions" | "brand" | "layout" | "uploads" | null;
@@ -31,10 +33,10 @@ const TEXT_ANIMATIONS: { value: TextAnimation; label: string }[] = [
 ];
 
 const ASPECT_RATIOS = [
-  { value: "16:9", width: 1920, height: 1080 },
-  { value: "9:16", width: 1080, height: 1920 },
-  { value: "1:1", width: 1080, height: 1080 },
-  { value: "4:5", width: 1080, height: 1350 },
+  { value: "16:9", width: 1920, height: 1080, label: "Landscape", desc: "YouTube" },
+  { value: "9:16", width: 1080, height: 1920, label: "Portrait", desc: "Shorts / Reels" },
+  { value: "1:1", width: 1080, height: 1080, label: "Square", desc: "Instagram" },
+  { value: "4:5", width: 1080, height: 1350, label: "Tall", desc: "Instagram / FB" },
 ];
 
 export function VideoEditor({ className }: VideoEditorProps) {
@@ -53,6 +55,60 @@ export function VideoEditor({ className }: VideoEditorProps) {
   // Mobile UI State
   const [showLeftPanel, setShowLeftPanel] = useState(false);
   const [showMobileTools, setShowMobileTools] = useState(false);
+
+  // Left panel tab
+  const [leftPanelTab, setLeftPanelTab] = useState<"script" | "ai">("ai");
+
+  // Resizable panels
+  const [leftPanelWidth, setLeftPanelWidth] = useState(320);
+  const [rightPanelWidth, setRightPanelWidth] = useState(288);
+  const resizingRef = useRef<"left" | "right" | null>(null);
+  const resizeStartXRef = useRef(0);
+  const resizeStartWidthRef = useRef(0);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!resizingRef.current) return;
+      e.preventDefault();
+      const delta = e.clientX - resizeStartXRef.current;
+      if (resizingRef.current === "left") {
+        setLeftPanelWidth(Math.max(200, Math.min(600, resizeStartWidthRef.current + delta)));
+      } else {
+        setRightPanelWidth(Math.max(200, Math.min(600, resizeStartWidthRef.current - delta)));
+      }
+    };
+    const handleMouseUp = () => {
+      if (resizingRef.current) {
+        resizingRef.current = null;
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
+
+  const startResizeLeft = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    resizingRef.current = "left";
+    resizeStartXRef.current = e.clientX;
+    resizeStartWidthRef.current = leftPanelWidth;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }, [leftPanelWidth]);
+
+  const startResizeRight = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    resizingRef.current = "right";
+    resizeStartXRef.current = e.clientX;
+    resizeStartWidthRef.current = rightPanelWidth;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }, [rightPanelWidth]);
 
   // Export State
   const [showExportModal, setShowExportModal] = useState(false);
@@ -114,6 +170,18 @@ export function VideoEditor({ className }: VideoEditorProps) {
   const [volume, setVolume] = useState(1);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [muted, setMuted] = useState(false);
+
+  // TTS State
+  const [ttsText, setTtsText] = useState("");
+  const [ttsVoices, setTtsVoices] = useState<{ voice_id: string; name: string; preview_url: string; category: string }[]>([]);
+  const [selectedVoiceId, setSelectedVoiceId] = useState("");
+  const [isLoadingVoices, setIsLoadingVoices] = useState(false);
+  const [isGeneratingTts, setIsGeneratingTts] = useState(false);
+  const [ttsAudioSrc, setTtsAudioSrc] = useState<string | null>(null);
+  const [ttsAudioFileName, setTtsAudioFileName] = useState<string | null>(null);
+  const [ttsError, setTtsError] = useState<string | null>(null);
+  const [isPreviewingAudio, setIsPreviewingAudio] = useState(false);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Trim controls
   const [trimStart, setTrimStart] = useState(0); // in seconds
@@ -932,6 +1000,126 @@ export function VideoEditor({ className }: VideoEditorProps) {
     { value: "#ffffff", label: "White" },
   ];
 
+  // Apply AI suggestion handler
+  const handleApplySuggestion = useCallback((suggestion: VideoSuggestion) => {
+    if (suggestion.title) setTitle(suggestion.title);
+    if (suggestion.caption) setCaption(suggestion.caption);
+    if (suggestion.backgroundColor) setBackgroundColor(suggestion.backgroundColor);
+    if (suggestion.accentColor) setAccentColor(suggestion.accentColor);
+    if (suggestion.aspectRatio) {
+      const ratio = ASPECT_RATIOS.find(r => r.value === suggestion.aspectRatio);
+      if (ratio) setAspectRatio(ratio);
+    }
+    if (suggestion.overlayPosition) {
+      setOverlayPosition(suggestion.overlayPosition as "top" | "center" | "bottom");
+    }
+  }, []);
+
+  // Fetch ElevenLabs voices (lazy, only when Music tool is activated)
+  const fetchVoices = useCallback(async () => {
+    if (ttsVoices.length > 0 || isLoadingVoices) return;
+    setIsLoadingVoices(true);
+    setTtsError(null);
+    try {
+      const res = await fetch("/api/tts/voices");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to fetch voices");
+      setTtsVoices(data.voices);
+      if (data.voices.length > 0) {
+        setSelectedVoiceId(data.voices[0].voice_id);
+      }
+    } catch (err) {
+      setTtsError(err instanceof Error ? err.message : "Failed to load voices");
+    } finally {
+      setIsLoadingVoices(false);
+    }
+  }, [ttsVoices.length, isLoadingVoices]);
+
+  // Generate TTS audio
+  const handleGenerateTts = useCallback(async () => {
+    if (!ttsText.trim() || !selectedVoiceId) return;
+    setIsGeneratingTts(true);
+    setTtsError(null);
+    try {
+      const res = await fetch("/api/tts/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: ttsText, voice_id: selectedVoiceId }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to generate speech");
+      }
+      const blob = await res.blob();
+      // Revoke previous blob URL if any
+      if (ttsAudioSrc) URL.revokeObjectURL(ttsAudioSrc);
+      const url = URL.createObjectURL(blob);
+      const voiceName = ttsVoices.find(v => v.voice_id === selectedVoiceId)?.name || "voice";
+      setTtsAudioSrc(url);
+      setTtsAudioFileName(`tts-${voiceName.toLowerCase().replace(/\s+/g, "-")}.mp3`);
+    } catch (err) {
+      setTtsError(err instanceof Error ? err.message : "Failed to generate speech");
+    } finally {
+      setIsGeneratingTts(false);
+    }
+  }, [ttsText, selectedVoiceId, ttsAudioSrc, ttsVoices]);
+
+  // Preview TTS audio via HTML Audio element
+  const handlePreviewAudio = useCallback(() => {
+    if (!ttsAudioSrc) return;
+    if (isPreviewingAudio && previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current.currentTime = 0;
+      setIsPreviewingAudio(false);
+      return;
+    }
+    const audio = new window.Audio(ttsAudioSrc);
+    previewAudioRef.current = audio;
+    audio.onended = () => setIsPreviewingAudio(false);
+    audio.play();
+    setIsPreviewingAudio(true);
+  }, [ttsAudioSrc, isPreviewingAudio]);
+
+  // Add TTS audio to timeline
+  const handleAddTtsToTimeline = useCallback(() => {
+    if (!ttsAudioSrc) return;
+    // Stop preview if playing
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current.currentTime = 0;
+      setIsPreviewingAudio(false);
+    }
+    setTracks(currentTracks => {
+      const audioTrack = currentTracks.find(t => t.type === "audio");
+      const clip: TimelineClip = {
+        id: generateId(),
+        type: "audio" as const,
+        name: ttsAudioFileName || "TTS Audio",
+        startFrame: 0,
+        endFrame: durationInFrames,
+        color: "#22c55e",
+      };
+      if (audioTrack) {
+        return currentTracks.map(t =>
+          t.type === "audio" ? { ...t, clips: [...t.clips, clip] } : t
+        );
+      }
+      return [...currentTracks, {
+        id: generateId(),
+        type: "audio" as const,
+        name: "Audio",
+        clips: [clip],
+      }];
+    });
+  }, [ttsAudioSrc, ttsAudioFileName, durationInFrames]);
+
+  // Lazy-load voices when Music tool is activated
+  useEffect(() => {
+    if (activeTool === "music") {
+      fetchVoices();
+    }
+  }, [activeTool, fetchVoices]);
+
   // Tool icons for the vertical toolbar
   const tools = [
     { id: "text" as const, label: "Text", icon: (
@@ -1009,26 +1197,45 @@ export function VideoEditor({ className }: VideoEditorProps) {
               onClick={() => setShowAspectMenu(!showAspectMenu)}
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-200 text-xs sm:text-sm text-gray-700 transition-colors"
             >
-              <svg className="w-3 h-3 sm:w-4 sm:h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-              </svg>
-              {aspectRatio.value}
+              <div
+                className="hidden sm:block border border-current rounded-[1px]"
+                style={{
+                  width: aspectRatio.width >= aspectRatio.height ? 16 : 16 * (aspectRatio.width / aspectRatio.height),
+                  height: aspectRatio.height >= aspectRatio.width ? 14 : 14 * (aspectRatio.height / aspectRatio.width),
+                }}
+              />
+              <span>{aspectRatio.value}</span>
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
             {showAspectMenu && (
-              <div className="absolute top-full mt-1 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 min-w-[120px]">
+              <div className="absolute top-full mt-1 right-0 bg-white border border-gray-200 rounded-xl shadow-lg z-50 p-2 min-w-[200px]">
                 {ASPECT_RATIOS.map((ratio) => (
                   <button
                     key={ratio.value}
                     onClick={() => { setAspectRatio(ratio); setShowAspectMenu(false); }}
                     className={cn(
-                      "w-full px-3 py-2 text-left text-sm hover:bg-gray-100 transition-colors",
-                      aspectRatio.value === ratio.value ? "text-primary" : "text-gray-700"
+                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors",
+                      aspectRatio.value === ratio.value
+                        ? "bg-primary/10 text-primary"
+                        : "text-gray-700 hover:bg-gray-50"
                     )}
                   >
-                    {ratio.value}
+                    <div
+                      className={cn(
+                        "border-2 rounded-[2px] flex-shrink-0",
+                        aspectRatio.value === ratio.value ? "border-primary bg-primary/10" : "border-gray-300 bg-gray-50"
+                      )}
+                      style={{
+                        width: 24 * (ratio.width / Math.max(ratio.width, ratio.height)),
+                        height: 24 * (ratio.height / Math.max(ratio.width, ratio.height)),
+                      }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium">{ratio.label}</div>
+                      <div className="text-[10px] text-gray-400">{ratio.value} &middot; {ratio.desc}</div>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -1055,11 +1262,30 @@ export function VideoEditor({ className }: VideoEditorProps) {
           <div className="absolute inset-0 z-40 md:hidden" onClick={() => setShowLeftPanel(false)}>
             <div className="absolute inset-0 bg-black/50" />
             <div
-              className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-xl"
+              className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-xl flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between p-3 border-b border-gray-200">
-                <span className="text-sm font-medium text-gray-900">Script</span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setLeftPanelTab("ai")}
+                    className={cn(
+                      "px-2.5 py-1 text-xs font-medium rounded-md transition-colors",
+                      leftPanelTab === "ai" ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100"
+                    )}
+                  >
+                    AI Assistant
+                  </button>
+                  <button
+                    onClick={() => setLeftPanelTab("script")}
+                    className={cn(
+                      "px-2.5 py-1 text-xs font-medium rounded-md transition-colors",
+                      leftPanelTab === "script" ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100"
+                    )}
+                  >
+                    Script
+                  </button>
+                </div>
                 <button
                   onClick={() => setShowLeftPanel(false)}
                   className="p-1.5 rounded hover:bg-gray-100 text-gray-500"
@@ -1069,79 +1295,124 @@ export function VideoEditor({ className }: VideoEditorProps) {
                   </svg>
                 </button>
               </div>
-              <div className="p-3 space-y-3 overflow-y-auto" style={{ maxHeight: "calc(100vh - 200px)" }}>
-                <div className="flex items-start gap-3">
-                  <span className="text-xs text-gray-400 font-mono pt-1">00:00</span>
-                  <div className="flex-1">
-                    <span className="text-xs font-medium text-primary mb-1 block">Title</span>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      {title || <span className="text-gray-400 italic">Add a title...</span>}
-                    </p>
+              {leftPanelTab === "script" ? (
+                <div className="p-3 space-y-3 overflow-y-auto flex-1">
+                  <div className="flex items-start gap-3">
+                    <span className="text-xs text-gray-400 font-mono pt-1">00:00</span>
+                    <div className="flex-1">
+                      <span className="text-xs font-medium text-primary mb-1 block">Title</span>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {title || <span className="text-gray-400 italic">Add a title...</span>}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="text-xs text-gray-400 font-mono pt-1">00:01</span>
+                    <div className="flex-1">
+                      <span className="text-xs font-medium text-purple-500 mb-1 block">Caption</span>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {caption || <span className="text-gray-400 italic">Add a caption...</span>}
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-xs text-gray-400 font-mono pt-1">00:01</span>
-                  <div className="flex-1">
-                    <span className="text-xs font-medium text-purple-500 mb-1 block">Caption</span>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      {caption || <span className="text-gray-400 italic">Add a caption...</span>}
-                    </p>
-                  </div>
+              ) : (
+                <div className="flex-1 overflow-hidden">
+                  <VideoAgentChat onApplySuggestion={handleApplySuggestion} />
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* Desktop Left Panel - Script/Transcript */}
-        <div className="hidden md:flex w-80 border-r border-gray-200 bg-white flex-col">
-          <div className="p-3 border-b border-gray-200">
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search"
-                className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-200"
-              />
-            </div>
-          </div>
-
-          <div className="p-3">
-            <button className="w-full flex items-center justify-center gap-2 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-700 transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add
+        {/* Desktop Left Panel - Script/AI Assistant */}
+        <div className="hidden md:flex border-r border-gray-200 bg-white flex-col flex-shrink-0" style={{ width: leftPanelWidth }}>
+          {/* Tab switcher */}
+          <div className="flex border-b border-gray-200">
+            <button
+              onClick={() => setLeftPanelTab("ai")}
+              className={cn(
+                "flex-1 px-3 py-2.5 text-xs font-medium transition-colors",
+                leftPanelTab === "ai"
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-gray-500 hover:text-gray-700"
+              )}
+            >
+              AI Assistant
+            </button>
+            <button
+              onClick={() => setLeftPanelTab("script")}
+              className={cn(
+                "flex-1 px-3 py-2.5 text-xs font-medium transition-colors",
+                leftPanelTab === "script"
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-gray-500 hover:text-gray-700"
+              )}
+            >
+              Script
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 space-y-4">
-            {/* Script segments */}
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <span className="text-xs text-gray-400 font-mono pt-1">00:00</span>
-                <div className="flex-1">
-                  <span className="text-xs font-medium text-primary mb-1 block">Title</span>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {title || <span className="text-gray-400 italic">Add a title...</span>}
-                  </p>
+          {leftPanelTab === "script" ? (
+            <>
+              <div className="p-3 border-b border-gray-200">
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Search"
+                    className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-200"
+                  />
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <span className="text-xs text-gray-400 font-mono pt-1">00:01</span>
-                <div className="flex-1">
-                  <span className="text-xs font-medium text-purple-500 mb-1 block">Caption</span>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {caption || <span className="text-gray-400 italic">Add a caption...</span>}
-                  </p>
+              <div className="p-3">
+                <button className="w-full flex items-center justify-center gap-2 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-700 transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-3 space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <span className="text-xs text-gray-400 font-mono pt-1">00:00</span>
+                    <div className="flex-1">
+                      <span className="text-xs font-medium text-primary mb-1 block">Title</span>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {title || <span className="text-gray-400 italic">Add a title...</span>}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <span className="text-xs text-gray-400 font-mono pt-1">00:01</span>
+                    <div className="flex-1">
+                      <span className="text-xs font-medium text-purple-500 mb-1 block">Caption</span>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {caption || <span className="text-gray-400 italic">Add a caption...</span>}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </>
+          ) : (
+            <div className="flex-1 overflow-hidden">
+              <VideoAgentChat onApplySuggestion={handleApplySuggestion} />
             </div>
-          </div>
+          )}
         </div>
+
+        {/* Left resize handle */}
+        <div
+          className="hidden md:block w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors flex-shrink-0"
+          onMouseDown={startResizeLeft}
+        />
 
         {/* Center - Video Preview */}
         <div
@@ -1163,7 +1434,7 @@ export function VideoEditor({ className }: VideoEditorProps) {
           ) : (
             <div
               ref={previewContainerRef}
-              className="rounded-lg overflow-hidden border border-gray-300 shadow-xl bg-black relative flex items-center justify-center"
+              className="rounded-sm overflow-hidden border border-gray-300 shadow-xl bg-black relative flex items-center justify-center"
               style={{
                 aspectRatio: `${aspectRatio.width}/${aspectRatio.height}`,
                 maxHeight: "calc(100% - 2rem)",
@@ -1241,6 +1512,8 @@ export function VideoEditor({ className }: VideoEditorProps) {
                     captions,
                     showCaptions,
                     captionStyle: { position: captionPosition },
+                    audioSrc: ttsAudioSrc,
+                    audioVolume: 1,
                   }}
                   durationInFrames={durationInFrames}
                   fps={fps}
@@ -1400,7 +1673,96 @@ export function VideoEditor({ className }: VideoEditorProps) {
                     )}
                   </div>
                 )}
-                {(activeTool === "music" || activeTool === "brand" || activeTool === "layout" || activeTool === "captions") && (
+                {activeTool === "music" && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-900">Text to Speech</h3>
+                    <div>
+                      <label className="text-xs text-gray-500 block mb-1.5">Voice</label>
+                      {isLoadingVoices ? (
+                        <div className="flex items-center gap-2 text-xs text-gray-500 py-2">
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Loading voices...
+                        </div>
+                      ) : (
+                        <select
+                          value={selectedVoiceId}
+                          onChange={(e) => setSelectedVoiceId(e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-200"
+                        >
+                          {ttsVoices.map((v) => (
+                            <option key={v.voice_id} value={v.voice_id}>
+                              {v.name} ({v.category})
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs text-gray-500">Text</label>
+                        {(title || caption) && (
+                          <button
+                            onClick={() => setTtsText([title, caption].filter(Boolean).join("\n\n"))}
+                            className="text-xs text-primary hover:text-primary/80 font-medium"
+                          >
+                            Use Script
+                          </button>
+                        )}
+                      </div>
+                      <textarea
+                        value={ttsText}
+                        onChange={(e) => setTtsText(e.target.value)}
+                        placeholder="Enter text to convert to speech..."
+                        rows={4}
+                        maxLength={5000}
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-200 resize-none"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">{ttsText.length} chars</p>
+                    </div>
+                    {ttsError && (
+                      <p className="text-xs text-red-500">{ttsError}</p>
+                    )}
+                    <Button
+                      size="sm"
+                      onClick={handleGenerateTts}
+                      disabled={!ttsText.trim() || !selectedVoiceId || isGeneratingTts}
+                      className="w-full gap-2"
+                    >
+                      {isGeneratingTts ? (
+                        <>
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Generating...
+                        </>
+                      ) : (
+                        "Generate Speech"
+                      )}
+                    </Button>
+                    {ttsAudioSrc && (
+                      <div className="border-t border-gray-200 pt-4 space-y-3">
+                        <span className="text-xs font-medium text-gray-700">Generated Audio</span>
+                        <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-2">
+                          <span className="text-lg">🎵</span>
+                          <span className="text-xs text-gray-600 truncate flex-1">{ttsAudioFileName}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={handlePreviewAudio} className="flex-1">
+                            {isPreviewingAudio ? "Stop" : "Preview"}
+                          </Button>
+                          <Button size="sm" onClick={handleAddTtsToTimeline} className="flex-1">
+                            Add to Timeline
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {(activeTool === "brand" || activeTool === "layout" || activeTool === "captions") && (
                   <div className="flex flex-col items-center justify-center py-8 text-center">
                     <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3 text-gray-500">
                       {tools.find(t => t.id === activeTool)?.icon}
@@ -1414,8 +1776,14 @@ export function VideoEditor({ className }: VideoEditorProps) {
           </div>
         )}
 
+        {/* Right resize handle */}
+        <div
+          className="hidden md:block w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors flex-shrink-0"
+          onMouseDown={startResizeRight}
+        />
+
         {/* Desktop Right Panel - Tool Properties */}
-        <div className="hidden md:flex w-72 border-l border-gray-200 bg-white">
+        <div className="hidden md:flex border-l border-gray-200 bg-white flex-shrink-0" style={{ width: rightPanelWidth }}>
           {/* Properties Panel */}
           <div className="flex-1 overflow-y-auto p-4">
             {activeTool === "text" && (
@@ -1916,13 +2284,112 @@ export function VideoEditor({ className }: VideoEditorProps) {
               </div>
             )}
 
-            {(activeTool === "music" || activeTool === "brand") && (
+            {activeTool === "music" && (
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-900">Text to Speech</h3>
+
+                {/* Voice selector */}
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1.5">Voice</label>
+                  {isLoadingVoices ? (
+                    <div className="flex items-center gap-2 text-xs text-gray-500 py-2">
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Loading voices...
+                    </div>
+                  ) : (
+                    <select
+                      value={selectedVoiceId}
+                      onChange={(e) => setSelectedVoiceId(e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-200"
+                    >
+                      {ttsVoices.map((v) => (
+                        <option key={v.voice_id} value={v.voice_id}>
+                          {v.name} ({v.category})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                {/* Text input */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs text-gray-500">Text</label>
+                    {(title || caption) && (
+                      <button
+                        onClick={() => setTtsText([title, caption].filter(Boolean).join("\n\n"))}
+                        className="text-xs text-primary hover:text-primary/80 font-medium"
+                      >
+                        Use Script
+                      </button>
+                    )}
+                  </div>
+                  <textarea
+                    value={ttsText}
+                    onChange={(e) => setTtsText(e.target.value)}
+                    placeholder="Enter text to convert to speech..."
+                    rows={4}
+                    maxLength={5000}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-200 resize-none"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">{ttsText.length} chars</p>
+                </div>
+
+                {/* Error */}
+                {ttsError && (
+                  <p className="text-xs text-red-500">{ttsError}</p>
+                )}
+
+                {/* Generate button */}
+                <Button
+                  size="sm"
+                  onClick={handleGenerateTts}
+                  disabled={!ttsText.trim() || !selectedVoiceId || isGeneratingTts}
+                  className="w-full gap-2"
+                >
+                  {isGeneratingTts ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Generating...
+                    </>
+                  ) : (
+                    "Generate Speech"
+                  )}
+                </Button>
+
+                {/* Generated audio preview + add to timeline */}
+                {ttsAudioSrc && (
+                  <div className="border-t border-gray-200 pt-4 space-y-3">
+                    <span className="text-xs font-medium text-gray-700">Generated Audio</span>
+                    <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-2">
+                      <span className="text-lg">🎵</span>
+                      <span className="text-xs text-gray-600 truncate flex-1">{ttsAudioFileName}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={handlePreviewAudio} className="flex-1">
+                        {isPreviewingAudio ? "Stop" : "Preview"}
+                      </Button>
+                      <Button size="sm" onClick={handleAddTtsToTimeline} className="flex-1">
+                        Add to Timeline
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTool === "brand" && (
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
                 <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3 text-gray-500">
-                  {activeTool === "music" && tools.find(t => t.id === "music")?.icon}
-                  {activeTool === "brand" && tools.find(t => t.id === "brand")?.icon}
+                  {tools.find(t => t.id === "brand")?.icon}
                 </div>
-                <p className="text-sm text-gray-600 capitalize">{activeTool}</p>
+                <p className="text-sm text-gray-600 capitalize">Brand</p>
                 <p className="text-xs text-gray-400 mt-1">Coming soon</p>
               </div>
             )}

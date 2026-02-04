@@ -140,13 +140,13 @@ export default function Navbar() {
     ),
   };
 
-  const NavLink = ({ href, children, icon }: { href: string; children: React.ReactNode; icon?: React.ReactNode }) => {
+  const NavLink = ({ href, children, icon, label }: { href: string; children: React.ReactNode; icon?: React.ReactNode; label?: string }) => {
     const isActive = pathname === href;
     return (
       <Link
         href={href}
         className={cn(
-          "px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-3",
+          "relative group px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-3",
           "hover:bg-accent/50 hover:text-foreground",
           isActive
             ? "bg-accent text-foreground"
@@ -154,10 +154,14 @@ export default function Navbar() {
           collapsed && "justify-center px-2"
         )}
         onClick={closeMenu}
-        title={collapsed ? String(children) : undefined}
       >
         {icon && <span className="w-5 h-5 flex-shrink-0">{icon}</span>}
         {!collapsed && children}
+        {collapsed && (
+          <span className="absolute left-full ml-2 px-2.5 py-1.5 rounded-md bg-popover text-popover-foreground text-xs font-medium whitespace-nowrap shadow-md border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 pointer-events-none">
+            {label || children}
+          </span>
+        )}
       </Link>
     );
   };
@@ -220,7 +224,7 @@ export default function Navbar() {
           <NavLink href="/podcast" icon={icons.podcast}>Podcast</NavLink>
           <NavLink href="/about" icon={icons.about}>About us</NavLink>
           <NavLink href="/docs" icon={icons.docs}>Docs</NavLink>
-          <NavLink href="/broadcast" icon={icons.broadcast}>Broadcast <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">Beta</span></NavLink>
+          <NavLink href="/broadcast" icon={icons.broadcast} label="Broadcast">Broadcast <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">Beta</span></NavLink>
 
           {user && (
             <>
@@ -313,7 +317,7 @@ export default function Navbar() {
               <NavLink href="/podcast" icon={icons.podcast}>Podcast</NavLink>
               <NavLink href="/about" icon={icons.about}>About us</NavLink>
               <NavLink href="/docs" icon={icons.docs}>Docs</NavLink>
-              <NavLink href="/broadcast" icon={icons.broadcast}>Broadcast <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">Beta</span></NavLink>
+              <NavLink href="/broadcast" icon={icons.broadcast} label="Broadcast">Broadcast <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">Beta</span></NavLink>
 
               {user && (
                 <>

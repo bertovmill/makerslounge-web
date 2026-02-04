@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
+import { useSidebar } from "@/context/SidebarContext";
 
 // Dynamic import for Remotion (avoid SSR issues)
 const VideoEditor = dynamic(
@@ -43,9 +44,21 @@ const ImageGenerator = dynamic(
 
 export default function BuildPage() {
   const router = useRouter();
+  const { collapsed, setCollapsed } = useSidebar();
+  const prevCollapsed = useRef(collapsed);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [contentType, setContentType] = useState<"video" | "image" | "text">("video");
+
+  // Collapse sidebar on mount, restore on unmount
+  useEffect(() => {
+    prevCollapsed.current = collapsed;
+    setCollapsed(true);
+    return () => {
+      setCollapsed(prevCollapsed.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Check auth
   useEffect(() => {
@@ -82,86 +95,83 @@ export default function BuildPage() {
   }
 
   return (
-    <div className="min-h-screen p-3 sm:p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-4 sm:mb-6">
-          <div className="flex items-center gap-2 sm:gap-3 mb-2">
+    <div className={cn("min-h-screen", contentType === "video" ? "p-0" : "p-3 sm:p-6")}>
+      <div className={cn(contentType !== "video" && "max-w-7xl mx-auto")}>
+        {/* Condensed Header Bar */}
+        <div className={cn(
+          "flex items-center justify-between",
+          contentType === "video" ? "px-3 py-2 border-b border-border" : "mb-4 sm:mb-6"
+        )}>
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/broadcast"
-              className="p-1.5 sm:p-2 -ml-1 sm:-ml-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
             >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-3xl font-bold">Build</h1>
-                <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
-                  Beta
-                </span>
-              </div>
-              <p className="text-muted-foreground text-xs sm:text-sm">
-                Create videos, images, and text content for your broadcasts.
-              </p>
+            <h1 className="text-sm sm:text-lg font-semibold">Build</h1>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
+              Beta
+            </span>
+
+            <div className="w-px h-5 bg-border mx-1" />
+
+            {/* Content Type Selector - inline */}
+            <div className="inline-flex items-center p-0.5 rounded-lg bg-muted/50 border border-border">
+              <button
+                onClick={() => setContentType("video")}
+                className={cn(
+                  "px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 flex items-center gap-1.5",
+                  contentType === "video"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Video
+              </button>
+              <button
+                onClick={() => setContentType("image")}
+                className={cn(
+                  "px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 flex items-center gap-1.5",
+                  contentType === "image"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Image
+              </button>
+              <button
+                onClick={() => setContentType("text")}
+                className={cn(
+                  "px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 flex items-center gap-1.5",
+                  contentType === "text"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Text
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Content Type Selector */}
-        <div className="mb-4 sm:mb-6">
-          <div className="inline-flex items-center p-0.5 sm:p-1 rounded-lg bg-muted/50 border border-border">
-            <button
-              onClick={() => setContentType("video")}
-              className={cn(
-                "px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 flex items-center gap-1.5 sm:gap-2",
-                contentType === "video"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-              Video
-            </button>
-            <button
-              onClick={() => setContentType("image")}
-              className={cn(
-                "px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 flex items-center gap-1.5 sm:gap-2",
-                contentType === "image"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              Image
-            </button>
-            <button
-              onClick={() => setContentType("text")}
-              className={cn(
-                "px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 flex items-center gap-1.5 sm:gap-2",
-                contentType === "text"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Text
-            </button>
-          </div>
-        </div>
+        {/* Video Editor - full width, no container */}
+        {contentType === "video" && <VideoEditor className="rounded-none border-0 shadow-none h-[calc(100vh-41px)]" />}
 
         {/* Editor Area */}
+        {contentType !== "video" && (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
-          {/* Video Editor */}
-          {contentType === "video" && <VideoEditor />}
-
           {/* AI Image Generator */}
           {contentType === "image" && <ImageGenerator />}
 
@@ -230,6 +240,7 @@ export default function BuildPage() {
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   );

@@ -76,6 +76,11 @@ export default function ProfilePage() {
   const [valuePortfolio, setValuePortfolio] = useState<ValuePortfolioItem[]>([]);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [connectionCounts, setConnectionCounts] = useState({
+    connections: 0,
+    pendingReceived: 0,
+    pendingSent: 0,
+  });
 
   useEffect(() => {
     const init = async () => {
@@ -140,6 +145,25 @@ export default function ProfilePage() {
         .order("created_at", { ascending: false });
 
       setValuePortfolio(portfolioData || []);
+
+      // Fetch connection counts
+      const { data: allConnections } = await supabase
+        .from("connections")
+        .select("id, requester_id, recipient_id, status")
+        .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`);
+
+      if (allConnections) {
+        setConnectionCounts({
+          connections: allConnections.filter((c) => c.status === "accepted").length,
+          pendingReceived: allConnections.filter(
+            (c) => c.status === "pending" && c.recipient_id === user.id
+          ).length,
+          pendingSent: allConnections.filter(
+            (c) => c.status === "pending" && c.requester_id === user.id
+          ).length,
+        });
+      }
+
       setLoading(false);
     };
 
@@ -282,6 +306,7 @@ export default function ProfilePage() {
           profile={profile}
           projects={projects}
           valuePortfolio={valuePortfolio}
+          connectionCounts={connectionCounts}
           onUpdateProfile={handleUpdateProfile}
           onUpdateProjects={setProjects}
           onUpdateValuePortfolio={setValuePortfolio}
