@@ -9,12 +9,14 @@ import AuthButton from "./AuthButton";
 import Logo, { LogoIcon } from "./Logo";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/context/SidebarContext";
+import { useFeedback } from "@/context/FeedbackContext";
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { collapsed, setCollapsed } = useSidebar();
+  const { openFeedback } = useFeedback();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -130,6 +132,12 @@ export default function Navbar() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.828a5 5 0 010-7.072m7.072 0a5 5 0 010 7.072M13 12a1 1 0 11-2 0 1 1 0 012 0z" />
       </svg>
     ),
+    settings: (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    ),
   };
 
   const NavLink = ({ href, children, icon }: { href: string; children: React.ReactNode; icon?: React.ReactNode }) => {
@@ -232,7 +240,10 @@ export default function Navbar() {
           )}
         </nav>
 
-        <div className={cn("p-4 border-t border-border", collapsed && "flex justify-center")}>
+        <div className={cn("p-4 border-t border-border", collapsed && "flex flex-col items-center gap-2")}>
+          {user && (
+            <NavLink href="/settings" icon={icons.settings}>Settings</NavLink>
+          )}
           {collapsed ? (
             <Link href="/profile" className="p-2 rounded-lg hover:bg-accent transition-colors" title="Profile">
               <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -252,12 +263,26 @@ export default function Navbar() {
             <Logo size="sm" />
           </Link>
 
-          {/* Mobile hamburger button */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="p-2 text-muted-foreground hover:text-foreground"
-            aria-label="Toggle menu"
-          >
+          <div className="flex items-center gap-1">
+            {/* Mobile Feedback button */}
+            {user && (
+              <button
+                onClick={openFeedback}
+                className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Send feedback"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                </svg>
+              </button>
+            )}
+
+            {/* Mobile hamburger button */}
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="p-2 text-muted-foreground hover:text-foreground"
+              aria-label="Toggle menu"
+            >
             {menuOpen ? (
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -267,7 +292,8 @@ export default function Navbar() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             )}
-          </button>
+            </button>
+          </div>
         </nav>
 
         {/* Mobile menu */}
@@ -296,6 +322,7 @@ export default function Navbar() {
                   <NavLink href="/connections" icon={icons.connections}>Connections</NavLink>
                   <NavLink href="/tools" icon={icons.tools}>Maker Tools</NavLink>
                   <NavLink href="/video-editing" icon={icons.video}>Video Editing</NavLink>
+                  <NavLink href="/settings" icon={icons.settings}>Settings</NavLink>
                 </>
               )}
 

@@ -432,7 +432,7 @@ export default function FeedCard({
           </div>
         ) : (
           <>
-            <h3 className="font-semibold text-[15px] mb-1">{project.title}</h3>
+            <h3 className="font-semibold text-[15px] mb-1 whitespace-pre-wrap">{project.title}</h3>
             {project.description && (
               <p className="text-muted-foreground text-[15px] leading-relaxed whitespace-pre-wrap">
                 <Linkify>{project.description}</Linkify>

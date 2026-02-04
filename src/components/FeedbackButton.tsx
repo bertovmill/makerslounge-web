@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { toPng } from "html-to-image";
 import { supabase } from "@/lib/supabase";
 import ScreenshotEditor from "./ScreenshotEditor";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { User } from "@supabase/supabase-js";
+import { useFeedback } from "@/context/FeedbackContext";
+import { useState } from "react";
 
 export default function FeedbackButton() {
-  const [showModal, setShowModal] = useState(false);
+  const { isOpen: showModal, openFeedback, closeFeedback } = useFeedback();
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -36,7 +38,7 @@ export default function FeedbackButton() {
 
   const captureScreenshot = async () => {
     setCapturing(true);
-    setShowModal(false);
+    closeFeedback();
 
     await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -61,7 +63,7 @@ export default function FeedbackButton() {
       console.error("Screenshot failed:", err);
     } finally {
       setCapturing(false);
-      setShowModal(true);
+      openFeedback();
     }
   };
 
@@ -125,7 +127,7 @@ export default function FeedbackButton() {
     setScreenshot(null);
 
     setTimeout(() => {
-      setShowModal(false);
+      closeFeedback();
       setSubmitted(false);
     }, 2000);
   };
@@ -138,9 +140,9 @@ export default function FeedbackButton() {
   return (
     <>
       <Button
-        onClick={() => setShowModal(true)}
+        onClick={() => openFeedback()}
         size="sm"
-        className="fixed bottom-6 right-6 rounded-full shadow-lg z-40"
+        className="hidden md:flex fixed bottom-6 right-6 rounded-full shadow-lg z-40"
       >
         Feedback
       </Button>
@@ -149,7 +151,7 @@ export default function FeedbackButton() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="glass-card p-8 max-w-md w-full relative">
             <button
-              onClick={() => setShowModal(false)}
+              onClick={() => closeFeedback()}
               className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

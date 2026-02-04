@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import FooterWrapper from "@/components/FooterWrapper";
 import MainWrapper from "@/components/MainWrapper";
 import { SidebarProvider } from "@/context/SidebarContext";
+import { FeedbackProvider } from "@/context/FeedbackContext";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-sans",
@@ -46,10 +47,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${spaceGrotesk.variable} ${syne.variable} ${playfair.variable} font-sans antialiased bg-background text-foreground min-h-screen flex flex-col`}>
         <SidebarProvider>
-          <Navbar />
-          <MainWrapper>{children}</MainWrapper>
-          <FooterWrapper />
-          <FeedbackButton />
+          <FeedbackProvider>
+            <Navbar />
+            <MainWrapper>{children}</MainWrapper>
+            <FooterWrapper />
+            <FeedbackButton />
+          </FeedbackProvider>
         </SidebarProvider>
       </body>
     </html>
