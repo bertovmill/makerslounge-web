@@ -27,8 +27,16 @@ function SettingsContent() {
   // Premium state
   const [isPremium, setIsPremium] = useState(false);
   const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null);
+  const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | null>(null);
   const [premiumLoading, setPremiumLoading] = useState(false);
   const [showUpgradeSuccess, setShowUpgradeSuccess] = useState(false);
+  const [subscriptionDetails, setSubscriptionDetails] = useState<{
+    status: string;
+    cancelAtPeriodEnd: boolean;
+    cancelAt: number | null;
+    billingCycleAnchor: number;
+    nextBillingDate: number | null;
+  } | null>(null);
 
   // Password change
   const [newPassword, setNewPassword] = useState("");
@@ -57,13 +65,31 @@ function SettingsContent() {
       // Fetch premium status from profile
       supabase
         .from("profiles")
-        .select("is_premium, stripe_customer_id")
+        .select("is_premium, stripe_customer_id, stripe_subscription_id")
         .eq("id", user.id)
         .single()
-        .then(({ data }) => {
+        .then(async ({ data }) => {
           if (data) {
             setIsPremium(data.is_premium ?? false);
             setStripeCustomerId(data.stripe_customer_id ?? null);
+            setStripeSubscriptionId(data.stripe_subscription_id ?? null);
+
+            // Fetch subscription details from Stripe if premium
+            if (data.stripe_subscription_id) {
+              try {
+                const res = await fetch("/api/stripe/subscription", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ subscriptionId: data.stripe_subscription_id }),
+                });
+                const subData = await res.json();
+                if (!subData.error) {
+                  setSubscriptionDetails(subData);
+                }
+              } catch {
+                // Subscription details are non-critical
+              }
+            }
           }
           setLoading(false);
         });
@@ -182,17 +208,48 @@ function SettingsContent() {
                 <span className="inline-flex items-center rounded-full bg-primary/15 px-3 py-1 text-sm font-medium text-primary">
                   Premium Active
                 </span>
+                {subscriptionDetails?.cancelAtPeriodEnd && (
+                  <span className="inline-flex items-center rounded-full bg-yellow-500/15 px-3 py-1 text-sm font-medium text-yellow-500">
+                    Cancels at period end
+                  </span>
+                )}
               </div>
-              <p className="text-sm text-muted-foreground">
-                You have access to all premium features. Manage your billing and subscription below.
-              </p>
-              <Button
-                onClick={handleManageSubscription}
-                disabled={premiumLoading}
-                variant="outline"
-              >
-                {premiumLoading ? "Loading..." : "Manage Subscription"}
-              </Button>
+
+              {subscriptionDetails && (
+                <div className="text-sm text-muted-foreground space-y-1">
+                  {subscriptionDetails.cancelAtPeriodEnd ? (
+                    <p>
+                      Your subscription is canceled and will expire on{" "}
+                      <span className="text-foreground font-medium">
+                        {new Date((subscriptionDetails.cancelAt ?? subscriptionDetails.billingCycleAnchor) * 1000).toLocaleDateString("en-US", {
+                          month: "long", day: "numeric", year: "numeric",
+                        })}
+                      </span>
+                      . You&apos;ll keep premium access until then.
+                    </p>
+                  ) : subscriptionDetails.nextBillingDate ? (
+                    <p>
+                      Next renewal:{" "}
+                      <span className="text-foreground font-medium">
+                        {new Date(subscriptionDetails.nextBillingDate * 1000).toLocaleDateString("en-US", {
+                          month: "long", day: "numeric", year: "numeric",
+                        })}
+                      </span>{" "}
+                      &middot; $30/mo
+                    </p>
+                  ) : null}
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleManageSubscription}
+                  disabled={premiumLoading}
+                  variant="outline"
+                >
+                  {premiumLoading ? "Loading..." : "Manage Subscription"}
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
