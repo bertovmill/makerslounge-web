@@ -13,8 +13,17 @@ interface Message {
   suggestions?: VideoSuggestion[];
 }
 
+export interface BroadcastIdea {
+  id: string;
+  title: string;
+  notes: string;
+  status: string;
+  channels: string[];
+}
+
 interface VideoAgentChatProps {
   onApplySuggestion: (suggestion: VideoSuggestion) => void;
+  broadcastIdeas?: BroadcastIdea[];
 }
 
 const INITIAL_MESSAGE: Message = {
@@ -75,6 +84,13 @@ function SuggestionCard({
           <span className="text-gray-700">{suggestion.overlayPosition}</span>
         </div>
       )}
+      {suggestion.script && suggestion.script.length > 0 && (
+        <div className="flex items-center gap-1.5">
+          <span className="text-gray-400">Script: </span>
+          <span className="text-gray-700">{suggestion.script.length} segment{suggestion.script.length !== 1 ? "s" : ""}</span>
+          <span className="text-gray-400 text-[10px]">({suggestion.script.map(s => s.label).join(", ")})</span>
+        </div>
+      )}
       <button
         onClick={onApply}
         className="w-full mt-1 py-1.5 bg-primary text-white text-xs font-medium rounded-md hover:bg-primary/90 transition-colors"
@@ -85,13 +101,17 @@ function SuggestionCard({
   );
 }
 
-export function VideoAgentChat({ onApplySuggestion }: VideoAgentChatProps) {
+export function VideoAgentChat({ onApplySuggestion, broadcastIdeas }: VideoAgentChatProps) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [streamingText, setStreamingText] = useState("");
   const [searchStatus, setSearchStatus] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const filteredIdeas = broadcastIdeas?.filter(
+    (idea) => idea.status === "idea" || idea.status === "in_progress"
+  ) ?? [];
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -121,7 +141,7 @@ export function VideoAgentChat({ onApplySuggestion }: VideoAgentChatProps) {
       const response = await fetch("/api/video-agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages }),
+        body: JSON.stringify({ messages: apiMessages, ideas: broadcastIdeas }),
       });
 
       if (!response.ok) throw new Error("Failed to generate");
@@ -215,7 +235,7 @@ export function VideoAgentChat({ onApplySuggestion }: VideoAgentChatProps) {
       setSearchStatus(null);
       setIsGenerating(false);
     }
-  }, [input, isGenerating, messages]);
+  }, [input, isGenerating, messages, broadcastIdeas]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -225,6 +245,107 @@ export function VideoAgentChat({ onApplySuggestion }: VideoAgentChatProps) {
       }
     },
     [handleSend]
+  );
+
+  const handleIdeaClick = useCallback(
+    (idea: BroadcastIdea) => {
+      if (isGenerating) return;
+      const text = `Create a video based on my idea: '${idea.title}'.${idea.notes ? ` Notes: ${idea.notes}` : ""}`;
+      setInput(text);
+      // Auto-send after a tick so input state is set
+      setTimeout(() => {
+        const userMsg: Message = { role: "user", content: text };
+        const currentMessages = [...messages, userMsg];
+        setMessages(currentMessages);
+        setInput("");
+        setIsGenerating(true);
+        setStreamingText("");
+        setSearchStatus(null);
+
+        const apiMessages = currentMessages
+          .filter((_, i) => i > 0)
+          .map((m) => ({ role: m.role, content: m.content }));
+
+        fetch("/api/video-agent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: apiMessages, ideas: broadcastIdeas }),
+        })
+          .then(async (response) => {
+            if (!response.ok) throw new Error("Failed to generate");
+            const reader = response.body?.getReader();
+            if (!reader) throw new Error("No reader");
+
+            const decoder = new TextDecoder();
+            let buffer = "";
+            let responseText = "";
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split("\n\n");
+              buffer = lines.pop() || "";
+
+              for (const line of lines) {
+                if (!line.startsWith("data: ")) continue;
+                const jsonStr = line.slice(6);
+                try {
+                  const event = JSON.parse(jsonStr);
+                  switch (event.type) {
+                    case "text_delta":
+                      responseText += event.text;
+                      setStreamingText(responseText);
+                      break;
+                    case "search_status":
+                      setSearchStatus(event.text);
+                      break;
+                    case "done": {
+                      const { cleanText, suggestions } = parseVideoSuggestions(responseText);
+                      setMessages((prev) => [
+                        ...prev,
+                        { role: "assistant", content: cleanText, suggestions: suggestions.length > 0 ? suggestions : undefined },
+                      ]);
+                      setStreamingText("");
+                      setSearchStatus(null);
+                      setIsGenerating(false);
+                      return;
+                    }
+                    case "error":
+                      throw new Error(event.text);
+                  }
+                } catch (e) {
+                  if (e instanceof SyntaxError) continue;
+                  throw e;
+                }
+              }
+            }
+
+            if (responseText) {
+              const { cleanText, suggestions } = parseVideoSuggestions(responseText);
+              setMessages((prev) => [
+                ...prev,
+                { role: "assistant", content: cleanText, suggestions: suggestions.length > 0 ? suggestions : undefined },
+              ]);
+            }
+            setStreamingText("");
+            setSearchStatus(null);
+            setIsGenerating(false);
+          })
+          .catch((error) => {
+            console.error("Video agent error:", error);
+            setMessages((prev) => [
+              ...prev,
+              { role: "assistant", content: "Sorry, something went wrong. Please try again." },
+            ]);
+            setStreamingText("");
+            setSearchStatus(null);
+            setIsGenerating(false);
+          });
+      }, 0);
+    },
+    [isGenerating, messages, broadcastIdeas]
   );
 
   return (
@@ -311,6 +432,32 @@ export function VideoAgentChat({ onApplySuggestion }: VideoAgentChatProps) {
           </div>
         )}
       </div>
+
+      {/* Broadcast Ideas Quick-Select */}
+      {filteredIdeas.length > 0 && (
+        <div className="border-t border-gray-200 px-2 pt-2 pb-1">
+          <div className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1.5 px-0.5">Your Ideas</div>
+          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {filteredIdeas.map((idea) => (
+              <button
+                key={idea.id}
+                onClick={() => handleIdeaClick(idea)}
+                disabled={isGenerating}
+                className="flex-shrink-0 flex items-start gap-1.5 px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed max-w-[160px]"
+              >
+                <span
+                  className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${
+                    idea.status === "in_progress" ? "bg-yellow-400" : "bg-blue-400"
+                  }`}
+                />
+                <span className="text-xs text-gray-700 leading-tight line-clamp-2">
+                  {idea.title.length > 30 ? idea.title.slice(0, 30) + "..." : idea.title}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Input */}
       <div className="border-t border-gray-200 p-2">

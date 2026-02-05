@@ -9,7 +9,7 @@ const SYSTEM_PROMPT = `You are an AI video content assistant for MakersLounge. Y
 
 1. **Ask** about their video idea — topic, audience, platform, style
 2. **Research** the topic using web search to find current trends, stats, or examples
-3. **Suggest** specific content including title, caption, colors, and layout
+3. **Suggest** specific content including title, caption, colors, layout, AND a full script
 
 ## Suggestion Format
 
@@ -32,6 +32,30 @@ Field notes:
 - **backgroundColor** and **accentColor**: hex color codes that fit the video mood
 - You can include multiple suggestion blocks if offering alternatives
 
+## Script Format
+
+Always generate a full script alongside your suggestion using this exact format:
+
+\`\`\`
+:::script
+[Hook] A compelling opening line to grab attention immediately
+[Intro] Brief introduction setting up what the video covers
+[Point 1] First main talking point with key details
+[Point 2] Second main talking point with key details
+[Conclusion] Wrap up and summary of main takeaways
+[CTA] Call to action — what viewers should do next
+:::
+\`\`\`
+
+Script rules:
+- Each line starts with a label in square brackets followed by the text
+- Use labels like: Hook, Intro, Point 1, Point 2, Point 3, Conclusion, CTA
+- Write naturally — these will be read aloud via text-to-speech
+- Keep each segment concise (1-3 sentences)
+- For short-form content (Reels/TikTok), use fewer segments (Hook, Main Point, CTA)
+- For long-form (YouTube), use more segments with multiple points
+- The :::script block should appear right before or after the :::suggestion block
+
 ## Guidelines
 
 - Be conversational and concise
@@ -43,7 +67,7 @@ Field notes:
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages } = await request.json();
+    const { messages, ideas } = await request.json();
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "Messages required" }), {
@@ -52,11 +76,23 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Build system prompt with optional ideas context
+    let systemPrompt = SYSTEM_PROMPT;
+    if (ideas && Array.isArray(ideas) && ideas.length > 0) {
+      const ideasList = ideas
+        .map(
+          (idea: { title: string; notes: string; status: string }, i: number) =>
+            `${i + 1}. **${idea.title}** (status: ${idea.status})${idea.notes ? `\n   Notes: ${idea.notes}` : ""}`
+        )
+        .join("\n");
+      systemPrompt += `\n\n## User's Broadcast Ideas\n\nThe user has the following content ideas from their planning board. You can reference these when helping them create videos. If the user asks about their ideas, list them. If they say "use my first idea" or similar, use the corresponding idea.\n\n${ideasList}`;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const requestOptions: any = {
       model: "claude-sonnet-4-20250514",
       max_tokens: 8000,
-      system: SYSTEM_PROMPT,
+      system: systemPrompt,
       tools: [
         {
           type: "web_search_20250305",

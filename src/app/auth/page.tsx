@@ -5,6 +5,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { motion } from "motion/react";
+
+const AVATAR_COLORS = [
+  "bg-rose-400/80",
+  "bg-amber-400/80",
+  "bg-emerald-400/80",
+  "bg-violet-400/80",
+];
+
+const AVATAR_INITIALS = ["JD", "AK", "MR"];
 
 function AuthContent() {
   const router = useRouter();
@@ -88,73 +98,134 @@ function AuthContent() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] bg-gradient-to-br from-primary/90 via-primary to-primary/80 relative overflow-hidden">
-        {/* Decorative shapes */}
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-white/10 rounded-full blur-2xl" />
+    <div className="min-h-screen flex relative">
+      {/* Grain overlay */}
+      <div className="grain-overlay" />
 
-          {/* Floating shapes */}
-          <svg className="absolute top-32 right-20 w-16 h-16 text-white/20" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="40" fill="currentColor" />
-          </svg>
-          <svg className="absolute bottom-40 left-20 w-20 h-20 text-white/15" viewBox="0 0 100 100">
-            <rect x="10" y="10" width="80" height="80" rx="20" fill="currentColor" transform="rotate(15 50 50)" />
-          </svg>
-          <svg className="absolute top-1/3 right-1/3 w-12 h-12 text-white/25" viewBox="0 0 100 100">
-            <polygon points="50,10 90,90 10,90" fill="currentColor" />
-          </svg>
-        </div>
+      {/* Left side - Photo Hero (desktop) */}
+      <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] relative overflow-hidden">
+        {/* Background photo */}
+        <img
+          src="/makerslounge-photos/team-photo.jpeg"
+          alt="MakersLounge community"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        {/* Dark gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/70" />
+        {/* Warm accent overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-orange-900/20 via-transparent to-transparent" />
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20 text-white">
-          <Link href="/" className="flex items-center gap-3 mb-12">
-            <img src="/icon-512.png" alt="MakersLounge" className="w-12 h-12 rounded-xl shadow-lg" />
-            <span className="text-2xl font-semibold">MakersLounge</span>
-          </Link>
+        <div className="relative z-10 flex flex-col justify-between p-12 xl:p-20 text-white h-full">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <Link href="/" className="flex items-center gap-3">
+              <img src="/icon-512.png" alt="MakersLounge" className="w-12 h-12 rounded-xl shadow-lg" />
+              <span className="text-2xl font-semibold">MakersLounge</span>
+            </Link>
+          </motion.div>
 
-          <h1 className="text-4xl xl:text-5xl font-bold leading-tight mb-6">
-            Where makers<br />
-            <span className="text-white/90">connect & build</span>
-          </h1>
+          <div>
+            <motion.h1
+              className="font-serif text-4xl xl:text-5xl 2xl:text-6xl leading-tight mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+            >
+              Where makers<br />
+              <span className="text-white/80 italic">connect & build</span>
+            </motion.h1>
 
-          <p className="text-lg xl:text-xl text-white/80 max-w-md mb-10 leading-relaxed">
-            Join Toronto&apos;s community of builders, creators, and entrepreneurs.
-            Share your projects, find collaborators, and grow together.
-          </p>
+            <motion.p
+              className="text-lg xl:text-xl text-white/70 max-w-md mb-10 leading-relaxed"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.35 }}
+            >
+              Join Toronto&apos;s community of builders, creators, and entrepreneurs.
+              Share your projects, find collaborators, and grow together.
+            </motion.p>
 
-          {/* Social proof */}
-          <div className="flex items-center gap-6">
-            <div className="flex -space-x-3">
-              <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center text-sm font-medium">JD</div>
-              <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center text-sm font-medium">AK</div>
-              <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center text-sm font-medium">MR</div>
-              <div className="w-10 h-10 rounded-full bg-white/30 border-2 border-white/30 flex items-center justify-center text-sm font-medium">+</div>
-            </div>
-            <p className="text-white/70 text-sm">
-              Join 100+ makers already building
-            </p>
+            {/* Social proof */}
+            <motion.div
+              className="flex items-center gap-5"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.5 }}
+            >
+              <div className="flex -space-x-3">
+                {AVATAR_INITIALS.map((initials, i) => (
+                  <motion.div
+                    key={initials}
+                    className={`w-11 h-11 rounded-full ${AVATAR_COLORS[i]} border-2 border-white/40 flex items-center justify-center text-sm font-semibold text-white shadow-lg`}
+                    whileHover={{ scale: 1.15, zIndex: 10 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    {initials}
+                  </motion.div>
+                ))}
+                <motion.div
+                  className={`w-11 h-11 rounded-full ${AVATAR_COLORS[3]} border-2 border-white/40 flex items-center justify-center text-sm font-semibold text-white shadow-lg`}
+                  whileHover={{ scale: 1.15, zIndex: 10 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  +
+                </motion.div>
+              </div>
+              <div>
+                <p className="text-white/90 text-sm font-medium">100+ makers already building</p>
+                <p className="text-white/50 text-xs">Toronto&apos;s fastest-growing maker community</p>
+              </div>
+            </motion.div>
           </div>
+
+          {/* Bottom spacer for layout balance */}
+          <div />
         </div>
       </div>
 
       {/* Right side - Auth Form */}
-      <div className="flex-1 flex flex-col bg-background">
+      <div className="flex-1 flex flex-col bg-[oklch(0.98_0.01_60)] dark:bg-background relative overflow-hidden">
+        {/* Mobile: photo background with blur */}
+        <div className="lg:hidden absolute inset-0">
+          <img
+            src="/makerslounge-photos/team-photo.jpeg"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover blur-sm scale-105"
+          />
+          <div className="absolute inset-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm" />
+        </div>
+
         {/* Mobile header */}
-        <div className="lg:hidden p-6 flex items-center justify-center border-b border-border/50">
+        <motion.div
+          className="lg:hidden relative z-10 p-6 flex items-center justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
           <Link href="/" className="flex items-center gap-2">
             <img src="/icon-512.png" alt="MakersLounge" className="w-8 h-8" />
             <span className="text-lg font-semibold">MakersLounge</span>
           </Link>
-        </div>
+        </motion.div>
 
-        <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
-          <div className="w-full max-w-sm">
+        <div className="flex-1 flex items-center justify-center p-6 sm:p-8 relative z-10">
+          <motion.div
+            className="w-full max-w-sm auth-glass-card rounded-2xl p-8"
+            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
             {/* Header */}
-            <div className="text-center mb-8">
+            <motion.div
+              className="text-center mb-8"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               <h2 className="text-2xl sm:text-3xl font-semibold mb-2">
                 {isSignUp ? "Create account" : "Welcome back"}
               </h2>
@@ -163,36 +234,53 @@ function AuthContent() {
                   ? "Start your maker journey today"
                   : "Sign in to continue to MakersLounge"}
               </p>
-            </div>
+            </motion.div>
 
             {/* Google Sign In */}
-            <Button
-              variant="outline"
-              onClick={handleSignInWithGoogle}
-              disabled={loading}
-              className="w-full h-12 rounded-xl border-border/60 hover:bg-muted/50 hover:border-border justify-center gap-3 font-medium transition-all"
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              Continue with Google
-            </Button>
+              <Button
+                variant="outline"
+                onClick={handleSignInWithGoogle}
+                disabled={loading}
+                className="w-full h-12 rounded-xl border-border/60 hover:bg-muted/50 hover:border-border justify-center gap-3 font-medium transition-all"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+              </Button>
+            </motion.div>
 
             {/* Divider */}
-            <div className="relative my-6">
+            <motion.div
+              className="relative my-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border/60"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-background px-4 text-muted-foreground">or</span>
+                <span className="bg-transparent px-4 text-muted-foreground backdrop-blur-sm">or</span>
               </div>
-            </div>
+            </motion.div>
 
             {/* Email Form */}
-            <form onSubmit={handleSignInWithEmail} className="space-y-4">
+            <motion.form
+              onSubmit={handleSignInWithEmail}
+              className="space-y-4"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.45 }}
+            >
               <div>
                 <label htmlFor="email" className="block text-sm font-medium mb-1.5 text-foreground/80">
                   Email
@@ -203,7 +291,7 @@ function AuthContent() {
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-12 px-4 bg-muted/40 border border-border/60 rounded-xl text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/60 transition-all"
+                  className="auth-glass-input w-full h-12 px-4 rounded-xl text-sm outline-none text-foreground placeholder:text-muted-foreground/60"
                   required
                 />
               </div>
@@ -218,7 +306,7 @@ function AuthContent() {
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full h-12 px-4 pr-12 bg-muted/40 border border-border/60 rounded-xl text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/60 transition-all"
+                    className="auth-glass-input w-full h-12 px-4 pr-12 rounded-xl text-sm outline-none text-foreground placeholder:text-muted-foreground/60"
                     required
                     minLength={6}
                   />
@@ -257,17 +345,22 @@ function AuthContent() {
                 </div>
               )}
 
-              <Button
+              <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 rounded-xl font-medium text-base mt-2"
+                className="auth-cta-btn w-full h-12 rounded-xl font-medium text-base mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Loading..." : isSignUp ? "Create account" : "Sign in"}
-              </Button>
-            </form>
+              </button>
+            </motion.form>
 
             {/* Toggle sign in/up */}
-            <p className="text-sm text-center mt-6 text-muted-foreground">
+            <motion.p
+              className="text-sm text-center mt-6 text-muted-foreground"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.55 }}
+            >
               {isSignUp ? "Already have an account?" : "New to MakersLounge?"}{" "}
               <button
                 type="button"
@@ -279,19 +372,24 @@ function AuthContent() {
               >
                 {isSignUp ? "Sign in" : "Sign up"}
               </button>
-            </p>
+            </motion.p>
 
             {/* Message */}
             {message && (
-              <div className="mt-4 p-3 bg-muted/50 rounded-xl border border-border/60">
+              <motion.div
+                className="mt-4 p-3 bg-muted/50 rounded-xl border border-border/60"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
                 <p className="text-sm text-center text-muted-foreground">{message}</p>
-              </div>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
         </div>
 
         {/* Footer */}
-        <div className="p-6 text-center">
+        <div className="relative z-10 p-6 text-center">
           <p className="text-xs text-muted-foreground">
             By continuing, you agree to our Terms of Service and Privacy Policy
           </p>

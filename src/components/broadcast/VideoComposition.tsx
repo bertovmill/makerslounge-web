@@ -169,6 +169,15 @@ export const TextLayer: React.FC<TextLayerProps> = ({
   }
 };
 
+export interface TextSegment {
+  id: string;
+  text: string;
+  label: string;
+  startFrame: number;
+  durationInFrames: number;
+  animation?: TextAnimation;
+}
+
 export interface VideoCompositionProps {
   title?: string;
   caption?: string;
@@ -192,6 +201,11 @@ export interface VideoCompositionProps {
   // TTS audio
   audioSrc?: string | null;
   audioVolume?: number;
+  // Free-form text positioning (percentage 0-100)
+  titlePosition?: { x: number; y: number };
+  captionPosition2?: { x: number; y: number };
+  // Per-segment text overlays (from script)
+  textSegments?: TextSegment[];
 }
 
 export const VideoComposition: React.FC<VideoCompositionProps> = ({
@@ -215,6 +229,9 @@ export const VideoComposition: React.FC<VideoCompositionProps> = ({
   showCaptions = false,
   audioSrc = null,
   audioVolume = 1,
+  titlePosition,
+  captionPosition2,
+  textSegments = [],
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -250,9 +267,13 @@ export const VideoComposition: React.FC<VideoCompositionProps> = ({
             volume={muted ? 0 : volume}
             playbackRate={playbackRate}
             muted={muted}
+            fallbackOffthreadVideoProps={{
+              pauseWhenBuffering: true,
+              acceptableTimeShiftInSeconds: 0.06,
+            }}
           />
           {/* Dark overlay for text readability */}
-          {showOverlay && (title || caption) && (
+          {showOverlay && (title || caption || textSegments.length > 0) && (
             <AbsoluteFill
               style={{
                 backgroundColor: `rgba(0,0,0,${overlayOpacity})`,
@@ -280,8 +301,89 @@ export const VideoComposition: React.FC<VideoCompositionProps> = ({
         />
       )}
 
-      {/* Content Overlay */}
-      {(title || caption) && (
+      {/* Per-segment text overlays (from script) */}
+      {textSegments.length > 0 ? (
+        <div
+          style={{
+            position: "absolute",
+            ...positionStyles[overlayPosition],
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 20,
+            padding: "0 40px",
+            zIndex: 10,
+          }}
+        >
+          {textSegments.map((seg) => (
+            <Sequence key={seg.id} from={seg.startFrame} durationInFrames={seg.durationInFrames}>
+              <TextLayer
+                text={seg.text}
+                fontSize={videoSrc ? 56 : 72}
+                color="#ffffff"
+                animation={seg.animation || titleAnimation}
+                highlightColor={accentColor}
+                shadow={!!videoSrc}
+              />
+            </Sequence>
+          ))}
+        </div>
+      ) : /* Content Overlay — free-form positioning when titlePosition/captionPosition2 provided */
+      (title || caption) && (titlePosition || captionPosition2) ? (
+        <>
+          {title && (
+            <div
+              style={{
+                position: "absolute",
+                left: `${(titlePosition?.x ?? 50)}%`,
+                top: `${(titlePosition?.y ?? 45)}%`,
+                transform: "translate(-50%, -50%)",
+                zIndex: 10,
+                padding: "0 40px",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <Sequence from={0}>
+                <TextLayer
+                  text={title}
+                  fontSize={videoSrc ? 56 : 72}
+                  color="#ffffff"
+                  animation={titleAnimation}
+                  highlightColor={accentColor}
+                  shadow={!!videoSrc}
+                />
+              </Sequence>
+            </div>
+          )}
+          {caption && (
+            <div
+              style={{
+                position: "absolute",
+                left: `${(captionPosition2?.x ?? 50)}%`,
+                top: `${(captionPosition2?.y ?? 60)}%`,
+                transform: "translate(-50%, -50%)",
+                zIndex: 10,
+                padding: "0 40px",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <Sequence from={15}>
+                <TextLayer
+                  text={caption}
+                  fontSize={videoSrc ? 28 : 32}
+                  color="rgba(255,255,255,0.9)"
+                  animation={captionAnimation}
+                  highlightColor={accentColor}
+                  shadow={!!videoSrc}
+                  delay={0}
+                />
+              </Sequence>
+            </div>
+          )}
+        </>
+      ) : (title || caption) && (
         <div
           style={{
             position: "absolute",

@@ -5,10 +5,11 @@ export interface VideoSuggestion {
   accentColor?: string;
   aspectRatio?: string;
   overlayPosition?: string;
+  script?: { label: string; text: string }[];
 }
 
 /**
- * Parse :::suggestion blocks from agent markdown output.
+ * Parse :::suggestion and :::script blocks from agent markdown output.
  * Returns cleaned text (blocks replaced with a placeholder) and structured suggestions.
  */
 export function parseVideoSuggestions(text: string): {
@@ -16,9 +17,31 @@ export function parseVideoSuggestions(text: string): {
   suggestions: VideoSuggestion[];
 } {
   const suggestions: VideoSuggestion[] = [];
-  const regex = /:::suggestion\n([\s\S]*?):::/g;
+  const suggestionRegex = /:::suggestion\n([\s\S]*?):::/g;
+  const scriptRegex = /:::script\n([\s\S]*?):::/g;
 
-  const cleanText = text.replace(regex, (_, block: string) => {
+  // Parse script blocks first and collect them
+  const scripts: { label: string; text: string }[][] = [];
+  let cleanText = text.replace(scriptRegex, (_, block: string) => {
+    const segments: { label: string; text: string }[] = [];
+    const lines = block.trim().split("\n");
+
+    for (const line of lines) {
+      const match = line.match(/^\[([^\]]+)\]\s*(.+)$/);
+      if (match) {
+        segments.push({ label: match[1], text: match[2] });
+      }
+    }
+
+    if (segments.length > 0) {
+      scripts.push(segments);
+    }
+
+    return "\n\n---\n\n";
+  });
+
+  // Parse suggestion blocks
+  cleanText = cleanText.replace(suggestionRegex, (_, block: string) => {
     const suggestion: VideoSuggestion = {};
     const lines = block.trim().split("\n");
 
@@ -57,12 +80,22 @@ export function parseVideoSuggestions(text: string): {
       }
     }
 
+    // Attach the first available script block to this suggestion
+    if (scripts.length > 0) {
+      suggestion.script = scripts.shift();
+    }
+
     if (Object.keys(suggestion).length > 0) {
       suggestions.push(suggestion);
     }
 
     return "\n\n---\n\n";
   });
+
+  // If there are remaining script blocks without a matching suggestion, create suggestions for them
+  for (const script of scripts) {
+    suggestions.push({ script });
+  }
 
   return { cleanText: cleanText.trim(), suggestions };
 }

@@ -139,14 +139,6 @@ export default function FeedbackButton() {
 
   return (
     <>
-      <Button
-        onClick={() => openFeedback()}
-        size="sm"
-        className="hidden md:flex fixed bottom-6 right-6 rounded-full shadow-lg z-40"
-      >
-        Feedback
-      </Button>
-
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="glass-card p-8 max-w-md w-full relative">

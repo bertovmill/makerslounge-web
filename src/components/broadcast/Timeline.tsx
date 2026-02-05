@@ -44,6 +44,7 @@ interface TimelineProps {
   canSplitClip?: boolean;
   onDeleteClip?: () => void;
   canDeleteClip?: boolean;
+  height?: number;
 }
 
 // Helper to format time
@@ -132,28 +133,28 @@ function TimeRuler({ durationInFrames, fps, pixelsPerFrame }: { durationInFrames
   );
 }
 
-// Clip component with resize handles
+// Clip component with resize handles and drag-to-reorder
 function TimelineClipComponent({
   clip,
   pixelsPerFrame,
   isSelected,
   onSelect,
   onResize,
-  onDrag,
+  onDragTo,
 }: {
   clip: TimelineClip;
   pixelsPerFrame: number;
   isSelected: boolean;
   onSelect: () => void;
   onResize: (startDelta: number, endDelta: number) => void;
-  onDrag: (frameDelta: number) => void;
+  onDragTo: (targetStartFrame: number) => void;
 }) {
   const clipRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizingLeft, setIsResizingLeft] = useState(false);
   const [isResizingRight, setIsResizingRight] = useState(false);
   const startX = useRef(0);
-  const startFrame = useRef(0);
+  const dragOriginFrame = useRef(0);
 
   const width = (clip.endFrame - clip.startFrame) * pixelsPerFrame;
   const left = clip.startFrame * pixelsPerFrame;
@@ -162,7 +163,7 @@ function TimelineClipComponent({
     e.stopPropagation();
     onSelect();
     startX.current = e.clientX;
-    startFrame.current = clip.startFrame;
+    dragOriginFrame.current = clip.startFrame;
 
     if (mode === "drag") setIsDragging(true);
     if (mode === "left") setIsResizingLeft(true);
@@ -175,7 +176,8 @@ function TimelineClipComponent({
       const frameDelta = Math.round(deltaX / pixelsPerFrame);
 
       if (isDragging) {
-        onDrag(frameDelta);
+        // Pass absolute target start frame (original position + delta)
+        onDragTo(dragOriginFrame.current + frameDelta);
       } else if (isResizingLeft) {
         onResize(frameDelta, 0);
       } else if (isResizingRight) {
@@ -198,14 +200,18 @@ function TimelineClipComponent({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isDragging, isResizingLeft, isResizingRight, pixelsPerFrame, onDrag, onResize]);
+  }, [isDragging, isResizingLeft, isResizingRight, pixelsPerFrame, onDragTo, onResize]);
 
   return (
     <div
       ref={clipRef}
       className={cn(
-        "absolute top-1 bottom-1 rounded-md cursor-pointer group transition-shadow",
-        isSelected ? "ring-2 ring-primary ring-offset-1 shadow-lg" : "hover:shadow-md"
+        "absolute top-1 bottom-1 rounded-md cursor-pointer group",
+        isDragging
+          ? "shadow-xl ring-2 ring-primary/50 opacity-90 z-10 cursor-grabbing"
+          : isSelected
+            ? "ring-2 ring-primary ring-offset-1 shadow-lg"
+            : "hover:shadow-md transition-shadow"
       )}
       style={{
         left,
@@ -266,11 +272,13 @@ export function Timeline({
   canSplitClip,
   onDeleteClip,
   canDeleteClip,
+  height,
 }: TimelineProps) {
   const timelineRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [showAddTrackMenu, setShowAddTrackMenu] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false);
   const [trackHeaderWidth, setTrackHeaderWidth] = useState(160);
 
@@ -323,7 +331,7 @@ export function Timeline({
     onTracksChange(newTracks);
   }, [tracks, durationInFrames, fps, onTracksChange]);
 
-  const handleClipDrag = useCallback((trackId: string, clipId: string, frameDelta: number) => {
+  const handleClipDrag = useCallback((trackId: string, clipId: string, targetStartFrame: number) => {
     if (!onTracksChange) return;
 
     const newTracks = tracks.map((track) => {
@@ -332,11 +340,10 @@ export function Timeline({
         ...track,
         clips: track.clips.map((clip) => {
           if (clip.id !== clipId) return clip;
-          const duration = clip.endFrame - clip.startFrame;
-          let newStart = clip.startFrame + frameDelta;
-          // Clamp to timeline bounds
-          newStart = Math.max(0, Math.min(durationInFrames - duration, newStart));
-          return { ...clip, startFrame: newStart, endFrame: newStart + duration };
+          const clipDuration = clip.endFrame - clip.startFrame;
+          // Allow free positioning — timeline auto-expands to fit
+          const newStart = Math.max(0, targetStartFrame);
+          return { ...clip, startFrame: newStart, endFrame: newStart + clipDuration };
         }),
       };
     });
@@ -417,7 +424,7 @@ export function Timeline({
   }, []);
 
   return (
-    <div className="flex flex-col border-t border-gray-200 bg-white flex-shrink-0" style={{ maxHeight: "280px" }}>
+    <div className="flex flex-col border-t border-gray-200 bg-white flex-shrink-0" style={{ height: height ? `${height}px` : undefined, maxHeight: height ? undefined : "280px" }}>
       {/* Timeline Controls */}
       <div className="flex items-center justify-between px-2 sm:px-4 py-2 border-b border-gray-200 bg-gray-50">
         <div className="flex items-center gap-1.5 sm:gap-3">
@@ -537,7 +544,7 @@ export function Timeline({
         onWheel={handleWheel}
         style={{ minHeight: "100px" }}
       >
-        <div className="relative" style={{ minWidth: timelineWidth + trackHeaderWidth, width: "100%" }}>
+        <div className="relative" style={{ minWidth: timelineWidth + trackHeaderWidth, width: "100%", minHeight: "100%" }}>
           {/* Time Ruler */}
           <div className="sticky top-0 z-20 flex">
             <div className="flex-shrink-0 bg-gray-50 border-r border-b border-gray-200" style={{ width: trackHeaderWidth }} />
@@ -617,7 +624,7 @@ export function Timeline({
                       isSelected={selectedClipId === clip.id}
                       onSelect={() => onClipSelect?.(clip)}
                       onResize={(startDelta, endDelta) => handleClipResize(track.id, clip.id, startDelta, endDelta)}
-                      onDrag={(frameDelta) => handleClipDrag(track.id, clip.id, frameDelta)}
+                      onDragTo={(targetStart) => handleClipDrag(track.id, clip.id, targetStart)}
                     />
                   ))}
                 </div>
@@ -662,8 +669,8 @@ export function Timeline({
         </div>
       </div>
 
-      {/* Add Track Button */}
-      <div className="px-2 sm:px-4 py-1.5 sm:py-2 border-t border-gray-200 bg-gray-50">
+      {/* Add Track Button + Info */}
+      <div className="flex items-center justify-between px-2 sm:px-4 py-1.5 sm:py-2 border-t border-gray-200 bg-gray-50">
         <div className="relative">
           <button
             onClick={() => setShowAddTrackMenu(!showAddTrackMenu)}
@@ -705,6 +712,35 @@ export function Timeline({
                   </div>
                 </button>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Info button */}
+        <div className="relative">
+          <button
+            onClick={() => setShowInfo(!showInfo)}
+            className={cn(
+              "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium transition-colors",
+              showInfo
+                ? "bg-gray-300 text-gray-700"
+                : "bg-gray-200/70 text-gray-400 hover:bg-gray-200 hover:text-gray-500"
+            )}
+            title="About the timeline editor"
+          >
+            i
+          </button>
+          {showInfo && (
+            <div className="absolute bottom-full right-0 mb-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50 text-xs text-gray-600 leading-relaxed">
+              <p className="font-medium text-gray-800 mb-1.5">Timeline Editor</p>
+              <p className="mb-1.5">
+                Arrange and time your video content on multi-track layers. Drag clips to reposition, resize edges to trim, and use the playhead to scrub through your project.
+              </p>
+              <ul className="space-y-1 text-gray-500">
+                <li><span className="text-gray-700 font-medium">Split</span> &mdash; cut a clip at the playhead</li>
+                <li><span className="text-gray-700 font-medium">Tracks</span> &mdash; add text, audio, or image layers</li>
+                <li><span className="text-gray-700 font-medium">Zoom</span> &mdash; adjust timeline scale with +/&minus;</li>
+              </ul>
             </div>
           )}
         </div>

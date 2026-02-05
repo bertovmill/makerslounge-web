@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 
+export const maxDuration = 120; // Allow up to 2 minutes for image generation
+
 const FAL_API_KEY = process.env.FAL_API_KEY;
 
 export async function POST(request: NextRequest) {
@@ -56,8 +58,8 @@ export async function POST(request: NextRequest) {
     const stylePrefix = stylePrompts[style] || "";
     const enhancedPrompt = `${stylePrefix}${prompt}`;
 
-    // Call Fal.ai API using flux-pro for high quality
-    const response = await fetch("https://queue.fal.run/fal-ai/flux-pro/v1.1", {
+    // Submit to fal.ai queue
+    const submitResponse = await fetch("https://queue.fal.run/fal-ai/flux-pro/v1.1", {
       method: "POST",
       headers: {
         Authorization: `Key ${FAL_API_KEY}`,
@@ -75,29 +77,39 @@ export async function POST(request: NextRequest) {
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error("Fal.ai error:", errorData);
+    if (!submitResponse.ok) {
+      const errorData = await submitResponse.json().catch(() => ({}));
+      console.error("Fal.ai submit error:", submitResponse.status, errorData);
       return NextResponse.json(
-        { error: errorData.detail || "Failed to generate image" },
-        { status: response.status }
+        { error: errorData.detail || errorData.message || `Fal.ai error: ${submitResponse.status}` },
+        { status: submitResponse.status }
       );
     }
 
-    const data = await response.json();
+    const submitData = await submitResponse.json();
+    console.log("Fal.ai submit response:", JSON.stringify(submitData).slice(0, 500));
 
-    // Handle queue response - poll for result
-    if (data.request_id) {
-      // Poll for result
-      const result = await pollForResult(data.request_id);
-      return NextResponse.json(result);
+    // If we got images directly (no queue), return them
+    if (submitData.images) {
+      return NextResponse.json({
+        images: submitData.images.map((img: { url: string }) => img.url),
+        prompt: enhancedPrompt,
+      });
     }
 
-    // Direct response
-    return NextResponse.json({
-      images: data.images?.map((img: { url: string }) => img.url) || [],
-      prompt: enhancedPrompt,
-    });
+    // Otherwise poll the queue using the URLs fal.ai gave us
+    const statusUrl = submitData.status_url;
+    const responseUrl = submitData.response_url;
+    if (!statusUrl || !responseUrl) {
+      console.error("Fal.ai: no status_url/response_url in response:", submitData);
+      return NextResponse.json(
+        { error: "Unexpected response from image generator" },
+        { status: 500 }
+      );
+    }
+
+    const result = await pollForResult(statusUrl, responseUrl);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Generate image error:", error);
     return NextResponse.json(
@@ -107,29 +119,35 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function pollForResult(requestId: string, maxAttempts = 60): Promise<{ images: string[]; prompt: string }> {
+async function pollForResult(statusUrl: string, responseUrl: string, maxAttempts = 120): Promise<{ images: string[]; prompt: string }> {
   for (let i = 0; i < maxAttempts; i++) {
-    const statusResponse = await fetch(
-      `https://queue.fal.run/fal-ai/flux-pro/v1.1/requests/${requestId}/status`,
-      {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const statusResponse = await fetch(statusUrl, {
+      headers: {
+        Authorization: `Key ${FAL_API_KEY}`,
+      },
+    });
+
+    if (!statusResponse.ok) {
+      console.error("Fal.ai status check failed:", statusResponse.status);
+      continue;
+    }
+
+    const statusData = await statusResponse.json();
+    console.log(`Fal.ai poll ${i + 1}: status=${statusData.status}`);
+
+    if (statusData.status === "COMPLETED") {
+      const resultResponse = await fetch(responseUrl, {
         headers: {
           Authorization: `Key ${FAL_API_KEY}`,
         },
+      });
+
+      if (!resultResponse.ok) {
+        throw new Error(`Failed to fetch result: ${resultResponse.status}`);
       }
-    );
 
-    const statusData = await statusResponse.json();
-
-    if (statusData.status === "COMPLETED") {
-      // Get the result
-      const resultResponse = await fetch(
-        `https://queue.fal.run/fal-ai/flux-pro/v1.1/requests/${requestId}`,
-        {
-          headers: {
-            Authorization: `Key ${FAL_API_KEY}`,
-          },
-        }
-      );
       const resultData = await resultResponse.json();
       return {
         images: resultData.images?.map((img: { url: string }) => img.url) || [],
@@ -138,12 +156,12 @@ async function pollForResult(requestId: string, maxAttempts = 60): Promise<{ ima
     }
 
     if (statusData.status === "FAILED") {
-      throw new Error("Image generation failed");
+      console.error("Fal.ai generation failed:", statusData);
+      throw new Error("Image generation failed on fal.ai");
     }
 
-    // Wait before polling again
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // IN_QUEUE or IN_PROGRESS — keep polling
   }
 
-  throw new Error("Image generation timed out");
+  throw new Error("Image generation timed out after 120 seconds");
 }

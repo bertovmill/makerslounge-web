@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { Player, PlayerRef } from "@remotion/player";
-import { VideoComposition } from "./VideoComposition";
+import { VideoComposition, type TextSegment } from "./VideoComposition";
 import { Timeline, TimelineTrack, TimelineClip } from "./Timeline";
 import { createAutoCaptions } from "./Captions";
 import type { Caption } from "@remotion/captions";
@@ -10,14 +10,66 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { VideoAgentChat } from "./VideoAgentChat";
+import type { BroadcastIdea } from "./VideoAgentChat";
 import type { VideoSuggestion } from "@/lib/parseVideoSuggestions";
+import { supabase } from "@/lib/supabase";
+import { RecordingPanel } from "./RecordingPanel";
 
 type TextAnimation = "none" | "fade" | "typewriter" | "word-highlight" | "slide-up" | "scale";
-type ActiveTool = "text" | "music" | "captions" | "brand" | "layout" | "uploads" | null;
+type ActiveTool = "text" | "music" | "captions" | "brand" | "layout" | "uploads" | "record" | null;
 type CaptionPosition = "top" | "center" | "bottom";
+
+interface ScriptSegment {
+  id: string;
+  label: string;
+  text: string;
+}
+
+const SEGMENT_LABEL_COLORS: Record<string, string> = {
+  hook: "bg-red-100 text-red-700",
+  intro: "bg-blue-100 text-blue-700",
+  conclusion: "bg-purple-100 text-purple-700",
+  cta: "bg-orange-100 text-orange-700",
+};
+
+function getSegmentColor(label: string): string {
+  const key = label.toLowerCase();
+  if (SEGMENT_LABEL_COLORS[key]) return SEGMENT_LABEL_COLORS[key];
+  if (key.startsWith("point")) return "bg-green-100 text-green-700";
+  return "bg-gray-100 text-gray-700";
+}
+
+const SEGMENT_CLIP_COLORS: Record<string, string> = {
+  hook: "#ef4444",
+  intro: "#3b82f6",
+  conclusion: "#8b5cf6",
+  cta: "#f97316",
+};
+
+function getSegmentClipColor(label: string): string {
+  const key = label.toLowerCase();
+  if (SEGMENT_CLIP_COLORS[key]) return SEGMENT_CLIP_COLORS[key];
+  if (key.startsWith("point")) return "#22c55e";
+  return "#6b7280";
+}
+
+function formatTimestamp(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+}
 
 // Generate unique IDs
 const generateId = () => Math.random().toString(36).substring(2, 9);
+
+interface MediaUpload {
+  id: string;
+  name: string;
+  url: string;
+  type: "recording" | "file";
+  uploading?: boolean;
+  supabaseUrl?: string;
+}
 
 interface VideoEditorProps {
   className?: string;
@@ -45,7 +97,6 @@ export function VideoEditor({ className }: VideoEditorProps) {
   const [playerRef, setPlayerRef] = useState<PlayerRef | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   // UI State
   const [activeTool, setActiveTool] = useState<ActiveTool>("text");
@@ -59,22 +110,47 @@ export function VideoEditor({ className }: VideoEditorProps) {
   // Left panel tab
   const [leftPanelTab, setLeftPanelTab] = useState<"script" | "ai">("ai");
 
+  // Broadcast ideas for AI agent
+  const [broadcastIdeas, setBroadcastIdeas] = useState<BroadcastIdea[]>([]);
+
+  useEffect(() => {
+    const fetchIdeas = async () => {
+      const { data, error } = await supabase
+        .from("broadcast_ideas")
+        .select("id, title, notes, status, channels")
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setBroadcastIdeas(data);
+      }
+    };
+    fetchIdeas();
+  }, []);
+
   // Resizable panels
   const [leftPanelWidth, setLeftPanelWidth] = useState(320);
   const [rightPanelWidth, setRightPanelWidth] = useState(288);
-  const resizingRef = useRef<"left" | "right" | null>(null);
+  const [timelineHeight, setTimelineHeight] = useState(200);
+  const resizingRef = useRef<"left" | "right" | "timeline" | null>(null);
   const resizeStartXRef = useRef(0);
+  const resizeStartYRef = useRef(0);
   const resizeStartWidthRef = useRef(0);
+  const resizeStartHeightRef = useRef(0);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!resizingRef.current) return;
       e.preventDefault();
-      const delta = e.clientX - resizeStartXRef.current;
-      if (resizingRef.current === "left") {
-        setLeftPanelWidth(Math.max(200, Math.min(600, resizeStartWidthRef.current + delta)));
+      if (resizingRef.current === "timeline") {
+        const delta = resizeStartYRef.current - e.clientY;
+        setTimelineHeight(Math.max(120, Math.min(600, resizeStartHeightRef.current + delta)));
       } else {
-        setRightPanelWidth(Math.max(200, Math.min(600, resizeStartWidthRef.current - delta)));
+        const delta = e.clientX - resizeStartXRef.current;
+        if (resizingRef.current === "left") {
+          setLeftPanelWidth(Math.max(200, Math.min(600, resizeStartWidthRef.current + delta)));
+        } else {
+          setRightPanelWidth(Math.max(200, Math.min(600, resizeStartWidthRef.current - delta)));
+        }
       }
     };
     const handleMouseUp = () => {
@@ -110,11 +186,32 @@ export function VideoEditor({ className }: VideoEditorProps) {
     document.body.style.userSelect = "none";
   }, [rightPanelWidth]);
 
+  const startResizeTimeline = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    resizingRef.current = "timeline";
+    resizeStartYRef.current = e.clientY;
+    resizeStartHeightRef.current = timelineHeight;
+    document.body.style.cursor = "row-resize";
+    document.body.style.userSelect = "none";
+  }, [timelineHeight]);
+
   // Export State
   const [showExportModal, setShowExportModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [exportFormat, setExportFormat] = useState<"webm" | "mp4">("webm");
+  const [exportedBlob, setExportedBlob] = useState<Blob | null>(null);
+
+  // YouTube Upload State
+  const [showYouTubeUpload, setShowYouTubeUpload] = useState(false);
+  const [ytTitle, setYtTitle] = useState("");
+  const [ytDescription, setYtDescription] = useState("");
+  const [ytTags, setYtTags] = useState("");
+  const [ytPrivacy, setYtPrivacy] = useState<"private" | "unlisted" | "public">("private");
+  const [isUploadingToYouTube, setIsUploadingToYouTube] = useState(false);
+  const [ytUploadProgress, setYtUploadProgress] = useState(0);
+  const [ytUploadSuccess, setYtUploadSuccess] = useState<string | null>(null);
+  const [ytUploadError, setYtUploadError] = useState<string | null>(null);
 
   // Captions State
   const [captions, setCaptions] = useState<Caption[]>([]);
@@ -132,13 +229,26 @@ export function VideoEditor({ className }: VideoEditorProps) {
   }, []);
 
   // Subscribe to player events
+  // Throttle frame updates to reduce React re-renders (Remotion fires 30x/sec)
+  const pendingFrameRef = useRef<number | null>(null);
+  const rafIdRef = useRef<number | null>(null);
+
   useEffect(() => {
     if (!playerRef) return;
 
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
     const onFrameUpdate = (e: { detail: { frame: number } }) => {
-      setCurrentFrame(e.detail.frame);
+      pendingFrameRef.current = e.detail.frame;
+      if (rafIdRef.current === null) {
+        rafIdRef.current = requestAnimationFrame(() => {
+          rafIdRef.current = null;
+          if (pendingFrameRef.current !== null) {
+            setCurrentFrame(pendingFrameRef.current);
+            pendingFrameRef.current = null;
+          }
+        });
+      }
     };
 
     playerRef.addEventListener("play", onPlay);
@@ -149,6 +259,10 @@ export function VideoEditor({ className }: VideoEditorProps) {
       playerRef.removeEventListener("play", onPlay);
       playerRef.removeEventListener("pause", onPause);
       playerRef.removeEventListener("frameupdate", onFrameUpdate);
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
     };
   }, [playerRef]);
 
@@ -163,6 +277,18 @@ export function VideoEditor({ className }: VideoEditorProps) {
   const [overlayPosition, setOverlayPosition] = useState<"top" | "center" | "bottom">("center");
   const [overlayOpacity, setOverlayOpacity] = useState(0.4);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Free-form text positioning (percentage-based 0-100)
+  const [titlePos, setTitlePos] = useState({ x: 50, y: 45 });
+  const [captionPos, setCaptionPos] = useState({ x: 50, y: 60 });
+  const [draggingText, setDraggingText] = useState<"title" | "caption" | null>(null);
+
+  // Media uploads library
+  const [mediaUploads, setMediaUploads] = useState<MediaUpload[]>([]);
+
+  // Script segments
+  const [scriptSegments, setScriptSegments] = useState<ScriptSegment[]>([]);
+  const [pendingBuild, setPendingBuild] = useState(false);
 
   // Animation and media controls
   const [titleAnimation, setTitleAnimation] = useState<TextAnimation>("fade");
@@ -192,11 +318,21 @@ export function VideoEditor({ className }: VideoEditorProps) {
   const [tracks, setTracks] = useState<TimelineTrack[]>([]);
   const [selectedClip, setSelectedClip] = useState<TimelineClip | null>(null);
 
+  // Preview rendering state (FFmpeg-based flat preview after split/delete)
+  const originalVideoSrcRef = useRef<string | null>(null); // original blob URL for re-processing
+  const previewBlobUrlRef = useRef<string | null>(null); // current preview URL for cleanup
+  const previewVersionRef = useRef(0); // monotonic counter to cancel stale renders
+  const [isRenderingPreview, setIsRenderingPreview] = useState(false);
+  const [previewProgress, setPreviewProgress] = useState(0);
+
   const fps = 30;
 
-  // Calculate effective duration based on trim
+  // Calculate effective duration based on trim, auto-expanding to fit all clips
   const effectiveDuration = trimEnd > trimStart ? trimEnd - trimStart : duration;
-  const durationInFrames = Math.round(effectiveDuration * fps);
+  const baseDurationInFrames = Math.round(effectiveDuration * fps);
+  const maxClipEndFrame = tracks.reduce((max, track) =>
+    Math.max(max, ...track.clips.map(c => c.endFrame)), 0);
+  const durationInFrames = Math.max(baseDurationInFrames, maxClipEndFrame);
 
   // Update duration when trim values change
   useEffect(() => {
@@ -213,9 +349,34 @@ export function VideoEditor({ className }: VideoEditorProps) {
     }
   }, [videoSrc]);
 
+  // Cleanup preview and original blob URLs on unmount
+  useEffect(() => {
+    const versionRef = previewVersionRef;
+    const previewRef = previewBlobUrlRef;
+    const originalRef = originalVideoSrcRef;
+    return () => {
+      // Cancel any in-flight renders
+      versionRef.current++;
+      if (previewRef.current) {
+        URL.revokeObjectURL(previewRef.current);
+        previewRef.current = null;
+      }
+      if (originalRef.current) {
+        URL.revokeObjectURL(originalRef.current);
+        originalRef.current = null;
+      }
+    };
+  }, []);
+
   // Update tracks when title/caption changes
   useEffect(() => {
     setTracks((currentTracks) => {
+      // Don't overwrite segment clips with title/caption logic
+      const textTrack = currentTracks.find(t => t.type === "text");
+      if (textTrack && textTrack.clips.some(c => (c.data as Record<string, unknown>)?.isSegment)) {
+        return currentTracks;
+      }
+
       const hasTextTrack = currentTracks.some(t => t.type === "text");
       const hasTitle = title.trim().length > 0;
       const hasCaption = caption.trim().length > 0;
@@ -293,53 +454,185 @@ export function VideoEditor({ className }: VideoEditorProps) {
     });
   }, [title, caption, fps, durationInFrames]);
 
+  // Derive TextSegment[] from text track's segment clips for VideoComposition
+  const textSegments: TextSegment[] = useMemo(() => {
+    const textTrack = tracks.find(t => t.type === "text");
+    if (!textTrack) return [];
+    return textTrack.clips
+      .filter(c => (c.data as Record<string, unknown>)?.isSegment)
+      .map(c => {
+        const data = c.data as Record<string, unknown>;
+        return {
+          id: c.id,
+          text: (data.text as string) || "",
+          label: (data.segmentLabel as string) || "",
+          startFrame: c.startFrame,
+          durationInFrames: c.endFrame - c.startFrame,
+          animation: (data.animation as TextSegment["animation"]) || "fade",
+        };
+      });
+  }, [tracks]);
+
+  // Build timeline clips from script segments with proportional timing
+  const buildTimelineFromSegments = useCallback(() => {
+    const validSegments = scriptSegments.filter(s => s.text.trim().length > 0);
+    if (validSegments.length === 0) return;
+
+    const totalChars = validSegments.reduce((sum, s) => sum + s.text.length, 0);
+    const minFrames = fps; // 1 second minimum per segment
+
+    // Calculate proportional frames
+    let remaining = durationInFrames;
+    const segmentFrames: number[] = validSegments.map(s => {
+      const proportion = s.text.length / totalChars;
+      const frames = Math.max(minFrames, Math.round(proportion * durationInFrames));
+      return frames;
+    });
+
+    // Normalize so they sum to durationInFrames
+    const totalAllocated = segmentFrames.reduce((a, b) => a + b, 0);
+    if (totalAllocated !== durationInFrames && totalAllocated > 0) {
+      const scale = durationInFrames / totalAllocated;
+      remaining = durationInFrames;
+      for (let i = 0; i < segmentFrames.length - 1; i++) {
+        segmentFrames[i] = Math.max(minFrames, Math.round(segmentFrames[i] * scale));
+        remaining -= segmentFrames[i];
+      }
+      segmentFrames[segmentFrames.length - 1] = Math.max(minFrames, remaining);
+    }
+
+    // Build clips
+    let currentFrame = 0;
+    const clips: TimelineClip[] = validSegments.map((seg, i) => {
+      const frames = segmentFrames[i];
+      const clip: TimelineClip = {
+        id: generateId(),
+        type: "text" as const,
+        name: `${seg.label}: ${seg.text.substring(0, 20)}${seg.text.length > 20 ? "..." : ""}`,
+        startFrame: currentFrame,
+        endFrame: currentFrame + frames,
+        color: getSegmentClipColor(seg.label),
+        data: {
+          segmentId: seg.id,
+          segmentLabel: seg.label,
+          text: seg.text,
+          isSegment: true,
+        },
+      };
+      currentFrame += frames;
+      return clip;
+    });
+
+    // Clamp last clip to durationInFrames
+    if (clips.length > 0) {
+      clips[clips.length - 1].endFrame = durationInFrames;
+    }
+
+    // Clear global title/caption since segments take over
+    setTitle("");
+    setCaption("");
+
+    // Create or replace the text track with segment clips
+    setTracks(currentTracks => {
+      const nonTextTracks = currentTracks.filter(t => t.type !== "text");
+      return [...nonTextTracks, {
+        id: generateId(),
+        type: "text" as const,
+        name: "Script Segments",
+        clips,
+      }];
+    });
+  }, [scriptSegments, durationInFrames, fps]);
+
+  // Auto-build timeline when pendingBuild is set (after handleApplySuggestion settles)
+  useEffect(() => {
+    if (pendingBuild && scriptSegments.length > 0) {
+      buildTimelineFromSegments();
+      setPendingBuild(false);
+    }
+  }, [pendingBuild, scriptSegments, buildTimelineFromSegments]);
+
   const togglePlayback = useCallback(() => {
     if (!playerRef) return;
     if (isPlaying) {
       playerRef.pause();
-      // Also pause the native video
-      if (videoRef.current) {
-        videoRef.current.pause();
-      }
     } else {
       playerRef.play();
-      // Also play the native video
-      if (videoRef.current) {
-        videoRef.current.play();
-      }
     }
   }, [playerRef, isPlaying]);
 
   const seekTo = useCallback((frame: number) => {
     if (!playerRef) return;
     playerRef.seekTo(frame);
+  }, [playerRef]);
 
-    // Also seek the native video element
-    if (videoRef.current) {
-      const timeInSeconds = frame / fps + trimStart;
-      videoRef.current.currentTime = timeInSeconds;
-    }
-  }, [playerRef, fps, trimStart]);
+  // Video playback is now handled by Remotion's built-in <Video> component
+  // inside VideoComposition. No manual sync needed.
 
   const [videoWarning, setVideoWarning] = useState<string | null>(null);
+  const [isConverting, setIsConverting] = useState(false);
+  const [convertProgress, setConvertProgress] = useState(0);
+  // Track which operation FFmpeg is performing so progress routes correctly
+  const ffmpegOperationRef = useRef<"idle" | "convert" | "export" | "preview">("idle");
 
-  const handleFileSelect = useCallback((file: File) => {
-    if (!file.type.startsWith("video/")) {
-      alert("Please select a video file");
-      return;
+  // FFmpeg instance ref (hoisted here so handleFileSelect can use loadFFmpeg)
+  const ffmpegRef = useRef<FFmpeg | null>(null);
+  const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
+  const [ffmpegLoading, setFfmpegLoading] = useState(false);
+
+  // Load FFmpeg WASM
+  const loadFFmpeg = useCallback(async () => {
+    if (ffmpegRef.current && ffmpegLoaded) return ffmpegRef.current;
+    if (ffmpegLoading) return null;
+
+    setFfmpegLoading(true);
+    try {
+      const ffmpeg = new FFmpeg();
+
+      // Use jsdelivr CDN which has better CORS support
+      const baseURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm";
+
+      ffmpeg.on("progress", ({ progress }) => {
+        if (ffmpegOperationRef.current === "convert") {
+          setConvertProgress(Math.round(30 + progress * 60));
+        } else if (ffmpegOperationRef.current === "preview") {
+          setPreviewProgress(Math.round(30 + progress * 60));
+        } else {
+          // Export or default
+          setExportProgress(Math.round(30 + progress * 60));
+        }
+      });
+
+      ffmpeg.on("log", ({ message }) => {
+        console.log("[FFmpeg]", message);
+      });
+
+      // Load with direct URLs - no blob conversion needed
+      await ffmpeg.load({
+        coreURL: `${baseURL}/ffmpeg-core.js`,
+        wasmURL: `${baseURL}/ffmpeg-core.wasm`,
+      });
+
+      ffmpegRef.current = ffmpeg;
+      setFfmpegLoaded(true);
+      setFfmpegLoading(false);
+      return ffmpeg;
+    } catch (error) {
+      console.error("Failed to load FFmpeg:", error);
+      setFfmpegLoading(false);
+      throw new Error("Failed to load video processing engine. Please try again.");
     }
+  }, [ffmpegLoaded, ffmpegLoading]);
 
-    // Check for potentially unsupported formats
-    const fileName = file.name.toLowerCase();
-    if (fileName.endsWith(".mov") || fileName.endsWith(".hevc")) {
-      setVideoWarning("MOV/HEVC files may not display in browser. If video doesn't appear, convert to MP4 (H.264).");
-    } else {
-      setVideoWarning(null);
-    }
-
-    const url = URL.createObjectURL(file);
+  // Helper: set video source and create timeline track from a blob URL
+  const applyVideoSource = useCallback((url: string, fileName: string) => {
     setVideoSrc(url);
-    setVideoFileName(file.name);
+    setVideoFileName(fileName);
+    originalVideoSrcRef.current = url;
+    if (previewBlobUrlRef.current) {
+      URL.revokeObjectURL(previewBlobUrlRef.current);
+      previewBlobUrlRef.current = null;
+    }
 
     const video = document.createElement("video");
     video.preload = "metadata";
@@ -351,19 +644,17 @@ export function VideoEditor({ className }: VideoEditorProps) {
       setTrimStart(0);
       setTrimEnd(videoDuration);
 
-      // Create video track with correct duration NOW that we know it
       const videoFrames = Math.round(videoDuration * fps);
       setTracks(currentTracks => {
-        // Remove any existing video track and add new one with correct duration
         const nonVideoTracks = currentTracks.filter(t => t.type !== "video");
         return [{
           id: generateId(),
           type: "video" as const,
-          name: file.name || "Video",
+          name: fileName || "Video",
           clips: [{
             id: generateId(),
             type: "video" as const,
-            name: file.name || "Video Clip",
+            name: fileName || "Video Clip",
             startFrame: 0,
             endFrame: videoFrames,
             color: "#3b82f6",
@@ -372,7 +663,6 @@ export function VideoEditor({ className }: VideoEditorProps) {
         }, ...nonVideoTracks];
       });
 
-      // Check if video has valid dimensions (indicates codec support)
       if (video.videoWidth === 0 || video.videoHeight === 0) {
         setVideoWarning("Video codec not supported by browser. Please convert to MP4 (H.264).");
       }
@@ -382,6 +672,75 @@ export function VideoEditor({ className }: VideoEditorProps) {
     };
     video.src = url;
   }, [fps]);
+
+  const handleFileSelect = useCallback(async (file: File) => {
+    if (!file.type.startsWith("video/")) {
+      alert("Please select a video file");
+      return;
+    }
+
+    const fileName = file.name.toLowerCase();
+    const needsConversion = fileName.endsWith(".mov") || fileName.endsWith(".hevc");
+
+    if (needsConversion) {
+      // Auto-convert MOV/HEVC to MP4 (H.264) for smooth browser playback
+      setVideoWarning(null);
+      setIsConverting(true);
+      setConvertProgress(0);
+
+      try {
+        ffmpegOperationRef.current = "convert";
+        const ffmpeg = await loadFFmpeg();
+        if (!ffmpeg) throw new Error("Failed to load FFmpeg");
+
+        setConvertProgress(15);
+
+        const inputData = new Uint8Array(await file.arrayBuffer());
+        const inputName = "convert_input.mov";
+        await ffmpeg.writeFile(inputName, inputData);
+
+        setConvertProgress(30);
+
+        await ffmpeg.exec([
+          "-i", inputName,
+          "-c:v", "libx264",
+          "-preset", "ultrafast",
+          "-crf", "23",
+          "-c:a", "aac",
+          "-movflags", "+faststart",
+          "convert_output.mp4",
+        ]);
+
+        setConvertProgress(90);
+
+        const outputData = await ffmpeg.readFile("convert_output.mp4");
+        const blob = new Blob([outputData as unknown as BlobPart], { type: "video/mp4" });
+        const url = URL.createObjectURL(blob);
+
+        // Cleanup FFmpeg temp files
+        await ffmpeg.deleteFile(inputName).catch(() => {});
+        await ffmpeg.deleteFile("convert_output.mp4").catch(() => {});
+
+        ffmpegOperationRef.current = "idle";
+        setConvertProgress(100);
+        setIsConverting(false);
+
+        applyVideoSource(url, file.name.replace(/\.(mov|hevc)$/i, ".mp4"));
+      } catch (error) {
+        console.error("MOV conversion failed:", error);
+        ffmpegOperationRef.current = "idle";
+        setIsConverting(false);
+        // Fall back to original file with warning
+        setVideoWarning("Auto-conversion failed. MOV/HEVC files may play choppy in browser.");
+        const url = URL.createObjectURL(file);
+        applyVideoSource(url, file.name);
+      }
+    } else {
+      setVideoWarning(null);
+      const url = URL.createObjectURL(file);
+      applyVideoSource(url, file.name);
+    }
+  }, [fps, loadFFmpeg, applyVideoSource]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -406,7 +765,18 @@ export function VideoEditor({ className }: VideoEditorProps) {
   }, [handleFileSelect]);
 
   const removeVideo = useCallback(() => {
-    if (videoSrc) URL.revokeObjectURL(videoSrc);
+    if (previewBlobUrlRef.current) {
+      URL.revokeObjectURL(previewBlobUrlRef.current);
+      previewBlobUrlRef.current = null;
+    }
+    if (originalVideoSrcRef.current) {
+      URL.revokeObjectURL(originalVideoSrcRef.current);
+      originalVideoSrcRef.current = null;
+    }
+    // Revoke videoSrc only if it's different from the above (shouldn't happen, but be safe)
+    if (videoSrc && videoSrc !== previewBlobUrlRef.current && videoSrc !== originalVideoSrcRef.current) {
+      URL.revokeObjectURL(videoSrc);
+    }
     setVideoSrc(null);
     setVideoFileName(null);
     setVideoWarning(null);
@@ -415,48 +785,257 @@ export function VideoEditor({ className }: VideoEditorProps) {
     setOriginalDuration(0);
   }, [videoSrc]);
 
-  // FFmpeg instance ref
-  const ffmpegRef = useRef<FFmpeg | null>(null);
-  const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
-  const [ffmpegLoading, setFfmpegLoading] = useState(false);
+  const handleRecordingComplete = useCallback(async (blob: Blob, recordedDuration: number) => {
+    const url = URL.createObjectURL(blob);
+    const uploadId = generateId();
+    const name = `Recording ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 
-  // Load FFmpeg WASM
-  const loadFFmpeg = useCallback(async () => {
-    if (ffmpegRef.current && ffmpegLoaded) return ffmpegRef.current;
-    if (ffmpegLoading) return null;
+    // Add to local uploads immediately
+    setMediaUploads(prev => [...prev, { id: uploadId, name, url, type: "recording", uploading: true }]);
+    setActiveTool("uploads");
 
-    setFfmpegLoading(true);
+    // Upload to Supabase in background
     try {
-      const ffmpeg = new FFmpeg();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const filePath = `${user.id}/${crypto.randomUUID()}.webm`;
+        const { error: uploadError } = await supabase.storage
+          .from("broadcast-media")
+          .upload(filePath, blob, { contentType: "video/webm" });
 
-      // Use jsdelivr CDN which has better CORS support
-      const baseURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm";
-
-      ffmpeg.on("progress", ({ progress }) => {
-        // Progress is 0-1, convert to percentage
-        setExportProgress(Math.round(30 + progress * 60)); // 30-90% range for actual processing
-      });
-
-      ffmpeg.on("log", ({ message }) => {
-        console.log("[FFmpeg]", message);
-      });
-
-      // Load with direct URLs - no blob conversion needed
-      await ffmpeg.load({
-        coreURL: `${baseURL}/ffmpeg-core.js`,
-        wasmURL: `${baseURL}/ffmpeg-core.wasm`,
-      });
-
-      ffmpegRef.current = ffmpeg;
-      setFfmpegLoaded(true);
-      setFfmpegLoading(false);
-      return ffmpeg;
-    } catch (error) {
-      console.error("Failed to load FFmpeg:", error);
-      setFfmpegLoading(false);
-      throw new Error("Failed to load video processing engine. Please try again.");
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from("broadcast-media")
+            .getPublicUrl(filePath);
+          setMediaUploads(prev => prev.map(u =>
+            u.id === uploadId ? { ...u, uploading: false, supabaseUrl: publicUrl } : u
+          ));
+        } else {
+          console.error("Failed to upload recording:", uploadError);
+          setMediaUploads(prev => prev.map(u =>
+            u.id === uploadId ? { ...u, uploading: false } : u
+          ));
+        }
+      } else {
+        // Not authenticated - keep local blob only
+        setMediaUploads(prev => prev.map(u =>
+          u.id === uploadId ? { ...u, uploading: false } : u
+        ));
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+      setMediaUploads(prev => prev.map(u =>
+        u.id === uploadId ? { ...u, uploading: false } : u
+      ));
     }
-  }, [ffmpegLoaded, ffmpegLoading]);
+  }, []);
+
+  const handleSelectUpload = useCallback((upload: MediaUpload) => {
+    const url = upload.supabaseUrl || upload.url;
+    setVideoSrc(url);
+    setVideoFileName(upload.name);
+    setVideoWarning(null);
+
+    // Probe duration and set up timeline
+    const probeVideo = document.createElement("video");
+    probeVideo.preload = "metadata";
+
+    let applied = false;
+    const applyDuration = (dur: number) => {
+      if (applied) return;
+      applied = true;
+
+      setOriginalDuration(dur);
+      setDuration(dur);
+      setTrimStart(0);
+      setTrimEnd(dur);
+
+      const videoFrames = Math.round(dur * fps);
+      setTracks(currentTracks => {
+        const nonVideoTracks = currentTracks.filter(t => t.type !== "video");
+        return [{
+          id: generateId(),
+          type: "video" as const,
+          name: upload.name,
+          clips: [{
+            id: generateId(),
+            type: "video" as const,
+            name: upload.name,
+            startFrame: 0,
+            endFrame: videoFrames,
+            color: "#3b82f6",
+            sourceOffset: 0,
+          }],
+        }, ...nonVideoTracks];
+      });
+    };
+
+    probeVideo.onloadedmetadata = () => {
+      if (isFinite(probeVideo.duration) && probeVideo.duration > 0) {
+        applyDuration(probeVideo.duration);
+      } else {
+        probeVideo.currentTime = 1e101;
+      }
+    };
+
+    probeVideo.ontimeupdate = () => {
+      if (!applied && isFinite(probeVideo.duration) && probeVideo.duration > 0) {
+        applyDuration(probeVideo.duration);
+      }
+    };
+
+    probeVideo.onerror = () => applyDuration(5);
+    setTimeout(() => applyDuration(5), 3000);
+
+    probeVideo.src = url;
+  }, [fps]);
+
+  const handleRemoveUpload = useCallback((uploadId: string) => {
+    setMediaUploads(prev => {
+      const upload = prev.find(u => u.id === uploadId);
+      if (upload && upload.url.startsWith("blob:")) {
+        URL.revokeObjectURL(upload.url);
+      }
+      return prev.filter(u => u.id !== uploadId);
+    });
+  }, []);
+
+  // Render a flat preview video from the current video clips using FFmpeg WASM.
+  // This replaces the per-frame seeking approach with a single linear video for smooth playback.
+  const renderPreview = useCallback(async (clipsSnapshot: TimelineClip[]) => {
+    const sourceUrl = originalVideoSrcRef.current;
+    if (!sourceUrl || clipsSnapshot.length === 0) return;
+
+    // Increment version to cancel any in-flight renders
+    const version = ++previewVersionRef.current;
+    setIsRenderingPreview(true);
+    setPreviewProgress(0);
+
+    try {
+      ffmpegOperationRef.current = "preview";
+      const ffmpeg = await loadFFmpeg();
+      if (!ffmpeg) throw new Error("Failed to load FFmpeg");
+      if (previewVersionRef.current !== version) return; // stale
+
+      setPreviewProgress(10);
+
+      // Fetch original video data
+      const videoResponse = await fetch(sourceUrl);
+      const videoData = await videoResponse.arrayBuffer();
+      if (previewVersionRef.current !== version) return; // stale
+
+      setPreviewProgress(20);
+
+      const inputFileName = "preview_input.mp4";
+      await ffmpeg.writeFile(inputFileName, new Uint8Array(videoData));
+      if (previewVersionRef.current !== version) return; // stale
+
+      setPreviewProgress(30);
+
+      const sortedClips = clipsSnapshot.slice().sort((a, b) => a.startFrame - b.startFrame);
+
+      if (sortedClips.length === 1) {
+        // Single clip - fast trim
+        const clip = sortedClips[0];
+        const startTime = (clip.sourceOffset ?? 0) / fps;
+        const clipDuration = (clip.endFrame - clip.startFrame) / fps;
+
+        await ffmpeg.exec([
+          "-i", inputFileName,
+          "-ss", startTime.toString(),
+          "-t", clipDuration.toString(),
+          "-preset", "ultrafast",
+          "-crf", "28",
+          "-c:a", "aac",
+          "-y",
+          "preview_output.mp4"
+        ]);
+      } else {
+        // Multiple clips - trim each, then concat
+        const clipFileNames: string[] = [];
+
+        for (let i = 0; i < sortedClips.length; i++) {
+          if (previewVersionRef.current !== version) return; // stale
+
+          const clip = sortedClips[i];
+          const startTime = (clip.sourceOffset ?? 0) / fps;
+          const clipDuration = (clip.endFrame - clip.startFrame) / fps;
+          const clipFileName = `preview_clip_${i}.mp4`;
+
+          await ffmpeg.exec([
+            "-i", inputFileName,
+            "-ss", startTime.toString(),
+            "-t", clipDuration.toString(),
+            "-preset", "ultrafast",
+            "-crf", "28",
+            "-c:a", "aac",
+            "-y",
+            clipFileName
+          ]);
+
+          clipFileNames.push(clipFileName);
+          setPreviewProgress(30 + Math.round((i + 1) / sortedClips.length * 40)); // 30-70%
+        }
+
+        if (previewVersionRef.current !== version) return; // stale
+
+        // Create concat list
+        const concatContent = clipFileNames.map(f => `file '${f}'`).join("\n");
+        await ffmpeg.writeFile("preview_concat.txt", concatContent);
+
+        setPreviewProgress(75);
+
+        // Concatenate with stream copy (fast, since all clips share encoding params)
+        await ffmpeg.exec([
+          "-f", "concat",
+          "-safe", "0",
+          "-i", "preview_concat.txt",
+          "-c", "copy",
+          "-movflags", "+faststart",
+          "-y",
+          "preview_output.mp4"
+        ]);
+
+        // Clean up clip files
+        for (const clipFile of clipFileNames) {
+          try { await ffmpeg.deleteFile(clipFile); } catch { /* ignore */ }
+        }
+        try { await ffmpeg.deleteFile("preview_concat.txt"); } catch { /* ignore */ }
+      }
+
+      if (previewVersionRef.current !== version) return; // stale
+
+      setPreviewProgress(90);
+
+      // Read output and create blob URL
+      const outputData = await ffmpeg.readFile("preview_output.mp4");
+
+      // Clean up FFmpeg FS
+      try { await ffmpeg.deleteFile(inputFileName); } catch { /* ignore */ }
+      try { await ffmpeg.deleteFile("preview_output.mp4"); } catch { /* ignore */ }
+
+      if (previewVersionRef.current !== version) return; // stale
+
+      const previewBlob = new Blob([outputData as unknown as BlobPart], { type: "video/mp4" });
+      const previewUrl = URL.createObjectURL(previewBlob);
+
+      // Revoke old preview
+      if (previewBlobUrlRef.current) {
+        URL.revokeObjectURL(previewBlobUrlRef.current);
+      }
+      previewBlobUrlRef.current = previewUrl;
+      setVideoSrc(previewUrl);
+
+      setPreviewProgress(100);
+    } catch (error) {
+      console.error("Preview render failed:", error);
+    } finally {
+      ffmpegOperationRef.current = "idle";
+      if (previewVersionRef.current === version) {
+        setIsRenderingPreview(false);
+      }
+    }
+  }, [fps, loadFFmpeg]);
 
   // Export video using browser-based FFmpeg (ffmpeg.wasm)
   const handleExport = useCallback(async () => {
@@ -480,6 +1059,7 @@ export function VideoEditor({ className }: VideoEditorProps) {
       setExportProgress(5);
 
       // Load FFmpeg if not already loaded
+      ffmpegOperationRef.current = "export";
       const ffmpeg = await loadFFmpeg();
       if (!ffmpeg) {
         throw new Error("Failed to initialize video processor");
@@ -487,8 +1067,9 @@ export function VideoEditor({ className }: VideoEditorProps) {
 
       setExportProgress(15);
 
-      // Fetch the video file
-      const videoResponse = await fetch(videoSrc);
+      // Fetch from the original source (not the preview) for full-quality export
+      const exportSrc = originalVideoSrcRef.current ?? videoSrc;
+      const videoResponse = await fetch(exportSrc);
       const videoData = await videoResponse.arrayBuffer();
 
       setExportProgress(25);
@@ -604,16 +1185,97 @@ export function VideoEditor({ className }: VideoEditorProps) {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
+      // Store the blob for potential YouTube upload
+      setExportedBlob(outputBlob);
+
       setExportProgress(100);
       setIsExporting(false);
-      setShowExportModal(false);
+      ffmpegOperationRef.current = "idle";
+      // Don't close modal - keep it open so user can upload to YouTube
 
     } catch (error) {
       console.error("Export failed:", error);
       setIsExporting(false);
+      ffmpegOperationRef.current = "idle";
       alert(`Export failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }, [fps, tracks, videoSrc, loadFFmpeg]);
+
+  // Upload exported video to YouTube
+  const handleUploadToYouTube = useCallback(async () => {
+    if (!exportedBlob) {
+      setYtUploadError("No exported video. Please export first.");
+      return;
+    }
+    if (!ytTitle.trim()) {
+      setYtUploadError("Title is required.");
+      return;
+    }
+
+    setIsUploadingToYouTube(true);
+    setYtUploadProgress(0);
+    setYtUploadError(null);
+    setYtUploadSuccess(null);
+
+    try {
+      // Step 1: Get resumable upload URL from our server
+      const tags = ytTags.split(",").map(t => t.trim()).filter(Boolean);
+      const initResponse = await fetch("/api/auth/youtube/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: ytTitle,
+          description: ytDescription,
+          tags,
+          privacy: ytPrivacy,
+        }),
+      });
+
+      if (!initResponse.ok) {
+        const err = await initResponse.json();
+        throw new Error(err.error || "Failed to initialize upload");
+      }
+
+      const { uploadUrl } = await initResponse.json();
+
+      // Step 2: Upload blob directly to YouTube using XMLHttpRequest for progress
+      const videoId = await new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", uploadUrl, true);
+        xhr.setRequestHeader("Content-Type", "video/mp4");
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setYtUploadProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              resolve(data.id);
+            } catch {
+              reject(new Error("Failed to parse YouTube response"));
+            }
+          } else {
+            reject(new Error(`YouTube upload failed: ${xhr.status}`));
+          }
+        };
+
+        xhr.onerror = () => reject(new Error("Network error during upload"));
+        xhr.send(exportedBlob);
+      });
+
+      setYtUploadSuccess(videoId);
+      setYtUploadProgress(100);
+    } catch (error) {
+      console.error("YouTube upload failed:", error);
+      setYtUploadError(error instanceof Error ? error.message : "Upload failed");
+    } finally {
+      setIsUploadingToYouTube(false);
+    }
+  }, [exportedBlob, ytTitle, ytDescription, ytTags, ytPrivacy]);
 
   // Generate captions from text input
   const handleGenerateCaptions = useCallback(() => {
@@ -679,7 +1341,15 @@ export function VideoEditor({ className }: VideoEditorProps) {
 
     setTracks(newTracks);
     setSelectedClip(secondClip); // Select the second clip after split
-  }, [selectedClip, currentFrame, tracks]);
+
+    // If we split a video clip, render a flat preview for smooth playback
+    if (selectedClip.type === "video") {
+      const updatedVideoTrack = newTracks.find(t => t.type === "video");
+      if (updatedVideoTrack) {
+        renderPreview(updatedVideoTrack.clips);
+      }
+    }
+  }, [selectedClip, currentFrame, tracks, renderPreview]);
 
   // Check if split is possible (playhead is within selected clip)
   const canSplitClip = !!(selectedClip &&
@@ -696,6 +1366,29 @@ export function VideoEditor({ className }: VideoEditorProps) {
 
     const clipToDelete = selectedClip;
     const clipDuration = clipToDelete.endFrame - clipToDelete.startFrame;
+
+    // Sync underlying state when a clip is deleted so the preview updates
+    const clipData = clipToDelete.data as Record<string, unknown> | undefined;
+    if (clipToDelete.type === "text" && clipData?.isTitle) {
+      setTitle("");
+    }
+    if (clipToDelete.type === "text" && clipData?.isCaption) {
+      setCaption("");
+    }
+    if (clipToDelete.type === "audio" && ttsAudioSrc) {
+      URL.revokeObjectURL(ttsAudioSrc);
+      setTtsAudioSrc(null);
+    }
+    if (clipToDelete.type === "video") {
+      // Check if this is the last video clip
+      const videoTrack = tracks.find(t => t.type === "video");
+      const remainingVideoClips = videoTrack?.clips.filter(c => c.id !== clipToDelete.id) || [];
+      if (remainingVideoClips.length === 0 && videoSrc) {
+        URL.revokeObjectURL(videoSrc);
+        setVideoSrc(null);
+        setVideoFileName("");
+      }
+    }
 
     // Update tracks: remove clip and shift subsequent clips
     const newTracks = tracks.map(track => {
@@ -722,7 +1415,16 @@ export function VideoEditor({ className }: VideoEditorProps) {
 
     setTracks(newTracks);
     setSelectedClip(null); // Clear selection after delete
-  }, [selectedClip, tracks]);
+
+    // If we deleted a video clip and clips remain, render a flat preview
+    if (clipToDelete.type === "video") {
+      const updatedVideoTrack = newTracks.find(t => t.type === "video");
+      const remainingClips = updatedVideoTrack?.clips || [];
+      if (remainingClips.length > 0) {
+        renderPreview(remainingClips);
+      }
+    }
+  }, [selectedClip, tracks, ttsAudioSrc, videoSrc, renderPreview]);
 
   // Check if delete is possible (a clip is selected)
   const canDeleteClip = !!selectedClip;
@@ -754,10 +1456,13 @@ export function VideoEditor({ className }: VideoEditorProps) {
 
   // Browser-based transcription using Web Speech API
   const handleTranscribe = useCallback(async () => {
-    if (!videoRef.current || !transcriptionSupported) return;
+    if (!videoSrc || !transcriptionSupported) return;
 
     setIsTranscribing(true);
-    const video = videoRef.current;
+    // Create a temporary video element for audio playback during transcription
+    const video = document.createElement("video");
+    video.src = videoSrc;
+    video.preload = "auto";
 
     try {
       // Use Web Speech API for transcription
@@ -822,7 +1527,7 @@ export function VideoEditor({ className }: VideoEditorProps) {
       console.error("Transcription failed:", error);
       setIsTranscribing(false);
     }
-  }, [duration, transcriptionSupported]);
+  }, [duration, transcriptionSupported, videoSrc]);
 
   // Helper function to extract audio from video as WebM
   const extractAudioFromVideo = useCallback(async (videoElement: HTMLVideoElement): Promise<Blob> => {
@@ -946,11 +1651,14 @@ export function VideoEditor({ className }: VideoEditorProps) {
       let result = await transcribeResponse.json();
 
       // If failed due to format, try extracting audio
-      if (!transcribeResponse.ok && result.error?.includes("Invalid file format") && videoRef.current) {
+      if (!transcribeResponse.ok && result.error?.includes("Invalid file format") && videoSrc) {
         console.log("Falling back to audio extraction...");
 
-        // Extract audio from video
-        const audioBlob = await extractAudioFromVideo(videoRef.current);
+        // Create a temporary video element for audio extraction
+        const tempVideo = document.createElement("video");
+        tempVideo.src = videoSrc;
+        tempVideo.preload = "auto";
+        const audioBlob = await extractAudioFromVideo(tempVideo);
         const extractedFile = new File([audioBlob], "audio.webm", { type: "audio/webm" });
 
         const retryFormData = new FormData();
@@ -1012,6 +1720,17 @@ export function VideoEditor({ className }: VideoEditorProps) {
     }
     if (suggestion.overlayPosition) {
       setOverlayPosition(suggestion.overlayPosition as "top" | "center" | "bottom");
+    }
+    if (suggestion.script && suggestion.script.length > 0) {
+      setScriptSegments(
+        suggestion.script.map(s => ({
+          id: generateId(),
+          label: s.label,
+          text: s.text,
+        }))
+      );
+      setLeftPanelTab("script");
+      setPendingBuild(true);
     }
   }, []);
 
@@ -1152,109 +1871,16 @@ export function VideoEditor({ className }: VideoEditorProps) {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
       </svg>
     )},
+    { id: "record" as const, label: "Record", icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" strokeWidth={1.5} />
+        <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
+      </svg>
+    )},
   ];
 
   return (
     <div className={cn("h-[calc(100vh-200px)] min-h-[400px] md:min-h-[600px] flex flex-col bg-gray-50 rounded-xl overflow-hidden border border-border shadow-sm", className)}>
-      {/* Top Header */}
-      <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 border-b border-gray-200 bg-white">
-        <div className="flex items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-1 sm:gap-2">
-            {/* Mobile: Toggle left panel */}
-            <button
-              onClick={() => setShowLeftPanel(!showLeftPanel)}
-              className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors md:hidden"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <button className="hidden md:block p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-            <span className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[100px] sm:max-w-none">Untitled Project</span>
-          </div>
-          <div className="hidden sm:flex items-center gap-1">
-            <button className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-              </svg>
-            </button>
-            <button className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1 sm:gap-3">
-          {/* Aspect Ratio Selector */}
-          <div className="relative">
-            <button
-              onClick={() => setShowAspectMenu(!showAspectMenu)}
-              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-200 text-xs sm:text-sm text-gray-700 transition-colors"
-            >
-              <div
-                className="hidden sm:block border border-current rounded-[1px]"
-                style={{
-                  width: aspectRatio.width >= aspectRatio.height ? 16 : 16 * (aspectRatio.width / aspectRatio.height),
-                  height: aspectRatio.height >= aspectRatio.width ? 14 : 14 * (aspectRatio.height / aspectRatio.width),
-                }}
-              />
-              <span>{aspectRatio.value}</span>
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {showAspectMenu && (
-              <div className="absolute top-full mt-1 right-0 bg-white border border-gray-200 rounded-xl shadow-lg z-50 p-2 min-w-[200px]">
-                {ASPECT_RATIOS.map((ratio) => (
-                  <button
-                    key={ratio.value}
-                    onClick={() => { setAspectRatio(ratio); setShowAspectMenu(false); }}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors",
-                      aspectRatio.value === ratio.value
-                        ? "bg-primary/10 text-primary"
-                        : "text-gray-700 hover:bg-gray-50"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "border-2 rounded-[2px] flex-shrink-0",
-                        aspectRatio.value === ratio.value ? "border-primary bg-primary/10" : "border-gray-300 bg-gray-50"
-                      )}
-                      style={{
-                        width: 24 * (ratio.width / Math.max(ratio.width, ratio.height)),
-                        height: 24 * (ratio.height / Math.max(ratio.width, ratio.height)),
-                      }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium">{ratio.label}</div>
-                      <div className="text-[10px] text-gray-400">{ratio.value} &middot; {ratio.desc}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <Button variant="outline" size="sm" className="hidden sm:inline-flex">
-            Share
-          </Button>
-          <Button
-            size="sm"
-            className="bg-primary hover:bg-primary/90 text-xs sm:text-sm px-2 sm:px-3"
-            onClick={() => setShowExportModal(true)}
-          >
-            Export
-          </Button>
-        </div>
-      </div>
-
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0 relative">
         {/* Mobile Left Panel Overlay */}
@@ -1297,28 +1923,77 @@ export function VideoEditor({ className }: VideoEditorProps) {
               </div>
               {leftPanelTab === "script" ? (
                 <div className="p-3 space-y-3 overflow-y-auto flex-1">
-                  <div className="flex items-start gap-3">
-                    <span className="text-xs text-gray-400 font-mono pt-1">00:00</span>
-                    <div className="flex-1">
-                      <span className="text-xs font-medium text-primary mb-1 block">Title</span>
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        {title || <span className="text-gray-400 italic">Add a title...</span>}
-                      </p>
+                  <button
+                    onClick={() => setScriptSegments(prev => [...prev, { id: generateId(), label: "Point", text: "" }])}
+                    className="w-full flex items-center justify-center gap-2 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-700 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add
+                  </button>
+                  {scriptSegments.length > 0 && scriptSegments.some(s => s.text.trim()) && (
+                    <button
+                      onClick={buildTimelineFromSegments}
+                      className="w-full flex items-center justify-center gap-2 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                      </svg>
+                      Build Timeline from Script
+                    </button>
+                  )}
+                  {scriptSegments.length > 0 ? (
+                    <div className="space-y-3">
+                      {scriptSegments.map((seg, i) => {
+                        const timePerSegment = duration / scriptSegments.length;
+                        const timestamp = formatTimestamp(i * timePerSegment);
+                        return (
+                          <div key={seg.id} className="flex items-start gap-3 group">
+                            <span className="text-xs text-gray-400 font-mono pt-1">{timestamp}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded", getSegmentColor(seg.label))}>
+                                  {seg.label}
+                                </span>
+                                <button
+                                  onClick={() => setScriptSegments(prev => prev.filter(s => s.id !== seg.id))}
+                                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </div>
+                              <textarea
+                                value={seg.text}
+                                onChange={(e) => {
+                                  setScriptSegments(prev => prev.map(s => s.id === seg.id ? { ...s, text: e.target.value } : s));
+                                  e.target.style.height = "auto";
+                                  e.target.style.height = e.target.scrollHeight + "px";
+                                }}
+                                ref={(el) => {
+                                  if (el) {
+                                    el.style.height = "auto";
+                                    el.style.height = el.scrollHeight + "px";
+                                  }
+                                }}
+                                placeholder="Enter text..."
+                                rows={1}
+                                className="w-full text-sm text-gray-700 leading-relaxed bg-transparent border-none outline-none resize-none placeholder:text-gray-400"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="text-xs text-gray-400 font-mono pt-1">00:01</span>
-                    <div className="flex-1">
-                      <span className="text-xs font-medium text-purple-500 mb-1 block">Caption</span>
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        {caption || <span className="text-gray-400 italic">Add a caption...</span>}
-                      </p>
-                    </div>
-                  </div>
+                  ) : (
+                    <p className="text-sm text-gray-400 text-center py-6">Add a segment or use the AI assistant to generate a script.</p>
+                  )}
                 </div>
               ) : (
                 <div className="flex-1 overflow-hidden">
-                  <VideoAgentChat onApplySuggestion={handleApplySuggestion} />
+                  <VideoAgentChat onApplySuggestion={handleApplySuggestion} broadcastIdeas={broadcastIdeas} />
                 </div>
               )}
             </div>
@@ -1368,42 +2043,82 @@ export function VideoEditor({ className }: VideoEditorProps) {
                 </div>
               </div>
 
-              <div className="p-3">
-                <button className="w-full flex items-center justify-center gap-2 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-700 transition-colors">
+              <div className="p-3 space-y-2">
+                <button
+                  onClick={() => setScriptSegments(prev => [...prev, { id: generateId(), label: "Point", text: "" }])}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-700 transition-colors"
+                >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                   Add
                 </button>
+                {scriptSegments.length > 0 && scriptSegments.some(s => s.text.trim()) && (
+                  <button
+                    onClick={buildTimelineFromSegments}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                    Build Timeline from Script
+                  </button>
+                )}
               </div>
 
               <div className="flex-1 overflow-y-auto p-3 space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <span className="text-xs text-gray-400 font-mono pt-1">00:00</span>
-                    <div className="flex-1">
-                      <span className="text-xs font-medium text-primary mb-1 block">Title</span>
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        {title || <span className="text-gray-400 italic">Add a title...</span>}
-                      </p>
-                    </div>
+                {scriptSegments.length > 0 ? (
+                  <div className="space-y-3">
+                    {scriptSegments.map((seg, i) => {
+                      const timePerSegment = duration / scriptSegments.length;
+                      const timestamp = formatTimestamp(i * timePerSegment);
+                      return (
+                        <div key={seg.id} className="flex items-start gap-3 group">
+                          <span className="text-xs text-gray-400 font-mono pt-1">{timestamp}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded", getSegmentColor(seg.label))}>
+                                {seg.label}
+                              </span>
+                              <button
+                                onClick={() => setScriptSegments(prev => prev.filter(s => s.id !== seg.id))}
+                                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                            <textarea
+                              value={seg.text}
+                              onChange={(e) => {
+                                setScriptSegments(prev => prev.map(s => s.id === seg.id ? { ...s, text: e.target.value } : s));
+                                e.target.style.height = "auto";
+                                e.target.style.height = e.target.scrollHeight + "px";
+                              }}
+                              ref={(el) => {
+                                if (el) {
+                                  el.style.height = "auto";
+                                  el.style.height = el.scrollHeight + "px";
+                                }
+                              }}
+                              placeholder="Enter text..."
+                              rows={1}
+                              className="w-full text-sm text-gray-700 leading-relaxed bg-transparent border-none outline-none resize-none placeholder:text-gray-400"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-
-                  <div className="flex items-start gap-3">
-                    <span className="text-xs text-gray-400 font-mono pt-1">00:01</span>
-                    <div className="flex-1">
-                      <span className="text-xs font-medium text-purple-500 mb-1 block">Caption</span>
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        {caption || <span className="text-gray-400 italic">Add a caption...</span>}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-sm text-gray-400 text-center py-6">Add a segment or use the AI assistant to generate a script.</p>
+                )}
               </div>
             </>
           ) : (
             <div className="flex-1 overflow-hidden">
-              <VideoAgentChat onApplySuggestion={handleApplySuggestion} />
+              <VideoAgentChat onApplySuggestion={handleApplySuggestion} broadcastIdeas={broadcastIdeas} />
             </div>
           )}
         </div>
@@ -1417,13 +2132,88 @@ export function VideoEditor({ className }: VideoEditorProps) {
         {/* Center - Video Preview */}
         <div
           className={cn(
-            "flex-1 flex items-center justify-center p-2 sm:p-4 bg-gray-100 transition-colors min-h-0 min-w-0",
+            "flex-1 flex items-center justify-center p-2 sm:p-4 bg-gray-100 transition-colors min-h-0 min-w-0 relative",
             isDragging && "bg-primary/10"
           )}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
         >
+          {/* Floating controls overlay */}
+          <div className="absolute top-2 left-2 right-2 z-20 flex items-center justify-between pointer-events-none">
+            {/* Mobile: Toggle left panel */}
+            <button
+              onClick={() => setShowLeftPanel(!showLeftPanel)}
+              className="pointer-events-auto p-1.5 rounded-lg bg-white/90 backdrop-blur-sm shadow-sm border border-gray-200 hover:bg-white text-gray-500 hover:text-gray-900 transition-colors md:hidden"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div className="hidden md:block" />
+
+            <div className="flex items-center gap-1.5 pointer-events-auto">
+              {/* Aspect Ratio Selector */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowAspectMenu(!showAspectMenu)}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/90 backdrop-blur-sm shadow-sm border border-gray-200 hover:bg-white text-xs text-gray-700 transition-colors"
+                >
+                  <div
+                    className="border border-current rounded-[1px]"
+                    style={{
+                      width: aspectRatio.width >= aspectRatio.height ? 12 : 12 * (aspectRatio.width / aspectRatio.height),
+                      height: aspectRatio.height >= aspectRatio.width ? 10 : 10 * (aspectRatio.height / aspectRatio.width),
+                    }}
+                  />
+                  <span>{aspectRatio.value}</span>
+                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {showAspectMenu && (
+                  <div className="absolute top-full mt-1 right-0 bg-white border border-gray-200 rounded-xl shadow-lg z-50 p-2 min-w-[200px]">
+                    {ASPECT_RATIOS.map((ratio) => (
+                      <button
+                        key={ratio.value}
+                        onClick={() => { setAspectRatio(ratio); setShowAspectMenu(false); }}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors",
+                          aspectRatio.value === ratio.value
+                            ? "bg-primary/10 text-primary"
+                            : "text-gray-700 hover:bg-gray-50"
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "border-2 rounded-[2px] flex-shrink-0",
+                            aspectRatio.value === ratio.value ? "border-primary bg-primary/10" : "border-gray-300 bg-gray-50"
+                          )}
+                          style={{
+                            width: 24 * (ratio.width / Math.max(ratio.width, ratio.height)),
+                            height: 24 * (ratio.height / Math.max(ratio.width, ratio.height)),
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium">{ratio.label}</div>
+                          <div className="text-[10px] text-gray-400">{ratio.value} &middot; {ratio.desc}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Button
+                size="sm"
+                className="bg-primary hover:bg-primary/90 text-xs h-7 px-2.5 shadow-sm"
+                onClick={() => setShowExportModal(true)}
+              >
+                Export
+              </Button>
+            </div>
+          </div>
+
           {isDragging ? (
             <div className="text-center text-gray-600">
               <svg className="w-16 h-16 mx-auto mb-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1445,86 +2235,176 @@ export function VideoEditor({ className }: VideoEditorProps) {
                 minHeight: "150px",
               }}
             >
-              {/* Native video layer for preview (works with blob URLs) */}
-              {videoSrc && (
-                <video
-                  src={videoSrc}
+              {/* Processing overlay when rendering preview */}
+              {isConverting && (
+                <div
                   style={{
                     position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    zIndex: 1,
+                    inset: 0,
+                    zIndex: 10,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
                   }}
-                  autoPlay={isPlaying}
-                  muted={muted}
-                  playsInline
-                  ref={(el) => {
-                    // Store ref for export
-                    (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = el;
-                    // Handle playback state and trim
-                    if (el) {
-                      el.volume = volume;
-                      el.playbackRate = playbackRate;
-
-                      // Handle trim bounds
-                      if (trimStart > 0 && el.currentTime < trimStart) {
-                        el.currentTime = trimStart;
-                      }
-                      if (trimEnd > 0 && el.currentTime >= trimEnd) {
-                        el.currentTime = trimStart; // Loop back to start
-                      }
-
-                      // Playback control
-                      if (isPlaying && el.paused) el.play();
-                      if (!isPlaying && !el.paused) el.pause();
-
-                      // Handle looping within trim bounds
-                      el.ontimeupdate = () => {
-                        if (trimEnd > 0 && el.currentTime >= trimEnd) {
-                          el.currentTime = trimStart;
-                        }
-                      };
-                    }
-                  }}
-                />
+                >
+                  <div className="text-white text-sm font-medium mb-3">Converting MOV to MP4...</div>
+                  <div className="w-48 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-green-500 rounded-full transition-all duration-300"
+                      style={{ width: `${convertProgress}%` }}
+                    />
+                  </div>
+                  <div className="text-white/60 text-xs mt-2">{convertProgress}%</div>
+                </div>
               )}
-              {/* Remotion composition layer for text overlays */}
-              <div style={{ position: "absolute", inset: 0, zIndex: 2 }}>
-                <Player
-                  ref={(ref) => setPlayerRef(ref)}
-                  component={VideoComposition}
-                  inputProps={{
-                    title,
-                    caption,
-                    backgroundColor: videoSrc ? "transparent" : backgroundColor,
-                    accentColor,
-                    videoSrc: null, // Don't pass video to Remotion, we handle it natively
-                    overlayPosition,
-                    overlayOpacity: videoSrc ? overlayOpacity : 0,
-                    titleAnimation,
-                    captionAnimation,
-                    volume,
-                    playbackRate,
-                    muted,
-                    captions,
-                    showCaptions,
-                    captionStyle: { position: captionPosition },
-                    audioSrc: ttsAudioSrc,
-                    audioVolume: 1,
+              {isRenderingPreview && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    zIndex: 10,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
                   }}
-                  durationInFrames={durationInFrames}
-                  fps={fps}
-                  compositionWidth={aspectRatio.width}
-                  compositionHeight={aspectRatio.height}
-                  style={{ width: "100%", height: "100%" }}
-                  controls={false}
-                  loop
-                  autoPlay={false}
-                />
-              </div>
+                >
+                  <div className="text-white text-sm font-medium mb-3">Processing preview...</div>
+                  <div className="w-48 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                      style={{ width: `${previewProgress}%` }}
+                    />
+                  </div>
+                  <div className="text-white/60 text-xs mt-2">{previewProgress}%</div>
+                </div>
+              )}
+              {/* Remotion Player handles both video and overlays */}
+              <Player
+                ref={(ref) => setPlayerRef(ref)}
+                component={VideoComposition}
+                inputProps={{
+                  title,
+                  caption,
+                  backgroundColor,
+                  accentColor,
+                  videoSrc,
+                  overlayPosition,
+                  overlayOpacity: videoSrc ? overlayOpacity : 0,
+                  titleAnimation,
+                  captionAnimation,
+                  volume,
+                  playbackRate,
+                  muted,
+                  captions,
+                  showCaptions,
+                  captionStyle: { position: captionPosition },
+                  audioSrc: ttsAudioSrc,
+                  audioVolume: 1,
+                  titlePosition: titlePos,
+                  captionPosition2: captionPos,
+                  textSegments,
+                }}
+                durationInFrames={durationInFrames}
+                fps={fps}
+                compositionWidth={aspectRatio.width}
+                compositionHeight={aspectRatio.height}
+                style={{ width: "100%", height: "100%" }}
+                controls={false}
+                loop
+                autoPlay={false}
+              />
+              {/* Drag overlay for repositioning text */}
+              {(title || caption) && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    zIndex: 20,
+                    cursor: draggingText ? "grabbing" : "default",
+                  }}
+                  onMouseMove={(e) => {
+                    if (!draggingText || !previewContainerRef.current) return;
+                    const rect = previewContainerRef.current.getBoundingClientRect();
+                    const x = Math.max(5, Math.min(95, ((e.clientX - rect.left) / rect.width) * 100));
+                    const y = Math.max(5, Math.min(95, ((e.clientY - rect.top) / rect.height) * 100));
+                    if (draggingText === "title") setTitlePos({ x, y });
+                    else setCaptionPos({ x, y });
+                  }}
+                  onMouseUp={() => setDraggingText(null)}
+                  onMouseLeave={() => setDraggingText(null)}
+                  onTouchMove={(e) => {
+                    if (!draggingText || !previewContainerRef.current) return;
+                    const touch = e.touches[0];
+                    const rect = previewContainerRef.current.getBoundingClientRect();
+                    const x = Math.max(5, Math.min(95, ((touch.clientX - rect.left) / rect.width) * 100));
+                    const y = Math.max(5, Math.min(95, ((touch.clientY - rect.top) / rect.height) * 100));
+                    if (draggingText === "title") setTitlePos({ x, y });
+                    else setCaptionPos({ x, y });
+                  }}
+                  onTouchEnd={() => setDraggingText(null)}
+                >
+                  {/* Title drag handle */}
+                  {title && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: `${titlePos.x}%`,
+                        top: `${titlePos.y}%`,
+                        transform: "translate(-50%, -50%)",
+                        padding: "8px 20px",
+                        cursor: "grab",
+                        borderRadius: 6,
+                        border: "2px dashed transparent",
+                        userSelect: "none",
+                        WebkitUserSelect: "none",
+                      }}
+                      className="hover:!border-white/60 transition-colors group"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        setDraggingText("title");
+                      }}
+                      onTouchStart={(e) => {
+                        e.stopPropagation();
+                        setDraggingText("title");
+                      }}
+                    >
+                      <span className="text-transparent group-hover:text-white/70 text-xs pointer-events-none select-none">Title</span>
+                    </div>
+                  )}
+                  {/* Caption drag handle */}
+                  {caption && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: `${captionPos.x}%`,
+                        top: `${captionPos.y}%`,
+                        transform: "translate(-50%, -50%)",
+                        padding: "6px 16px",
+                        cursor: "grab",
+                        borderRadius: 6,
+                        border: "2px dashed transparent",
+                        userSelect: "none",
+                        WebkitUserSelect: "none",
+                      }}
+                      className="hover:!border-white/60 transition-colors group"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        setDraggingText("caption");
+                      }}
+                      onTouchStart={(e) => {
+                        e.stopPropagation();
+                        setDraggingText("caption");
+                      }}
+                    >
+                      <span className="text-transparent group-hover:text-white/70 text-xs pointer-events-none select-none">Caption</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1603,6 +2483,21 @@ export function VideoEditor({ className }: VideoEditorProps) {
                         className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-200 resize-none"
                       />
                     </div>
+                    {(title || caption) && (
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-2">Position</label>
+                        <p className="text-xs text-gray-400 mb-2">Drag text on the preview to reposition</p>
+                        <button
+                          onClick={() => {
+                            setTitlePos({ x: 50, y: 45 });
+                            setCaptionPos({ x: 50, y: 60 });
+                          }}
+                          className="w-full py-2 text-xs rounded-lg border bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 transition-all"
+                        >
+                          Reset positions
+                        </button>
+                      </div>
+                    )}
                     <div>
                       <label className="text-xs text-gray-500 block mb-2">Accent Color</label>
                       <div className="flex gap-2 flex-wrap">
@@ -1630,8 +2525,11 @@ export function VideoEditor({ className }: VideoEditorProps) {
                       onChange={handleInputChange}
                       className="hidden"
                     />
-                    {videoSrc ? (
+
+                    {/* Current active video */}
+                    {videoSrc && (
                       <div className="space-y-3">
+                        <label className="text-xs text-gray-500">Active Video</label>
                         <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                           <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -1660,17 +2558,60 @@ export function VideoEditor({ className }: VideoEditorProps) {
                           ))}
                         </div>
                       </div>
-                    ) : (
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="w-full p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary/50 transition-colors text-center"
-                      >
-                        <svg className="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
-                        <span className="text-sm text-gray-500">Tap to upload</span>
-                      </button>
                     )}
+
+                    {/* Media library */}
+                    {mediaUploads.length > 0 && (
+                      <div className="space-y-2">
+                        <label className="text-xs text-gray-500">Media Library</label>
+                        <div className="space-y-1.5">
+                          {mediaUploads.map((upload) => (
+                            <div key={upload.id} className="flex items-center gap-2 p-2 bg-gray-50 border border-gray-200 rounded-lg group">
+                              <div className="w-8 h-8 rounded bg-gray-200 flex items-center justify-center flex-shrink-0">
+                                {upload.type === "recording" ? (
+                                  <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="8" />
+                                  </svg>
+                                ) : (
+                                  <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs text-gray-700 truncate">{upload.name}</p>
+                                {upload.uploading && <p className="text-[10px] text-gray-400">Saving...</p>}
+                              </div>
+                              <button
+                                onClick={() => handleSelectUpload(upload)}
+                                className="px-2 py-1 text-[10px] font-medium bg-primary text-white rounded hover:bg-primary/90 transition-colors flex-shrink-0"
+                              >
+                                Use
+                              </button>
+                              <button
+                                onClick={() => handleRemoveUpload(upload.id)}
+                                className="p-1 hover:bg-gray-200 rounded text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Upload button */}
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary/50 transition-colors text-center"
+                    >
+                      <svg className="w-6 h-6 mx-auto mb-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <span className="text-xs text-gray-500">Upload a file</span>
+                    </button>
                   </div>
                 )}
                 {activeTool === "music" && (
@@ -1703,9 +2644,13 @@ export function VideoEditor({ className }: VideoEditorProps) {
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="text-xs text-gray-500">Text</label>
-                        {(title || caption) && (
+                        {(scriptSegments.length > 0 || title || caption) && (
                           <button
-                            onClick={() => setTtsText([title, caption].filter(Boolean).join("\n\n"))}
+                            onClick={() => setTtsText(
+                              scriptSegments.length > 0
+                                ? scriptSegments.map(s => s.text).filter(Boolean).join("\n\n")
+                                : [title, caption].filter(Boolean).join("\n\n")
+                            )}
                             className="text-xs text-primary hover:text-primary/80 font-medium"
                           >
                             Use Script
@@ -1770,6 +2715,9 @@ export function VideoEditor({ className }: VideoEditorProps) {
                     <p className="text-sm text-gray-600 capitalize">{activeTool}</p>
                     <p className="text-xs text-gray-400 mt-1">Coming soon</p>
                   </div>
+                )}
+                {activeTool === "record" && (
+                  <RecordingPanel onRecordingComplete={handleRecordingComplete} />
                 )}
               </div>
             </div>
@@ -1842,28 +2790,23 @@ export function VideoEditor({ className }: VideoEditorProps) {
                   </div>
                 )}
 
-                {(title || caption) && videoSrc && (
-                  <>
-                    <div>
-                      <label className="text-xs text-gray-500 block mb-2">Position</label>
-                      <div className="flex gap-1">
-                        {(["top", "center", "bottom"] as const).map((pos) => (
-                          <button
-                            key={pos}
-                            onClick={() => setOverlayPosition(pos)}
-                            className={cn(
-                              "flex-1 py-2 text-xs rounded-lg border transition-all capitalize",
-                              overlayPosition === pos
-                                ? "bg-primary text-white border-primary"
-                                : "bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300"
-                            )}
-                          >
-                            {pos}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                {(title || caption) && (
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-2">Position</label>
+                    <p className="text-xs text-gray-400 mb-2">Drag text on the preview to reposition</p>
+                    <button
+                      onClick={() => {
+                        setTitlePos({ x: 50, y: 45 });
+                        setCaptionPos({ x: 50, y: 60 });
+                      }}
+                      className="w-full py-2 text-xs rounded-lg border bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 transition-all"
+                    >
+                      Reset positions
+                    </button>
+                  </div>
+                )}
 
+                {(title || caption) && videoSrc && (
                     <div>
                       <label className="text-xs text-gray-500 block mb-1.5">
                         Overlay: {Math.round(overlayOpacity * 100)}%
@@ -1878,7 +2821,6 @@ export function VideoEditor({ className }: VideoEditorProps) {
                         className="w-full accent-primary"
                       />
                     </div>
-                  </>
                 )}
 
                 <div className="pt-2 border-t border-gray-200">
@@ -1911,8 +2853,11 @@ export function VideoEditor({ className }: VideoEditorProps) {
                   onChange={handleInputChange}
                   className="hidden"
                 />
-                {videoSrc ? (
+
+                {/* Current active video controls */}
+                {videoSrc && (
                   <div className="space-y-3">
+                    <label className="text-xs text-gray-500">Active Video</label>
                     <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                       <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -1992,12 +2937,8 @@ export function VideoEditor({ className }: VideoEditorProps) {
                           </span>
                         </div>
 
-                        {/* Trim Range Slider */}
                         <div className="relative h-8 mb-3">
-                          {/* Track background */}
                           <div className="absolute inset-x-0 top-3 h-2 bg-gray-200 rounded-full" />
-
-                          {/* Selected range */}
                           <div
                             className="absolute top-3 h-2 bg-primary rounded-full"
                             style={{
@@ -2005,8 +2946,6 @@ export function VideoEditor({ className }: VideoEditorProps) {
                               right: `${100 - (trimEnd / originalDuration) * 100}%`,
                             }}
                           />
-
-                          {/* Start handle */}
                           <input
                             type="range"
                             min={0}
@@ -2019,8 +2958,6 @@ export function VideoEditor({ className }: VideoEditorProps) {
                             }}
                             className="absolute inset-x-0 top-0 h-8 opacity-0 cursor-pointer z-10"
                           />
-
-                          {/* End handle */}
                           <input
                             type="range"
                             min={0}
@@ -2034,8 +2971,6 @@ export function VideoEditor({ className }: VideoEditorProps) {
                             className="absolute inset-x-0 top-0 h-8 opacity-0 cursor-pointer z-20"
                             style={{ pointerEvents: "none" }}
                           />
-
-                          {/* Handle indicators */}
                           <div
                             className="absolute top-1 w-4 h-6 bg-white border-2 border-primary rounded cursor-ew-resize shadow-sm"
                             style={{ left: `calc(${(trimStart / originalDuration) * 100}% - 8px)` }}
@@ -2046,7 +2981,6 @@ export function VideoEditor({ className }: VideoEditorProps) {
                           />
                         </div>
 
-                        {/* Time inputs */}
                         <div className="flex items-center gap-2">
                           <div className="flex-1">
                             <label className="text-xs text-gray-400 block mb-1">Start</label>
@@ -2075,7 +3009,6 @@ export function VideoEditor({ className }: VideoEditorProps) {
                           </div>
                         </div>
 
-                        {/* Reset button */}
                         {(trimStart > 0 || trimEnd < originalDuration) && (
                           <button
                             onClick={() => {
@@ -2090,17 +3023,65 @@ export function VideoEditor({ className }: VideoEditorProps) {
                       </div>
                     )}
                   </div>
-                ) : (
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full p-8 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary/50 transition-colors text-center"
-                  >
-                    <svg className="w-10 h-10 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <span className="text-sm text-gray-500">Click or drag to upload</span>
-                  </button>
                 )}
+
+                {/* Media Library */}
+                {mediaUploads.length > 0 && (
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-500">Media Library</label>
+                    <div className="space-y-1.5">
+                      {mediaUploads.map((upload) => (
+                        <div key={upload.id} className="flex items-center gap-2 p-2.5 bg-gray-50 border border-gray-200 rounded-lg group hover:bg-gray-100 transition-colors">
+                          <div className="w-9 h-9 rounded bg-gray-200 flex items-center justify-center flex-shrink-0">
+                            {upload.type === "recording" ? (
+                              <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="8" />
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-gray-700 truncate">{upload.name}</p>
+                            <p className="text-[10px] text-gray-400">
+                              {upload.uploading ? "Saving..." : upload.supabaseUrl ? "Saved" : "Local"}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleSelectUpload(upload)}
+                            className="px-2.5 py-1 text-xs font-medium bg-primary text-white rounded hover:bg-primary/90 transition-colors flex-shrink-0"
+                          >
+                            Use
+                          </button>
+                          <button
+                            onClick={() => handleRemoveUpload(upload.id)}
+                            className="p-1 hover:bg-gray-200 rounded text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload button */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className={cn(
+                    "w-full border-2 border-dashed border-gray-300 rounded-xl hover:border-primary/50 transition-colors text-center",
+                    videoSrc || mediaUploads.length > 0 ? "p-4" : "p-8"
+                  )}
+                >
+                  <svg className={cn("mx-auto mb-2 text-gray-400", videoSrc || mediaUploads.length > 0 ? "w-6 h-6" : "w-10 h-10")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <span className="text-sm text-gray-500">{videoSrc || mediaUploads.length > 0 ? "Upload another file" : "Click or drag to upload"}</span>
+                </button>
               </div>
             )}
 
@@ -2318,9 +3299,13 @@ export function VideoEditor({ className }: VideoEditorProps) {
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="text-xs text-gray-500">Text</label>
-                    {(title || caption) && (
+                    {(scriptSegments.length > 0 || title || caption) && (
                       <button
-                        onClick={() => setTtsText([title, caption].filter(Boolean).join("\n\n"))}
+                        onClick={() => setTtsText(
+                          scriptSegments.length > 0
+                            ? scriptSegments.map(s => s.text).filter(Boolean).join("\n\n")
+                            : [title, caption].filter(Boolean).join("\n\n")
+                        )}
                         className="text-xs text-primary hover:text-primary/80 font-medium"
                       >
                         Use Script
@@ -2393,6 +3378,10 @@ export function VideoEditor({ className }: VideoEditorProps) {
                 <p className="text-xs text-gray-400 mt-1">Coming soon</p>
               </div>
             )}
+
+            {activeTool === "record" && (
+              <RecordingPanel onRecordingComplete={handleRecordingComplete} />
+            )}
           </div>
 
           {/* Vertical Tool Icons - Desktop Only */}
@@ -2420,6 +3409,16 @@ export function VideoEditor({ className }: VideoEditorProps) {
       {/* Spacer for mobile tool bar */}
       <div className="h-14 md:hidden flex-shrink-0" />
 
+      {/* Timeline resize handle */}
+      <div
+        className="h-1.5 cursor-row-resize hover:bg-primary/30 active:bg-primary/50 transition-colors flex-shrink-0 bg-gray-200 group relative"
+        onMouseDown={startResizeTimeline}
+      >
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-center">
+          <div className="w-8 h-0.5 rounded-full bg-gray-400 group-hover:bg-primary/60 transition-colors" />
+        </div>
+      </div>
+
       {/* Multi-Layer Timeline */}
       <Timeline
         tracks={tracks}
@@ -2436,6 +3435,7 @@ export function VideoEditor({ className }: VideoEditorProps) {
         canSplitClip={canSplitClip}
         onDeleteClip={handleDeleteClip}
         canDeleteClip={canDeleteClip}
+        height={timelineHeight}
         onAddTrack={(type) => {
           const trackColors: Record<string, string> = {
             text: "#8b5cf6",
@@ -2462,14 +3462,22 @@ export function VideoEditor({ className }: VideoEditorProps) {
       {/* Export Modal */}
       {showExportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden max-h-[90vh] flex flex-col">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 shrink-0">
               <h2 className="text-lg font-semibold text-gray-900">Export Video</h2>
               <button
-                onClick={() => !isExporting && setShowExportModal(false)}
+                onClick={() => {
+                  if (isExporting || isUploadingToYouTube) return;
+                  setShowExportModal(false);
+                  setExportedBlob(null);
+                  setShowYouTubeUpload(false);
+                  setYtUploadSuccess(null);
+                  setYtUploadError(null);
+                  setYtUploadProgress(0);
+                }}
                 className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                disabled={isExporting}
+                disabled={isExporting || isUploadingToYouTube}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -2478,7 +3486,7 @@ export function VideoEditor({ className }: VideoEditorProps) {
             </div>
 
             {/* Modal Content */}
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-4 overflow-y-auto">
               {/* Export Preview */}
               <div className="aspect-video bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
                 {videoSrc ? (
@@ -2582,39 +3590,187 @@ export function VideoEditor({ className }: VideoEditorProps) {
                   </div>
                 </div>
               )}
+
+              {/* YouTube Upload Section - shown after export completes */}
+              {exportedBlob && !isExporting && (
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => setShowYouTubeUpload(!showYouTubeUpload)}
+                    className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-red-600 font-bold text-lg">▶</span>
+                      <span className="text-sm font-medium text-gray-700">Upload to YouTube</span>
+                    </div>
+                    <svg
+                      className={cn("w-4 h-4 text-gray-400 transition-transform", showYouTubeUpload && "rotate-180")}
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {showYouTubeUpload && (
+                    <div className="p-3 pt-0 space-y-3 border-t border-gray-100">
+                      {ytUploadSuccess ? (
+                        <div className="text-center py-3">
+                          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-2">
+                            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <p className="text-sm font-medium text-gray-900">Uploaded to YouTube!</p>
+                          <a
+                            href={`https://www.youtube.com/watch?v=${ytUploadSuccess}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-red-600 hover:text-red-700 underline mt-1 inline-block"
+                          >
+                            View on YouTube
+                          </a>
+                        </div>
+                      ) : (
+                        <>
+                          <div>
+                            <label className="text-xs font-medium text-gray-600 block mb-1">Title *</label>
+                            <input
+                              type="text"
+                              value={ytTitle}
+                              onChange={(e) => setYtTitle(e.target.value)}
+                              placeholder="Video title"
+                              className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                              disabled={isUploadingToYouTube}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-600 block mb-1">Description</label>
+                            <textarea
+                              value={ytDescription}
+                              onChange={(e) => setYtDescription(e.target.value)}
+                              placeholder="Video description"
+                              rows={2}
+                              className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 resize-none"
+                              disabled={isUploadingToYouTube}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-600 block mb-1">Tags (comma-separated)</label>
+                            <input
+                              type="text"
+                              value={ytTags}
+                              onChange={(e) => setYtTags(e.target.value)}
+                              placeholder="tag1, tag2, tag3"
+                              className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500"
+                              disabled={isUploadingToYouTube}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-600 block mb-1">Privacy</label>
+                            <div className="flex gap-1.5">
+                              {(["private", "unlisted", "public"] as const).map((p) => (
+                                <button
+                                  key={p}
+                                  onClick={() => setYtPrivacy(p)}
+                                  disabled={isUploadingToYouTube}
+                                  className={cn(
+                                    "flex-1 py-1.5 px-2 rounded text-xs font-medium border transition-all capitalize",
+                                    ytPrivacy === p
+                                      ? "bg-red-600 text-white border-red-600"
+                                      : "bg-gray-50 text-gray-600 border-gray-200 hover:border-gray-300"
+                                  )}
+                                >
+                                  {p}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* YouTube Upload Progress */}
+                          {isUploadingToYouTube && (
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-gray-600">Uploading to YouTube...</span>
+                                <span className="text-gray-900 font-medium">{ytUploadProgress}%</span>
+                              </div>
+                              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-red-600 transition-all duration-300"
+                                  style={{ width: `${ytUploadProgress}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {ytUploadError && (
+                            <p className="text-xs text-red-600">{ytUploadError}</p>
+                          )}
+
+                          <Button
+                            onClick={handleUploadToYouTube}
+                            disabled={isUploadingToYouTube || !ytTitle.trim()}
+                            className="w-full bg-red-600 hover:bg-red-700 text-white text-sm"
+                            size="sm"
+                          >
+                            {isUploadingToYouTube ? (
+                              <>
+                                <svg className="w-3.5 h-3.5 mr-1.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                                Uploading...
+                              </>
+                            ) : (
+                              "Upload to YouTube"
+                            )}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 bg-gray-50 shrink-0">
               <Button
                 variant="outline"
-                onClick={() => setShowExportModal(false)}
-                disabled={isExporting}
+                onClick={() => {
+                  setShowExportModal(false);
+                  setExportedBlob(null);
+                  setShowYouTubeUpload(false);
+                  setYtUploadSuccess(null);
+                  setYtUploadError(null);
+                  setYtUploadProgress(0);
+                }}
+                disabled={isExporting || isUploadingToYouTube}
               >
-                Cancel
+                {exportedBlob ? "Done" : "Cancel"}
               </Button>
-              <Button
-                onClick={handleExport}
-                disabled={isExporting}
-                className="bg-primary hover:bg-primary/90"
-              >
-                {isExporting ? (
-                  <>
-                    <svg className="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Exporting...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                    </svg>
-                    Export Video
-                  </>
-                )}
-              </Button>
+              {!exportedBlob && (
+                <Button
+                  onClick={handleExport}
+                  disabled={isExporting}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  {isExporting ? (
+                    <>
+                      <svg className="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                      </svg>
+                      Export Video
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </div>

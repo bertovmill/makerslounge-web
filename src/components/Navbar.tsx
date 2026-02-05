@@ -1,37 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import { User } from "@supabase/supabase-js";
 import AuthButton from "./AuthButton";
 import Logo, { LogoIcon } from "./Logo";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/context/SidebarContext";
 import { useFeedback } from "@/context/FeedbackContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { user, isAdmin } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const { collapsed, setCollapsed } = useSidebar();
   const { openFeedback } = useFeedback();
   const pathname = usePathname();
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-      setIsAdmin(user?.email === "bertmill19@gmail.com");
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setIsAdmin(session?.user?.email === "bertmill19@gmail.com");
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -247,6 +231,23 @@ export default function Navbar() {
         <div className={cn("p-4 border-t border-border", collapsed && "flex flex-col items-center gap-2")}>
           {user && (
             <NavLink href="/settings" icon={icons.settings}>Settings</NavLink>
+          )}
+          {user && (
+            <button
+              onClick={openFeedback}
+              className={cn(
+                "relative group px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-3 w-full bg-primary text-primary-foreground hover:bg-primary/90",
+                collapsed && "justify-center px-2"
+              )}
+            >
+              <span className="w-5 h-5 flex-shrink-0">{icons.feedback}</span>
+              {!collapsed && "Feedback"}
+              {collapsed && (
+                <span className="absolute left-full ml-2 px-2.5 py-1.5 rounded-md bg-popover text-popover-foreground text-xs font-medium whitespace-nowrap shadow-md border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 pointer-events-none">
+                  Feedback
+                </span>
+              )}
+            </button>
           )}
           {collapsed ? (
             <Link href="/profile" className="p-2 rounded-lg hover:bg-accent transition-colors" title="Profile">

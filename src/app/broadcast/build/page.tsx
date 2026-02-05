@@ -95,12 +95,12 @@ export default function BuildPage() {
   }
 
   return (
-    <div className={cn("min-h-screen", contentType === "video" ? "p-0" : "p-3 sm:p-6")}>
-      <div className={cn(contentType !== "video" && "max-w-7xl mx-auto")}>
+    <div className={cn("min-h-screen", contentType === "video" || contentType === "image" ? "p-0" : "p-3 sm:p-6")}>
+      <div className={cn(contentType !== "video" && contentType !== "image" && "max-w-7xl mx-auto")}>
         {/* Condensed Header Bar */}
         <div className={cn(
           "flex items-center justify-between",
-          contentType === "video" ? "px-3 py-2 border-b border-border" : "mb-4 sm:mb-6"
+          contentType === "video" || contentType === "image" ? "px-3 py-2 border-b border-border" : "mb-4 sm:mb-6"
         )}>
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
@@ -169,11 +169,12 @@ export default function BuildPage() {
         {/* Video Editor - full width, no container */}
         {contentType === "video" && <VideoEditor className="rounded-none border-0 shadow-none h-[calc(100vh-41px)]" />}
 
+        {/* AI Image Generator - full width, no container */}
+        {contentType === "image" && <ImageGenerator className="h-[calc(100vh-41px)]" />}
+
         {/* Editor Area */}
-        {contentType !== "video" && (
+        {contentType !== "video" && contentType !== "image" && (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
-          {/* AI Image Generator */}
-          {contentType === "image" && <ImageGenerator />}
 
           {/* Text Editor */}
           {contentType === "text" && (

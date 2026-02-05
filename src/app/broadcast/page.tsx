@@ -47,6 +47,7 @@ interface SocialConnection {
 const CONNECTABLE_PLATFORMS = [
   { id: "x", name: "X", icon: "𝕏", available: true },
   { id: "linkedin", name: "LinkedIn", icon: "in", available: true },
+  { id: "youtube", name: "YouTube", icon: "▶", available: true },
   { id: "instagram", name: "Instagram", icon: "📷", available: false },
   { id: "threads", name: "Threads", icon: "@", available: false },
 ] as const;
@@ -129,6 +130,15 @@ export default function BroadcastPage() {
   // Media Selection State
   const [selectedMediaUrls, setSelectedMediaUrls] = useState<string[]>([]);
 
+  // AI Image Generation State
+  const [showImageGen, setShowImageGen] = useState(false);
+  const [imagePrompt, setImagePrompt] = useState("");
+  const [imageStyle, setImageStyle] = useState("none");
+  const [imageAspectRatio, setImageAspectRatio] = useState("1:1");
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState("");
+  const [isSuggestingPrompt, setIsSuggestingPrompt] = useState(false);
+
   // Edit Idea Modal State
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingIdea, setEditingIdea] = useState<BroadcastIdea | null>(null);
@@ -167,7 +177,8 @@ export default function BroadcastPage() {
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION') return;
       setUser(session?.user ?? null);
       if (!session?.user) {
         router.push("/auth");
@@ -302,6 +313,29 @@ export default function BroadcastPage() {
     } catch (error) {
       console.error("Disconnect error:", error);
       alert("Failed to disconnect LinkedIn account");
+    }
+  };
+
+  const handleConnectYouTube = () => {
+    window.location.href = "/api/auth/youtube/authorize";
+  };
+
+  const handleDisconnectYouTube = async () => {
+    if (!confirm("Are you sure you want to disconnect your YouTube account?")) return;
+
+    try {
+      const response = await fetch("/api/auth/youtube/disconnect", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        setSocialConnections((prev) => prev.filter((c) => c.platform !== "youtube"));
+      } else {
+        alert("Failed to disconnect YouTube account");
+      }
+    } catch (error) {
+      console.error("Disconnect error:", error);
+      alert("Failed to disconnect YouTube account");
     }
   };
 
@@ -693,6 +727,13 @@ export default function BroadcastPage() {
     setScheduleTime("");
     setShowScheduleModal(false);
     setSelectedMediaUrls([]);
+    setShowImageGen(false);
+    setImagePrompt("");
+    setImageStyle("none");
+    setImageAspectRatio("1:1");
+    setIsGeneratingImage(false);
+    setGeneratedImageUrl("");
+    setIsSuggestingPrompt(false);
     setShowGenerateModal(true);
   };
 
@@ -733,6 +774,67 @@ export default function BroadcastPage() {
       console.error("Refine error:", error);
     } finally {
       setIsRefining(false);
+    }
+  };
+
+  // Suggest image prompt from post content
+  const handleSuggestImagePrompt = async () => {
+    setIsSuggestingPrompt(true);
+    try {
+      const response = await fetch("/api/generate-image-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postContent: generatedContent,
+          ideaTitle: generateIdeaTitle,
+          ideaNotes: generateIdeaNotes,
+          channel: generateChannel,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to suggest prompt");
+      setImagePrompt(data.prompt);
+    } catch (error) {
+      console.error("Suggest image prompt error:", error);
+    } finally {
+      setIsSuggestingPrompt(false);
+    }
+  };
+
+  // Generate AI image
+  const handleGenerateImage = async () => {
+    if (!imagePrompt.trim()) return;
+    setIsGeneratingImage(true);
+    try {
+      const response = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: imagePrompt,
+          aspectRatio: imageAspectRatio,
+          style: imageStyle,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        console.error("Generate image API error:", response.status, data);
+        throw new Error(data.error || "Failed to generate image");
+      }
+      const url = data.images?.[0];
+      if (url) {
+        setGeneratedImageUrl(url);
+        // Auto-add to selected media (max 4)
+        setSelectedMediaUrls((prev) => {
+          if (prev.length < 4 && !prev.includes(url)) {
+            return [...prev, url];
+          }
+          return prev;
+        });
+      }
+    } catch (error) {
+      console.error("Generate image error:", error);
+    } finally {
+      setIsGeneratingImage(false);
     }
   };
 
@@ -877,6 +979,7 @@ export default function BroadcastPage() {
                         onClick={() => {
                           if (platform.id === "x") handleDisconnectX();
                           if (platform.id === "linkedin") handleDisconnectLinkedIn();
+                          if (platform.id === "youtube") handleDisconnectYouTube();
                         }}
                         className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-background border border-green-500/30 hover:border-red-500/50 transition-colors"
                         title={`Connected as @${connection.platform_username}`}
@@ -901,6 +1004,7 @@ export default function BroadcastPage() {
                           if (!platform.available) return;
                           if (platform.id === "x") handleConnectX();
                           if (platform.id === "linkedin") handleConnectLinkedIn();
+                          if (platform.id === "youtube") handleConnectYouTube();
                         }}
                         disabled={!platform.available}
                         className={cn(
@@ -1927,6 +2031,214 @@ export default function BroadcastPage() {
                       )}
                     </div>
                   )}
+
+                  {/* AI Image Generation */}
+                  <div className="space-y-3 border border-border rounded-lg overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const opening = !showImageGen;
+                        setShowImageGen(opening);
+                        if (opening && !imagePrompt && (generatedContent || generateIdeaTitle)) {
+                          handleSuggestImagePrompt();
+                        }
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors"
+                    >
+                      <span className="flex items-center gap-2 text-sm font-medium">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        AI Image
+                        {generatedImageUrl && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary">1 generated</span>
+                        )}
+                      </span>
+                      <svg
+                        className={cn("w-4 h-4 transition-transform", showImageGen && "rotate-180")}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {showImageGen && (
+                      <div className="px-4 pb-4 space-y-3">
+                        {/* Image Prompt */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-medium text-muted-foreground">Image Prompt</label>
+                            <button
+                              type="button"
+                              onClick={handleSuggestImagePrompt}
+                              disabled={isSuggestingPrompt}
+                              className="text-xs text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                            >
+                              {isSuggestingPrompt ? "Suggesting..." : "Suggest from post"}
+                            </button>
+                          </div>
+                          <textarea
+                            value={imagePrompt}
+                            onChange={(e) => setImagePrompt(e.target.value)}
+                            placeholder={isSuggestingPrompt ? "Generating suggestion..." : "Describe the image you want to generate..."}
+                            rows={2}
+                            className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg text-sm resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
+                        </div>
+
+                        {/* Style Picker */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-medium text-muted-foreground">Style</label>
+                          <div className="flex flex-wrap gap-1.5">
+                            {[
+                              { id: "none", label: "None" },
+                              { id: "realistic", label: "Realistic" },
+                              { id: "artistic", label: "Artistic" },
+                              { id: "minimal", label: "Minimal" },
+                              { id: "vibrant", label: "Vibrant" },
+                              { id: "professional", label: "Professional" },
+                            ].map((s) => (
+                              <button
+                                key={s.id}
+                                type="button"
+                                onClick={() => setImageStyle(s.id)}
+                                className={cn(
+                                  "px-2.5 py-1 rounded-full text-xs font-medium transition-colors",
+                                  imageStyle === s.id
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted/50 hover:bg-muted"
+                                )}
+                              >
+                                {s.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Aspect Ratio Picker */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-medium text-muted-foreground">Aspect Ratio</label>
+                          <div className="flex flex-wrap gap-1.5">
+                            {[
+                              { id: "1:1", label: "Square 1:1" },
+                              { id: "16:9", label: "Wide 16:9" },
+                              { id: "9:16", label: "Tall 9:16" },
+                              { id: "4:3", label: "4:3" },
+                              { id: "3:4", label: "3:4" },
+                            ].map((ar) => (
+                              <button
+                                key={ar.id}
+                                type="button"
+                                onClick={() => setImageAspectRatio(ar.id)}
+                                className={cn(
+                                  "px-2.5 py-1 rounded-full text-xs font-medium transition-colors",
+                                  imageAspectRatio === ar.id
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted/50 hover:bg-muted"
+                                )}
+                              >
+                                {ar.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Generate Button */}
+                        <button
+                          type="button"
+                          onClick={handleGenerateImage}
+                          disabled={isGeneratingImage || !imagePrompt.trim()}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                        >
+                          {isGeneratingImage ? (
+                            <>
+                              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              Generate Image
+                            </>
+                          )}
+                        </button>
+
+                        {/* Generated Image Preview */}
+                        {generatedImageUrl && (
+                          <div className="space-y-2">
+                            <div className="relative rounded-lg overflow-hidden border border-border">
+                              <img
+                                src={generatedImageUrl}
+                                alt="AI generated"
+                                className="w-full max-h-64 object-contain bg-muted/20"
+                              />
+                              {selectedMediaUrls.includes(generatedImageUrl) && (
+                                <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/90 text-primary-foreground text-[10px] font-medium">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                  Added to post
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={handleGenerateImage}
+                                disabled={isGeneratingImage}
+                                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border hover:border-primary/50 transition-colors disabled:opacity-50"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Regenerate
+                              </button>
+                              {selectedMediaUrls.includes(generatedImageUrl) ? (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSelectedMediaUrls((prev) =>
+                                      prev.filter((u) => u !== generatedImageUrl)
+                                    )
+                                  }
+                                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-destructive/50 text-destructive hover:bg-destructive/10 transition-colors"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                  Remove from post
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSelectedMediaUrls((prev) => {
+                                      if (prev.length < 4) return [...prev, generatedImageUrl];
+                                      return prev;
+                                    })
+                                  }
+                                  disabled={selectedMediaUrls.length >= 4}
+                                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary/50 text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                  </svg>
+                                  Add to post
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-muted-foreground">
