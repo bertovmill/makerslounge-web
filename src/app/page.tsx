@@ -353,7 +353,7 @@ export default function Home() {
 
               {/* Main headline */}
               <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-serif leading-[1.05] mb-6 text-slate-900 text-center max-w-5xl">
-                Find the right people for what you&apos;re building
+                Follow our community.
               </h1>
 
               {/* Subtitle */}
