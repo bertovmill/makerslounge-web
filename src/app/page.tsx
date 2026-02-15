@@ -291,16 +291,21 @@ export default function Home() {
       {!user ? (
         <>
           {/* Hero with warm background */}
-          <section className="relative min-h-screen flex flex-col overflow-hidden bg-[#f5f3ef]">
+          <section className="relative min-h-screen flex flex-col overflow-hidden bg-gradient-to-br from-[#f5f3ef] via-[#f0ece4] to-[#e8e0d4]">
             {/* Subtle background texture */}
             <div className="absolute inset-0 opacity-[0.03]" style={{
               backgroundImage: `radial-gradient(circle at 1px 1px, #94a3b8 1px, transparent 0)`,
               backgroundSize: '32px 32px',
             }} />
+            {/* Warm gradient accent */}
+            <div className="absolute top-0 right-0 w-[60%] h-[60%] opacity-20 pointer-events-none" style={{
+              background: 'radial-gradient(ellipse at 70% 20%, #e54b4b22 0%, transparent 60%)',
+            }} />
 
             {/* Content */}
             <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 pt-24 pb-16">
               {/* Social platform links */}
+              <p className="text-sm font-medium text-slate-500 mb-3 tracking-wide uppercase">Follow our community</p>
               <div className="flex items-center gap-4 mb-10 px-3 py-3 rounded-full bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-sm">
                 <a
                   href="https://www.linkedin.com/company/makerslounge"
@@ -353,7 +358,7 @@ export default function Home() {
 
               {/* Main headline */}
               <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-serif leading-[1.05] mb-6 text-slate-900 text-center max-w-5xl">
-                Follow our community.
+                Find the right people for what you&apos;re building
               </h1>
 
               {/* Subtitle */}
