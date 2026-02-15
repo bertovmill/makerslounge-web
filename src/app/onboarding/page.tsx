@@ -271,7 +271,7 @@ export default function OnboardingPage() {
         .single();
 
       if (profile?.onboarding_completed) {
-        router.push("/home");
+        router.push("/matcher");
         return;
       }
 
@@ -350,7 +350,7 @@ export default function OnboardingPage() {
 
       if (error) throw error;
 
-      router.push("/home");
+      router.push("/matcher");
     } catch (error) {
       console.error("Error saving profile:", error);
       setSaving(false);

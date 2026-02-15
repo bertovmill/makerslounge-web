@@ -1,18 +1,19 @@
 import Link from "next/link";
 import Logo from "./Logo";
+import EmailSignup from "./EmailSignup";
 
 export default function Footer() {
   return (
     <footer className="border-t border-border bg-background/50 mt-auto">
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="inline-block hover:opacity-90 transition-opacity">
               <Logo size="sm" />
             </Link>
             <p className="mt-3 text-sm text-muted-foreground">
-              Toronto&apos;s community for makers and builders.
+              AI-powered matching for builders and makers.
             </p>
             <div className="flex gap-4 mt-4">
               <a
@@ -137,6 +138,15 @@ export default function Footer() {
                 </Link>
               </li>
             </ul>
+          </div>
+
+          {/* Newsletter */}
+          <div className="col-span-2 md:col-span-1">
+            <h3 className="font-semibold text-sm mb-3">Newsletter</h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              Get the latest updates on events and community news.
+            </p>
+            <EmailSignup variant="compact" />
           </div>
         </div>
 

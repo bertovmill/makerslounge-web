@@ -29,8 +29,8 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "MakersLounge - Toronto's Maker Community",
-  description: "Connect with makers, share projects, and grow your network in Toronto's most supportive community for builders.",
+  title: "MakersLounge - Find Your People",
+  description: "AI-powered matching that connects builders and makers with the right people. Share what you're building, tell us who you need, and let AI find your perfect match.",
   icons: {
     icon: [
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },

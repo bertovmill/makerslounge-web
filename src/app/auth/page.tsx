@@ -37,7 +37,7 @@ function AuthContent() {
       if (!profile || !profile.onboarding_completed) {
         router.push("/onboarding");
       } else {
-        router.push("/home");
+        router.push("/people");
       }
     };
 
@@ -58,7 +58,7 @@ function AuthContent() {
 
   const handleSignInWithGoogle = async () => {
     setLoading(true);
-    const redirectUrl = `${window.location.origin}/home`;
+    const redirectUrl = `${window.location.origin}/people`;
 
     await supabase.auth.signInWithOAuth({
       provider: "google",

@@ -69,12 +69,6 @@ export default function Navbar() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
       </svg>
     ),
-    tools: (
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
     admin: (
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -84,11 +78,6 @@ export default function Navbar() {
     feedback: (
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-      </svg>
-    ),
-    video: (
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
       </svg>
     ),
     agents: (
@@ -109,11 +98,6 @@ export default function Navbar() {
     docs: (
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-    ),
-    broadcast: (
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.828a5 5 0 010-7.072m7.072 0a5 5 0 010 7.072M13 12a1 1 0 11-2 0 1 1 0 012 0z" />
       </svg>
     ),
     settings: (
@@ -158,7 +142,7 @@ export default function Navbar() {
         collapsed ? "w-16" : "w-64"
       )}>
         <div className={cn("p-6 flex items-center", collapsed ? "justify-center p-4" : "justify-between")}>
-          <Link href="/home" className="hover:opacity-90 transition-opacity inline-block">
+          <Link href="/matcher" className="hover:opacity-90 transition-opacity inline-block">
             {collapsed ? (
               <LogoIcon size={32} />
             ) : (
@@ -195,27 +179,16 @@ export default function Navbar() {
         )}
 
         <nav className="flex-1 flex flex-col gap-1 px-3 py-4">
-          {user && (
-            <>
-              <NavLink href="/home" icon={icons.home}>Home</NavLink>
-              <div className="my-2 border-t border-border"></div>
-            </>
-          )}
-
           <NavLink href="/people" icon={icons.people}>People</NavLink>
-          <NavLink href="/agents" icon={icons.agents}>Agents</NavLink>
           <NavLink href="/matcher" icon={icons.matcher}>Matcher</NavLink>
-          <NavLink href="/podcast" icon={icons.podcast}>Podcast</NavLink>
+          <NavLink href="/agents" icon={icons.agents}>Agents</NavLink>
           <NavLink href="/about" icon={icons.about}>About us</NavLink>
           <NavLink href="/docs" icon={icons.docs}>Docs</NavLink>
-          <NavLink href="/broadcast" icon={icons.broadcast} label="Broadcast">Broadcast <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">Beta</span></NavLink>
-
           {user && (
             <>
               <div className="my-2 border-t border-border"></div>
               <NavLink href="/profile" icon={icons.profile}>Profile</NavLink>
               <NavLink href="/connections" icon={icons.connections}>Connections</NavLink>
-              <NavLink href="/tools" icon={icons.tools}>Maker Tools</NavLink>
             </>
           )}
 
@@ -264,7 +237,7 @@ export default function Navbar() {
       {/* Mobile Header */}
       <header className="md:hidden sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <nav className="flex items-center justify-between px-4 py-4">
-          <Link href="/home" className="hover:opacity-90 transition-opacity">
+          <Link href="/matcher" className="hover:opacity-90 transition-opacity">
             <Logo size="sm" />
           </Link>
 
@@ -305,28 +278,16 @@ export default function Navbar() {
         {menuOpen && (
           <div className="border-t border-border bg-background/95 backdrop-blur-md">
             <div className="flex flex-col gap-1 px-4 py-4">
-              {user && (
-                <>
-                  <NavLink href="/home" icon={icons.home}>Home</NavLink>
-                  <div className="my-2 border-t border-border"></div>
-                </>
-              )}
-
               <NavLink href="/people" icon={icons.people}>People</NavLink>
-              <NavLink href="/agents" icon={icons.agents}>Agents</NavLink>
               <NavLink href="/matcher" icon={icons.matcher}>Matcher</NavLink>
-              <NavLink href="/podcast" icon={icons.podcast}>Podcast</NavLink>
-              <NavLink href="/about" icon={icons.about}>About us</NavLink>
+              <NavLink href="/agents" icon={icons.agents}>Agents</NavLink>
+                  <NavLink href="/about" icon={icons.about}>About us</NavLink>
               <NavLink href="/docs" icon={icons.docs}>Docs</NavLink>
-              <NavLink href="/broadcast" icon={icons.broadcast} label="Broadcast">Broadcast <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">Beta</span></NavLink>
-
               {user && (
                 <>
                   <div className="my-2 border-t border-border"></div>
                   <NavLink href="/profile" icon={icons.profile}>Profile</NavLink>
                   <NavLink href="/connections" icon={icons.connections}>Connections</NavLink>
-                  <NavLink href="/tools" icon={icons.tools}>Maker Tools</NavLink>
-                  <NavLink href="/video-editing" icon={icons.video}>Video Editing</NavLink>
                   <NavLink href="/settings" icon={icons.settings}>Settings</NavLink>
                 </>
               )}
