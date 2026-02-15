@@ -20,7 +20,11 @@ A whimsical hand-drawn illustration in a storybook editorial style with a rich, 
 
 ## Prompt (v3 — ReCraft, under 1000 characters)
 
-Whimsical storybook illustration with loose ink outlines and soft watercolor fills. Three focal scenes with generous white space between them. Left: a maker at a drafting table, sketching something coming to life, a small river below with boats carrying lightbulb sails. Center: a magnifying glass floating in open space, its lens showing constellation lines connecting people and two hands reaching toward each other, warm rays of light around it. Right: four makers around a round table, one on a laptop, one sculpting, one sketching, one painting. A hummingbird carries a small envelope between the groups. Scattered sparingly: a few stars and sparkle marks. Rich diverse colors throughout — yellows, blues, greens, oranges, pinks, purples, reds — each element a different color. Cream background with 40% open space. Warm, playful, joyful mood. Panoramic ultra-wide composition with sparse center for text overlay.
+Style: `digital_illustration/urban_sketching` | Wide aspect ratio (1820x1024)
+
+Colors: none (remove all color params)
+
+Minimalist illustration on a pure white background, not colored or tinted. Mostly empty white space with very few small, simple elements scattered loosely. A tiny sailboat with a lightbulb sail. A small magnifying glass. Two people sitting at a table sketching together. A little hummingbird carrying an envelope. A few tiny stars. That is all. The elements are very small compared to the canvas. At least 70% of the image is pure untouched white. Think minimalist editorial illustration with lots of breathing room. Simple, sparse, joyful. Less is more.
 
 ## Changes from v1
 

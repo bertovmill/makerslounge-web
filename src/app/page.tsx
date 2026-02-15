@@ -291,16 +291,34 @@ export default function Home() {
       {!user ? (
         <>
           {/* Hero with warm background */}
-          <section className="relative min-h-screen flex flex-col overflow-hidden bg-gradient-to-br from-[#f5f3ef] via-[#f0ece4] to-[#e8e0d4]">
-            {/* Subtle background texture */}
-            <div className="absolute inset-0 opacity-[0.03]" style={{
-              backgroundImage: `radial-gradient(circle at 1px 1px, #94a3b8 1px, transparent 0)`,
-              backgroundSize: '32px 32px',
-            }} />
-            {/* Warm gradient accent */}
-            <div className="absolute top-0 right-0 w-[60%] h-[60%] opacity-20 pointer-events-none" style={{
-              background: 'radial-gradient(ellipse at 70% 20%, #e54b4b22 0%, transparent 60%)',
-            }} />
+          <section className="relative min-h-screen flex flex-col overflow-hidden bg-[#f5f3ef]">
+            {/* Decorative illustration elements */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+              {/* Magnifying glass - top left */}
+              <img
+                src="/hero-elements/magnifying-glass.webp"
+                alt=""
+                className="absolute -top-8 -left-8 w-48 sm:w-64 lg:w-72 opacity-60 rotate-[-15deg]"
+              />
+              {/* Lightbulb - top right */}
+              <img
+                src="/hero-elements/lightbulb.webp"
+                alt=""
+                className="absolute -top-12 -right-12 w-44 sm:w-56 lg:w-64 opacity-50 rotate-[10deg] mix-blend-multiply"
+              />
+              {/* Makers table - bottom right */}
+              <img
+                src="/hero-elements/makers-table.webp"
+                alt=""
+                className="absolute -bottom-4 -right-4 w-56 sm:w-72 lg:w-80 opacity-60"
+              />
+              {/* Stars - bottom left */}
+              <img
+                src="/hero-elements/stars.webp"
+                alt=""
+                className="absolute -bottom-8 -left-8 w-40 sm:w-52 lg:w-60 opacity-50 rotate-[5deg]"
+              />
+            </div>
 
             {/* Content */}
             <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 pt-24 pb-16">
@@ -356,68 +374,19 @@ export default function Home() {
                 </a>
               </div>
 
-              {/* Main headline */}
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-serif leading-[1.05] mb-6 text-slate-900 text-center max-w-5xl">
-                Find the right people for what you&apos;re building
-              </h1>
+              {/* Main headline + subtitle with frosted backdrop */}
+              <div className="rounded-3xl backdrop-blur-md bg-[#f5f3ef]/60 px-8 sm:px-12 py-10 max-w-5xl">
+                <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-serif leading-[1.05] mb-6 text-slate-900 text-center">
+                  We help makers in their{" "}
+                  <span className="text-[#e54b4b]">building journey</span>
+                </h1>
 
-              {/* Subtitle */}
-              <p className="text-lg sm:text-xl text-slate-600 mb-10 text-center max-w-2xl leading-relaxed">
-                MakersLounge uses AI to match you with builders who have the skills, experience, and ideas that complement yours.
-              </p>
+                <p className="text-lg sm:text-xl text-slate-600 mb-10 text-center max-w-2xl mx-auto leading-relaxed">
+                  MakersLounge uses AI to match you with builders who have the skills, experience, and ideas that complement yours.
+                </p>
 
-              {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button
-                  asChild
-                  variant="outline"
-                  size="lg"
-                  className="rounded-lg px-8 py-6 text-base font-medium border-slate-900 text-slate-900 bg-transparent hover:bg-slate-100 transition-colors duration-200"
-                >
-                  <Link href="/people">Browse People</Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  className="rounded-lg px-8 py-6 text-base font-medium bg-[#e54b4b] hover:bg-[#d43d3d] text-white shadow-lg shadow-[#e54b4b]/20 transition-all duration-200"
-                >
-                  <Link href="/matcher">Find Your Match</Link>
-                </Button>
               </div>
 
-              {/* Photo banner with overlapping avatars */}
-              <div className="relative mt-16 w-full max-w-3xl">
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                  <img
-                    src="/makerslounge-photos/lounge-networking.jpeg"
-                    alt="MakersLounge community networking"
-                    className="w-full h-[280px] sm:h-[340px] object-cover"
-                  />
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
-                  {/* Bottom text overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
-                    <p className="text-white/90 text-sm sm:text-base font-medium">
-                      Join a growing community of builders, designers, and makers in Toronto
-                    </p>
-                  </div>
-                </div>
-
-                {/* Floating social proof card */}
-                <div className="absolute -bottom-6 -right-4 sm:right-6 bg-white rounded-xl px-5 py-3 shadow-lg border border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <div className="flex -space-x-2">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white" />
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 border-2 border-white" />
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 border-2 border-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">600+ makers</p>
-                      <p className="text-xs text-slate-500">matched this month</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
             </div>
           </section>
