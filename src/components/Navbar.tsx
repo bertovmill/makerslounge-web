@@ -183,6 +183,7 @@ export default function Navbar() {
           <NavLink href="/matcher" icon={icons.matcher}>Matcher</NavLink>
           <NavLink href="/agents" icon={icons.agents}>Agents</NavLink>
           <NavLink href="/about" icon={icons.about}>About us</NavLink>
+          <NavLink href="/brand" icon={icons.docs}>Brand</NavLink>
           <NavLink href="/docs" icon={icons.docs}>Docs</NavLink>
           {user && (
             <>
@@ -281,7 +282,8 @@ export default function Navbar() {
               <NavLink href="/people" icon={icons.people}>People</NavLink>
               <NavLink href="/matcher" icon={icons.matcher}>Matcher</NavLink>
               <NavLink href="/agents" icon={icons.agents}>Agents</NavLink>
-                  <NavLink href="/about" icon={icons.about}>About us</NavLink>
+              <NavLink href="/about" icon={icons.about}>About us</NavLink>
+              <NavLink href="/brand" icon={icons.docs}>Brand</NavLink>
               <NavLink href="/docs" icon={icons.docs}>Docs</NavLink>
               {user && (
                 <>

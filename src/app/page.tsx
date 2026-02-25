@@ -268,6 +268,7 @@ export default function Home() {
               <Link href="/people" className="px-4 py-2 rounded-full text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-colors duration-200">People</Link>
               <Link href="/events" className="px-4 py-2 rounded-full text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-colors duration-200">Events</Link>
               <Link href="/about" className="px-4 py-2 rounded-full text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-colors duration-200">About</Link>
+              <Link href="/brand" className="px-4 py-2 rounded-full text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-colors duration-200">Brand</Link>
             </nav>
 
             {/* Auth buttons - floating pill */}

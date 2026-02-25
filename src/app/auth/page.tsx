@@ -58,7 +58,7 @@ function AuthContent() {
 
   const handleSignInWithGoogle = async () => {
     setLoading(true);
-    const redirectUrl = `${window.location.origin}/people`;
+    const redirectUrl = `${window.location.origin}/auth`;
 
     await supabase.auth.signInWithOAuth({
       provider: "google",
