@@ -1,10 +1,118 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import Logo, { LogoIcon } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
+/* ── Download utilities ── */
+
+function downloadSvgFromElement(svgElement: SVGSVGElement, filename: string) {
+  const serializer = new XMLSerializer();
+  const svgString = serializer.serializeToString(svgElement);
+  const blob = new Blob([svgString], { type: "image/svg+xml" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadPngFromSvg(svgElement: SVGSVGElement, filename: string, scale = 2) {
+  const serializer = new XMLSerializer();
+  const svgString = serializer.serializeToString(svgElement);
+  const viewBox = svgElement.getAttribute("viewBox")?.split(" ").map(Number) || [0, 0, 400, 400];
+  const width = viewBox[2] * scale;
+  const height = viewBox[3] * scale;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  const img = new Image();
+  const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  img.onload = () => {
+    ctx.drawImage(img, 0, 0, width, height);
+    URL.revokeObjectURL(url);
+    const pngUrl = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = pngUrl;
+    a.download = filename;
+    a.click();
+  };
+  img.src = url;
+}
+
+function DownloadButton({
+  svgRef,
+  filename,
+  label,
+  format = "both",
+}: {
+  svgRef: React.RefObject<SVGSVGElement | null>;
+  filename: string;
+  label?: string;
+  format?: "svg" | "png" | "both";
+}) {
+  const handleDownload = (type: "svg" | "png") => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    if (type === "svg") {
+      downloadSvgFromElement(svg, `${filename}.svg`);
+    } else {
+      downloadPngFromSvg(svg, `${filename}.png`);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      {label && <span className="text-xs text-muted-foreground mr-1">{label}</span>}
+      {(format === "svg" || format === "both") && (
+        <button
+          onClick={() => handleDownload("svg")}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          SVG
+        </button>
+      )}
+      {(format === "png" || format === "both") && (
+        <button
+          onClick={() => handleDownload("png")}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          PNG
+        </button>
+      )}
+    </div>
+  );
+}
+
+function StaticFileDownload({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      download
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors"
+    >
+      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+      </svg>
+      {label}
+    </a>
+  );
+}
 
 function CopyButton({ value, label }: { value: string; label?: string }) {
   const [copied, setCopied] = useState(false);
@@ -94,9 +202,9 @@ function Section({
 
 /* ── Inline SVG templates for social/business card previews ── */
 
-function SocialProfilePreview() {
+function SocialProfilePreview({ svgRef }: { svgRef?: React.RefObject<SVGSVGElement | null> }) {
   return (
-    <svg viewBox="0 0 400 400" className="w-full rounded-2xl shadow-sm border border-border/50">
+    <svg ref={svgRef} viewBox="0 0 400 400" className="w-full rounded-2xl shadow-sm border border-border/50">
       <rect width="400" height="400" rx="24" fill="#0f172a" />
       {/* Gradient wave background */}
       <defs>
@@ -125,9 +233,9 @@ function SocialProfilePreview() {
   );
 }
 
-function SocialBannerPreview() {
+function SocialBannerPreview({ svgRef }: { svgRef?: React.RefObject<SVGSVGElement | null> }) {
   return (
-    <svg viewBox="0 0 1200 630" className="w-full rounded-2xl shadow-sm border border-border/50">
+    <svg ref={svgRef} viewBox="0 0 1200 630" className="w-full rounded-2xl shadow-sm border border-border/50">
       <rect width="1200" height="630" rx="16" fill="#0f172a" />
       <defs>
         <linearGradient id="bannerWave" x1="0" y1="0.5" x2="1" y2="0.5">
@@ -157,10 +265,10 @@ function SocialBannerPreview() {
   );
 }
 
-function BusinessCardPreview({ side }: { side: "front" | "back" }) {
+function BusinessCardPreview({ side, svgRef }: { side: "front" | "back"; svgRef?: React.RefObject<SVGSVGElement | null> }) {
   if (side === "back") {
     return (
-      <svg viewBox="0 0 700 400" className="w-full rounded-xl shadow-sm border border-border/50">
+      <svg ref={svgRef} viewBox="0 0 700 400" className="w-full rounded-xl shadow-sm border border-border/50">
         <rect width="700" height="400" rx="12" fill="#0f172a" />
         <defs>
           <linearGradient id="cardBackWave" x1="0" y1="0.5" x2="1" y2="0.5">
@@ -188,7 +296,7 @@ function BusinessCardPreview({ side }: { side: "front" | "back" }) {
   }
 
   return (
-    <svg viewBox="0 0 700 400" className="w-full rounded-xl shadow-sm border border-border/50">
+    <svg ref={side === "front" ? svgRef : undefined} viewBox="0 0 700 400" className="w-full rounded-xl shadow-sm border border-border/50">
       <rect width="700" height="400" rx="12" fill="white" />
       {/* Top accent strip */}
       <defs>
@@ -232,6 +340,14 @@ const NAV_ITEMS = [
 ];
 
 export default function BrandPage() {
+  const logoIconRef = useRef<SVGSVGElement>(null);
+  const socialProfileRef = useRef<SVGSVGElement>(null);
+  const socialBannerRef = useRef<SVGSVGElement>(null);
+  const cardFrontRef = useRef<SVGSVGElement>(null);
+  const cardBackRef = useRef<SVGSVGElement>(null);
+  const slideRef = useRef<SVGSVGElement>(null);
+  const emailSigRef = useRef<SVGSVGElement>(null);
+
   return (
     <div className="min-h-screen">
       {/* Hero */}
@@ -389,8 +505,32 @@ export default function BrandPage() {
           description="The MakersLounge logo combines three overlapping rounded rectangles (coral, teal, peach) with the wordmark. Use these consistently across all touchpoints."
         >
           {/* Primary logo on light/dark */}
+          {/* Hidden downloadable logo SVG */}
+          <svg ref={logoIconRef} viewBox="0 0 100 100" width="0" height="0" style={{ position: "absolute", opacity: 0 }} xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="30" width="52" height="52" rx="14" fill="#EE7878" />
+            <rect x="7" y="32" width="48" height="48" rx="12" fill="url(#dlCoralFill)" />
+            <rect x="22" y="8" width="52" height="52" rx="14" fill="#64C0C4" />
+            <rect x="24" y="10" width="48" height="48" rx="12" fill="url(#dlTealFill)" />
+            <rect x="38" y="25" width="52" height="52" rx="14" fill="#EDB070" />
+            <rect x="40" y="27" width="48" height="48" rx="12" fill="url(#dlPeachFill)" />
+            <defs>
+              <linearGradient id="dlCoralFill" x1="0.5" y1="0" x2="0.5" y2="1">
+                <stop offset="0%" stopColor="#F28C8C" />
+                <stop offset="100%" stopColor="#EE7878" />
+              </linearGradient>
+              <linearGradient id="dlTealFill" x1="0.5" y1="0" x2="0.5" y2="1">
+                <stop offset="0%" stopColor="#74CCCE" />
+                <stop offset="100%" stopColor="#64C0C4" />
+              </linearGradient>
+              <linearGradient id="dlPeachFill" x1="0.5" y1="0" x2="0.5" y2="1">
+                <stop offset="0%" stopColor="#F2BC84" />
+                <stop offset="100%" stopColor="#EDB070" />
+              </linearGradient>
+            </defs>
+          </svg>
+
           <h3 className="text-xl font-semibold mb-4">Primary Logo</h3>
-          <div className="grid md:grid-cols-2 gap-8 mb-12">
+          <div className="grid md:grid-cols-2 gap-8 mb-4">
             <Card className="p-12 flex items-center justify-center bg-white border-dashed">
               <Logo size="lg" />
             </Card>
@@ -403,6 +543,13 @@ export default function BrandPage() {
                 </span>
               </div>
             </Card>
+          </div>
+          <div className="flex flex-wrap gap-3 mb-12">
+            <DownloadButton svgRef={logoIconRef} filename="makerslounge-logo-icon" label="Logo Icon:" />
+            <StaticFileDownload href="/icon-512.png" label="PNG 512px" />
+            <StaticFileDownload href="/icon-192.png" label="PNG 192px" />
+            <StaticFileDownload href="/apple-touch-icon.png" label="Apple Touch Icon" />
+            <StaticFileDownload href="/favicon.svg" label="Favicon SVG" />
           </div>
 
           {/* Logo variants */}
@@ -784,16 +931,22 @@ export default function BrandPage() {
           <h3 className="text-xl font-semibold mb-4">Social Media</h3>
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             <div>
-              <SocialProfilePreview />
-              <p className="text-sm text-muted-foreground mt-3">
-                <strong>Profile Image</strong> — 400x400px. Use for Slack, LinkedIn, Instagram, X.
-              </p>
+              <SocialProfilePreview svgRef={socialProfileRef} />
+              <div className="flex items-center justify-between mt-3">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Profile Image</strong> — 400x400px
+                </p>
+                <DownloadButton svgRef={socialProfileRef} filename="makerslounge-social-profile" />
+              </div>
             </div>
             <div>
-              <SocialBannerPreview />
-              <p className="text-sm text-muted-foreground mt-3">
-                <strong>Banner / OG Image</strong> — 1200x630px. Use for link previews, LinkedIn banner, event headers.
-              </p>
+              <SocialBannerPreview svgRef={socialBannerRef} />
+              <div className="flex items-center justify-between mt-3">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Banner / OG Image</strong> — 1200x630px
+                </p>
+                <DownloadButton svgRef={socialBannerRef} filename="makerslounge-social-banner" />
+              </div>
             </div>
           </div>
 
@@ -801,12 +954,18 @@ export default function BrandPage() {
           <h3 className="text-xl font-semibold mb-4">Business Card</h3>
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             <div>
-              <BusinessCardPreview side="front" />
-              <p className="text-sm text-muted-foreground mt-3"><strong>Front</strong> — Clean layout with wave accent strip and contact info.</p>
+              <BusinessCardPreview side="front" svgRef={cardFrontRef} />
+              <div className="flex items-center justify-between mt-3">
+                <p className="text-sm text-muted-foreground"><strong>Front</strong></p>
+                <DownloadButton svgRef={cardFrontRef} filename="makerslounge-card-front" />
+              </div>
             </div>
             <div>
-              <BusinessCardPreview side="back" />
-              <p className="text-sm text-muted-foreground mt-3"><strong>Back</strong> — Logo centered on dark background with wave accent.</p>
+              <BusinessCardPreview side="back" svgRef={cardBackRef} />
+              <div className="flex items-center justify-between mt-3">
+                <p className="text-sm text-muted-foreground"><strong>Back</strong></p>
+                <DownloadButton svgRef={cardBackRef} filename="makerslounge-card-back" />
+              </div>
             </div>
           </div>
 
@@ -841,7 +1000,7 @@ export default function BrandPage() {
           {/* Presentation slide */}
           <h3 className="text-xl font-semibold mb-4 mt-12">Presentation Title Slide</h3>
           <Card className="overflow-hidden">
-            <svg viewBox="0 0 1600 900" className="w-full">
+            <svg ref={slideRef} viewBox="0 0 1600 900" className="w-full">
               <rect width="1600" height="900" fill="#0f172a" />
               <defs>
                 <linearGradient id="slideWave" x1="0" y1="0" x2="1" y2="1">
@@ -869,6 +1028,10 @@ export default function BrandPage() {
               <text x="80" y="820" fontFamily="system-ui, sans-serif" fontSize="18" fill="#64748b">Your Name  |  February 2026</text>
             </svg>
           </Card>
+          <div className="flex items-center justify-between mt-3">
+            <p className="text-sm text-muted-foreground">16:9 presentation title slide template</p>
+            <DownloadButton svgRef={slideRef} filename="makerslounge-slide-title" />
+          </div>
         </Section>
 
         {/* ── Components ── */}
