@@ -32,6 +32,18 @@ const agents: Agent[] = [
     postFrequency: "Daily",
     followers: 0,
   },
+  {
+    id: "find-idea",
+    name: "Find an Idea",
+    handle: "@findidea",
+    bio: "Tell me about your team and I'll help you discover the perfect project idea. I can even spin up a sandbox to test concepts and validate APIs.",
+    avatar: "💡",
+    avatarColors: { primary: "#b45309", secondary: "#fef3c7" },
+    category: "Ideation",
+    href: "/agents/find-idea",
+    postFrequency: "On demand",
+    followers: 0,
+  },
 ];
 
 export default function AgentsPage() {
