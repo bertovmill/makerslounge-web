@@ -134,6 +134,85 @@ export default function Navbar() {
     );
   };
 
+  const NavDropdown = ({ label, icon, items }: { label: string; icon?: React.ReactNode; items: { href: string; label: string }[] }) => {
+    const isAnyActive = items.some((item) => pathname === item.href);
+    const [open, setOpen] = useState(false);
+
+    // Desktop sidebar: expandable section
+    if (!collapsed) {
+      return (
+        <div>
+          <button
+            onClick={() => setOpen(!open)}
+            className={cn(
+              "relative w-full px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-3",
+              "hover:bg-accent/50 hover:text-foreground",
+              isAnyActive ? "text-foreground" : "text-muted-foreground"
+            )}
+          >
+            {icon && <span className="w-5 h-5 flex-shrink-0">{icon}</span>}
+            <span className="flex-1 text-left">{label}</span>
+            <svg className={cn("w-4 h-4 transition-transform duration-200", open && "rotate-180")} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {open && (
+            <div className="ml-8 mt-1 space-y-0.5">
+              {items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenu}
+                  className={cn(
+                    "block px-3 py-1.5 rounded-md text-sm transition-colors duration-150",
+                    pathname === item.href
+                      ? "text-foreground bg-accent/50 font-medium"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Collapsed sidebar: hover flyout
+    return (
+      <div className="relative group">
+        <div
+          className={cn(
+            "px-2 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center",
+            "hover:bg-accent/50 hover:text-foreground cursor-pointer",
+            isAnyActive ? "bg-accent text-foreground" : "text-muted-foreground"
+          )}
+        >
+          {icon && <span className="w-5 h-5 flex-shrink-0">{icon}</span>}
+        </div>
+        <div className="absolute left-full top-0 ml-2 py-1.5 px-1 rounded-lg bg-popover border border-border shadow-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 min-w-[140px]">
+          <p className="px-2.5 py-1 text-xs font-semibold text-muted-foreground">{label}</p>
+          {items.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={closeMenu}
+              className={cn(
+                "block px-2.5 py-1.5 rounded-md text-sm transition-colors duration-150",
+                pathname === item.href
+                  ? "text-foreground bg-accent/50 font-medium"
+                  : "text-popover-foreground hover:bg-accent/30"
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       {/* Desktop Sidebar */}
@@ -182,7 +261,14 @@ export default function Navbar() {
           <NavLink href="/people" icon={icons.people}>People</NavLink>
           <NavLink href="/matcher" icon={icons.matcher}>Matcher</NavLink>
           <NavLink href="/agents" icon={icons.agents}>Agents</NavLink>
-          <NavLink href="/about" icon={icons.about}>About us</NavLink>
+          <NavDropdown
+            label="About"
+            icon={icons.about}
+            items={[
+              { href: "/about", label: "Background" },
+              { href: "/values", label: "Values" },
+            ]}
+          />
           <NavLink href="/brand" icon={icons.docs}>Brand</NavLink>
           <NavLink href="/docs" icon={icons.docs}>Docs</NavLink>
           {user && (
@@ -282,7 +368,14 @@ export default function Navbar() {
               <NavLink href="/people" icon={icons.people}>People</NavLink>
               <NavLink href="/matcher" icon={icons.matcher}>Matcher</NavLink>
               <NavLink href="/agents" icon={icons.agents}>Agents</NavLink>
-              <NavLink href="/about" icon={icons.about}>About us</NavLink>
+              <NavDropdown
+                label="About"
+                icon={icons.about}
+                items={[
+                  { href: "/about", label: "Background" },
+                  { href: "/values", label: "Values" },
+                ]}
+              />
               <NavLink href="/brand" icon={icons.docs}>Brand</NavLink>
               <NavLink href="/docs" icon={icons.docs}>Docs</NavLink>
               {user && (

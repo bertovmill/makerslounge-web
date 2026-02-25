@@ -267,7 +267,24 @@ export default function Home() {
             <nav className="hidden md:flex items-center gap-1 px-2 py-2 rounded-full bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-sm">
               <Link href="/people" className="px-4 py-2 rounded-full text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-colors duration-200">People</Link>
               <Link href="/events" className="px-4 py-2 rounded-full text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-colors duration-200">Events</Link>
-              <Link href="/about" className="px-4 py-2 rounded-full text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-colors duration-200">About</Link>
+              <div className="relative group">
+                <button className="px-4 py-2 rounded-full text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-colors duration-200 flex items-center gap-1">
+                  About
+                  <svg className="w-3.5 h-3.5 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
+                  <div className="bg-white/95 backdrop-blur-md border border-slate-200/60 shadow-lg rounded-xl py-1.5 px-1.5 min-w-[150px]">
+                    <Link href="/about" className="block px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-colors duration-150">
+                      Background
+                    </Link>
+                    <Link href="/values" className="block px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-colors duration-150">
+                      Values
+                    </Link>
+                  </div>
+                </div>
+              </div>
               <Link href="/brand" className="px-4 py-2 rounded-full text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-colors duration-200">Brand</Link>
             </nav>
 
