@@ -409,6 +409,75 @@ export default function Home() {
             </div>
           </section>
 
+          {/* Mission Section */}
+          <section className="relative py-28 md:py-36 overflow-hidden">
+            {/* Subtle warm gradient background */}
+            <div className="absolute inset-0 bg-gradient-to-b from-[#f5f3ef] via-white to-white" />
+            <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+
+            <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+              {/* Mission label */}
+              <div className="flex justify-center mb-8">
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#e54b4b]/10 text-[#e54b4b] text-sm font-semibold tracking-wide uppercase">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  </svg>
+                  Our Mission
+                </span>
+              </div>
+
+              {/* Core mission statement */}
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-serif text-center leading-[1.15] mb-8 text-slate-900">
+                No maker should ever build{" "}
+                <span className="text-[#e54b4b] italic">alone</span>
+              </h2>
+
+              <p className="text-xl sm:text-2xl text-slate-600 text-center leading-relaxed max-w-3xl mx-auto mb-16">
+                We believe every maker deserves a support network. The resources to learn, the connections to grow, and a platform to share what they&apos;re building with the world — so no one is ever held back by building in silence.
+              </p>
+
+              {/* Three mission pillars */}
+              <div className="grid md:grid-cols-3 gap-6 md:gap-8 mb-16">
+                <div className="text-center group">
+                  <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25 group-hover:scale-110 transition-transform duration-300">
+                    <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">Resources to learn</h3>
+                  <p className="text-slate-500 leading-relaxed">Knowledge, tools, and guidance from makers who&apos;ve walked the path before you.</p>
+                </div>
+
+                <div className="text-center group">
+                  <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center text-white shadow-lg shadow-teal-500/25 group-hover:scale-110 transition-transform duration-300">
+                    <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">Connections to grow</h3>
+                  <p className="text-slate-500 leading-relaxed">Find collaborators, mentors, and friends who push you forward and have your back.</p>
+                </div>
+
+                <div className="text-center group">
+                  <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/25 group-hover:scale-110 transition-transform duration-300">
+                    <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">A platform to share</h3>
+                  <p className="text-slate-500 leading-relaxed">Show the world what you&apos;re building. Your work deserves to be seen, celebrated, and supported.</p>
+                </div>
+              </div>
+
+              {/* Emotional closing line */}
+              <div className="text-center">
+                <p className="text-lg sm:text-xl text-slate-500 italic font-serif max-w-2xl mx-auto leading-relaxed">
+                  &ldquo;Building something is hard enough. You shouldn&apos;t have to do it without a community behind you.&rdquo;
+                </p>
+              </div>
+            </div>
+          </section>
+
           {/* What you can do section */}
           <section className="relative py-24 bg-background">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
