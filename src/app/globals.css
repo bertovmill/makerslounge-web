@@ -43,7 +43,7 @@
   --popover-foreground: #1a1a1a;
 
   /* Warm ochre accent — distinctive, earthy, not "AI" */
-  --primary: #c2703e;
+  --primary: #d4764e;
   --primary-foreground: #ffffff;
 
   --secondary: #f3f1ee;
@@ -58,7 +58,7 @@
 
   --border: #e8e5e0;
   --input: #e8e5e0;
-  --ring: #c2703e;
+  --ring: #d4764e;
 }
 
 @layer base {

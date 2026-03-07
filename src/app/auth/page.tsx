@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
 
 function AuthContent() {
   const router = useRouter();
@@ -39,15 +40,60 @@ function AuthContent() {
       if (session?.user) checkOnboardingStatus(session.user.id);
     });
 
+    // Listen for deep link callback from native OAuth
+    if (Capacitor.isNativePlatform()) {
+      import("@capacitor/app").then(({ App }) => {
+        App.addListener("appUrlOpen", async ({ url }) => {
+          if (url.includes("auth-callback")) {
+            // Extract tokens from the URL hash fragment
+            const hashPart = url.split("#")[1];
+            if (hashPart) {
+              const params = new URLSearchParams(hashPart);
+              const accessToken = params.get("access_token");
+              const refreshToken = params.get("refresh_token");
+              if (accessToken && refreshToken) {
+                await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+              }
+            }
+            // Close the in-app browser
+            import("@capacitor/browser").then(({ Browser }) => Browser.close());
+          }
+        });
+      });
+    }
+
     return () => subscription.unsubscribe();
   }, [router]);
 
   const handleSignInWithGoogle = async () => {
     setLoading(true);
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth` },
-    });
+
+    if (Capacitor.isNativePlatform()) {
+      // Native: open in-app browser (SFSafariViewController — bottom sheet)
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: "com.makerslounge.app://auth-callback",
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) {
+        setMessage(error.message);
+        setLoading(false);
+        return;
+      }
+      if (data?.url) {
+        const { Browser } = await import("@capacitor/browser");
+        await Browser.open({ url: data.url, presentationStyle: "popover" });
+      }
+      setLoading(false);
+    } else {
+      // Web: normal redirect
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/auth` },
+      });
+    }
   };
 
   const handleSignInWithEmail = async (e: React.FormEvent) => {
@@ -72,7 +118,7 @@ function AuthContent() {
   };
 
   return (
-    <div className="min-h-svh flex items-center justify-center px-4 py-12">
+    <div className="min-h-svh flex items-center justify-center px-4 py-12 pt-[env(safe-area-inset-top,48px)]">
       <div className="w-full max-w-sm">
         {/* Header */}
         <div className="text-center mb-8">

@@ -12,6 +12,7 @@
     "@anthropic-ai/claude-agent-sdk": "^0.2.5",
     "@anthropic-ai/sdk": "^0.71.2",
     "@capacitor/app": "^8.0.1",
+    "@capacitor/browser": "^8.0.2",
     "@capacitor/cli": "^8.2.0",
     "@capacitor/core": "^8.2.0",
     "@capacitor/ios": "^8.2.0",

@@ -38,7 +38,7 @@ export default function Home() {
   return (
     <div className="min-h-svh flex flex-col">
       {/* Nav */}
-      <header className="flex items-center justify-between px-6 py-4">
+      <header className="flex items-center justify-between px-6 py-4 pt-[env(safe-area-inset-top,16px)]">
         <span className="text-lg font-semibold tracking-tight">MakersLounge</span>
         <div className="flex items-center gap-3">
           <Link

@@ -9,7 +9,7 @@ const publicDir = join(root, 'public');
 
 // The icon as an SVG string (no rounded corners - iOS adds them)
 const iconSvg = `<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1024" height="1024" fill="#c2703e"/>
+  <rect width="1024" height="1024" fill="#d4764e"/>
   <path d="M256 760V264l160 256 160-256v496" stroke="#faf9f7" stroke-width="72" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
   <path d="M672 760V264" stroke="#faf9f7" stroke-width="72" stroke-linecap="round"/>
   <path d="M672 760h96" stroke="#faf9f7" stroke-width="72" stroke-linecap="round"/>
@@ -17,7 +17,7 @@ const iconSvg = `<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="n
 
 // Favicon SVG (with rounded corners for web)
 const faviconSvg = `<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" rx="96" fill="#c2703e"/>
+  <rect width="512" height="512" rx="96" fill="#d4764e"/>
   <path d="M128 380V132l80 128 80-128v248" stroke="#faf9f7" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
   <path d="M336 380V132" stroke="#faf9f7" stroke-width="36" stroke-linecap="round"/>
   <path d="M336 380h48" stroke="#faf9f7" stroke-width="36" stroke-linecap="round"/>
