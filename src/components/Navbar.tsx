@@ -64,8 +64,8 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Mobile: Top bar with logo */}
-      <header className="md:hidden flex items-center justify-between h-11 px-4 pt-[env(safe-area-inset-top)] border-b border-border/50 bg-background/80 backdrop-blur-lg sticky top-0 z-50">
+      {/* Mobile: Fixed top bar with logo */}
+      <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-[calc(2.75rem+env(safe-area-inset-top))] px-4 pt-[env(safe-area-inset-top)] border-b border-border/50 bg-background/80 backdrop-blur-lg">
         <Logo />
         {user ? (
           <Link
@@ -83,6 +83,8 @@ export default function Navbar() {
           </Link>
         )}
       </header>
+      {/* Spacer for fixed header */}
+      <div className="md:hidden h-[calc(2.75rem+env(safe-area-inset-top))]" />
 
       {/* Mobile: Bottom tab bar (iOS style) */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t border-border/50 safe-area-bottom">
