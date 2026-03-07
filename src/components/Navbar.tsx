@@ -5,8 +5,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Logo from "./Logo";
 import { cn } from "@/lib/utils";
-import { Users, Sparkles, Calendar, User, Menu, X, Settings } from "lucide-react";
-import { useState } from "react";
+import { Users, Sparkles, Calendar, User, Settings } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/people", label: "People", icon: Users },
@@ -18,7 +17,6 @@ const NAV_ITEMS = [
 export default function Navbar() {
   const { user } = useAuth();
   const pathname = usePathname();
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const isLandingOrAuth = pathname === "/" || pathname === "/auth";
   if (isLandingOrAuth && !user) return null;
@@ -66,66 +64,25 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Mobile: Top bar with logo + hamburger */}
+      {/* Mobile: Top bar with logo */}
       <header className="md:hidden flex items-center justify-between h-11 px-4 pt-[env(safe-area-inset-top)] border-b border-border/50 bg-background/80 backdrop-blur-lg sticky top-0 z-50">
         <Logo />
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="p-2 text-muted-foreground hover:text-foreground"
-          aria-label="Toggle menu"
-        >
-          {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        {user ? (
+          <Link
+            href="/settings"
+            className="p-2 text-muted-foreground active:opacity-60"
+          >
+            <Settings className="w-5 h-5" />
+          </Link>
+        ) : (
+          <Link
+            href="/auth"
+            className="text-sm font-medium px-3 py-1 rounded-full bg-primary text-primary-foreground active:opacity-80"
+          >
+            Sign in
+          </Link>
+        )}
       </header>
-
-      {/* Mobile: Dropdown menu */}
-      {menuOpen && (
-        <div className="md:hidden fixed inset-0 top-[calc(2.75rem+env(safe-area-inset-top))] z-40 bg-background">
-          <nav className="flex flex-col px-4 pt-2 gap-0.5">
-            {NAV_ITEMS.map(({ href, label, icon: Icon, authRequired }) => (
-              <Link
-                key={href}
-                href={authRequired && !user ? "/auth" : href}
-                onClick={() => setMenuOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-3.5 rounded-xl text-[15px] active:bg-secondary transition-colors",
-                  pathname === href
-                    ? "text-primary font-medium"
-                    : "text-foreground"
-                )}
-              >
-                <Icon className="w-5 h-5" />
-                {label}
-              </Link>
-            ))}
-            {user && (
-              <>
-                <div className="my-1 mx-3 border-t border-border/50" />
-                <Link
-                  href="/settings"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-3.5 rounded-xl text-[15px] text-foreground active:bg-secondary transition-colors"
-                >
-                  <Settings className="w-5 h-5" />
-                  Settings
-                </Link>
-              </>
-            )}
-            {!user && (
-              <>
-                <div className="my-1 mx-3 border-t border-border/50" />
-                <Link
-                  href="/auth"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center px-3 py-3.5 rounded-xl text-[15px] font-medium bg-primary text-primary-foreground active:opacity-80"
-                >
-                  Sign in
-                </Link>
-              </>
-            )}
-          </nav>
-        </div>
-      )}
 
       {/* Mobile: Bottom tab bar (iOS style) */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t border-border/50 safe-area-bottom">
