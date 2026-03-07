@@ -87,7 +87,7 @@ export default function Navbar() {
       <div className="md:hidden h-[calc(2.75rem+env(safe-area-inset-top))]" />
 
       {/* Mobile: Bottom tab bar (iOS style) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t border-border/50 safe-area-bottom">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t border-border/50 pb-[env(safe-area-inset-bottom,0px)]">
         <div className="flex items-center justify-around h-[50px]">
           {NAV_ITEMS.map(({ href, label, icon: Icon, authRequired }) => (
             <Link
