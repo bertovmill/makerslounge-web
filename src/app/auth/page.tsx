@@ -118,7 +118,7 @@ function AuthContent() {
   };
 
   return (
-    <div className="min-h-svh flex items-center justify-center px-4 py-12 pt-[env(safe-area-inset-top,48px)]">
+    <div className="h-svh flex items-center justify-center px-4 overflow-hidden pt-[env(safe-area-inset-top,48px)]">
       <div className="w-full max-w-sm">
         {/* Back button */}
         <button
