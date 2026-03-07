@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 
 function AuthContent() {
@@ -120,6 +120,15 @@ function AuthContent() {
   return (
     <div className="min-h-svh flex items-center justify-center px-4 py-12 pt-[env(safe-area-inset-top,48px)]">
       <div className="w-full max-w-sm">
+        {/* Back button */}
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </button>
+
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/" className="text-lg font-semibold tracking-tight inline-block mb-6">

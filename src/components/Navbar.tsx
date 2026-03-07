@@ -18,8 +18,9 @@ export default function Navbar() {
   const { user } = useAuth();
   const pathname = usePathname();
 
-  const isLandingOrAuth = pathname === "/" || pathname === "/auth";
-  if (isLandingOrAuth && !user) return null;
+  const isLanding = pathname === "/";
+  if (isLanding && !user) return null;
+  if (pathname === "/auth") return null;
 
   return (
     <>
