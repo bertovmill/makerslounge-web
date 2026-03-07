@@ -4,43 +4,25 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
-import { ThemedProfile } from "@/components/ThemedProfile";
-import { EditablePublicProfile } from "@/components/EditablePublicProfile";
-import { ThemePicker } from "@/components/ThemePicker";
-import AvatarPicker from "@/components/AvatarPicker";
 import SkillsInput from "@/components/SkillsInput";
-import ValuePortfolioSection from "@/components/ValuePortfolioSection";
-import { ValuePortfolioItem } from "@/components/ValuePortfolioModal";
-import { ThemeConfig, getDefaultThemeConfig } from "@/lib/themes";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { ExternalLink, Upload, Check } from "lucide-react";
 
 interface Profile {
   id: string;
   username: string | null;
   name: string | null;
+  first_name: string | null;
+  last_name: string | null;
   photo_url: string | null;
-  avatar_style: string | null;
   bio: string | null;
   skills: string[] | null;
+  looking_for_skills: string[] | null;
+  currently_building: string | null;
   linkedin: string | null;
   twitter: string | null;
+  instagram: string | null;
   website: string | null;
-  theme_config: ThemeConfig | null;
-  cover_image: string | null;
-  whiteboard_data: any | null;
-  show_whiteboard: boolean | null;
-  currently_building: string | null;
-  looking_for_skills: string[] | null;
-  onboarding_completed: boolean | null;
-}
-
-interface Project {
-  id: string;
-  user_id: string;
-  title: string;
-  description: string | null;
-  media_urls: string[] | null;
 }
 
 export default function ProfilePage() {
@@ -49,430 +31,306 @@ export default function ProfilePage() {
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const [profile, setProfile] = useState<Profile>({
     id: "",
     username: "",
     name: "",
+    first_name: "",
+    last_name: "",
     photo_url: null,
-    avatar_style: null,
     bio: "",
     skills: [],
+    looking_for_skills: [],
+    currently_building: null,
     linkedin: "",
     twitter: "",
+    instagram: "",
     website: "",
-    theme_config: getDefaultThemeConfig(),
-    cover_image: null,
-    whiteboard_data: null,
-    show_whiteboard: false,
-    currently_building: null,
-    looking_for_skills: [],
-    onboarding_completed: false,
-  });
-
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [valuePortfolio, setValuePortfolio] = useState<ValuePortfolioItem[]>([]);
-  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
-  const [connectionCounts, setConnectionCounts] = useState({
-    connections: 0,
-    pendingReceived: 0,
-    pendingSent: 0,
   });
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.push("/");
-        return;
-      }
-
+      if (!user) { router.push("/"); return; }
       setUser(user);
 
-      // Fetch or create profile
       const { data: existingProfile } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, username, name, first_name, last_name, photo_url, bio, skills, looking_for_skills, currently_building, linkedin, twitter, instagram, website")
         .eq("id", user.id)
         .single();
 
       if (existingProfile) {
         setProfile(existingProfile);
       } else {
-        // Create new profile
         const newProfile = {
           id: user.id,
           username: null,
           name: user.user_metadata?.full_name || user.email?.split("@")[0] || "",
+          first_name: null,
+          last_name: null,
           photo_url: user.user_metadata?.avatar_url || null,
-          avatar_style: null,
           bio: "",
           skills: [],
+          looking_for_skills: [],
+          currently_building: null,
           linkedin: "",
           twitter: "",
+          instagram: "",
           website: "",
-          theme_config: getDefaultThemeConfig(),
-          cover_image: null,
-          whiteboard_data: null,
-          show_whiteboard: false,
-          currently_building: null,
-          looking_for_skills: [],
-          onboarding_completed: false,
         };
-
         await supabase.from("profiles").insert(newProfile);
         setProfile(newProfile);
       }
 
-      // Fetch projects
-      const { data: projectsData } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      setProjects(projectsData || []);
-
-      // Fetch value portfolio items
-      const { data: portfolioData } = await supabase
-        .from("value_portfolio")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      setValuePortfolio(portfolioData || []);
-
-      // Fetch connection counts
-      const { data: allConnections } = await supabase
-        .from("connections")
-        .select("id, requester_id, recipient_id, status")
-        .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`);
-
-      if (allConnections) {
-        setConnectionCounts({
-          connections: allConnections.filter((c) => c.status === "accepted").length,
-          pendingReceived: allConnections.filter(
-            (c) => c.status === "pending" && c.recipient_id === user.id
-          ).length,
-          pendingSent: allConnections.filter(
-            (c) => c.status === "pending" && c.requester_id === user.id
-          ).length,
-        });
-      }
-
       setLoading(false);
     };
-
     init();
   }, [router]);
 
-  const handleUpdateProfile = async (updates: Partial<Profile>) => {
+  const handleSave = async () => {
     if (!user) return;
+    setSaving(true);
 
     try {
       const { error } = await supabase
         .from("profiles")
         .update({
-          ...updates,
+          username: profile.username,
+          name: profile.name,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          bio: profile.bio,
+          skills: profile.skills,
+          looking_for_skills: profile.looking_for_skills,
+          currently_building: profile.currently_building,
+          linkedin: profile.linkedin,
+          twitter: profile.twitter,
+          instagram: profile.instagram,
+          website: profile.website,
           updated_at: new Date().toISOString(),
         })
         .eq("id", user.id);
 
-      if (error) {
-        console.error("Supabase error:", {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-        });
-        throw error;
-      }
-
-      setProfile({ ...profile, ...updates });
-      setMessage("Saved!");
-      setTimeout(() => setMessage(""), 2000);
-    } catch (error: any) {
-      console.error("Update error:", {
-        message: error?.message,
-        details: error?.details,
-        hint: error?.hint,
-        code: error?.code,
-        full: error,
-      });
-      const errorMessage = error?.message || error?.hint || error?.details || "Failed to save";
-      setMessage(errorMessage);
-      setTimeout(() => setMessage(""), 5000);
-    }
-  };
-
-  const handlePhotoUploadFromFile = async (file: File) => {
-    if (!file || !user) return;
-
-    setUploading(true);
-
-    try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `profiles/${user.id}/avatar.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("media")
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("media")
-        .getPublicUrl(filePath);
-
-      await handleUpdateProfile({ photo_url: publicUrl, avatar_style: null });
+      if (error) throw error;
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
     } catch (error) {
-      console.error("Upload error:", error);
-      setMessage("Failed to upload photo");
+      console.error("Save error:", error);
     } finally {
-      setUploading(false);
+      setSaving(false);
     }
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      await handlePhotoUploadFromFile(file);
+    if (!file || !user) return;
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const filePath = `profiles/${user.id}/avatar.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("media")
+        .upload(filePath, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage.from("media").getPublicUrl(filePath);
+      setProfile({ ...profile, photo_url: publicUrl });
+
+      await supabase.from("profiles").update({ photo_url: publicUrl }).eq("id", user.id);
+    } catch (error) {
+      console.error("Upload error:", error);
+    } finally {
+      setUploading(false);
     }
-  };
-
-  const handleAvatarSelect = async (style: string) => {
-    await handleUpdateProfile({ avatar_style: style, photo_url: null });
-    setShowAvatarPicker(false);
-  };
-
-  const handleThemeChange = async (themeId: string) => {
-    const newThemeConfig = { ...profile.theme_config, theme_id: themeId };
-    await handleUpdateProfile({ theme_config: newThemeConfig });
-  };
-
-  const handleSaveAdvanced = async () => {
-    await handleUpdateProfile({
-      username: profile.username,
-      skills: profile.skills,
-      looking_for_skills: profile.looking_for_skills,
-      currently_building: profile.currently_building,
-      linkedin: profile.linkedin,
-      twitter: profile.twitter,
-      website: profile.website,
-    });
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="min-h-svh flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
     );
   }
 
   const profileUrl = profile.username ? `/p/${profile.username}` : `/profile/${user?.id}`;
+  const initials = profile.name
+    ?.split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "?";
 
   return (
-    <div>
-      {/* Sticky Header with View Public Profile Link */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-semibold">Edit Profile</h1>
-          <div className="flex items-center gap-3">
-            {message && (
-              <span className="text-sm text-green-600">{message}</span>
-            )}
-            <Button asChild variant="outline" size="sm" className="rounded-full">
-              <Link href={profileUrl} target="_blank" rel="noopener noreferrer">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                View Public Profile
-              </Link>
-            </Button>
-          </div>
-        </div>
+    <div className="max-w-lg mx-auto px-4 py-6 md:py-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 md:mb-8">
+        <h1 className="text-[28px] md:text-2xl font-bold md:font-semibold tracking-tight">Edit profile</h1>
+        <Link
+          href={profileUrl}
+          target="_blank"
+          className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5"
+        >
+          View public profile
+          <ExternalLink className="w-3.5 h-3.5" />
+        </Link>
       </div>
 
-      {/* Themed Profile with Inline Editing */}
-      <ThemedProfile themeConfig={profile.theme_config}>
-        <EditablePublicProfile
-          profile={profile}
-          projects={projects}
-          valuePortfolio={valuePortfolio}
-          connectionCounts={connectionCounts}
-          onUpdateProfile={handleUpdateProfile}
-          onUpdateProjects={setProjects}
-          onUpdateValuePortfolio={setValuePortfolio}
-          onPhotoUpload={handlePhotoUploadFromFile}
-          onAvatarSelect={handleAvatarSelect}
-        />
-
-        {/* Advanced Settings Section */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-          <div className="bg-card border border-border rounded-2xl p-6 mt-8">
-            <button
-              onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
-              className="flex items-center justify-between w-full text-left"
-            >
-              <h2 className="text-xl font-semibold">Advanced Settings</h2>
-              <svg
-                className={`w-5 h-5 transition-transform ${
-                  showAdvancedSettings ? 'rotate-180' : ''
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {showAdvancedSettings && (
-              <div className="mt-6 space-y-6">
-                {/* Theme Picker */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Theme & Style</h3>
-                  <ThemePicker
-                    currentThemeId={profile.theme_config?.theme_id || "default"}
-                    onSelectTheme={handleThemeChange}
-                  />
-                </div>
-
-                <div className="border-t border-border my-6"></div>
-
-                {/* Username */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">Username</label>
-                  <div className="flex items-center">
-                    <span className="text-sm text-muted-foreground mr-2">
-                      makerslounge.com/p/
-                    </span>
-                    <input
-                      type="text"
-                      value={profile.username || ""}
-                      onChange={(e) =>
-                        setProfile({
-                          ...profile,
-                          username: e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, ""),
-                        })
-                      }
-                      className="flex-1 px-4 py-2 border border-border rounded-lg"
-                      placeholder="yourname"
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Only lowercase letters, numbers, dashes, and underscores
-                  </p>
-                </div>
-
-                {/* Currently Building */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">Currently Building</label>
-                  <textarea
-                    value={profile.currently_building || ""}
-                    onChange={(e) => setProfile({ ...profile, currently_building: e.target.value })}
-                    className="w-full px-4 py-3 border border-border rounded-lg resize-none"
-                    placeholder="What are you currently working on?"
-                    rows={3}
-                  />
-                </div>
-
-                {/* Skills (Superpowers) */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">Your Superpowers</label>
-                  <SkillsInput
-                    skills={profile.skills || []}
-                    onChange={(skills) => setProfile({ ...profile, skills })}
-                    maxSkills={10}
-                  />
-                </div>
-
-                {/* Looking For Skills */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">Skills You&apos;re Looking For</label>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    What skills are you looking for in collaborators?
-                  </p>
-                  <SkillsInput
-                    skills={profile.looking_for_skills || []}
-                    onChange={(looking_for_skills) => setProfile({ ...profile, looking_for_skills })}
-                    maxSkills={10}
-                  />
-                </div>
-
-                {/* Social Links */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">LinkedIn</label>
-                    <input
-                      type="url"
-                      value={profile.linkedin || ""}
-                      onChange={(e) => setProfile({ ...profile, linkedin: e.target.value })}
-                      className="w-full px-4 py-2 border border-border rounded-lg"
-                      placeholder="https://linkedin.com/in/yourname"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Twitter</label>
-                    <input
-                      type="text"
-                      value={profile.twitter || ""}
-                      onChange={(e) => setProfile({ ...profile, twitter: e.target.value })}
-                      className="w-full px-4 py-2 border border-border rounded-lg"
-                      placeholder="@yourhandle or https://twitter.com/yourhandle"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Website</label>
-                    <input
-                      type="url"
-                      value={profile.website || ""}
-                      onChange={(e) => setProfile({ ...profile, website: e.target.value })}
-                      className="w-full px-4 py-2 border border-border rounded-lg"
-                      placeholder="https://yourwebsite.com"
-                    />
-                  </div>
-                </div>
-
-                <Button onClick={handleSaveAdvanced} className="rounded-full w-full">
-                  Save Advanced Settings
-                </Button>
-              </div>
+      <div className="space-y-6">
+        {/* Avatar */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="relative w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-muted-foreground font-semibold overflow-hidden group"
+          >
+            {profile.photo_url ? (
+              <img src={profile.photo_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              initials
             )}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <Upload className="w-4 h-4 text-white" />
+            </div>
+          </button>
+          <div>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="text-sm font-medium hover:underline"
+            >
+              {uploading ? "Uploading..." : "Change photo"}
+            </button>
+            <p className="text-xs text-muted-foreground">JPG, PNG. Max 5MB.</p>
           </div>
         </div>
-      </ThemedProfile>
 
-      {/* Avatar Picker Modal */}
-      {showAvatarPicker && (
-        <AvatarPicker
-          selectedAvatar={profile.avatar_style}
-          name={profile.name || ""}
-          onSelect={(style) => {
-            handleAvatarSelect(style);
-          }}
-          onClose={() => setShowAvatarPicker(false)}
-        />
-      )}
+        {/* Name */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-medium mb-1.5">First name</label>
+            <input
+              type="text"
+              value={profile.first_name || ""}
+              onChange={(e) => setProfile({ ...profile, first_name: e.target.value, name: `${e.target.value} ${profile.last_name || ""}`.trim() })}
+              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Last name</label>
+            <input
+              type="text"
+              value={profile.last_name || ""}
+              onChange={(e) => setProfile({ ...profile, last_name: e.target.value, name: `${profile.first_name || ""} ${e.target.value}`.trim() })}
+              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+            />
+          </div>
+        </div>
 
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handlePhotoUpload}
-        className="hidden"
-      />
+        {/* Username */}
+        <div>
+          <label className="block text-sm font-medium mb-1.5">Username</label>
+          <div className="flex items-center h-10 rounded-md border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
+            <span className="text-xs text-muted-foreground pl-3 pr-1">makerslounge.com/p/</span>
+            <input
+              type="text"
+              value={profile.username || ""}
+              onChange={(e) => setProfile({ ...profile, username: e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, "") })}
+              placeholder="yourname"
+              className="flex-1 h-full pr-3 text-sm outline-none bg-transparent"
+            />
+          </div>
+        </div>
+
+        {/* Bio */}
+        <div>
+          <label className="block text-sm font-medium mb-1.5">Bio</label>
+          <textarea
+            value={profile.bio || ""}
+            onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+            placeholder="Tell people about yourself..."
+            rows={3}
+            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm outline-none resize-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+          />
+        </div>
+
+        {/* Currently building */}
+        <div>
+          <label className="block text-sm font-medium mb-1.5">Currently building</label>
+          <textarea
+            value={profile.currently_building || ""}
+            onChange={(e) => setProfile({ ...profile, currently_building: e.target.value })}
+            placeholder="What are you working on?"
+            rows={2}
+            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm outline-none resize-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+          />
+        </div>
+
+        {/* Skills */}
+        <div>
+          <label className="block text-sm font-medium mb-1.5">Your skills</label>
+          <SkillsInput skills={profile.skills || []} onChange={(skills) => setProfile({ ...profile, skills })} maxSkills={10} />
+        </div>
+
+        {/* Looking for */}
+        <div>
+          <label className="block text-sm font-medium mb-1.5">Looking for</label>
+          <SkillsInput
+            skills={profile.looking_for_skills || []}
+            onChange={(looking_for_skills) => setProfile({ ...profile, looking_for_skills })}
+            maxSkills={10}
+            mode="looking_for"
+          />
+        </div>
+
+        {/* Social links */}
+        <div>
+          <label className="block text-sm font-medium mb-3">Social links</label>
+          <div className="space-y-2">
+            {[
+              { label: "LinkedIn", key: "linkedin" as const, placeholder: "https://linkedin.com/in/..." },
+              { label: "X (Twitter)", key: "twitter" as const, placeholder: "https://x.com/..." },
+              { label: "Instagram", key: "instagram" as const, placeholder: "https://instagram.com/..." },
+              { label: "Website", key: "website" as const, placeholder: "https://yoursite.com" },
+            ].map((field) => (
+              <input
+                key={field.key}
+                type="text"
+                value={profile[field.key] || ""}
+                onChange={(e) => setProfile({ ...profile, [field.key]: e.target.value })}
+                placeholder={field.placeholder}
+                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Save */}
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full h-11 md:h-10 rounded-xl md:rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {saved ? (
+            <>
+              <Check className="w-4 h-4" />
+              Saved
+            </>
+          ) : saving ? (
+            "Saving..."
+          ) : (
+            "Save changes"
+          )}
+        </button>
+      </div>
+
+      <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
     </div>
   );
 }
-

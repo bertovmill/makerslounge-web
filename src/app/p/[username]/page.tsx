@@ -4,111 +4,55 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { ThemedProfile } from "@/components/ThemedProfile";
-import { PublicProfileLayout } from "@/components/PublicProfileLayout";
-import { ValuePortfolioItem } from "@/components/ValuePortfolioModal";
-import { Button } from "@/components/ui/button";
-import { ThemeConfig } from "@/lib/themes";
-
-interface Profile {
-  id: string;
-  username: string | null;
-  name: string | null;
-  photo_url: string | null;
-  avatar_style: string | null;
-  bio: string | null;
-  skills: string[] | null;
-  linkedin: string | null;
-  twitter: string | null;
-  website: string | null;
-  cover_image: string | null;
-  theme_config: ThemeConfig | null;
-  whiteboard_data: any | null;
-  show_whiteboard: boolean | null;
-}
-
-interface Project {
-  id: string;
-  title: string;
-  description: string | null;
-  media_urls: string[] | null;
-}
+import ProfileView from "@/components/ProfileView";
 
 export default function UsernameProfilePage() {
   const params = useParams();
   const username = params.username as string;
 
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [valuePortfolio, setValuePortfolio] = useState<ValuePortfolioItem[]>([]);
+  const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
-      // Fetch profile by username
-      const { data: profileData, error: profileError } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, name, photo_url, bio, skills, looking_for_skills, currently_building, linkedin, twitter, instagram, website")
         .eq("username", username)
         .single();
 
-      if (profileError || !profileData) {
+      if (error || !data) {
         setNotFound(true);
-        setLoading(false);
-        return;
+      } else {
+        setProfile(data);
       }
-
-      setProfile(profileData);
-
-      // Fetch projects
-      const { data: projectsData } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("user_id", profileData.id)
-        .order("created_at", { ascending: false });
-
-      setProjects(projectsData || []);
-
-      // Fetch value portfolio
-      const { data: portfolioData } = await supabase
-        .from("value_portfolio")
-        .select("*")
-        .eq("user_id", profileData.id)
-        .order("created_at", { ascending: false });
-
-      setValuePortfolio(portfolioData || []);
       setLoading(false);
     };
-
     fetchProfile();
   }, [username]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="min-h-svh flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
     );
   }
 
   if (notFound || !profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-svh flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Profile Not Found</h1>
-          <p className="text-muted-foreground mb-4">This profile doesn&apos;t exist or has been removed.</p>
-          <Button asChild variant="outline">
-            <Link href="/">Go home</Link>
-          </Button>
+          <h1 className="text-lg font-semibold mb-1">Profile not found</h1>
+          <p className="text-sm text-muted-foreground mb-4">This profile doesn&apos;t exist.</p>
+          <Link href="/people" className="text-sm font-medium hover:underline">
+            Browse people
+          </Link>
         </div>
       </div>
     );
   }
 
-  return (
-    <ThemedProfile themeConfig={profile.theme_config}>
-      <PublicProfileLayout profile={profile} projects={projects} valuePortfolio={valuePortfolio} />
-    </ThemedProfile>
-  );
+  return <ProfileView profile={profile as any} />;
 }

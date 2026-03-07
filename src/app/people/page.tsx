@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import UserCard from "@/components/UserCard";
-import { Card } from "@/components/ui/card";
+import { Search, X } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -30,22 +30,6 @@ function PeopleContent() {
     searchParams.get("skills")?.split(",").filter(Boolean) || []
   );
   const [totalCount, setTotalCount] = useState(0);
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
-
-  const placeholders = [
-    "Search by name or bio...",
-    "Find React developers...",
-    "Search for designers...",
-    "Looking for marketers...",
-  ];
-
-  // Rotate placeholder text
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
 
   const fetchProfiles = useCallback(async () => {
     setLoading(true);
@@ -55,7 +39,6 @@ function PeopleContent() {
         .from("profiles")
         .select("id, name, photo_url, bio, skills");
 
-      // Apply text search filter (name or bio)
       if (searchQuery.trim()) {
         const searchTerm = `%${searchQuery.trim()}%`;
         query = query.or(`name.ilike.${searchTerm},bio.ilike.${searchTerm}`);
@@ -67,11 +50,9 @@ function PeopleContent() {
 
       let filteredProfiles = data || [];
 
-      // Filter by selected skills (client-side since skills is an array)
       if (selectedSkills.length > 0) {
         filteredProfiles = filteredProfiles.filter((profile) => {
           if (!profile.skills || profile.skills.length === 0) return false;
-          // Check if profile has at least one of the selected skills (case-insensitive)
           return selectedSkills.some((selectedSkill) =>
             profile.skills!.some(
               (profileSkill: string) =>
@@ -82,7 +63,6 @@ function PeopleContent() {
         });
       }
 
-      // Deduplicate profiles by name (keep first occurrence)
       const seen = new Set<string>();
       const uniqueProfiles = filteredProfiles.filter((profile) => {
         const key = profile.name?.toLowerCase() || profile.id;
@@ -103,10 +83,7 @@ function PeopleContent() {
   }, [searchQuery, selectedSkills]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchProfiles();
-    }, 300);
-
+    const timer = setTimeout(() => fetchProfiles(), 300);
     return () => clearTimeout(timer);
   }, [fetchProfiles]);
 
@@ -114,207 +91,114 @@ function PeopleContent() {
     const params = new URLSearchParams();
     if (searchQuery) params.set("q", searchQuery);
     if (selectedSkills.length > 0) params.set("skills", selectedSkills.join(","));
-
     const newUrl = params.toString() ? `/people?${params.toString()}` : "/people";
     router.replace(newUrl, { scroll: false });
   }, [searchQuery, selectedSkills, router]);
 
   const toggleSkill = (skill: string) => {
     setSelectedSkills((prev) =>
-      prev.includes(skill)
-        ? prev.filter((s) => s !== skill)
-        : [...prev, skill]
+      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]
     );
   };
 
-  const clearFilters = () => {
-    setSearchQuery("");
-    setSelectedSkills([]);
-  };
+  const hasFilters = searchQuery || selectedSkills.length > 0;
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Banner with People Photos */}
-      <div className="relative h-64 md:h-80 overflow-hidden">
-        <div className="absolute inset-0 grid grid-cols-3 gap-1">
-          <img
-            src="/makerslounge-photos/lounge-networking.jpeg"
-            alt="Networking at MakersLounge"
-            className="w-full h-full object-cover"
-          />
-          <img
-            src="/makerslounge-photos/coffee-chat.jpeg"
-            alt="Coffee chat"
-            className="w-full h-full object-cover"
-          />
-          <img
-            src="/makerslounge-photos/team-photo.jpeg"
-            alt="MakersLounge community"
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-8 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">
-            Discover Makers
-          </h1>
-          <p className="text-muted-foreground">
-            Find and connect with talented people in the community
-          </p>
-        </div>
+    <div className="max-w-5xl mx-auto px-4 py-6 md:py-8">
+      {/* Header */}
+      <div className="mb-5 md:mb-8">
+        <h1 className="text-[28px] md:text-2xl font-bold md:font-semibold tracking-tight mb-0.5">People</h1>
+        <p className="text-[13px] md:text-sm text-muted-foreground">
+          {loading ? "Searching..." : `${totalCount} makers in the community`}
+        </p>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-12">
-
-        {/* Search Bar */}
-        <div className="max-w-3xl mx-auto mb-8">
-          <div className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={placeholders[placeholderIndex]}
-              className="w-full px-6 py-5 text-xl bg-card/50 backdrop-blur-sm border border-border/50 rounded-3xl outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/60 placeholder:transition-opacity placeholder:duration-500"
-            />
-            {searchQuery || selectedSkills.length > 0 ? (
-              <button
-                onClick={clearFilters}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
-              >
-                Clear
-              </button>
-            ) : (
-              <svg
-                className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/40"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            )}
-          </div>
-        </div>
-
-        {/* Skills Filter Pills */}
-        <div className="max-w-4xl mx-auto mb-8">
-          <div className="flex flex-wrap justify-center gap-2">
-            {SKILL_FILTERS.map((skill) => (
-              <button
-                key={skill}
-                onClick={() => toggleSkill(skill)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                  selectedSkills.includes(skill)
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-card text-muted-foreground hover:bg-secondary border border-border"
-                }`}
-              >
-                {skill}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Results Count */}
-        <div className="text-center text-sm text-muted-foreground mb-6">
-          {loading ? (
-            <span>Searching...</span>
-          ) : (
-            `${totalCount} ${totalCount === 1 ? "person" : "people"} found`
-          )}
-        </div>
-
-        {/* Results Grid */}
-        {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-              <div key={i} className="rounded-xl border border-border/50 p-4 space-y-3">
-                <div className="w-16 h-16 rounded-full bg-muted animate-pulse mx-auto" />
-                <div className="h-4 bg-muted rounded animate-pulse w-3/4 mx-auto" />
-                <div className="h-3 bg-muted rounded animate-pulse w-1/2 mx-auto" />
-              </div>
-            ))}
-          </div>
-        ) : profiles.length === 0 ? (
-          <Card className="glass-card p-12 text-center">
-            <p className="text-muted-foreground mb-2">No people found</p>
-            <p className="text-sm text-muted-foreground/70">
-              Try adjusting your search or filters
-            </p>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {profiles.map((profile) => (
-              <UserCard
-                key={profile.id}
-                user={profile}
-                showSkills={true}
-                highlightedSkills={selectedSkills}
-              />
-            ))}
-          </div>
+      {/* Search (iOS pill style on mobile) */}
+      <div className="relative mb-3 md:mb-4">
+        <Search className="absolute left-2.5 md:left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by name or bio..."
+          className="w-full h-9 md:h-10 pl-9 md:pl-10 pr-9 md:pr-10 rounded-[10px] md:rounded-md bg-secondary md:bg-background md:border md:border-input text-[15px] md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+        />
+        {hasFilters && (
+          <button
+            onClick={() => { setSearchQuery(""); setSelectedSkills([]); }}
+            className="absolute right-2.5 md:right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="w-4 h-4" />
+          </button>
         )}
       </div>
-    </div>
-  );
-}
 
-function PeoplePageSkeleton() {
-  return (
-    <div className="min-h-screen">
-      {/* Hero Banner skeleton */}
-      <div className="relative h-64 md:h-80 overflow-hidden">
-        <div className="absolute inset-0 bg-muted animate-pulse" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-8 text-center">
-          <div className="h-10 bg-muted rounded animate-pulse w-64 mx-auto mb-2" />
-          <div className="h-5 bg-muted rounded animate-pulse w-80 mx-auto" />
-        </div>
+      {/* Skill filters (horizontal scroll on mobile) */}
+      <div className="flex gap-1.5 mb-6 md:mb-8 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap scrollbar-hide">
+        {SKILL_FILTERS.map((skill) => (
+          <button
+            key={skill}
+            onClick={() => toggleSkill(skill)}
+            className={`px-3 py-1.5 rounded-full md:rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+              selectedSkills.includes(skill)
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {skill}
+          </button>
+        ))}
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        {/* Search Bar skeleton */}
-        <div className="max-w-3xl mx-auto mb-8">
-          <div className="h-16 bg-muted/50 rounded-3xl animate-pulse" />
-        </div>
-
-        {/* Skills Filter Pills skeleton */}
-        <div className="max-w-4xl mx-auto mb-8">
-          <div className="flex flex-wrap justify-center gap-2">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="h-10 w-24 bg-muted rounded-full animate-pulse" />
-            ))}
-          </div>
-        </div>
-
-        {/* Results Count skeleton */}
-        <div className="text-center mb-6">
-          <div className="h-4 bg-muted rounded animate-pulse w-32 mx-auto" />
-        </div>
-
-        {/* Results Grid skeleton */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-            <div key={i} className="rounded-xl border border-border/50 p-4 space-y-3">
-              <div className="w-16 h-16 rounded-full bg-muted animate-pulse mx-auto" />
-              <div className="h-4 bg-muted rounded animate-pulse w-3/4 mx-auto" />
-              <div className="h-3 bg-muted rounded animate-pulse w-1/2 mx-auto" />
+      {/* Results */}
+      {loading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="rounded-md border border-border p-5 space-y-3">
+              <div className="w-12 h-12 rounded-full bg-secondary animate-pulse" />
+              <div className="h-4 bg-secondary rounded animate-pulse w-3/4" />
+              <div className="h-3 bg-secondary rounded animate-pulse w-1/2" />
             </div>
           ))}
         </div>
-      </div>
+      ) : profiles.length === 0 ? (
+        <div className="py-16 text-center">
+          <p className="text-sm text-muted-foreground">No people found. Try adjusting your search.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {profiles.map((profile) => (
+            <UserCard
+              key={profile.id}
+              user={profile}
+              showSkills={true}
+              highlightedSkills={selectedSkills}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 export default function PeoplePage() {
   return (
-    <Suspense fallback={<PeoplePageSkeleton />}>
+    <Suspense
+      fallback={
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          <div className="h-8 bg-secondary rounded animate-pulse w-32 mb-8" />
+          <div className="h-10 bg-secondary rounded animate-pulse mb-8" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="rounded-md border border-border p-5 space-y-3">
+                <div className="w-12 h-12 rounded-full bg-secondary animate-pulse" />
+                <div className="h-4 bg-secondary rounded animate-pulse w-3/4" />
+              </div>
+            ))}
+          </div>
+        </div>
+      }
+    >
       <PeopleContent />
     </Suspense>
   );

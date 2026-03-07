@@ -1,653 +1,138 @@
-/*
-  Import Tailwind CSS base and tw-animate plugin for main utility and animation classes
-*/
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/*
-  Define a custom variant 'dark' using the :is selector for easy dark mode theming
-*/
 @custom-variant dark (&:is(.dark *));
 
-/*
-  Theme variables - shortcut CSS custom properties for easier access throughout the app
-  These map 'color-'/'font-' variables to the main CSS custom properties defined below
-*/
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-heading: var(--font-heading);
-  --font-serif: var(--font-serif);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
   --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
 }
 
-/* Set default font family for the body using Space Grotesk */
-body {
-  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
-}
-
-/*
-  Heading font utility class using Syne for bold, creative headings.
-*/
-.font-heading {
-  font-family: var(--font-heading), system-ui, -apple-system, sans-serif;
-}
-
-/*
-  Serif font utility class using Playfair Display for elegant headlines.
-*/
-.font-serif {
-  font-family: var(--font-serif), Georgia, "Times New Roman", serif;
-}
-
-/* Apply heading font to all headings */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading), system-ui, -apple-system, sans-serif;
-}
-
-/* 
-  Light mode (default) palette and global CSS variables.
-  Colors: OKLCH for superior color rendering and warmth.
-  Comments explain each variable group and how it connects to the design system (see CLAUDE.md).
-*/
 :root {
-  --radius: 0.75rem;
-  --sidebar-width: 15rem;
-  /* Makers Lounge brand colors using OKLCH for accessible, vibrant color */
-  --ml-blue: oklch(0.5 0.2 255);
-  --ml-teal: oklch(0.6 0.15 195);
-  --ml-orange: oklch(0.7 0.18 50);
-  --ml-yellow: oklch(0.85 0.18 90);
+  --radius: 0.5rem;
 
-  /* UI backgrounds and surfaces */
-  --background: oklch(0.985 0.005 250); /* clean off-white */
-  --foreground: oklch(0.2 0.02 260);   /* almost-black (deep blue tone) */
+  /* Warm off-white base — not sterile */
+  --background: #faf9f7;
+  --foreground: #1a1a1a;
 
-  /* Card/Popover - white surface with dark text */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.02 260);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.02 260);
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
 
-  /* Primary action color - Royal blue from brand */
-  --primary: oklch(0.5 0.2 255);
-  --primary-foreground: oklch(1 0 0); /* white for on-primary text */
+  /* Warm ochre accent — distinctive, earthy, not "AI" */
+  --primary: #c2703e;
+  --primary-foreground: #ffffff;
 
-  /* Secondary/Muted background: subtle gray */
-  --secondary: oklch(0.96 0.005 250);
-  --secondary-foreground: oklch(0.3 0.02 260);
-  --muted: oklch(0.96 0.005 250);
-  --muted-foreground: oklch(0.5 0.02 260);
+  --secondary: #f3f1ee;
+  --secondary-foreground: #1a1a1a;
+  --muted: #f3f1ee;
+  --muted-foreground: #6b6560;
 
-  /* Accent: warm orange from logo wave */
-  --accent: oklch(0.95 0.03 50);
-  --accent-foreground: oklch(0.3 0.02 260);
+  --accent: #f3f1ee;
+  --accent-foreground: #1a1a1a;
 
-  /* Destructive actions: red/coral */
-  --destructive: oklch(0.55 0.22 25);
+  --destructive: #c43333;
 
-  /* Subtle borders and rings */
-  --border: oklch(0.92 0.01 250);
-  --input: oklch(0.92 0.01 250);
-  --ring: oklch(0.5 0.2 255);
-
-  /* Charting palette (see /matcher, /people, or data viz) */
-  --chart-1: oklch(0.5 0.2 255);
-  --chart-2: oklch(0.6 0.15 195);
-  --chart-3: oklch(0.7 0.18 50);
-  --chart-4: oklch(0.85 0.18 90);
-  --chart-5: oklch(0.55 0.15 280);
-
-  /* Sidebar-specific coloring (matches shadcn/ui sidebar, eg. nav, chat) */
-  --sidebar: oklch(0.98 0.005 250);
-  --sidebar-foreground: oklch(0.2 0.02 260);
-  --sidebar-primary: oklch(0.5 0.2 255);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.95 0.02 50);
-  --sidebar-accent-foreground: oklch(0.3 0.02 260);
-  --sidebar-border: oklch(0.92 0.01 250);
-  --sidebar-ring: oklch(0.5 0.2 255);
+  --border: #e8e5e0;
+  --input: #e8e5e0;
+  --ring: #c2703e;
 }
 
-/*
-  Dark mode overrides for all the palette variables.
-  Activated with the 'dark' class on <html> according to shadcn/ui system.
-*/
-.dark {
-  /* Makers Lounge brand colors for dark mode */
-  --ml-blue: oklch(0.6 0.2 255);
-  --ml-teal: oklch(0.65 0.15 195);
-  --ml-orange: oklch(0.75 0.18 50);
-  --ml-yellow: oklch(0.88 0.18 90);
-
-  --background: oklch(0.12 0.015 255);            /* dark blue canvas */
-  --foreground: oklch(0.95 0 0);                  /* bright white text */
-  --card: oklch(0.16 0.02 255);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.16 0.02 255);
-  --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.6 0.2 255);                  /* brand blue, brighter in dark mode */
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.22 0.02 255);
-  --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.22 0.015 255);
-  --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.7 0.18 50);                   /* warm orange accent */
-  --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.65 0.2 25);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.6 0.2 255);
-
-  /* Chart/dataset variant - Makers Lounge palette for dark mode */
-  --chart-1: oklch(0.6 0.2 255);
-  --chart-2: oklch(0.65 0.15 195);
-  --chart-3: oklch(0.75 0.18 50);
-  --chart-4: oklch(0.88 0.18 90);
-  --chart-5: oklch(0.6 0.15 280);
-
-  --sidebar: oklch(0.14 0.02 255);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.6 0.2 255);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.25 0.03 50);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.6 0.2 255);
-}
-
-/*
-  Tailwind @layer base to apply border and outline color globally,
-  and set body background/text color from current theme variables.
-*/
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
 }
 
-/*
-  Custom utility classes inspired by Claude + Linear design:
-  - .glass, .glass-card: glassmorphism with blurred, transparent backgrounds and light borders/shadow
-  - .gradient-warm: subtle warm radial accent (e.g. behind avatars, highlights)
-  - .gradient-glow: animating or static glow for elements, uses an absolutely positioned pseudo-element
-  - .text-gradient: for gradient headings/logos, using background-clip & text-fill-color
-  - .gradient-wave, .gradient-wave-subtle: multi-stop gradients to match the Makers Lounge logo wave
-*/
-
-.glass {
-  background: oklch(1 0 0 / 70%);
-  backdrop-filter: blur(12px);
-  border: 1px solid oklch(0 0 0 / 5%);
+/* iOS-like mobile feel */
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.glass-card {
-  background: oklch(1 0 0 / 90%);
-  backdrop-filter: blur(8px);
-  border: 1px solid oklch(0 0 0 / 5%);
-  box-shadow: 0 1px 3px oklch(0 0 0 / 5%), 0 4px 12px oklch(0 0 0 / 3%);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+body {
+  -webkit-overflow-scrolling: touch;
 }
 
-.glass-card:hover {
-  /* Elevate glass cards when hovered for subtle interactivity */
-  box-shadow: 0 2px 8px oklch(0 0 0 / 8%), 0 8px 24px oklch(0 0 0 / 5%);
+/* Safe area for mobile bottom nav */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Soft, warm background radial gradient utility */
-.gradient-warm {
-  background: radial-gradient(ellipse at top, oklch(0.5 0.15 255 / 25%) 0%, transparent 60%);
-}
-
-/* Glow utility: uses a blurred pseudo-element for a glowing border */
-.gradient-glow {
-  position: relative;
-}
-.gradient-glow::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  background: linear-gradient(135deg, oklch(0.5 0.2 255 / 20%), oklch(0.6 0.15 195 / 15%), transparent);
-  border-radius: inherit;
-  z-index: -1;
-  filter: blur(20px);
-  opacity: 0.5;
-}
-
-/* Text gradient utility: applies a linear gradient to text for modern logo/headings */
-.text-gradient {
-  background: linear-gradient(135deg, oklch(0.5 0.2 255), oklch(0.45 0.18 270));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* 
-  Makers Lounge signature wave gradient.
-  Used for hero backgrounds, logo stripes, buttons, etc.
-*/
-.gradient-wave {
-  background: linear-gradient(90deg,
-    oklch(0.5 0.2 255) 0%,
-    oklch(0.6 0.15 195) 33%,
-    oklch(0.7 0.18 50) 66%,
-    oklch(0.85 0.18 90) 100%
-  );
-}
-
-/* Subtle version of wave gradient for overlays and muted backgrounds */
-.gradient-wave-subtle {
-  background: linear-gradient(90deg,
-    oklch(0.5 0.2 255 / 10%) 0%,
-    oklch(0.6 0.15 195 / 10%) 33%,
-    oklch(0.7 0.18 50 / 10%) 66%,
-    oklch(0.85 0.18 90 / 10%) 100%
-  );
-}
-
-/* Sidebar margin utility - responsive to sidebar collapse state */
-.sidebar-margin {
-  margin-left: 0;
-  transition: margin-left 0.3s ease;
-}
-@media (min-width: 768px) {
-  .sidebar-margin {
-    margin-left: var(--sidebar-width, 15rem);
+/* Account for bottom nav on mobile */
+@media (max-width: 767px) {
+  main {
+    padding-bottom: 4.5rem;
   }
 }
 
-/* Hide tldraw watermark/license message - comprehensive coverage */
-.tldraw__license,
-.tlui-watermark,
-.tlui-watermark__link,
-[class*="watermark"],
-[class*="license"] {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-
-/* Hide any links to tldraw.com or containing "license" */
-.tldraw a[href*="tldraw.com"],
-.tldraw a[href*="license"],
-[class*="tldraw"] a[href*="tldraw.com"],
-[class*="tldraw"] a[href*="license"],
-.tlui-button[href*="tldraw"],
-.tlui-button[href*="license"],
-button[href*="tldraw"],
-button[href*="license"] {
-  display: none !important;
-  visibility: hidden !important;
-}
-
-/* ============================================
-   Network Graph Styles (React Flow)
-   ============================================ */
-
-/* Container for the network graph */
-.network-graph-container {
-  /* Override React Flow defaults to match our design system */
-  --xy-background-color: transparent;
-  --xy-background-pattern-color: var(--border);
-  --xy-node-color: var(--foreground);
-  --xy-node-background-color: var(--card);
-  --xy-node-border-color: var(--border);
-  --xy-edge-stroke: var(--primary);
-  --xy-edge-stroke-width: 2px;
-}
-
-/* Person node styling - extends glass-card */
-.person-node {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.person-node:hover {
-  transform: translateY(-2px);
-}
-
-/* React Flow control button styling */
-.react-flow__controls {
-  box-shadow: 0 2px 8px oklch(0 0 0 / 10%);
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-}
-
-.react-flow__controls-button {
-  background: var(--card) !important;
-  border: none !important;
-  border-bottom: 1px solid var(--border) !important;
-  color: var(--foreground) !important;
-  width: 28px !important;
-  height: 28px !important;
-}
-
-.react-flow__controls-button:hover {
-  background: var(--muted) !important;
-}
-
-.react-flow__controls-button:last-child {
-  border-bottom: none !important;
-}
-
-.react-flow__controls-button svg {
-  fill: currentColor !important;
-  max-width: 14px;
-  max-height: 14px;
-}
-
-/* Edge label styling */
-.connection-edge-label {
-  font-family: var(--font-sans), system-ui, sans-serif;
-  pointer-events: auto;
-}
-
-/* Dark mode adjustments for network graph */
-.dark .network-graph-container {
-  --xy-background-pattern-color: oklch(1 0 0 / 8%);
-}
-
-.dark .person-node.glass-card {
-  background: oklch(0.18 0.02 255 / 95%);
-  border-color: oklch(1 0 0 / 10%);
-}
-
-.dark .react-flow__controls-button {
-  background: var(--card) !important;
-  color: var(--foreground) !important;
-}
-
-/* Selection box styling */
-.react-flow__selection {
-  background: oklch(0.5 0.2 255 / 10%);
-  border: 1px dashed oklch(0.5 0.2 255 / 50%);
-}
-
-/* Mini map styling (if used later) */
-.react-flow__minimap {
+/* iOS grouped section */
+.ios-group {
   background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-/* Attribution hidden via proOptions but just in case */
-.react-flow__attribution {
-  display: none !important;
-}
-
-/* ============================================
-   Tetris Loader Animation
-   ============================================ */
-
-@keyframes tetris-drop {
-  0% {
-    transform: translateY(-100px);
-    opacity: 0;
-  }
-  60% {
-    transform: translateY(5px);
-    opacity: 1;
-  }
-  80% {
-    transform: translateY(-3px);
-  }
-  100% {
-    transform: translateY(0);
-  }
-}
-
-.tetris-drop {
-  animation: tetris-drop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-@keyframes tetris-flash {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-.tetris-flash {
-  animation: tetris-flash 0.3s ease-in-out 3;
-}
-
-/* ============================================
-   Makers Lounge Loader Animation
-   ============================================ */
-
-@keyframes loader-pulse {
-  0%, 100% {
-    transform: scale(1) translate(0, 0);
-    opacity: 0.9;
-  }
-  25% {
-    transform: scale(1.05) translate(2px, -2px);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(0.95) translate(-2px, 2px);
-    opacity: 0.8;
-  }
-  75% {
-    transform: scale(1.02) translate(1px, -1px);
-    opacity: 1;
-  }
-}
-
-.animate-loader-pulse {
-  animation: loader-pulse 2s ease-in-out infinite;
-}
-
-/* ============================================
-   Auth Page - Glassmorphism & Premium Styles
-   ============================================ */
-
-/* Glassmorphic card for auth form */
-.auth-glass-card {
-  background: oklch(1 0 0 / 60%);
-  backdrop-filter: blur(20px) saturate(1.2);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  border: 1px solid oklch(1 0 0 / 30%);
-  box-shadow:
-    0 8px 32px oklch(0 0 0 / 8%),
-    0 2px 8px oklch(0 0 0 / 4%),
-    inset 0 1px 0 oklch(1 0 0 / 40%);
-}
-
-.dark .auth-glass-card {
-  background: oklch(0.15 0.02 255 / 50%);
-  border: 1px solid oklch(1 0 0 / 10%);
-  box-shadow:
-    0 8px 32px oklch(0 0 0 / 30%),
-    0 2px 8px oklch(0 0 0 / 20%),
-    inset 0 1px 0 oklch(1 0 0 / 5%);
-}
-
-/* Glassmorphic inputs */
-.auth-glass-input {
-  background: oklch(1 0 0 / 50%);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid oklch(0 0 0 / 8%);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.auth-glass-input:focus {
-  border-color: oklch(0.7 0.18 50);
-  box-shadow:
-    0 0 0 3px oklch(0.7 0.18 50 / 15%),
-    0 0 20px oklch(0.7 0.18 50 / 8%);
-  animation: input-glow 2s ease-in-out infinite;
-}
-
-.dark .auth-glass-input {
-  background: oklch(1 0 0 / 8%);
-  border: 1px solid oklch(1 0 0 / 10%);
-}
-
-.dark .auth-glass-input:focus {
-  border-color: oklch(0.75 0.18 50);
-  box-shadow:
-    0 0 0 3px oklch(0.75 0.18 50 / 20%),
-    0 0 20px oklch(0.75 0.18 50 / 10%);
-}
-
-/* Input focus glow animation */
-@keyframes input-glow {
-  0%, 100% {
-    box-shadow:
-      0 0 0 3px oklch(0.7 0.18 50 / 15%),
-      0 0 20px oklch(0.7 0.18 50 / 8%);
-  }
-  50% {
-    box-shadow:
-      0 0 0 3px oklch(0.7 0.18 50 / 25%),
-      0 0 30px oklch(0.7 0.18 50 / 12%);
-  }
-}
-
-/* Warm gradient CTA button */
-.auth-cta-btn {
-  background: linear-gradient(135deg, oklch(0.65 0.2 30), oklch(0.7 0.18 50), oklch(0.8 0.15 70));
-  background-size: 200% 200%;
-  color: white;
-  position: relative;
+  border-radius: 0.75rem;
   overflow: hidden;
-  transition: all 0.3s ease;
 }
 
-.auth-cta-btn:hover {
-  background-position: 100% 0;
-  box-shadow: 0 4px 20px oklch(0.7 0.18 50 / 40%);
-  transform: translateY(-1px);
+.ios-group > * + * {
+  border-top: 0.5px solid var(--border);
 }
 
-.auth-cta-btn:active {
-  transform: translateY(0);
+.ios-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  min-height: 2.75rem;
 }
 
-/* Shimmer sweep on hover */
-.auth-cta-btn::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
+/* iOS search bar */
+.ios-search {
+  background: var(--secondary);
+  border: none;
+  border-radius: 0.625rem;
+  height: 2.25rem;
+  padding-left: 2rem;
+  padding-right: 0.75rem;
+  font-size: 0.9375rem;
   width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    oklch(1 0 0 / 20%),
-    transparent
-  );
-  transition: left 0.5s ease;
+  outline: none;
 }
 
-.auth-cta-btn:hover::after {
-  left: 100%;
+.ios-search::placeholder {
+  color: var(--muted-foreground);
 }
 
-.dark .auth-cta-btn {
-  background: linear-gradient(135deg, oklch(0.6 0.2 30), oklch(0.65 0.18 50), oklch(0.75 0.15 70));
-  background-size: 200% 200%;
+/* Hide scrollbar for horizontal scroll areas */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
-
-/* Animated grain texture overlay */
-.grain-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 50;
-  opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 256px 256px;
-  animation: grain-shift 8s steps(10) infinite;
-}
-
-@keyframes grain-shift {
-  0%, 100% { transform: translate(0, 0); }
-  10% { transform: translate(-5%, -10%); }
-  20% { transform: translate(-15%, 5%); }
-  30% { transform: translate(7%, -25%); }
-  40% { transform: translate(-5%, 25%); }
-  50% { transform: translate(-15%, 10%); }
-  60% { transform: translate(15%, 0%); }
-  70% { transform: translate(0%, 15%); }
-  80% { transform: translate(3%, 35%); }
-  90% { transform: translate(-10%, 10%); }
-}
-
-/* Reduced motion: disable all auth animations */
-@media (prefers-reduced-motion: reduce) {
-  .auth-glass-input:focus {
-    animation: none;
-  }
-  .auth-cta-btn::after {
-    display: none;
-  }
-  .auth-cta-btn:hover {
-    transform: none;
-  }
-  .grain-overlay {
-    animation: none;
-  }
-}
-
-/* Graceful degradation for browsers without backdrop-filter */
-@supports not (backdrop-filter: blur(1px)) {
-  .auth-glass-card {
-    background: oklch(1 0 0 / 92%);
-  }
-  .dark .auth-glass-card {
-    background: oklch(0.15 0.02 255 / 92%);
-  }
-  .auth-glass-input {
-    background: oklch(0.97 0.005 250);
-  }
-  .dark .auth-glass-input {
-    background: oklch(0.2 0.02 255);
-  }
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

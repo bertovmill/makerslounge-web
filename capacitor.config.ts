@@ -12,20 +12,21 @@ const config: CapacitorConfig = {
     contentInset: "automatic",
     allowsLinkPreview: false,
     scrollEnabled: true,
+    preferredContentMode: "mobile",
   },
   plugins: {
     SplashScreen: {
       launchAutoHide: true,
-      launchShowDuration: 2000,
-      backgroundColor: "#1d1b2e",
+      launchShowDuration: 1500,
+      backgroundColor: "#faf9f7",
       showSpinner: false,
     },
     Keyboard: {
       resize: "body",
-      style: "dark",
+      style: "light",
     },
     StatusBar: {
-      style: "dark",
+      style: "light",
     },
   },
 };

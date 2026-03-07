@@ -510,7 +510,7 @@ export default function MatcherPage() {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onClick={() => fileInputRef.current?.click()}
-              className={`glass-card rounded-2xl p-8 sm:p-12 text-center transition-all duration-300 cursor-pointer ${
+              className={`border border-border rounded-2xl p-8 sm:p-12 text-center transition-all duration-300 cursor-pointer ${
                 isDragging
                   ? "border-2 border-primary bg-primary/5 shadow-lg shadow-primary/10"
                   : "border border-border hover:border-primary/40 hover:shadow-lg"
@@ -560,7 +560,7 @@ export default function MatcherPage() {
 
             {/* Saved Events */}
             {savedEvents.length > 0 && (
-              <div className="glass-card rounded-2xl p-6">
+              <div className="border border-border rounded-2xl p-6">
                 <h2 className="text-lg font-semibold mb-4">Saved Events</h2>
                 <div className="space-y-2">
                   {savedEvents.map((event) => (

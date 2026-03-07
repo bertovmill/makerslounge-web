@@ -29,9 +29,9 @@ export default function UserCard({
 
   return (
     <Link href={`/profile/${user.id}`}>
-      <Card className="glass-card p-5 hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
+      <Card className="p-5 hover:bg-secondary/50 transition-colors cursor-pointer h-full">
         {/* Avatar */}
-        <div className="w-14 h-14 bg-gradient-to-br from-rose-400 to-orange-400 rounded-full mb-3 flex items-center justify-center text-white font-bold overflow-hidden">
+        <div className="w-12 h-12 bg-secondary rounded-full mb-3 flex items-center justify-center text-muted-foreground font-semibold text-sm overflow-hidden">
           {user.photo_url ? (
             <img
               src={user.photo_url}

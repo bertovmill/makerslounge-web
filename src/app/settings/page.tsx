@@ -173,8 +173,8 @@ function SettingsContent() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-8">Settings</h1>
+    <div className="min-h-screen py-6 md:py-8 px-4 max-w-2xl mx-auto">
+      <h1 className="text-[28px] md:text-2xl font-bold tracking-tight mb-6 md:mb-8">Settings</h1>
 
       {/* Upgrade Success Banner */}
       {showUpgradeSuccess && (
@@ -190,18 +190,20 @@ function SettingsContent() {
       )}
 
       {/* Account Info */}
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">Account</h2>
-        <div className="rounded-lg border border-border p-4">
-          <label className="text-sm text-muted-foreground">Email</label>
-          <p className="text-foreground">{user?.email}</p>
+      <section className="mb-6 md:mb-8">
+        <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wider mb-2 md:mb-4 px-1 md:px-0 md:text-lg md:font-semibold md:normal-case md:tracking-normal md:text-foreground">Account</h2>
+        <div className="rounded-xl md:rounded-lg bg-card md:border md:border-border">
+          <div className="px-4 py-3 md:p-4">
+            <label className="text-[13px] md:text-sm text-muted-foreground">Email</label>
+            <p className="text-[15px] md:text-base text-foreground">{user?.email}</p>
+          </div>
         </div>
       </section>
 
       {/* Premium Section */}
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">Premium</h2>
-        <div className="rounded-lg border border-border p-4">
+      <section className="mb-6 md:mb-8">
+        <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wider mb-2 md:mb-4 px-1 md:px-0 md:text-lg md:font-semibold md:normal-case md:tracking-normal md:text-foreground">Premium</h2>
+        <div className="rounded-xl md:rounded-lg bg-card md:border md:border-border p-4">
           {isPremium ? (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
@@ -274,9 +276,9 @@ function SettingsContent() {
       </section>
 
       {/* Change Password */}
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">Change Password</h2>
-        <form onSubmit={handlePasswordChange} className="rounded-lg border border-border p-4 space-y-4">
+      <section className="mb-6 md:mb-8">
+        <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wider mb-2 md:mb-4 px-1 md:px-0 md:text-lg md:font-semibold md:normal-case md:tracking-normal md:text-foreground">Change Password</h2>
+        <form onSubmit={handlePasswordChange} className="rounded-xl md:rounded-lg bg-card md:border md:border-border p-4 space-y-4">
           <div>
             <label htmlFor="new-password" className="block text-sm text-muted-foreground mb-1">
               New Password
@@ -286,7 +288,7 @@ function SettingsContent() {
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
               placeholder="Enter new password"
             />
           </div>
@@ -299,7 +301,7 @@ function SettingsContent() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
               placeholder="Confirm new password"
             />
           </div>
@@ -315,9 +317,9 @@ function SettingsContent() {
       </section>
 
       {/* Notification Preferences */}
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">Notifications</h2>
-        <div className="rounded-lg border border-border p-4 space-y-4">
+      <section className="mb-6 md:mb-8">
+        <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wider mb-2 md:mb-4 px-1 md:px-0 md:text-lg md:font-semibold md:normal-case md:tracking-normal md:text-foreground">Notifications</h2>
+        <div className="rounded-xl md:rounded-lg bg-card md:border md:border-border p-4 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">Email Notifications</p>

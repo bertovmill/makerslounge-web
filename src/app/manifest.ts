@@ -2,14 +2,16 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "MakersLounge - Toronto's Maker Community",
+    name: "MakersLounge",
     short_name: "MakersLounge",
     description:
-      "Connect with makers, share projects, and grow your network in Toronto's most supportive community for builders.",
+      "Connect with makers. Find opportunities. Build together.",
     start_url: "/",
     display: "standalone",
-    background_color: "#1d1b2e",
-    theme_color: "#1d1b2e",
+    background_color: "#faf9f7",
+    theme_color: "#faf9f7",
+    orientation: "portrait",
+    categories: ["social", "business"],
     icons: [
       {
         src: "/icon-192.png",

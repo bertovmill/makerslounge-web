@@ -1,28 +1,6 @@
-<svg width="32" height="32" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="24" cy="24" r="22" fill="white" stroke="#1a1a1a" stroke-width="1.5" />
-
-  <defs>
-    <clipPath id="clip">
-      <circle cx="24" cy="24" r="21" />
-    </clipPath>
-    <linearGradient id="wave" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#2563EB" />
-      <stop offset="100%" stop-color="#F97316" />
-    </linearGradient>
-  </defs>
-
-  <path d="M2 30 Q14 24 24 30 Q34 36 46 30 L46 46 L2 46 Z" fill="url(#wave)" clip-path="url(#clip)" />
-
-  <!-- Lightbulb -->
-  <g transform="translate(10, 12)">
-    <ellipse cx="6" cy="7" rx="5" ry="6" fill="#F97316" />
-    <rect x="4" y="12" width="4" height="3" fill="#F97316" />
-    <ellipse cx="6" cy="6" rx="2.5" ry="3" fill="white" />
-  </g>
-
-  <!-- Rocket -->
-  <g transform="translate(24, 8)">
-    <path d="M6 0 L12 16 L6 13 L0 16 Z" fill="#2563EB" />
-    <circle cx="6" cy="6" r="2.5" fill="white" />
-  </g>
+<svg width="32" height="32" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="112" fill="#c2703e"/>
+  <path d="M128 380V148l80 128 80-128v232" stroke="#faf9f7" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M336 380V148" stroke="#faf9f7" stroke-width="44" stroke-linecap="round"/>
+  <path d="M336 380h48" stroke="#faf9f7" stroke-width="44" stroke-linecap="round"/>
 </svg>

@@ -106,13 +106,13 @@ export default function SkillsInput({
           {skills.map((skill) => (
             <span
               key={skill}
-              className="inline-flex items-center gap-1 bg-[#F4A261]/20 text-[#c77f4a] px-3 py-1 rounded-full text-sm"
+              className="inline-flex items-center gap-1 bg-primary/15 text-primary px-3 py-1 rounded-full text-sm"
             >
               {skill}
               <button
                 type="button"
                 onClick={() => removeSkill(skill)}
-                className="hover:text-[#a66b3d]"
+                className="hover:opacity-70"
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -134,20 +134,20 @@ export default function SkillsInput({
         onKeyDown={handleKeyDown}
         onFocus={() => setShowSuggestions(true)}
         onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-        className="w-full px-4 py-3 border border-gray-300 rounded-xl outline-none focus:border-gray-400"
+        className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
         placeholder={skills.length >= maxSkills ? "Max skills reached" : "Type a skill and press Enter..."}
         disabled={skills.length >= maxSkills}
       />
 
       {/* Suggestions dropdown */}
       {showSuggestions && input && filteredSuggestions.length > 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+        <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
           {filteredSuggestions.slice(0, 6).map((suggestion) => (
             <button
               key={suggestion}
               type="button"
               onClick={() => addSkill(suggestion)}
-              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 first:rounded-t-xl last:rounded-b-xl"
+              className="w-full px-3 py-2 text-left text-sm hover:bg-secondary first:rounded-t-lg last:rounded-b-lg"
             >
               {suggestion}
             </button>
@@ -155,7 +155,7 @@ export default function SkillsInput({
         </div>
       )}
 
-      <p className="text-xs text-gray-400 mt-1">
+      <p className="text-xs text-muted-foreground mt-1">
         {skills.length}/{maxSkills} skills - Press Enter or comma to add
       </p>
 
@@ -164,7 +164,7 @@ export default function SkillsInput({
         <div className="mt-4 space-y-3">
           {categories.map((category) => (
             <div key={category.label}>
-              <p className="text-xs font-medium text-gray-500 mb-1.5">{category.label}</p>
+              <p className="text-xs font-medium text-muted-foreground mb-1.5">{category.label}</p>
               <div className="flex flex-wrap gap-1.5">
                 {category.skills.map((skill) => {
                   const selected = isSelected(skill);
@@ -182,8 +182,8 @@ export default function SkillsInput({
                       disabled={!selected && !canAddMore}
                       className={`px-3 py-1.5 text-sm rounded-full border transition-all ${
                         selected
-                          ? "bg-[#F4A261]/20 border-[#F4A261] text-[#c77f4a]"
-                          : "bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                          ? "bg-primary/15 border-primary/40 text-primary"
+                          : "bg-card border-border text-muted-foreground hover:border-muted-foreground/40 hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed"
                       }`}
                     >
                       {selected && (

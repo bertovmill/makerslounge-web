@@ -38,9 +38,7 @@ export default function EventsPage() {
 
   useEffect(() => {
     const checkAdmin = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       setIsAdmin(user?.email === "bertmill19@gmail.com");
       setLoading(false);
     };
@@ -49,60 +47,27 @@ export default function EventsPage() {
     fetchEvents();
   }, []);
 
-  const handleEditEvent = (event: Event) => {
-    setEventToEdit(event);
-  };
-
   const handleDeleteEvent = async (eventId: string) => {
     const { error } = await supabase.from("events").delete().eq("id", eventId);
-    if (error) {
-      console.error("Error deleting event:", error);
-      alert("Failed to delete event. Please try again.");
-    } else {
-      fetchEvents();
-    }
+    if (!error) fetchEvents();
   };
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Banner with Event Photos */}
-      <div className="relative h-64 md:h-80 overflow-hidden">
-        <div className="absolute inset-0 grid grid-cols-3 gap-1">
-          <img
-            src="/makerslounge-photos/presenting-slides.jpeg"
-            alt="MakersLounge presentation"
-            className="w-full h-full object-cover"
-          />
-          <img
-            src="/makerslounge-photos/team-photo.jpeg"
-            alt="MakersLounge team"
-            className="w-full h-full object-cover"
-          />
-          <img
-            src="/makerslounge-photos/lounge-networking.jpeg"
-            alt="Networking at MakersLounge"
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-8 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Events</h1>
-          <p className="text-muted-foreground">
-            Join us at upcoming maker meetups, workshops, and community events
-          </p>
-        </div>
+    <div className="max-w-5xl mx-auto px-4 py-6 md:py-8">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-[28px] md:text-2xl font-bold md:font-semibold tracking-tight mb-0.5">Events</h1>
+        <p className="text-[13px] md:text-sm text-muted-foreground">
+          Upcoming meetups, workshops, and community events
+        </p>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <Calendar
-          events={events}
-          isAdmin={isAdmin}
-          onEditEvent={handleEditEvent}
-          onDeleteEvent={handleDeleteEvent}
-        />
-      </div>
+      <Calendar
+        events={events}
+        isAdmin={isAdmin}
+        onEditEvent={(event) => setEventToEdit(event)}
+        onDeleteEvent={handleDeleteEvent}
+      />
 
-      {/* Event Form - Only visible to admin */}
       {!loading && isAdmin && (
         <EventForm
           onEventCreated={fetchEvents}

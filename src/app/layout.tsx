@@ -1,36 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk, Syne, Playfair_Display } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import "./globals.css";
-import FeedbackButton from "@/components/FeedbackButton";
 import Navbar from "@/components/Navbar";
-import FooterWrapper from "@/components/FooterWrapper";
-import MainWrapper from "@/components/MainWrapper";
-import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
-import { SidebarProvider } from "@/context/SidebarContext";
-import { FeedbackProvider } from "@/context/FeedbackContext";
 import { AuthProvider } from "@/context/AuthContext";
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const syne = Syne({
-  variable: "--font-heading",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const playfair = Playfair_Display({
-  variable: "--font-serif",
-  subsets: ["latin"],
-  display: "swap",
-});
-
 export const metadata: Metadata = {
-  title: "MakersLounge - Find Your People",
-  description: "AI-powered matching that connects builders and makers with the right people. Share what you're building, tell us who you need, and let AI find your perfect match.",
+  title: "MakersLounge",
+  description: "Connect with makers. Find opportunities. Build together.",
   icons: {
     icon: [
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
@@ -40,16 +17,17 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "MakersLounge",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#1d1b2e" },
-    { media: "(prefers-color-scheme: dark)", color: "#1d1b2e" },
-  ],
+  themeColor: "#faf9f7",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -59,18 +37,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${spaceGrotesk.variable} ${syne.variable} ${playfair.variable} font-sans antialiased bg-background text-foreground min-h-screen flex flex-col`}>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans min-h-svh`}>
         <AuthProvider>
-          <SidebarProvider>
-            <FeedbackProvider>
-              <Navbar />
-              <MainWrapper>{children}</MainWrapper>
-              <FooterWrapper />
-              <FeedbackButton />
-            </FeedbackProvider>
-          </SidebarProvider>
+          <Navbar />
+          <main className="flex-1">{children}</main>
         </AuthProvider>
-        <ServiceWorkerRegistration />
       </body>
     </html>
   );
