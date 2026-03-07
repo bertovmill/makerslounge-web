@@ -42,8 +42,8 @@
   --popover: #ffffff;
   --popover-foreground: #1a1a1a;
 
-  /* Warm ochre accent — distinctive, earthy, not "AI" */
-  --primary: #d4764e;
+  /* Light blue accent */
+  --primary: #4A9FE5;
   --primary-foreground: #ffffff;
 
   --secondary: #f3f1ee;
@@ -58,7 +58,7 @@
 
   --border: #e8e5e0;
   --input: #e8e5e0;
-  --ring: #d4764e;
+  --ring: #4A9FE5;
 }
 
 @layer base {

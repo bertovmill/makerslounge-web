@@ -168,7 +168,7 @@ export default function ProfilePage() {
     .slice(0, 2) || "?";
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6 md:py-8">
+    <div className="max-w-lg mx-auto px-4 py-6 md:py-8 pb-24">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 md:mb-8">
         <h1 className="text-[28px] md:text-2xl font-bold md:font-semibold tracking-tight">Edit profile</h1>
