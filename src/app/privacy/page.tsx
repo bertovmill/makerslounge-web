@@ -75,8 +75,8 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-foreground mb-2">Contact</h2>
             <p>
               If you have questions about this Privacy Policy, please contact us at{" "}
-              <a href="mailto:hello@makerslounge.com" className="underline underline-offset-2 text-foreground">
-                hello@makerslounge.com
+              <a href="mailto:makerslounge@outlook.com" className="underline underline-offset-2 text-foreground">
+                makerslounge@outlook.com
               </a>.
             </p>
           </section>
