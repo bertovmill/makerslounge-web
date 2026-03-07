@@ -67,7 +67,7 @@ export default function Navbar() {
       </header>
 
       {/* Mobile: Top bar with logo + hamburger */}
-      <header className="md:hidden flex items-center justify-between h-11 px-4 border-b border-border/50 bg-background/80 backdrop-blur-lg sticky top-0 z-50">
+      <header className="md:hidden flex items-center justify-between h-11 px-4 pt-[env(safe-area-inset-top)] border-b border-border/50 bg-background/80 backdrop-blur-lg sticky top-0 z-50">
         <Logo />
         <button
           onClick={() => setMenuOpen(!menuOpen)}
@@ -80,7 +80,7 @@ export default function Navbar() {
 
       {/* Mobile: Dropdown menu */}
       {menuOpen && (
-        <div className="md:hidden fixed inset-0 top-11 z-40 bg-background">
+        <div className="md:hidden fixed inset-0 top-[calc(2.75rem+env(safe-area-inset-top))] z-40 bg-background">
           <nav className="flex flex-col px-4 pt-2 gap-0.5">
             {NAV_ITEMS.map(({ href, label, icon: Icon, authRequired }) => (
               <Link
