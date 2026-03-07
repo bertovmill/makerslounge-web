@@ -12,7 +12,7 @@ const NAV_ITEMS = [
   { href: "/people", label: "People", icon: Users },
   { href: "/matcher", label: "Match", icon: Sparkles },
   { href: "/events", label: "Events", icon: Calendar },
-  { href: "/profile", label: "Profile", icon: User },
+  { href: "/profile", label: "Profile", icon: User, authRequired: true },
 ];
 
 export default function Navbar() {
@@ -20,8 +20,8 @@ export default function Navbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const isPublicPage = pathname === "/" || pathname === "/auth";
-  if (isPublicPage && !user) return null;
+  const isLandingOrAuth = pathname === "/" || pathname === "/auth";
+  if (isLandingOrAuth && !user) return null;
 
   return (
     <>
@@ -30,10 +30,10 @@ export default function Navbar() {
         <div className="flex items-center gap-8">
           <Logo />
           <nav className="flex items-center gap-1">
-            {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
+            {NAV_ITEMS.map(({ href, label, icon: Icon, authRequired }) => (
               <Link
                 key={href}
-                href={href}
+                href={authRequired && !user ? "/auth" : href}
                 className={cn(
                   "px-3 py-1.5 text-sm rounded-md transition-colors",
                   pathname === href
@@ -82,10 +82,10 @@ export default function Navbar() {
       {menuOpen && (
         <div className="md:hidden fixed inset-0 top-11 z-40 bg-background">
           <nav className="flex flex-col px-4 pt-2 gap-0.5">
-            {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
+            {NAV_ITEMS.map(({ href, label, icon: Icon, authRequired }) => (
               <Link
                 key={href}
-                href={href}
+                href={authRequired && !user ? "/auth" : href}
                 onClick={() => setMenuOpen(false)}
                 className={cn(
                   "flex items-center gap-3 px-3 py-3.5 rounded-xl text-[15px] active:bg-secondary transition-colors",
@@ -130,10 +130,10 @@ export default function Navbar() {
       {/* Mobile: Bottom tab bar (iOS style) */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t border-border/50 safe-area-bottom">
         <div className="flex items-center justify-around h-[50px]">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
+          {NAV_ITEMS.map(({ href, label, icon: Icon, authRequired }) => (
             <Link
               key={href}
-              href={href}
+              href={authRequired && !user ? "/auth" : href}
               className={cn(
                 "flex flex-col items-center justify-center gap-[2px] w-full h-full active:opacity-60 transition-opacity",
                 pathname === href
