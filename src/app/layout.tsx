@@ -1,15 +1,29 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
+import { Instrument_Serif } from "next/font/google";
+
+const instrumentSerif = Instrument_Serif({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-instrument-serif",
+  display: "swap",
+});
 import "./globals.css";
-import Navbar from "@/components/Navbar";
+import Sidebar from "@/components/Sidebar";
+import AppShell from "@/components/AppShell";
 import { AuthProvider } from "@/context/AuthContext";
+import { ThemeProvider } from "@/context/ThemeContext";
+import { SidebarProvider } from "@/context/SidebarContext";
 
 export const metadata: Metadata = {
   title: "MakersLounge",
   description: "Connect with makers. Find opportunities. Build together.",
   icons: {
     icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
@@ -36,12 +50,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans min-h-svh`}>
-        <AuthProvider>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-        </AuthProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} ${instrumentSerif.variable} font-sans min-h-svh transition-colors duration-300`}>
+        <ThemeProvider>
+          <AuthProvider>
+            <SidebarProvider>
+              <Sidebar />
+              <AppShell>{children}</AppShell>
+            </SidebarProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
