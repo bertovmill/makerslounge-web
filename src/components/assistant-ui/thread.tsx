@@ -23,7 +23,7 @@ import {
   SearchIcon,
   SquareIcon,
 } from "lucide-react";
-import type { FC } from "react";
+import { type FC, useState } from "react";
 
 export const Thread: FC = () => {
   return (
@@ -175,39 +175,79 @@ const ComposerAction: FC = () => {
 };
 
 const TOOL_LABELS: Record<string, string> = {
-  search_people: "Searching community",
-  filter_by_skills: "Filtering by skills",
-  get_profile_details: "Looking up profile",
-  find_looking_for: "Finding matches",
-  browse_community: "Browsing community",
+  search_people: "Search community",
+  filter_by_skills: "Filter by skills",
+  get_profile_details: "Look up profile",
+  find_looking_for: "Find matches",
+  browse_community: "Browse community",
 };
 
-const ToolFallback: ToolCallMessagePartComponent = ({ toolName, args, result }) => {
-  const label = TOOL_LABELS[toolName] || "Working";
+const ToolFallback: ToolCallMessagePartComponent = ({ toolName, args, result, status }) => {
+  const [expanded, setExpanded] = useState(false);
+  const label = TOOL_LABELS[toolName] || toolName;
+  const isRunning = status.type === "running";
 
-  // Build a detail string from the tool args
-  let detail = "";
+  // Build summary from args
+  let summary = "";
   if (args) {
     const a = args as Record<string, unknown>;
-    if (a.query) detail = `"${a.query}"`;
-    else if (a.skills && Array.isArray(a.skills)) detail = (a.skills as string[]).join(", ");
-    else if (a.name_or_username) detail = `"${a.name_or_username}"`;
+    if (a.query) summary = `"${a.query}"`;
+    else if (a.skills && Array.isArray(a.skills)) summary = (a.skills as string[]).join(", ");
+    else if (a.name_or_username) summary = `"${a.name_or_username}"`;
   }
 
-  // Show result count if available
-  let resultInfo = "";
+  // Result count
+  let resultCount = "";
   if (result) {
     const r = result as Record<string, unknown>;
-    if (typeof r.count === "number") resultInfo = `${r.count} found`;
-    else if (r.total_members) resultInfo = `${r.total_members} members`;
+    if (typeof r.count === "number") resultCount = `${r.count} result${r.count !== 1 ? "s" : ""}`;
+    else if (r.total_members) resultCount = `${r.total_members} members`;
+    else if (Array.isArray(r.results)) resultCount = `${r.results.length} result${r.results.length !== 1 ? "s" : ""}`;
+    else if (Array.isArray(r.profiles)) resultCount = `${r.profiles.length} profile${r.profiles.length !== 1 ? "s" : ""}`;
   }
 
   return (
-    <div className="flex items-center gap-2 px-4 py-1.5 text-muted-foreground text-sm">
-      <SearchIcon className="size-3.5 shrink-0" />
-      <span>{label}</span>
-      {detail && <span className="text-foreground/70 font-medium">{detail}</span>}
-      {resultInfo && <span className="ml-auto text-xs opacity-60">{resultInfo}</span>}
+    <div className="my-1 rounded-md border border-border/40 bg-muted/20 text-sm overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex w-full items-center gap-2 px-3 py-2 hover:bg-muted/40 transition-colors text-left"
+      >
+        {isRunning ? (
+          <div className="size-3.5 shrink-0 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
+        ) : (
+          <SearchIcon className="size-3.5 shrink-0 text-muted-foreground" />
+        )}
+        <span className="font-medium text-foreground/80">{label}</span>
+        {summary && <span className="text-muted-foreground">{summary}</span>}
+        {resultCount && !isRunning && (
+          <span className="ml-auto text-xs text-muted-foreground/70 tabular-nums">{resultCount}</span>
+        )}
+        <ChevronRightIcon className={cn("size-3.5 shrink-0 text-muted-foreground/50 transition-transform", expanded && "rotate-90")} />
+      </button>
+
+      {expanded && (
+        <div className="border-t border-border/30 px-3 py-2 space-y-2">
+          {args && Object.keys(args as object).length > 0 && (
+            <div>
+              <p className="text-[11px] font-medium text-muted-foreground/70 uppercase tracking-wider mb-1">Input</p>
+              <pre className="text-xs text-foreground/70 bg-muted/30 rounded px-2 py-1.5 overflow-x-auto">
+                {JSON.stringify(args, null, 2)}
+              </pre>
+            </div>
+          )}
+          {result && !isRunning && (
+            <div>
+              <p className="text-[11px] font-medium text-muted-foreground/70 uppercase tracking-wider mb-1">Output</p>
+              <pre className="text-xs text-foreground/70 bg-muted/30 rounded px-2 py-1.5 overflow-x-auto max-h-64 overflow-y-auto">
+                {JSON.stringify(result, null, 2)}
+              </pre>
+            </div>
+          )}
+          {isRunning && (
+            <p className="text-xs text-muted-foreground italic">Running...</p>
+          )}
+        </div>
+      )}
     </div>
   );
 };
