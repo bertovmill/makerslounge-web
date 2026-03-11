@@ -6,52 +6,43 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { cn } from "@/lib/utils";
-import { useTheme } from "@/context/ThemeContext";
 import {
+  Home,
   Users,
   Calendar,
-  User,
   MessageCircle,
   Search,
   SquarePen,
-  Sun,
-  Moon,
-  Settings,
   PanelLeft,
 } from "lucide-react";
+import UserMenu from "./UserMenu";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 const NAV_ITEMS = [
-  { href: "/home", label: "New task", icon: SquarePen },
+  { href: "/home", label: "Home", icon: Home },
+  { href: "/new", label: "New task", icon: SquarePen },
   { href: "/people", label: "People", icon: Users },
   { href: "/messages", label: "Messages", icon: MessageCircle },
   { href: "/matcher", label: "AI Match", icon: Search },
   { href: "/events", label: "Events", icon: Calendar },
 ];
 
-const BOTTOM_ITEMS = [
-  { href: "/profile", label: "Profile", icon: User },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+// Profile and Settings are now in UserMenu dropdown
 
 const MOBILE_TABS = [
-  { href: "/home", label: "Home", icon: SquarePen },
+  { href: "/home", label: "Home", icon: Home },
   { href: "/people", label: "People", icon: Users },
   { href: "/messages", label: "Messages", icon: MessageCircle },
   { href: "/events", label: "Events", icon: Calendar },
-  { href: "/profile", label: "Profile", icon: User },
 ];
 
 export default function Sidebar() {
   const { user } = useAuth();
   const pathname = usePathname();
-  const { resolved, setTheme } = useTheme();
   const { collapsed, toggleCollapsed } = useSidebar();
   const [unreadCount, setUnreadCount] = useState(0);
   const [logoHovered, setLogoHovered] = useState(false);
-
-  const toggleTheme = () => setTheme(resolved === "dark" ? "light" : "dark");
 
   const isHidden = pathname === "/" || pathname === "/auth" || pathname === "/onboarding";
 
@@ -191,38 +182,12 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        {/* Bottom section */}
-        <div className={cn("pb-3 space-y-0.5 border-t border-border pt-2", collapsed ? "px-1.5" : "px-2")}>
-          {BOTTOM_ITEMS.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              title={collapsed ? label : undefined}
-              className={cn(
-                "flex items-center rounded-lg text-sm transition-colors",
-                collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2",
-                isActive(href)
-                  ? "text-foreground bg-secondary font-medium"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-              )}
-            >
-              <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={isActive(href) ? 2.2 : 1.8} />
-              {!collapsed && label}
-            </Link>
-          ))}
-          <button
-            onClick={toggleTheme}
-            title={collapsed ? (resolved === "dark" ? "Light mode" : "Dark mode") : undefined}
-            className={cn(
-              "flex items-center rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors w-full",
-              collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2"
-            )}
-          >
-            {resolved === "dark" ? <Sun className="w-[18px] h-[18px] shrink-0" /> : <Moon className="w-[18px] h-[18px] shrink-0" />}
-            {!collapsed && (resolved === "dark" ? "Light mode" : "Dark mode")}
-          </button>
-        </div>
       </aside>
+
+      {/* Desktop: User menu in top-right corner */}
+      <div className="hidden md:flex fixed top-3 right-4 z-[60]">
+        <UserMenu />
+      </div>
 
       {/* Mobile: Top bar */}
       <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-[calc(2.75rem+env(safe-area-inset-top))] px-4 pt-[env(safe-area-inset-top)] border-b border-border/50 bg-background/80 backdrop-blur-lg">
@@ -231,15 +196,7 @@ export default function Sidebar() {
           <Image src="/logo-light.svg" alt="MakersLounge" width={16} height={17} className="hidden dark:block" />
           <span className="text-base font-serif tracking-tight text-foreground">makerslounge</span>
         </Link>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={toggleTheme}
-            className="p-2 text-muted-foreground active:opacity-60"
-            aria-label="Toggle theme"
-          >
-            {resolved === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
-        </div>
+        <UserMenu />
       </header>
       <div className="md:hidden h-[calc(2.75rem+env(safe-area-inset-top))]" />
 
