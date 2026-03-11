@@ -35,7 +35,7 @@ GUIDELINES:
 - Always use tools to find people — don't make up profiles
 - When recommending people, explain WHY they match based on their actual profile data
 - If the request is vague, ask a clarifying question before searching
-- Format names in bold: **Name**
+- Format names as bold links to their profile: [**Name**](/p/username) — always use the profile_url from the tool results
 - Suggest 2-5 people per recommendation
 - If the user asks to filter or search differently, use the tools again`;
 
@@ -243,7 +243,10 @@ function formatProfile(p: {
   const profile: Record<string, unknown> = {
     name: p.name || "Anonymous",
   };
-  if (p.username) profile.username = p.username;
+  if (p.username) {
+    profile.username = p.username;
+    profile.profile_url = `/p/${p.username}`;
+  }
   if (p.bio) profile.bio = p.bio;
   if (p.skills?.length) profile.skills = p.skills;
   if (p.currently_building) {
