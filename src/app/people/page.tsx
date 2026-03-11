@@ -170,7 +170,7 @@ function PeopleContent() {
 
           {/* Results */}
           {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <div className={`grid gap-3 ${matcherOpen ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-2" : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"}`}>
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="rounded-md border border-border p-5 space-y-3">
                   <div className="w-12 h-12 rounded-full bg-secondary animate-pulse" />
@@ -184,7 +184,7 @@ function PeopleContent() {
               <p className="text-sm text-muted-foreground">No people found. Try adjusting your search.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <div className={`grid gap-3 ${matcherOpen ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-2" : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"}`}>
               {profiles.map((profile) => (
                 <UserCard
                   key={profile.id}
