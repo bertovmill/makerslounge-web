@@ -10,6 +10,7 @@ import {
   MessagePrimitive,
   ThreadPrimitive,
 } from "@assistant-ui/react";
+import type { ToolCallMessagePartProps } from "@assistant-ui/react";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -18,8 +19,51 @@ import {
   RefreshCwIcon,
   SquareIcon,
   Sparkles,
+  Search,
+  Users,
+  UserCheck,
+  Globe,
+  Send,
+  Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import type { FC } from "react";
+
+/* ─── Tool display labels ─── */
+
+const TOOL_META: Record<string, { label: string; icon: FC<{ className?: string }> }> = {
+  search_makers: { label: "Searching makers", icon: Search },
+  filter_by_skills: { label: "Filtering by skills", icon: Users },
+  find_looking_for: { label: "Finding skill matches", icon: UserCheck },
+  get_maker_profile: { label: "Looking up profile", icon: Users },
+  browse_community: { label: "Browsing community", icon: Globe },
+  send_intro_message: { label: "Sending introduction", icon: Send },
+};
+
+/* ─── Tool call fallback component ─── */
+
+const ToolCallFallback: FC<ToolCallMessagePartProps> = ({ toolName, status }) => {
+  const meta = TOOL_META[toolName] || { label: toolName, icon: Search };
+  const Icon = meta.icon;
+  const isRunning = status.type === "running" || status.type === "requires-action";
+
+  return (
+    <div className="flex items-center gap-2.5 py-2 px-3 my-1.5 rounded-lg bg-secondary/50 border border-border/40 text-sm">
+      {isRunning ? (
+        <Loader2 className="w-4 h-4 text-primary animate-spin flex-shrink-0" />
+      ) : (
+        <CheckCircle2 className="w-4 h-4 text-muted-foreground/60 flex-shrink-0" />
+      )}
+      <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+      <span className={cn("font-medium", isRunning ? "text-foreground" : "text-muted-foreground/70")}>
+        {meta.label}
+        {isRunning && <span className="text-muted-foreground font-normal">...</span>}
+      </span>
+    </div>
+  );
+};
+
+/* ─── Main thread ─── */
 
 export const MayThread: FC = () => {
   return (
@@ -30,7 +74,6 @@ export const MayThread: FC = () => {
       }}
     >
       <ThreadPrimitive.Viewport
-        turnAnchor="top"
         className="aui-thread-viewport relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth px-4 pt-4"
       >
         <AuiIf condition={(s) => s.thread.isEmpty}>
@@ -44,12 +87,14 @@ export const MayThread: FC = () => {
               AssistantMessage,
             }}
           />
+        </AuiIf>
 
-          <ThreadPrimitive.ViewportFooter className="aui-thread-viewport-footer sticky bottom-0 mx-auto mt-auto flex w-full max-w-(--thread-max-width) flex-col gap-3 overflow-hidden rounded-t-2xl bg-background px-2 pb-3 md:pb-4">
+        <ThreadPrimitive.ViewportFooter className="aui-thread-viewport-footer sticky bottom-0 mx-auto mt-auto flex w-full max-w-(--thread-max-width) flex-col gap-3 overflow-hidden bg-background px-2 pb-3 md:pb-4">
+          <AuiIf condition={(s) => !s.thread.isEmpty}>
             <ThreadScrollToBottom />
             <ConversationComposer />
-          </ThreadPrimitive.ViewportFooter>
-        </AuiIf>
+          </AuiIf>
+        </ThreadPrimitive.ViewportFooter>
       </ThreadPrimitive.Viewport>
     </ThreadPrimitive.Root>
   );
@@ -69,10 +114,11 @@ const ThreadScrollToBottom: FC = () => {
   );
 };
 
+/* ─── Welcome screen (Manus-style) ─── */
+
 const MayWelcome: FC = () => {
   return (
     <div className="mx-auto flex w-full max-w-[640px] grow flex-col items-center justify-center px-4 pb-24">
-      {/* Big centered heading */}
       <h1 className="fade-in slide-in-from-bottom-2 animate-in fill-mode-both text-4xl sm:text-5xl tracking-tight leading-[1.15] text-center mb-10 duration-300">
         How can May help you
         <br />
@@ -118,7 +164,6 @@ const MayWelcome: FC = () => {
         </ComposerPrimitive.Root>
       </div>
 
-      {/* Suggestion pills */}
       <MaySuggestions />
     </div>
   );
@@ -155,7 +200,7 @@ const MaySuggestions: FC = () => {
   );
 };
 
-/* ─── Conversation mode (after first message) ─── */
+/* ─── Conversation composer (after first message) ─── */
 
 const ConversationComposer: FC = () => {
   return (
@@ -219,6 +264,9 @@ const AssistantMessage: FC = () => {
           <MessagePrimitive.Parts
             components={{
               Text: MarkdownText,
+              tools: {
+                Fallback: ToolCallFallback,
+              },
             }}
           />
           <MessageError />
