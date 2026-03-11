@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import {
   ActionBarPrimitive,
   AuiIf,
+  ChainOfThoughtPrimitive,
   ComposerPrimitive,
   ErrorPrimitive,
   MessagePrimitive,
@@ -15,6 +16,8 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
   CheckIcon,
+  ChevronRightIcon,
+  ChevronDownIcon,
   CopyIcon,
   RefreshCwIcon,
   SquareIcon,
@@ -29,7 +32,7 @@ import {
 } from "lucide-react";
 import type { FC } from "react";
 
-/* ─── Tool display labels ─── */
+/* ─── Tool display config ─── */
 
 const TOOL_META: Record<string, { label: string; icon: FC<{ className?: string }> }> = {
   search_makers: { label: "Searching makers", icon: Search },
@@ -40,7 +43,7 @@ const TOOL_META: Record<string, { label: string; icon: FC<{ className?: string }
   send_intro_message: { label: "Sending introduction", icon: Send },
 };
 
-/* ─── Tool call fallback component ─── */
+/* ─── Tool call fallback (shown inside chain of thought) ─── */
 
 const ToolCallFallback: FC<ToolCallMessagePartProps> = ({ toolName, status }) => {
   const meta = TOOL_META[toolName] || { label: toolName, icon: Search };
@@ -48,18 +51,57 @@ const ToolCallFallback: FC<ToolCallMessagePartProps> = ({ toolName, status }) =>
   const isRunning = status.type === "running" || status.type === "requires-action";
 
   return (
-    <div className="flex items-center gap-2.5 py-2 px-3 my-1.5 rounded-lg bg-secondary/50 border border-border/40 text-sm">
+    <div className="flex items-center gap-2.5 py-1.5 px-3 rounded-md text-sm">
       {isRunning ? (
-        <Loader2 className="w-4 h-4 text-primary animate-spin flex-shrink-0" />
+        <Loader2 className="w-3.5 h-3.5 text-primary animate-spin flex-shrink-0" />
       ) : (
-        <CheckCircle2 className="w-4 h-4 text-muted-foreground/60 flex-shrink-0" />
+        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500/70 flex-shrink-0" />
       )}
-      <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-      <span className={cn("font-medium", isRunning ? "text-foreground" : "text-muted-foreground/70")}>
+      <Icon className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+      <span className={cn("text-[13px]", isRunning ? "text-foreground" : "text-muted-foreground")}>
         {meta.label}
-        {isRunning && <span className="text-muted-foreground font-normal">...</span>}
+        {isRunning && "..."}
       </span>
     </div>
+  );
+};
+
+/* ─── Reasoning text (shown inside chain of thought) ─── */
+
+const Reasoning: FC<{ text: string }> = ({ text }) => {
+  return (
+    <p className="whitespace-pre-wrap px-3 py-1.5 text-muted-foreground text-[13px] italic">
+      {text}
+    </p>
+  );
+};
+
+/* ─── Chain of Thought accordion ─── */
+
+const ChainOfThought: FC = () => {
+  return (
+    <ChainOfThoughtPrimitive.Root className="my-2 rounded-xl border border-border/60 bg-secondary/30 overflow-hidden">
+      <ChainOfThoughtPrimitive.AccordionTrigger className="flex w-full cursor-pointer items-center gap-2 px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">
+        <AuiIf condition={(s) => s.chainOfThought.collapsed}>
+          <ChevronRightIcon className="w-4 h-4 flex-shrink-0" />
+        </AuiIf>
+        <AuiIf condition={(s) => !s.chainOfThought.collapsed}>
+          <ChevronDownIcon className="w-4 h-4 flex-shrink-0" />
+        </AuiIf>
+        <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
+        <span>Thinking</span>
+      </ChainOfThoughtPrimitive.AccordionTrigger>
+      <AuiIf condition={(s) => !s.chainOfThought.collapsed}>
+        <div className="border-t border-border/40 py-1">
+          <ChainOfThoughtPrimitive.Parts
+            components={{
+              Reasoning,
+              tools: { Fallback: ToolCallFallback },
+            }}
+          />
+        </div>
+      </AuiIf>
+    </ChainOfThoughtPrimitive.Root>
   );
 };
 
@@ -125,7 +167,6 @@ const MayWelcome: FC = () => {
         today?
       </h1>
 
-      {/* Manus-style input box */}
       <div className="w-full mb-5">
         <ComposerPrimitive.Root className="relative flex w-full flex-col">
           <div className="flex w-full flex-col rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] overflow-hidden transition-shadow focus-within:shadow-[var(--shadow-card-hover)] focus-within:border-border">
@@ -264,9 +305,7 @@ const AssistantMessage: FC = () => {
           <MessagePrimitive.Parts
             components={{
               Text: MarkdownText,
-              tools: {
-                Fallback: ToolCallFallback,
-              },
+              ChainOfThought,
             }}
           />
           <MessageError />
