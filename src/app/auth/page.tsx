@@ -134,7 +134,7 @@ function AuthContent() {
         speedMax={1.2}
         speedScale={0.8}
       />
-      <div className="relative z-10 w-full max-w-sm">
+      <div className="relative z-10 w-full max-w-sm bg-white/60 dark:bg-black/40 backdrop-blur-xl rounded-2xl p-6 md:p-8">
         {/* Back button */}
         <button
           onClick={() => router.back()}
