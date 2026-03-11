@@ -5,17 +5,22 @@ import { cn } from "@/lib/utils";
 import {
   ActionBarPrimitive,
   AuiIf,
+  ChainOfThoughtPrimitive,
   ComposerPrimitive,
   ErrorPrimitive,
   MessagePrimitive,
   ThreadPrimitive,
 } from "@assistant-ui/react";
+import type { ToolCallMessagePartComponent } from "@assistant-ui/react";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
   CheckIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
   CopyIcon,
   RefreshCwIcon,
+  SearchIcon,
   SquareIcon,
 } from "lucide-react";
 import type { FC } from "react";
@@ -169,6 +174,54 @@ const ComposerAction: FC = () => {
   );
 };
 
+const TOOL_LABELS: Record<string, string> = {
+  search_people: "Searching community",
+  filter_by_skills: "Filtering by skills",
+  get_profile_details: "Looking up profile",
+  find_looking_for: "Finding matches",
+  browse_community: "Browsing community",
+};
+
+const ToolFallback: ToolCallMessagePartComponent = ({ toolName }) => {
+  const label = TOOL_LABELS[toolName] || "Working";
+  return (
+    <div className="flex items-center gap-2 px-4 py-2 text-muted-foreground text-sm">
+      <SearchIcon className="size-3.5 animate-pulse" />
+      <span>{label}...</span>
+    </div>
+  );
+};
+
+const Reasoning: FC<{ text: string }> = ({ text }) => {
+  return (
+    <p className="whitespace-pre-wrap px-4 py-2 text-muted-foreground text-sm italic">
+      {text}
+    </p>
+  );
+};
+
+const ChainOfThought: FC = () => {
+  return (
+    <ChainOfThoughtPrimitive.Root className="my-2 rounded-lg border border-border/50">
+      <ChainOfThoughtPrimitive.AccordionTrigger className="flex w-full cursor-pointer items-center gap-2 px-4 py-2 font-medium text-sm text-muted-foreground hover:bg-muted/50 transition-colors rounded-lg">
+        <AuiIf condition={(s) => s.chainOfThought.collapsed}>
+          <ChevronRightIcon className="size-4" />
+        </AuiIf>
+        <AuiIf condition={(s) => !s.chainOfThought.collapsed}>
+          <ChevronDownIcon className="size-4" />
+        </AuiIf>
+        <SearchIcon className="size-3.5" />
+        Searching
+      </ChainOfThoughtPrimitive.AccordionTrigger>
+      <AuiIf condition={(s) => !s.chainOfThought.collapsed}>
+        <ChainOfThoughtPrimitive.Parts
+          components={{ Reasoning, tools: { Fallback: ToolFallback } }}
+        />
+      </AuiIf>
+    </ChainOfThoughtPrimitive.Root>
+  );
+};
+
 const AssistantMessage: FC = () => {
   return (
     <MessagePrimitive.Root
@@ -179,6 +232,7 @@ const AssistantMessage: FC = () => {
         <MessagePrimitive.Parts
           components={{
             Text: MarkdownText,
+            ChainOfThought,
           }}
         />
         <MessageError />
