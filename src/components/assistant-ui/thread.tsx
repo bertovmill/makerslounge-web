@@ -182,12 +182,32 @@ const TOOL_LABELS: Record<string, string> = {
   browse_community: "Browsing community",
 };
 
-const ToolFallback: ToolCallMessagePartComponent = ({ toolName }) => {
+const ToolFallback: ToolCallMessagePartComponent = ({ toolName, args, result }) => {
   const label = TOOL_LABELS[toolName] || "Working";
+
+  // Build a detail string from the tool args
+  let detail = "";
+  if (args) {
+    const a = args as Record<string, unknown>;
+    if (a.query) detail = `"${a.query}"`;
+    else if (a.skills && Array.isArray(a.skills)) detail = (a.skills as string[]).join(", ");
+    else if (a.name_or_username) detail = `"${a.name_or_username}"`;
+  }
+
+  // Show result count if available
+  let resultInfo = "";
+  if (result) {
+    const r = result as Record<string, unknown>;
+    if (typeof r.count === "number") resultInfo = `${r.count} found`;
+    else if (r.total_members) resultInfo = `${r.total_members} members`;
+  }
+
   return (
-    <div className="flex items-center gap-2 px-4 py-2 text-muted-foreground text-sm">
-      <SearchIcon className="size-3.5 animate-pulse" />
-      <span>{label}...</span>
+    <div className="flex items-center gap-2 px-4 py-1.5 text-muted-foreground text-sm">
+      <SearchIcon className="size-3.5 shrink-0" />
+      <span>{label}</span>
+      {detail && <span className="text-foreground/70 font-medium">{detail}</span>}
+      {resultInfo && <span className="ml-auto text-xs opacity-60">{resultInfo}</span>}
     </div>
   );
 };

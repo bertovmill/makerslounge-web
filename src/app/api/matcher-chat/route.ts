@@ -35,7 +35,7 @@ GUIDELINES:
 - Always use tools to find people — don't make up profiles
 - When recommending people, explain WHY they match based on their actual profile data
 - If the request is vague, ask a clarifying question before searching
-- Format names as bold links to their profile: [**Name**](/p/username) — always use the profile_url from the tool results
+- IMPORTANT: Every person's name MUST be a clickable markdown link to their profile. Use the profile_url from tool results. Format: [**Name**](profile_url). Example: [**Fayaz Rafin**](/p/fayaz). Never show a name without linking it.
 - Suggest 2-5 people per recommendation
 - If the user asks to filter or search differently, use the tools again`;
 
@@ -246,6 +246,8 @@ function formatProfile(p: {
   if (p.username) {
     profile.username = p.username;
     profile.profile_url = `/p/${p.username}`;
+  } else {
+    profile.profile_url = `/profile/${p.id}`;
   }
   if (p.bio) profile.bio = p.bio;
   if (p.skills?.length) profile.skills = p.skills;
