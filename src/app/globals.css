@@ -8,6 +8,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-instrument-serif);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -33,7 +34,7 @@
 :root {
   --radius: 0.5rem;
 
-  /* Warm off-white base — not sterile */
+  /* Light mode — warm, clean */
   --background: #faf9f7;
   --foreground: #1a1a1a;
 
@@ -42,16 +43,15 @@
   --popover: #ffffff;
   --popover-foreground: #1a1a1a;
 
-  /* Light blue accent */
   --primary: #4A9FE5;
   --primary-foreground: #ffffff;
 
-  --secondary: #f3f1ee;
+  --secondary: #f0eee9;
   --secondary-foreground: #1a1a1a;
-  --muted: #f3f1ee;
+  --muted: #f0eee9;
   --muted-foreground: #6b6560;
 
-  --accent: #f3f1ee;
+  --accent: #f0eee9;
   --accent-foreground: #1a1a1a;
 
   --destructive: #c43333;
@@ -59,6 +59,49 @@
   --border: #e8e5e0;
   --input: #e8e5e0;
   --ring: #4A9FE5;
+
+  /* Shadows & accents */
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.03);
+  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.07), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --shadow-input-focus: 0 0 0 3px rgba(74, 159, 229, 0.12);
+  --primary-gradient: linear-gradient(135deg, #4A9FE5 0%, #3b8ad4 100%);
+  --surface-shine: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 50%);
+}
+
+.dark {
+  --background: #111110;
+  --foreground: #e8e6e1;
+
+  --card: #1a1918;
+  --card-foreground: #e8e6e1;
+  --popover: #1a1918;
+  --popover-foreground: #e8e6e1;
+
+  --primary: #5eb0f0;
+  --primary-foreground: #0f0f0e;
+
+  --secondary: #232220;
+  --secondary-foreground: #e8e6e1;
+  --muted: #232220;
+  --muted-foreground: #8a8580;
+
+  --accent: #232220;
+  --accent-foreground: #e8e6e1;
+
+  --destructive: #e54d4d;
+
+  --border: #2e2d2a;
+  --input: #2e2d2a;
+  --ring: #5eb0f0;
+
+  /* Shadows & accents — dark mode */
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 1px rgba(255, 255, 255, 0.05);
+  --shadow-card-hover: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 1px rgba(255, 255, 255, 0.08);
+  --shadow-input-focus: 0 0 0 3px rgba(94, 176, 240, 0.15);
+  --primary-gradient: linear-gradient(135deg, #5eb0f0 0%, #4a9ce0 100%);
+  --surface-shine: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 50%);
 }
 
 @layer base {
@@ -68,6 +111,38 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+}
+
+/* --- Global polish --- */
+
+/* Headings use Instrument Serif */
+h1, h2, h3 {
+  font-family: var(--font-serif), Georgia, serif;
+  letter-spacing: -0.01em;
+  font-weight: 400;
+}
+
+/* Sticky headers get a subtle shadow when scrolled */
+header[class*="sticky"], header[class*="fixed"] {
+  box-shadow: var(--shadow-subtle);
+}
+
+/* All border-t section dividers get a subtle gradient fade */
+section[class*="border-t"] {
+  border-image: linear-gradient(to right, transparent, var(--border), transparent) 1;
+}
+
+/* iOS group cards get depth */
+.ios-group {
+  box-shadow: var(--shadow-card);
+}
+
+/* Smooth theme transitions */
+html.transitioning,
+html.transitioning *,
+html.transitioning *::before,
+html.transitioning *::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease !important;
 }
 
 /* iOS-like mobile feel */

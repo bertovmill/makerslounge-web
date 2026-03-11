@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
+import { DottedGlowBackground } from "@/components/ui/dotted-glow-background";
 
 function AuthContent() {
   const router = useRouter();
@@ -28,7 +29,7 @@ function AuthContent() {
       if (!profile || !profile.onboarding_completed) {
         router.push("/onboarding");
       } else {
-        router.push("/people");
+        router.push("/home");
       }
     };
 
@@ -118,8 +119,22 @@ function AuthContent() {
   };
 
   return (
-    <div className="h-svh flex items-center justify-center px-4 overflow-hidden pt-[env(safe-area-inset-top,48px)]">
-      <div className="w-full max-w-sm">
+    <div className="relative h-svh flex items-center justify-center px-4 overflow-hidden pt-[env(safe-area-inset-top,48px)]">
+      <DottedGlowBackground
+        className="pointer-events-none"
+        opacity={0.8}
+        gap={14}
+        radius={1.4}
+        colorLightVar="--color-neutral-400"
+        glowColorLightVar="--color-neutral-500"
+        colorDarkVar="--color-neutral-500"
+        glowColorDarkVar="--color-neutral-400"
+        backgroundOpacity={0}
+        speedMin={0.2}
+        speedMax={1.2}
+        speedScale={0.8}
+      />
+      <div className="relative z-10 w-full max-w-sm">
         {/* Back button */}
         <button
           onClick={() => router.back()}
@@ -131,14 +146,15 @@ function AuthContent() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <Link href="/" className="text-lg font-semibold tracking-tight inline-block mb-6">
-            MakersLounge
+          <Link href="/" className="inline-block mb-6">
+            <img src="/logo.svg" alt="MakersLounge" className="w-12 h-12 mx-auto dark:hidden" />
+            <img src="/logo-light.svg" alt="MakersLounge" className="w-12 h-12 mx-auto hidden dark:block" />
           </Link>
-          <h1 className="text-2xl font-semibold mb-1">
-            {isSignUp ? "Create your account" : "Welcome back"}
+          <h1 className="text-2xl mb-1">
+            Sign in or sign up
           </h1>
           <p className="text-sm text-muted-foreground">
-            {isSignUp ? "Start connecting with makers" : "Sign in to continue"}
+            Start connecting with makers
           </p>
         </div>
 
