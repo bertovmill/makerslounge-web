@@ -11,8 +11,7 @@ import {
   Users,
   Calendar,
   MessageCircle,
-  Search,
-  SquarePen,
+  Sparkles,
   PanelLeft,
 } from "lucide-react";
 import UserMenu from "./UserMenu";
@@ -21,10 +20,9 @@ import { supabase } from "@/lib/supabase";
 
 const NAV_ITEMS = [
   { href: "/home", label: "Home", icon: Home },
-  { href: "/new", label: "New task", icon: SquarePen },
+  { href: "/new", label: "Get Matched", icon: Sparkles },
   { href: "/people", label: "People", icon: Users },
   { href: "/messages", label: "Messages", icon: MessageCircle },
-  { href: "/matcher", label: "AI Match", icon: Search },
   { href: "/events", label: "Events", icon: Calendar },
 ];
 
