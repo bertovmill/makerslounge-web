@@ -1,7 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ExternalLink, MessageCircle } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { useState } from "react";
 
 interface ProfileViewProps {
   profile: {
@@ -20,6 +24,50 @@ interface ProfileViewProps {
 }
 
 export default function ProfileView({ profile }: ProfileViewProps) {
+  const { user } = useAuth();
+  const router = useRouter();
+  const [startingChat, setStartingChat] = useState(false);
+
+  async function handleMessage() {
+    if (!user) {
+      router.push("/auth");
+      return;
+    }
+    if (startingChat) return;
+    setStartingChat(true);
+
+    // Order IDs so participant_1 < participant_2
+    const [p1, p2] = [user.id, profile.id].sort();
+
+    // Check if conversation already exists
+    const { data: existing } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("participant_1", p1)
+      .eq("participant_2", p2)
+      .single();
+
+    if (existing) {
+      router.push(`/messages/${existing.id}`);
+      return;
+    }
+
+    // Create new conversation
+    const { data: newConvo, error } = await supabase
+      .from("conversations")
+      .insert({ participant_1: p1, participant_2: p2 })
+      .select("id")
+      .single();
+
+    setStartingChat(false);
+
+    if (newConvo) {
+      router.push(`/messages/${newConvo.id}`);
+    } else if (error) {
+      console.error("Failed to create conversation:", error);
+    }
+  }
+
   const initials = profile.name
     ?.split(" ")
     .map((n) => n[0])
@@ -62,6 +110,20 @@ export default function ProfileView({ profile }: ProfileViewProps) {
           )}
         </div>
       </div>
+
+      {/* Message button (don't show on own profile) */}
+      {user && user.id !== profile.id && (
+        <div className="mb-6">
+          <button
+            onClick={handleMessage}
+            disabled={startingChat}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Message
+          </button>
+        </div>
+      )}
 
       {/* Info sections in iOS grouped style on mobile */}
       <div className="space-y-4 md:space-y-6">
