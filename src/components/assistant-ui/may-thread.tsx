@@ -37,17 +37,19 @@ export const MayThread: FC = () => {
           <MayWelcome />
         </AuiIf>
 
-        <ThreadPrimitive.Messages
-          components={{
-            UserMessage,
-            AssistantMessage,
-          }}
-        />
+        <AuiIf condition={(s) => !s.thread.isEmpty}>
+          <ThreadPrimitive.Messages
+            components={{
+              UserMessage,
+              AssistantMessage,
+            }}
+          />
 
-        <ThreadPrimitive.ViewportFooter className="aui-thread-viewport-footer sticky bottom-0 mx-auto mt-auto flex w-full max-w-(--thread-max-width) flex-col gap-3 overflow-hidden rounded-t-2xl bg-background px-2 pb-3 md:pb-4">
-          <ThreadScrollToBottom />
-          <Composer />
-        </ThreadPrimitive.ViewportFooter>
+          <ThreadPrimitive.ViewportFooter className="aui-thread-viewport-footer sticky bottom-0 mx-auto mt-auto flex w-full max-w-(--thread-max-width) flex-col gap-3 overflow-hidden rounded-t-2xl bg-background px-2 pb-3 md:pb-4">
+            <ThreadScrollToBottom />
+            <ConversationComposer />
+          </ThreadPrimitive.ViewportFooter>
+        </AuiIf>
       </ThreadPrimitive.Viewport>
     </ThreadPrimitive.Root>
   );
@@ -69,40 +71,70 @@ const ThreadScrollToBottom: FC = () => {
 
 const MayWelcome: FC = () => {
   return (
-    <div className="mx-auto my-auto flex w-full max-w-(--thread-max-width) grow flex-col">
-      <div className="flex w-full grow flex-col items-center justify-center">
-        <div className="flex size-full flex-col justify-center px-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-primary" />
+    <div className="mx-auto flex w-full max-w-[640px] grow flex-col items-center justify-center px-4 pb-24">
+      {/* Big centered heading */}
+      <h1 className="fade-in slide-in-from-bottom-2 animate-in fill-mode-both text-4xl sm:text-5xl tracking-tight leading-[1.15] text-center mb-10 duration-300">
+        How can May help you
+        <br />
+        today?
+      </h1>
+
+      {/* Manus-style input box */}
+      <div className="w-full mb-5">
+        <ComposerPrimitive.Root className="relative flex w-full flex-col">
+          <div className="flex w-full flex-col rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] overflow-hidden transition-shadow focus-within:shadow-[var(--shadow-card-hover)] focus-within:border-border">
+            <ComposerPrimitive.Input
+              placeholder="Describe who you're looking for..."
+              className="min-h-[72px] max-h-40 w-full resize-none bg-transparent px-5 pt-4 pb-12 text-[15px] outline-none placeholder:text-muted-foreground/50 focus-visible:ring-0"
+              rows={2}
+              autoFocus
+              aria-label="Message input"
+            />
+            <div className="absolute bottom-3 right-3 flex items-center gap-2">
+              <AuiIf condition={(s) => s.thread.isRunning}>
+                <ComposerPrimitive.Cancel asChild>
+                  <button
+                    type="button"
+                    className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center hover:opacity-80 transition-opacity"
+                    aria-label="Stop generating"
+                  >
+                    <SquareIcon className="w-3 h-3 fill-current" />
+                  </button>
+                </ComposerPrimitive.Cancel>
+              </AuiIf>
+              <AuiIf condition={(s) => !s.thread.isRunning}>
+                <ComposerPrimitive.Send asChild>
+                  <button
+                    type="submit"
+                    className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-30"
+                    aria-label="Send message"
+                  >
+                    <ArrowUpIcon className="w-4 h-4" />
+                  </button>
+                </ComposerPrimitive.Send>
+              </AuiIf>
             </div>
-            <span className="text-sm font-medium text-muted-foreground">May</span>
           </div>
-          <h1 className="fade-in slide-in-from-bottom-1 animate-in fill-mode-both font-semibold text-2xl duration-200">
-            Hey! I&apos;m May, your maker connector.
-          </h1>
-          <p className="fade-in slide-in-from-bottom-1 animate-in fill-mode-both text-muted-foreground text-base mt-1 delay-75 duration-200">
-            Tell me what you&apos;re working on or who you need, and I&apos;ll find the right people in the community. I can also introduce you directly.
-          </p>
-        </div>
+        </ComposerPrimitive.Root>
       </div>
+
+      {/* Suggestion pills */}
       <MaySuggestions />
     </div>
   );
 };
 
 const SUGGESTIONS = [
-  "I need a co-founder who knows AI and backend dev",
-  "Who's building something in the AI agent space?",
-  "Find someone who can help me with product design",
-  "I want to meet other founders in Toronto",
-  "Who should I collaborate with on my startup?",
-  "Show me who's in the community",
+  "Find me a co-founder",
+  "Who's building with AI?",
+  "Product designers",
+  "Toronto founders",
+  "Who's in the community?",
 ];
 
 const MaySuggestions: FC = () => {
   return (
-    <div className="flex flex-wrap gap-2 pb-4 px-4">
+    <div className="fade-in slide-in-from-bottom-1 animate-in fill-mode-both delay-150 duration-300 flex flex-wrap items-center justify-center gap-2">
       {SUGGESTIONS.map((prompt) => (
         <ThreadPrimitive.Suggestion
           key={prompt}
@@ -113,9 +145,9 @@ const MaySuggestions: FC = () => {
         >
           <Button
             variant="ghost"
-            className="h-auto items-start justify-start rounded-full border px-3.5 py-2 text-left transition-colors hover:bg-muted whitespace-normal"
+            className="h-auto rounded-full border border-border px-4 py-2 text-left transition-colors hover:bg-secondary/50"
           >
-            <span className="text-muted-foreground text-xs leading-snug">{prompt}</span>
+            <span className="text-muted-foreground text-sm">{prompt}</span>
           </Button>
         </ThreadPrimitive.Suggestion>
       ))}
@@ -123,57 +155,55 @@ const MaySuggestions: FC = () => {
   );
 };
 
-const Composer: FC = () => {
+/* ─── Conversation mode (after first message) ─── */
+
+const ConversationComposer: FC = () => {
   return (
     <ComposerPrimitive.Root className="relative flex w-full flex-col">
       <div className="flex w-full flex-col rounded-2xl border border-input bg-background px-1 pt-2 outline-none transition-shadow has-[textarea:focus-visible]:border-ring has-[textarea:focus-visible]:ring-2 has-[textarea:focus-visible]:ring-ring/20">
         <ComposerPrimitive.Input
-          placeholder="Tell May what you need..."
+          placeholder="Ask May anything..."
           className="mb-1 max-h-32 min-h-14 w-full resize-none bg-transparent px-4 pt-2 pb-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-0"
           rows={1}
           autoFocus
           aria-label="Message input"
         />
-        <ComposerAction />
+        <div className="relative mx-2 mb-2 flex items-center justify-end">
+          <AuiIf condition={(s) => !s.thread.isRunning}>
+            <ComposerPrimitive.Send asChild>
+              <TooltipIconButton
+                tooltip="Send message"
+                side="bottom"
+                type="submit"
+                variant="default"
+                size="icon"
+                className="size-8 rounded-full"
+                aria-label="Send message"
+              >
+                <ArrowUpIcon className="size-4" />
+              </TooltipIconButton>
+            </ComposerPrimitive.Send>
+          </AuiIf>
+          <AuiIf condition={(s) => s.thread.isRunning}>
+            <ComposerPrimitive.Cancel asChild>
+              <Button
+                type="button"
+                variant="default"
+                size="icon"
+                className="size-8 rounded-full"
+                aria-label="Stop generating"
+              >
+                <SquareIcon className="size-3 fill-current" />
+              </Button>
+            </ComposerPrimitive.Cancel>
+          </AuiIf>
+        </div>
       </div>
     </ComposerPrimitive.Root>
   );
 };
 
-const ComposerAction: FC = () => {
-  return (
-    <div className="relative mx-2 mb-2 flex items-center justify-end">
-      <AuiIf condition={(s) => !s.thread.isRunning}>
-        <ComposerPrimitive.Send asChild>
-          <TooltipIconButton
-            tooltip="Send message"
-            side="bottom"
-            type="submit"
-            variant="default"
-            size="icon"
-            className="size-8 rounded-full"
-            aria-label="Send message"
-          >
-            <ArrowUpIcon className="size-4" />
-          </TooltipIconButton>
-        </ComposerPrimitive.Send>
-      </AuiIf>
-      <AuiIf condition={(s) => s.thread.isRunning}>
-        <ComposerPrimitive.Cancel asChild>
-          <Button
-            type="button"
-            variant="default"
-            size="icon"
-            className="size-8 rounded-full"
-            aria-label="Stop generating"
-          >
-            <SquareIcon className="size-3 fill-current" />
-          </Button>
-        </ComposerPrimitive.Cancel>
-      </AuiIf>
-    </div>
-  );
-};
+/* ─── Messages ─── */
 
 const AssistantMessage: FC = () => {
   return (
