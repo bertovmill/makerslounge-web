@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.58",
+    "@ai-sdk/deepgram": "^2.0.24",
+    "@ai-sdk/elevenlabs": "^2.0.24",
     "@anthropic-ai/claude-agent-sdk": "^0.2.5",
     "@anthropic-ai/sdk": "^0.71.2",
     "@assistant-ui/react": "^0.12.15",

@@ -21,11 +21,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       style={{ marginLeft: undefined }}
     >
       {/* Desktop sidebar offset */}
-      <div className={`hidden md:block ${collapsed ? "ml-16" : "ml-60"} transition-[margin] duration-200 ease-in-out`}>
+      <div className={`hidden lg:block ${collapsed ? "ml-16" : "ml-60"} transition-[margin] duration-200 ease-in-out`}>
         {children}
       </div>
-      {/* Mobile: no sidebar offset */}
-      <div className="md:hidden">
+      {/* Mobile/Tablet: no sidebar offset */}
+      <div className="lg:hidden">
         {children}
       </div>
     </main>

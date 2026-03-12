@@ -1,23 +1,33 @@
 "use client";
 
+import { useEffect, useMemo, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { WebSpeechDictationAdapter } from "@assistant-ui/react";
 import {
   useChatRuntime,
   AssistantChatTransport,
 } from "@assistant-ui/react-ai-sdk";
 import { Thread } from "@/components/assistant-ui/thread";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useMemo } from "react";
-
-const transport = new AssistantChatTransport({
-  api: "/api/matcher-chat",
-});
+import { DeepgramDictationAdapter } from "@/lib/deepgram-dictation-adapter";
+import { Suspense } from "react";
 
 function MatcherInner() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  const transport = useMemo(
+    () =>
+      new AssistantChatTransport({
+        api: "/api/matcher-chat",
+        body: { userId: user?.id },
+      }),
+    [user?.id],
+  );
+
   const adapters = useMemo(
     () => ({
-      dictation: new WebSpeechDictationAdapter(),
+      dictation: new DeepgramDictationAdapter(),
     }),
     [],
   );
@@ -26,6 +36,12 @@ function MatcherInner() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q");
   const sentRef = useRef(false);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/");
+    }
+  }, [user, loading, router]);
 
   useEffect(() => {
     if (initialQuery && !sentRef.current) {
@@ -39,6 +55,8 @@ function MatcherInner() {
       return () => clearTimeout(timer);
     }
   }, [initialQuery, runtime]);
+
+  if (loading || !user) return null;
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>

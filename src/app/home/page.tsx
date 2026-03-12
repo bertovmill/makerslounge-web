@@ -43,6 +43,7 @@ export default function HomePage() {
   const router = useRouter();
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [feedLoading, setFeedLoading] = useState(true);
+  const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set());
 
   // Compose state
   const [title, setTitle] = useState("");
@@ -66,6 +67,15 @@ export default function HomePage() {
 
   async function fetchFeed() {
     setFeedLoading(true);
+
+    // Fetch blocked users
+    const { data: blocks } = await supabase
+      .from("blocked_users")
+      .select("blocked_id")
+      .eq("blocker_id", user!.id);
+
+    const blockedIds = new Set((blocks || []).map((b) => b.blocked_id));
+    setBlockedUserIds(blockedIds);
 
     const { data: projects } = await supabase
       .from("projects")
@@ -127,15 +137,21 @@ export default function HomePage() {
       });
     });
 
-    const items: FeedItem[] = projects.map((p) => ({
-      project: {
-        ...p,
-        profiles: Array.isArray(p.profiles) ? p.profiles[0] || null : p.profiles,
-      } as FeedProject,
-      likeCount: likeCountMap[p.id] || 0,
-      hasLiked: userLikeSet.has(p.id),
-      comments: commentMap[p.id] || [],
-    }));
+    const items: FeedItem[] = projects
+      .filter((p) => {
+        const prof = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+        const profileId = (prof as { id?: string } | null)?.id;
+        return !profileId || !blockedIds.has(profileId);
+      })
+      .map((p) => ({
+        project: {
+          ...p,
+          profiles: Array.isArray(p.profiles) ? p.profiles[0] || null : p.profiles,
+        } as FeedProject,
+        likeCount: likeCountMap[p.id] || 0,
+        hasLiked: userLikeSet.has(p.id),
+        comments: commentMap[p.id] || [],
+      }));
 
     setFeed(items);
     setFeedLoading(false);
@@ -215,6 +231,11 @@ export default function HomePage() {
     setFeed((prev) => prev.filter((item) => item.project.id !== projectId));
   }
 
+  function handleBlock(blockedUserId: string) {
+    setBlockedUserIds((prev) => new Set([...prev, blockedUserId]));
+    setFeed((prev) => prev.filter((item) => item.project.profiles?.id !== blockedUserId));
+  }
+
   function handleUpdate(projectId: string, newTitle: string, newDescription: string | null) {
     setFeed((prev) =>
       prev.map((item) =>
@@ -291,7 +312,7 @@ export default function HomePage() {
                 className="hidden"
               />
               <button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => { try { fileInputRef.current?.click(); } catch { /* camera access may fail on some devices */ } }}
                 disabled={uploading}
                 className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors disabled:opacity-50"
                 title="Add image"
@@ -338,6 +359,7 @@ export default function HomePage() {
               initialComments={item.comments}
               onDelete={handleDelete}
               onUpdate={handleUpdate}
+              onBlock={handleBlock}
             />
           ))}
         </div>

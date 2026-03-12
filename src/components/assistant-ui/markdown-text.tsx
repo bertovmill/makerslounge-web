@@ -11,6 +11,7 @@ import {
 import remarkGfm from "remark-gfm";
 import { type FC, memo, useState } from "react";
 import { CheckIcon, CopyIcon } from "lucide-react";
+import Link from "next/link";
 
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { cn } from "@/lib/utils";
@@ -78,9 +79,27 @@ const defaultComponents = memoizeMarkdownComponents({
   p: ({ className, ...props }) => (
     <p className={cn("my-2.5 leading-normal first:mt-0 last:mb-0", className)} {...props} />
   ),
-  a: ({ className, ...props }) => (
-    <a className={cn("text-foreground underline underline-offset-2 hover:opacity-70 font-medium", className)} {...props} />
-  ),
+  a: ({ className, href, ...props }) => {
+    const isInternal = href?.startsWith("/");
+    if (isInternal) {
+      return (
+        <Link
+          href={href}
+          className={cn("text-foreground underline underline-offset-2 hover:opacity-70 font-medium", className)}
+          {...props}
+        />
+      );
+    }
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cn("text-foreground underline underline-offset-2 hover:opacity-70 font-medium", className)}
+        {...props}
+      />
+    );
+  },
   blockquote: ({ className, ...props }) => (
     <blockquote className={cn("my-2.5 border-muted-foreground/30 border-l-2 pl-3 text-muted-foreground italic", className)} {...props} />
   ),

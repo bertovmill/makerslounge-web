@@ -54,5 +54,11 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>MakersLounge needs access to your camera to take photos for your posts and profile.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>MakersLounge needs access to your photo library to upload images for your posts and profile.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>MakersLounge needs access to your microphone for voice input.</string>
 </dict>
 </plist>

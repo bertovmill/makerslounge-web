@@ -111,6 +111,7 @@ interface FeedCardProps {
   onAuthRequired?: () => void;
   onDelete?: (projectId: string) => void;
   onUpdate?: (projectId: string, title: string, description: string | null) => void;
+  onBlock?: (blockedUserId: string) => void;
 }
 
 export default function FeedCard({
@@ -122,6 +123,7 @@ export default function FeedCard({
   onAuthRequired,
   onDelete,
   onUpdate,
+  onBlock,
 }: FeedCardProps) {
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [hasLiked, setHasLiked] = useState(initialHasLiked);
@@ -139,6 +141,12 @@ export default function FeedCard({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [isReporting, setIsReporting] = useState(false);
+  const [reportSubmitted, setReportSubmitted] = useState(false);
+  const [isBlocking, setIsBlocking] = useState(false);
   const likeButtonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -307,6 +315,38 @@ export default function FeedCard({
     setIsEditing(false);
   };
 
+  const handleReport = async () => {
+    if (!currentUserId || !reportReason) return;
+    setIsReporting(true);
+    await supabase.from("reports").insert({
+      reporter_id: currentUserId,
+      reported_user_id: project.profiles?.id,
+      project_id: project.id,
+      reason: reportReason,
+      details: reportDetails.trim() || null,
+    });
+    setIsReporting(false);
+    setReportSubmitted(true);
+    setTimeout(() => {
+      setShowReportModal(false);
+      setReportSubmitted(false);
+      setReportReason("");
+      setReportDetails("");
+    }, 1500);
+  };
+
+  const handleBlock = async () => {
+    if (!currentUserId || !project.profiles?.id) return;
+    setIsBlocking(true);
+    await supabase.from("blocked_users").insert({
+      blocker_id: currentUserId,
+      blocked_id: project.profiles.id,
+    });
+    setIsBlocking(false);
+    setShowMenu(false);
+    onBlock?.(project.profiles.id);
+  };
+
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -352,8 +392,8 @@ export default function FeedCard({
           </div>
         </div>
 
-        {/* Menu for owner */}
-        {isOwner && (
+        {/* Menu */}
+        {currentUserId && (
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setShowMenu(!showMenu)}
@@ -365,28 +405,57 @@ export default function FeedCard({
             </button>
 
             {showMenu && (
-              <div className="absolute right-0 top-full mt-1 w-32 bg-background border border-border rounded-lg shadow-lg py-1 z-10">
-                <button
-                  onClick={() => {
-                    setIsEditing(true);
-                    setShowMenu(false);
-                  }}
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Edit
-                </button>
-                <button
-                  onClick={handleDeleteClick}
-                  className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Delete
-                </button>
+              <div className="absolute right-0 top-full mt-1 w-40 bg-background border border-border rounded-lg shadow-lg py-1 z-10">
+                {isOwner ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        setIsEditing(true);
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Edit
+                    </button>
+                    <button
+                      onClick={handleDeleteClick}
+                      className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex items-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Delete
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setShowMenu(false);
+                        setShowReportModal(true);
+                      }}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 21v-13l9-5 9 5v13M3 8l9 4 9-4" />
+                      </svg>
+                      Report post
+                    </button>
+                    <button
+                      onClick={handleBlock}
+                      disabled={isBlocking}
+                      className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                      </svg>
+                      {isBlocking ? "Blocking..." : "Block user"}
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -640,6 +709,93 @@ export default function FeedCard({
                   {isDeleting ? "Deleting..." : "Delete"}
                 </button>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Report Modal */}
+      <AnimatePresence>
+        {showReportModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+            onClick={() => !isReporting && setShowReportModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", duration: 0.3 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-background rounded-2xl shadow-xl w-full max-w-sm mx-4 overflow-hidden"
+            >
+              {reportSubmitted ? (
+                <div className="p-6 text-center">
+                  <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold mb-1">Report submitted</h3>
+                  <p className="text-sm text-muted-foreground">We&apos;ll review this within 24 hours.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="p-6">
+                    <h3 className="text-lg font-semibold mb-1">Report this post</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Why are you reporting this content?
+                    </p>
+                    <div className="space-y-2 mb-4">
+                      {["Spam", "Harassment or bullying", "Inappropriate content", "Misinformation", "Other"].map((reason) => (
+                        <button
+                          key={reason}
+                          onClick={() => setReportReason(reason)}
+                          className={`w-full px-3 py-2.5 text-left text-sm rounded-lg border transition-colors ${
+                            reportReason === reason
+                              ? "border-primary bg-primary/5 text-foreground"
+                              : "border-border hover:bg-muted"
+                          }`}
+                        >
+                          {reason}
+                        </button>
+                      ))}
+                    </div>
+                    {reportReason && (
+                      <textarea
+                        value={reportDetails}
+                        onChange={(e) => setReportDetails(e.target.value)}
+                        placeholder="Additional details (optional)"
+                        rows={2}
+                        className="w-full px-3 py-2 text-sm bg-muted/50 rounded-lg border border-border/40 focus:border-primary/40 focus:bg-background outline-none transition-colors resize-none"
+                      />
+                    )}
+                  </div>
+                  <div className="flex border-t border-border">
+                    <button
+                      onClick={() => {
+                        setShowReportModal(false);
+                        setReportReason("");
+                        setReportDetails("");
+                      }}
+                      disabled={isReporting}
+                      className="flex-1 py-3 text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleReport}
+                      disabled={isReporting || !reportReason}
+                      className="flex-1 py-3 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors border-l border-border disabled:opacity-50"
+                    >
+                      {isReporting ? "Submitting..." : "Submit report"}
+                    </button>
+                  </div>
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}

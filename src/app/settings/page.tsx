@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
+import { Capacitor } from "@capacitor/core";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -164,33 +165,35 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* Subscription */}
-      <section className="mb-6 md:mb-8">
-        <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wider mb-2 md:mb-4 px-1 md:px-0 md:text-lg md:font-semibold md:normal-case md:tracking-normal md:text-foreground">Subscription</h2>
-        <div className="rounded-xl md:rounded-lg bg-card md:border md:border-border p-4">
-          {isPremium ? (
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">MakersLounge Pro</p>
-                <p className="text-xs text-muted-foreground">100 messages/month included</p>
+      {/* Subscription — hidden on native iOS (Apple requires IAP) */}
+      {!Capacitor.isNativePlatform() && (
+        <section className="mb-6 md:mb-8">
+          <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wider mb-2 md:mb-4 px-1 md:px-0 md:text-lg md:font-semibold md:normal-case md:tracking-normal md:text-foreground">Subscription</h2>
+          <div className="rounded-xl md:rounded-lg bg-card md:border md:border-border p-4">
+            {isPremium ? (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">MakersLounge Pro</p>
+                  <p className="text-xs text-muted-foreground">100 messages/month included</p>
+                </div>
+                <Button variant="outline" onClick={handleManageSubscription}>
+                  Manage
+                </Button>
               </div>
-              <Button variant="outline" onClick={handleManageSubscription}>
-                Manage
-              </Button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Free plan</p>
-                <p className="text-xs text-muted-foreground">Subscribe to unlock messaging</p>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Free plan</p>
+                  <p className="text-xs text-muted-foreground">Subscribe to unlock messaging</p>
+                </div>
+                <Button onClick={handleUpgrade} disabled={upgradeLoading}>
+                  {upgradeLoading ? "Loading..." : "Upgrade — $10/mo"}
+                </Button>
               </div>
-              <Button onClick={handleUpgrade} disabled={upgradeLoading}>
-                {upgradeLoading ? "Loading..." : "Upgrade — $10/mo"}
-              </Button>
-            </div>
-          )}
-        </div>
-      </section>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Change Password */}
       <section className="mb-6 md:mb-8">

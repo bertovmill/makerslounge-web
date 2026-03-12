@@ -169,8 +169,8 @@ export default function OnboardingPage() {
   const isLastStep = currentStep === STEPS.length - 1;
 
   return (
-    <div className="min-h-svh flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
+    <div className="min-h-svh flex items-start md:items-center justify-center px-4 py-12 overflow-y-auto">
+      <div className="w-full max-w-md md:max-w-lg">
         {/* Progress */}
         <div className="mb-8">
           <div className="flex gap-1">

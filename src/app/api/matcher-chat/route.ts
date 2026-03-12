@@ -11,7 +11,7 @@ const supabaseAdmin = createClient(
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  const { messages, userId }: { messages: UIMessage[]; userId?: string } = await req.json();
 
   if (!messages || messages.length === 0) {
     return new Response(JSON.stringify({ error: "No messages provided" }), {
@@ -20,54 +20,85 @@ export async function POST(req: Request) {
     });
   }
 
-  const systemPrompt = `You are the MakersLounge AI Matcher — a friendly assistant that helps people find the right connections in the MakersLounge maker/builder community.
+  // Fetch the current user's profile for context
+  let userProfile: Record<string, unknown> | null = null;
+  if (userId) {
+    const { data } = await supabaseAdmin
+      .from("profiles")
+      .select("name, bio, skills, looking_for_skills, currently_building")
+      .eq("id", userId)
+      .single();
+    userProfile = data;
+  }
 
-You have tools to search and filter the community. Use them to find relevant people based on what the user is looking for.
+  const userContext = userProfile
+    ? `\n\nCURRENT USER'S PROFILE:
+- Name: ${userProfile.name || "Unknown"}
+- Skills: ${(userProfile.skills as string[])?.join(", ") || "None listed"}
+- Looking for: ${(userProfile.looking_for_skills as string[])?.join(", ") || "Not specified"}
+- Building: ${userProfile.currently_building || "Not specified"}
+- Bio: ${userProfile.bio || "No bio"}
+
+Use this context to make better recommendations. For example, if they have design skills, you can tell them about people looking for designers.`
+    : "";
+
+  const systemPrompt = `You are May — the ultimate maker connector at MakersLounge. You're warm, enthusiastic, and genuinely excited about connecting builders with each other.
+
+PERSONALITY:
+- Friendly and direct — like a well-connected friend at a party who knows exactly who you should meet
+- You get excited about good matches ("Oh, you HAVE to meet Sarah — she's building something very similar!")
+- Brief but insightful — don't ramble, but show you understand WHY connections matter
+- Use the person's first name when you know it
+
+YOUR MISSION:
+Help makers find the right people to collaborate with, get feedback from, hire, or learn from. You have full access to the MakersLounge community database.
 
 WORKFLOW:
-1. When the user describes what they need, use the appropriate tool(s) to search
-2. You can combine tools — e.g. search by keyword AND filter by skills
-3. Present results with a brief explanation of WHY each person is a good match
-4. If no results, suggest broadening the search or trying different terms
+1. Understand what the user needs (ask a quick clarifying question if vague)
+2. Search the community using your tools — try multiple approaches if the first doesn't yield great results
+3. Present 2-5 recommendations with a clear reason for each match
+4. Offer to introduce them (send_intro_message tool)
 
-GUIDELINES:
-- Be conversational and warm, but concise
-- Always use tools to find people — don't make up profiles
-- When recommending people, explain WHY they match based on their actual profile data
-- If the request is vague, ask a clarifying question before searching
-- IMPORTANT: Every person's name MUST be a clickable markdown link to their profile. Use the profile_url from tool results. Format: [**Name**](profile_url). Example: [**Fayaz Rafin**](/p/fayaz). Never show a name without linking it.
-- Suggest 2-5 people per recommendation
-- If the user asks to filter or search differently, use the tools again`;
+FORMATTING:
+- Every person's name MUST be a clickable markdown link to their profile: [**Name**](/p/username)
+- The profile_url field is included in search results — always use it for the link
+- Show key info: skills, what they're building, and WHY they're a match
+- Use bullet points for multiple recommendations
+- Keep it conversational, not list-heavy
+
+IMPORTANT:
+- Never invent or hallucinate profiles — always use tools to find real people
+- If no results, suggest broadening the search or try alternative terms
+- You can chain multiple tool calls to refine results
+- When the user wants to connect, use send_intro_message to start a conversation${userContext}`;
 
   const result = streamText({
     model: anthropic("claude-sonnet-4-20250514"),
     system: systemPrompt,
     messages: await convertToModelMessages(messages),
     tools: {
-      search_people: {
+      search_makers: {
         description:
-          "Search community members by keyword. Matches against name, bio, and what they're currently building. Use this for general queries like finding someone by name or topic.",
+          "Search community members by keyword. Matches against name, bio, and what they're currently building. Use for general queries like finding someone by name, topic, or interest area.",
         inputSchema: z.object({
-          query: z
-            .string()
-            .describe("Search keyword (name, topic, or interest)"),
+          query: z.string().describe("Search keyword — name, topic, technology, or interest"),
         }),
         execute: async ({ query }: { query: string }) => {
           const searchTerm = `%${query}%`;
           const { data, error } = await supabaseAdmin
             .from("profiles")
             .select(
-              "id, name, username, bio, skills, looking_for_skills, currently_building"
+              "id, name, username, bio, skills, looking_for_skills, currently_building, photo_url"
             )
             .not("name", "is", null)
             .or(
               `name.ilike.${searchTerm},bio.ilike.${searchTerm},currently_building.ilike.${searchTerm}`
             )
-            .limit(10);
+            .limit(15);
 
           if (error) return { error: "Search failed" };
           if (!data || data.length === 0)
-            return { results: [], message: "No people found matching that query" };
+            return { results: [], message: "No makers found matching that query" };
 
           return {
             results: data.map(formatProfile),
@@ -78,25 +109,21 @@ GUIDELINES:
 
       filter_by_skills: {
         description:
-          "Filter community members who have specific skills. Use this when the user is looking for people with particular expertise like 'design', 'AI', 'marketing', etc.",
+          "Filter community members who have specific skills. Use when the user needs people with particular expertise like 'design', 'AI', 'React', 'marketing', etc.",
         inputSchema: z.object({
           skills: z
             .array(z.string())
-            .describe(
-              "Skills to filter by (e.g. ['AI', 'Web Dev', 'Design'])"
-            ),
+            .describe("Skills to filter by (e.g. ['AI', 'Web Dev', 'Design'])"),
           match_all: z
             .boolean()
             .optional()
-            .describe(
-              "If true, person must have ALL listed skills. Default false (any match)."
-            ),
+            .describe("If true, person must have ALL listed skills. Default false (any match)."),
         }),
         execute: async ({ skills, match_all }: { skills: string[]; match_all?: boolean }) => {
           const { data, error } = await supabaseAdmin
             .from("profiles")
             .select(
-              "id, name, username, bio, skills, looking_for_skills, currently_building"
+              "id, name, username, bio, skills, looking_for_skills, currently_building, photo_url"
             )
             .not("name", "is", null)
             .overlaps("skills", skills);
@@ -105,7 +132,7 @@ GUIDELINES:
           if (!data || data.length === 0)
             return {
               results: [],
-              message: `No people found with skills: ${skills.join(", ")}`,
+              message: `No makers found with skills: ${skills.join(", ")}`,
             };
 
           let filtered = data;
@@ -128,20 +155,49 @@ GUIDELINES:
         },
       },
 
-      get_profile_details: {
+      find_looking_for: {
         description:
-          "Get detailed profile information for a specific person by name or username. Use this to learn more about someone before recommending them.",
+          "Find people who are actively looking for specific skills or roles. Use to find people who NEED what the user offers — creating mutual value.",
         inputSchema: z.object({
-          name_or_username: z
-            .string()
-            .describe("The person's name or username to look up"),
+          skills: z
+            .array(z.string())
+            .describe("Skills/roles to search for in looking_for fields"),
+        }),
+        execute: async ({ skills }: { skills: string[] }) => {
+          const { data, error } = await supabaseAdmin
+            .from("profiles")
+            .select(
+              "id, name, username, bio, skills, looking_for_skills, currently_building, photo_url"
+            )
+            .not("name", "is", null)
+            .overlaps("looking_for_skills", skills);
+
+          if (error) return { error: "Search failed" };
+          if (!data || data.length === 0)
+            return {
+              results: [],
+              message: `No one currently looking for: ${skills.join(", ")}`,
+            };
+
+          return {
+            results: data.map(formatProfile),
+            count: data.length,
+          };
+        },
+      },
+
+      get_maker_profile: {
+        description:
+          "Get detailed profile for a specific person by name or username. Use to learn more about someone before recommending or introducing them.",
+        inputSchema: z.object({
+          name_or_username: z.string().describe("The person's name or username"),
         }),
         execute: async ({ name_or_username }: { name_or_username: string }) => {
           const term = `%${name_or_username}%`;
           const { data, error } = await supabaseAdmin
             .from("profiles")
             .select(
-              "id, name, username, bio, skills, looking_for_skills, currently_building, social_links"
+              "id, name, username, bio, skills, looking_for_skills, currently_building, photo_url, linkedin, twitter, website"
             )
             .or(`name.ilike.${term},username.ilike.${term}`)
             .limit(3);
@@ -154,52 +210,23 @@ GUIDELINES:
             profiles: data.map((p) => ({
               ...formatProfile(p),
               looking_for: p.looking_for_skills || [],
-              social_links: p.social_links || {},
+              linkedin: p.linkedin || null,
+              twitter: p.twitter || null,
+              website: p.website || null,
             })),
-          };
-        },
-      },
-
-      find_looking_for: {
-        description:
-          "Find people who are actively looking for specific skills or roles. Use this to find people who NEED the skills the user HAS, creating mutual matches.",
-        inputSchema: z.object({
-          skills: z
-            .array(z.string())
-            .describe("Skills/roles to search for in 'looking for' fields"),
-        }),
-        execute: async ({ skills }: { skills: string[] }) => {
-          const { data, error } = await supabaseAdmin
-            .from("profiles")
-            .select(
-              "id, name, username, bio, skills, looking_for_skills, currently_building"
-            )
-            .not("name", "is", null)
-            .overlaps("looking_for_skills", skills);
-
-          if (error) return { error: "Search failed" };
-          if (!data || data.length === 0)
-            return {
-              results: [],
-              message: `No one is currently looking for: ${skills.join(", ")}`,
-            };
-
-          return {
-            results: data.map(formatProfile),
-            count: data.length,
           };
         },
       },
 
       browse_community: {
         description:
-          "Get an overview of the community — total members, common skills, and a sample of active members. Use this when the user wants a general sense of who's in the community.",
+          "Get a community overview — total members, common skills, and sample members. Use when the user wants to explore who's in the community.",
         inputSchema: z.object({}),
         execute: async () => {
           const { data, error, count } = await supabaseAdmin
             .from("profiles")
             .select(
-              "id, name, username, bio, skills, looking_for_skills, currently_building",
+              "id, name, username, bio, skills, looking_for_skills, currently_building, photo_url",
               { count: "exact" }
             )
             .not("name", "is", null);
@@ -221,12 +248,106 @@ GUIDELINES:
           return {
             total_members: count || 0,
             top_skills: topSkills,
-            sample_members: (data || []).slice(0, 8).map(formatProfile),
+            sample_members: (data || []).slice(0, 10).map(formatProfile),
+          };
+        },
+      },
+
+      send_intro_message: {
+        description:
+          "Send an introductory message to a maker to start a conversation. Use when the user explicitly wants to connect with someone. This creates a new conversation thread.",
+        inputSchema: z.object({
+          recipient_name: z.string().describe("Name of the person to message"),
+          message: z
+            .string()
+            .describe(
+              "The intro message to send. Should be warm, mention why they want to connect, and reference something specific from the recipient's profile."
+            ),
+        }),
+        execute: async ({
+          recipient_name,
+          message,
+        }: {
+          recipient_name: string;
+          message: string;
+        }) => {
+          if (!userId) {
+            return { error: "You need to be signed in to send messages." };
+          }
+
+          // Find recipient
+          const term = `%${recipient_name}%`;
+          const { data: recipients } = await supabaseAdmin
+            .from("profiles")
+            .select("id, name")
+            .or(`name.ilike.${term},username.ilike.${term}`)
+            .limit(1);
+
+          if (!recipients || recipients.length === 0) {
+            return { error: `Could not find "${recipient_name}" in the community.` };
+          }
+
+          const recipientId = recipients[0].id;
+          const recipientDisplayName = recipients[0].name || recipient_name;
+
+          if (recipientId === userId) {
+            return { error: "You can't send a message to yourself!" };
+          }
+
+          // Find or create conversation (ensure participant_1 < participant_2)
+          const [p1, p2] =
+            userId < recipientId ? [userId, recipientId] : [recipientId, userId];
+
+          let conversationId: string;
+
+          const { data: existing } = await supabaseAdmin
+            .from("conversations")
+            .select("id")
+            .eq("participant_1", p1)
+            .eq("participant_2", p2)
+            .single();
+
+          if (existing) {
+            conversationId = existing.id;
+          } else {
+            const { data: newConvo, error: convoError } = await supabaseAdmin
+              .from("conversations")
+              .insert({ participant_1: p1, participant_2: p2 })
+              .select("id")
+              .single();
+
+            if (convoError || !newConvo) {
+              return { error: "Failed to create conversation." };
+            }
+            conversationId = newConvo.id;
+          }
+
+          // Send the message
+          const { error: msgError } = await supabaseAdmin.from("messages").insert({
+            conversation_id: conversationId,
+            sender_id: userId,
+            content: message,
+          });
+
+          // Update last_message_at
+          await supabaseAdmin
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("id", conversationId);
+
+          if (msgError) {
+            return { error: "Failed to send message." };
+          }
+
+          return {
+            success: true,
+            message: `Message sent to ${recipientDisplayName}! They'll see it in their messages.`,
+            conversation_id: conversationId,
           };
         },
       },
     },
-    stopWhen: stepCountIs(5),
+    stopWhen: stepCountIs(6),
   });
 
   return result.toUIMessageStreamResponse();
@@ -239,8 +360,10 @@ function formatProfile(p: {
   bio?: string | null;
   skills?: string[] | null;
   currently_building?: string | null;
+  photo_url?: string | null;
 }) {
   const profile: Record<string, unknown> = {
+    id: p.id,
     name: p.name || "Anonymous",
   };
   if (p.username) {
@@ -249,13 +372,13 @@ function formatProfile(p: {
   } else {
     profile.profile_url = `/profile/${p.id}`;
   }
+  if (p.photo_url) profile.photo_url = p.photo_url;
   if (p.bio) profile.bio = p.bio;
   if (p.skills?.length) profile.skills = p.skills;
   if (p.currently_building) {
     try {
       const projects = JSON.parse(p.currently_building);
-      if (Array.isArray(projects) && projects.length)
-        profile.building = projects;
+      if (Array.isArray(projects) && projects.length) profile.building = projects;
     } catch {
       if (p.currently_building.trim()) profile.building = p.currently_building;
     }

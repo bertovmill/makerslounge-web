@@ -27,7 +27,12 @@ function AuthContent() {
   }, [searchParams]);
 
   useEffect(() => {
+    let hasRedirected = false;
+
     const checkOnboardingStatus = async (userId: string) => {
+      if (hasRedirected) return;
+      hasRedirected = true;
+
       const { data: profile } = await supabase
         .from("profiles")
         .select("onboarding_completed")

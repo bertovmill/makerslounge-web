@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft, Send } from "lucide-react";
 import Link from "next/link";
+import { Capacitor } from "@capacitor/core";
 
 interface Message {
   id: string;
@@ -326,7 +327,7 @@ export default function ConversationPage() {
         {limitError && (
           <div className="mb-3 p-3 rounded-lg bg-secondary text-sm text-center">
             <p className="text-muted-foreground">{limitError}</p>
-            {limitError.includes("Subscribe") && (
+            {limitError.includes("Subscribe") && !Capacitor.isNativePlatform() && (
               <Link href="/settings" className="text-primary font-medium text-xs mt-1 inline-block hover:underline">
                 Upgrade now
               </Link>

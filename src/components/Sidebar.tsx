@@ -21,7 +21,7 @@ import { supabase } from "@/lib/supabase";
 
 const NAV_ITEMS = [
   { href: "/home", label: "Home", icon: Home },
-  { href: "/new", label: "Get Matched", icon: Sparkles },
+  { href: "/matcher", label: "Get Matched", icon: Sparkles },
   { href: "/people", label: "People", icon: Users },
   { href: "/community", label: "Community", icon: BarChart3 },
   { href: "/messages", label: "Messages", icon: MessageCircle },
@@ -99,7 +99,7 @@ export default function Sidebar() {
       {/* Desktop: Left sidebar */}
       <aside
         className={cn(
-          "hidden md:flex flex-col h-svh fixed left-0 top-0 border-r border-border bg-background z-50 transition-[width] duration-200 ease-in-out",
+          "hidden lg:flex flex-col h-svh fixed left-0 top-0 border-r border-border bg-background z-50 transition-[width] duration-200 ease-in-out",
           collapsed ? "w-16" : "w-60"
         )}
       >
@@ -185,12 +185,12 @@ export default function Sidebar() {
       </aside>
 
       {/* Desktop: User menu in top-right corner */}
-      <div className="hidden md:flex fixed top-3 right-4 z-[60]">
+      <div className="hidden lg:flex fixed top-3 right-4 z-[60]">
         <UserMenu />
       </div>
 
       {/* Mobile: Top bar */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-[calc(2.75rem+env(safe-area-inset-top))] px-4 pt-[env(safe-area-inset-top)] border-b border-border/50 bg-background/80 backdrop-blur-lg">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-[calc(2.75rem+env(safe-area-inset-top))] px-4 pt-[env(safe-area-inset-top)] border-b border-border/50 bg-background/80 backdrop-blur-lg">
         <Link href="/home" className="flex items-center gap-1.5">
           <Image src="/logo.svg" alt="MakersLounge" width={16} height={17} className="dark:hidden" />
           <Image src="/logo-light.svg" alt="MakersLounge" width={16} height={17} className="hidden dark:block" />
@@ -198,10 +198,10 @@ export default function Sidebar() {
         </Link>
         <UserMenu />
       </header>
-      <div className="md:hidden h-[calc(2.75rem+env(safe-area-inset-top))]" />
+      <div className="lg:hidden h-[calc(2.75rem+env(safe-area-inset-top))]" />
 
       {/* Mobile: Bottom tab bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t border-border/50 pb-[env(safe-area-inset-bottom,0px)]">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t border-border/50 pb-[env(safe-area-inset-bottom,0px)]">
         <div className="flex items-center justify-around h-[50px]">
           {MOBILE_TABS.map(({ href, label, icon: Icon }) => {
             const active = isActive(href);

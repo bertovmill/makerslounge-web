@@ -17,23 +17,23 @@ interface SkillCount {
   count: number;
 }
 
-// Monochrome shades for charts (darkest to lightest)
+// Subtle Apple-inspired palette
 const SHADES = [
-  "var(--foreground)",
-  "oklch(0.35 0 0)",
-  "oklch(0.45 0 0)",
-  "oklch(0.52 0 0)",
-  "oklch(0.58 0 0)",
-  "oklch(0.64 0 0)",
-  "oklch(0.70 0 0)",
-  "oklch(0.75 0 0)",
-  "oklch(0.80 0 0)",
-  "oklch(0.84 0 0)",
-  "oklch(0.88 0 0)",
-  "oklch(0.91 0 0)",
-  "oklch(0.93 0 0)",
-  "oklch(0.95 0 0)",
-  "oklch(0.97 0 0)",
+  "oklch(0.55 0.15 250)",  // blue
+  "oklch(0.55 0.14 290)",  // purple
+  "oklch(0.60 0.14 340)",  // pink
+  "oklch(0.62 0.13 25)",   // coral
+  "oklch(0.65 0.14 55)",   // orange
+  "oklch(0.68 0.13 145)",  // green
+  "oklch(0.60 0.12 195)",  // teal
+  "oklch(0.58 0.10 270)",  // indigo
+  "oklch(0.70 0.11 80)",   // yellow-green
+  "oklch(0.65 0.12 320)",  // magenta
+  "oklch(0.72 0.10 170)",  // mint
+  "oklch(0.68 0.09 230)",  // sky
+  "oklch(0.62 0.11 10)",   // red-orange
+  "oklch(0.75 0.08 110)",  // lime
+  "oklch(0.70 0.10 300)",  // lavender
 ];
 
 function StatCard({ icon: Icon, label, value, sub }: {
@@ -193,7 +193,7 @@ function BubbleCloud({ data }: { data: SkillCount[] }) {
             onMouseEnter={() => setHoveredIdx(i)}
             onMouseLeave={() => setHoveredIdx(null)}
           >
-            <span className={`text-xs font-medium px-2 truncate ${i < 5 ? "text-background" : "text-foreground"}`}>
+            <span className="text-xs font-medium px-2 truncate text-white">
               {item.name}
               {hoveredIdx === i && <span className="ml-1 opacity-70">({item.count})</span>}
             </span>
