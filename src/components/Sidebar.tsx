@@ -135,7 +135,7 @@ export default function Sidebar() {
               <Link href="/home" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
                 <Image src="/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
                 <Image src="/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
-                <span className="text-lg font-serif tracking-tight text-foreground">
+                <span className="text-lg font-sans font-normal tracking-normal text-foreground">
                   makerslounge
                 </span>
               </Link>
@@ -194,7 +194,7 @@ export default function Sidebar() {
         <Link href="/home" className="flex items-center gap-1.5">
           <Image src="/logo.svg" alt="MakersLounge" width={16} height={17} className="dark:hidden" />
           <Image src="/logo-light.svg" alt="MakersLounge" width={16} height={17} className="hidden dark:block" />
-          <span className="text-base font-serif tracking-tight text-foreground">makerslounge</span>
+          <span className="text-base font-sans font-normal tracking-normal text-foreground">makerslounge</span>
         </Link>
         <UserMenu />
       </header>

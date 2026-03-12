@@ -15,7 +15,7 @@ export default function Logo({ className = "", href = "/", size, showText }: Log
     <Link href={href} className={`flex items-center gap-1.5 hover:opacity-70 transition-opacity ${className}`}>
       <Image src="/logo.svg" alt="MakersLounge" width={20} height={21} className="dark:hidden" />
       <Image src="/logo-light.svg" alt="MakersLounge" width={20} height={21} className="hidden dark:block" />
-      <span className="text-xl font-serif tracking-tight text-foreground">
+      <span className="text-xl font-sans font-normal tracking-normal text-foreground">
         makerslounge
       </span>
     </Link>

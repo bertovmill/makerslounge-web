@@ -19,6 +19,7 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   CopyIcon,
+  MicIcon,
   RefreshCwIcon,
   SearchIcon,
   SquareIcon,
@@ -141,35 +142,64 @@ const Composer: FC = () => {
 
 const ComposerAction: FC = () => {
   return (
-    <div className="relative mx-2 mb-2 flex items-center justify-end">
-      <AuiIf condition={(s) => !s.thread.isRunning}>
-        <ComposerPrimitive.Send asChild>
+    <div className="relative mx-2 mb-2 flex items-center justify-between">
+      <div className="flex items-center gap-1">
+        <ComposerPrimitive.Dictate asChild>
           <TooltipIconButton
-            tooltip="Send message"
+            tooltip="Voice input"
             side="bottom"
-            type="submit"
-            variant="default"
+            variant="ghost"
             size="icon"
-            className="size-8 rounded-full"
-            aria-label="Send message"
+            className="size-8 rounded-full text-muted-foreground hover:text-foreground"
+            aria-label="Start voice input"
           >
-            <ArrowUpIcon className="size-4" />
+            <MicIcon className="size-4" />
           </TooltipIconButton>
-        </ComposerPrimitive.Send>
-      </AuiIf>
-      <AuiIf condition={(s) => s.thread.isRunning}>
-        <ComposerPrimitive.Cancel asChild>
-          <Button
-            type="button"
-            variant="default"
+        </ComposerPrimitive.Dictate>
+        <ComposerPrimitive.StopDictation asChild>
+          <TooltipIconButton
+            tooltip="Stop listening"
+            side="bottom"
+            variant="ghost"
             size="icon"
-            className="size-8 rounded-full"
-            aria-label="Stop generating"
+            className="size-8 rounded-full text-red-500 animate-pulse"
+            aria-label="Stop voice input"
           >
             <SquareIcon className="size-3 fill-current" />
-          </Button>
-        </ComposerPrimitive.Cancel>
-      </AuiIf>
+          </TooltipIconButton>
+        </ComposerPrimitive.StopDictation>
+      </div>
+
+      <div className="flex items-center gap-1">
+        <AuiIf condition={(s) => !s.thread.isRunning}>
+          <ComposerPrimitive.Send asChild>
+            <TooltipIconButton
+              tooltip="Send message"
+              side="bottom"
+              type="submit"
+              variant="default"
+              size="icon"
+              className="size-8 rounded-full"
+              aria-label="Send message"
+            >
+              <ArrowUpIcon className="size-4" />
+            </TooltipIconButton>
+          </ComposerPrimitive.Send>
+        </AuiIf>
+        <AuiIf condition={(s) => s.thread.isRunning}>
+          <ComposerPrimitive.Cancel asChild>
+            <Button
+              type="button"
+              variant="default"
+              size="icon"
+              className="size-8 rounded-full"
+              aria-label="Stop generating"
+            >
+              <SquareIcon className="size-3 fill-current" />
+            </Button>
+          </ComposerPrimitive.Cancel>
+        </AuiIf>
+      </div>
     </div>
   );
 };

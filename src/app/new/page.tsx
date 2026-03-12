@@ -35,7 +35,7 @@ export default function NewTaskPage() {
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <div className="h-[calc(100dvh-3rem)] md:h-dvh">
+      <div className="h-[calc(100dvh-2.75rem-50px)] md:h-dvh overflow-hidden">
         <MayThread />
       </div>
     </AssistantRuntimeProvider>
