@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
+import { containsObjectionableContent } from "@/lib/content-filter";
 
 // Helper function to convert URLs in text to clickable links
 function Linkify({ children }: { children: string }) {
@@ -225,6 +226,12 @@ export default function FeedCard({
     }
 
     if (!commentText.trim()) return;
+
+    const filterResult = containsObjectionableContent(commentText.trim());
+    if (filterResult.flagged) {
+      alert(filterResult.reason || "Your comment contains content that violates our community guidelines.");
+      return;
+    }
 
     setIsSubmitting(true);
 

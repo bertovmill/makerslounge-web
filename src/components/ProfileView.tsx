@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ExternalLink, MessageCircle, MoreHorizontal, Flag, Ban } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface ProfileViewProps {
   profile: {
@@ -33,6 +34,22 @@ export default function ProfileView({ profile }: ProfileViewProps) {
   const [reportDetails, setReportDetails] = useState("");
   const [reportSubmitted, setReportSubmitted] = useState(false);
   const [blocked, setBlocked] = useState(false);
+  const [posts, setPosts] = useState<
+    { id: string; title: string; description: string | null; media_urls: string[] | null; created_at: string }[]
+  >([]);
+
+  useEffect(() => {
+    async function fetchPosts() {
+      const { data } = await supabase
+        .from("projects")
+        .select("id, title, description, media_urls, created_at")
+        .eq("user_id", profile.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (data) setPosts(data);
+    }
+    fetchPosts();
+  }, [profile.id]);
 
   async function handleMessage() {
     if (!user) {
@@ -300,6 +317,41 @@ export default function ProfileView({ profile }: ProfileViewProps) {
           </div>
         )}
       </div>
+
+      {/* Posts */}
+      {posts.length > 0 && (
+        <div className="mt-6 md:mt-8">
+          <h2 className="text-[13px] md:text-sm font-medium text-muted-foreground md:text-foreground mb-3">Posts</h2>
+          <div className="space-y-3">
+            {posts.map((post) => (
+              <div key={post.id} className="rounded-xl bg-card md:bg-muted/30 border border-border/50 p-4">
+                <p className="text-sm font-medium text-foreground">{post.title}</p>
+                {post.description && (
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{post.description}</p>
+                )}
+                {post.media_urls && post.media_urls.length > 0 && (
+                  <div className="mt-2 flex gap-2 overflow-x-auto">
+                    {post.media_urls.slice(0, 3).map((url, i) => (
+                      <div key={i} className="relative w-24 h-24 rounded-lg overflow-hidden shrink-0 bg-muted">
+                        <Image
+                          src={url}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          sizes="96px"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[11px] text-muted-foreground/50 mt-2">
+                  {new Date(post.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Back */}
       <div className="mt-8 md:mt-10 pt-6 border-t border-border">

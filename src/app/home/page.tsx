@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import FeedCard from "@/components/FeedCard";
 import { ImagePlus, X, Loader2 } from "lucide-react";
+import { containsObjectionableContent } from "@/lib/content-filter";
 
 interface FeedProject {
   id: string;
@@ -192,6 +193,13 @@ export default function HomePage() {
 
   async function handlePost() {
     if (!title.trim() || !user) return;
+
+    const contentToCheck = `${title.trim()} ${description.trim()}`;
+    const filterResult = containsObjectionableContent(contentToCheck);
+    if (filterResult.flagged) {
+      alert(filterResult.reason || "Your post contains content that violates our community guidelines.");
+      return;
+    }
 
     setPosting(true);
     const { data, error } = await supabase

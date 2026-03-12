@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { ArrowLeft, Send, MoreHorizontal, Flag, Ban } from "lucide-react";
 import Link from "next/link";
 import { Capacitor } from "@capacitor/core";
+import { containsObjectionableContent } from "@/lib/content-filter";
 
 interface Message {
   id: string;
@@ -184,6 +185,13 @@ export default function ConversationPage() {
   async function handleSend() {
     if (!newMessage.trim() || sending || !user) return;
     setLimitError(null);
+
+    // Content filter
+    const filterResult = containsObjectionableContent(newMessage.trim());
+    if (filterResult.flagged) {
+      setLimitError(filterResult.reason || "This message violates our community guidelines.");
+      return;
+    }
 
     // Skip message limit check on native iOS (Apple IAP requirement)
     if (!Capacitor.isNativePlatform()) {
