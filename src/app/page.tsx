@@ -225,13 +225,13 @@ export default function Home() {
   return (
     <div className="min-h-svh flex flex-col">
       {/* Nav */}
-      <header className="flex items-center justify-between px-6 py-4 pt-6">
+      <header className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <Link href="/" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
-          <Image src="/logo.svg" alt="MakersLounge" width={20} height={21} className="dark:hidden" />
-          <Image src="/logo-light.svg" alt="MakersLounge" width={20} height={21} className="hidden dark:block" />
-          <span className="text-xl font-sans font-normal tracking-normal">makerslounge</span>
+          <Image src="/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
+          <Image src="/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
+          <span className="text-base sm:text-xl font-sans font-normal tracking-normal">makerslounge</span>
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={toggleTheme}
             className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md"
@@ -241,13 +241,13 @@ export default function Home() {
           </button>
           <Link
             href="/auth"
-            className="text-sm font-medium px-4 py-2 rounded-md bg-foreground text-background hover:opacity-90 transition-opacity"
+            className="text-xs sm:text-sm font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-md bg-foreground text-background hover:opacity-90 transition-opacity"
           >
             Sign in
           </Link>
           <Link
             href="/auth?mode=signup"
-            className="text-sm font-medium px-4 py-2 rounded-md border border-border hover:bg-secondary transition-colors"
+            className="text-xs sm:text-sm font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-md border border-border hover:bg-secondary transition-colors"
           >
             Sign up
           </Link>
@@ -255,15 +255,15 @@ export default function Home() {
       </header>
 
       {/* Hero — Manus-style centered layout */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 pb-24">
-        <h1 className="text-4xl sm:text-5xl md:text-[3.5rem] tracking-tight leading-[1.15] mb-10 text-center">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pb-12 sm:pb-24">
+        <h1 className="text-[1.75rem] sm:text-5xl md:text-[3.5rem] tracking-tight leading-[1.15] mb-6 sm:mb-10 text-center">
           How can the community
           <br />
           help you?
         </h1>
 
         {/* Input box */}
-        <form onSubmit={handleSubmit} className="w-full max-w-[640px] mb-6">
+        <form onSubmit={handleSubmit} className="w-full max-w-[640px] mb-4 sm:mb-6">
           <div className="relative rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
             <textarea
               ref={textareaRef}
@@ -276,8 +276,8 @@ export default function Home() {
                 }
               }}
               placeholder="Describe what you're looking for..."
-              rows={3}
-              className="w-full resize-none bg-transparent px-5 pt-4 pb-12 text-[15px] placeholder:text-muted-foreground/60 focus:outline-none"
+              rows={2}
+              className="w-full resize-none bg-transparent px-4 sm:px-5 pt-3 sm:pt-4 pb-10 sm:pb-12 text-sm sm:text-[15px] placeholder:text-muted-foreground/60 focus:outline-none"
             />
             <div className="absolute bottom-3 right-3">
               <button
@@ -302,7 +302,7 @@ export default function Home() {
                   key={action.label}
                   type="button"
                   onClick={() => selectCategory(action.label)}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm transition-colors ${
+                  className={`inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border text-xs sm:text-sm transition-colors ${
                     isActive
                       ? "border-foreground bg-foreground text-background"
                       : "border-border text-muted-foreground hover:text-foreground hover:bg-secondary/50"
