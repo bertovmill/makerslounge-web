@@ -36,27 +36,28 @@ export const Thread: FC = () => {
     >
       <ThreadPrimitive.Viewport
         turnAnchor="top"
-        className="aui-thread-viewport relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth px-4 pt-4"
+        className="aui-thread-viewport relative flex flex-1 flex-col overflow-y-auto scroll-smooth px-4 pt-4"
       >
         <AuiIf condition={(s) => s.thread.isEmpty}>
           <ThreadWelcome />
         </AuiIf>
 
+        <div className="min-h-8 grow" />
         <ThreadPrimitive.Messages
           components={{
             UserMessage,
             AssistantMessage,
           }}
         />
-
-        <ThreadPrimitive.ViewportFooter className="aui-thread-viewport-footer sticky bottom-0 mx-auto mt-auto flex w-full max-w-(--thread-max-width) flex-col gap-3 overflow-hidden rounded-t-2xl bg-background px-2 pb-3 md:pb-4">
-          <ThreadScrollToBottom />
-          <Composer />
-          <p className="text-[11px] text-muted-foreground/50 text-center">
-            AI matches are based on community profiles and may not be perfect.
-          </p>
-        </ThreadPrimitive.ViewportFooter>
       </ThreadPrimitive.Viewport>
+
+      <div className="relative mx-auto flex w-full max-w-(--thread-max-width) flex-col gap-3 px-4 pb-3 md:pb-4">
+        <ThreadScrollToBottom />
+        <Composer />
+        <p className="text-[11px] text-muted-foreground/50 text-center">
+          AI matches are based on community profiles and may not be perfect.
+        </p>
+      </div>
     </ThreadPrimitive.Root>
   );
 };

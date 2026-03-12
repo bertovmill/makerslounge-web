@@ -18,6 +18,14 @@ function AuthContent() {
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  // Persist pending query so it survives OAuth redirects
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) {
+      localStorage.setItem("pendingMatcherQuery", q);
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     const checkOnboardingStatus = async (userId: string) => {
       const { data: profile } = await supabase
@@ -26,8 +34,15 @@ function AuthContent() {
         .eq("id", userId)
         .single();
 
+      // Check both URL param and localStorage (URL param for direct navigation,
+      // localStorage for after OAuth redirect where URL param is lost)
+      const pendingQuery = searchParams.get("q") || localStorage.getItem("pendingMatcherQuery");
+
       if (!profile || !profile.onboarding_completed) {
         router.push("/onboarding");
+      } else if (pendingQuery) {
+        localStorage.removeItem("pendingMatcherQuery");
+        router.push(`/matcher?q=${encodeURIComponent(pendingQuery)}`);
       } else {
         router.push("/home");
       }
@@ -64,7 +79,39 @@ function AuthContent() {
     }
 
     return () => subscription.unsubscribe();
-  }, [router]);
+  }, [router, searchParams]);
+
+  const handleSignInWithApple = async () => {
+    setLoading(true);
+    setMessage("");
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const { SignInWithApple } = await import("@capacitor-community/apple-sign-in");
+        const result = await SignInWithApple.authorize({
+          clientId: "com.makerslounge.app",
+          redirectURI: "https://makerslounge.com",
+          scopes: "email name",
+        });
+        const { error } = await supabase.auth.signInWithIdToken({
+          provider: "apple",
+          token: result.response.identityToken!,
+        });
+        if (error) setMessage(error.message);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : "Apple Sign In failed";
+        if (!errorMessage.includes("canceled") && !errorMessage.includes("cancelled")) {
+          setMessage(errorMessage);
+        }
+      }
+      setLoading(false);
+    } else {
+      await supabase.auth.signInWithOAuth({
+        provider: "apple",
+        options: { redirectTo: `${window.location.origin}/auth` },
+      });
+    }
+  };
 
   const handleSignInWithGoogle = async () => {
     setLoading(true);
@@ -171,6 +218,18 @@ function AuthContent() {
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
           Continue with Google
+        </button>
+
+        {/* Apple */}
+        <button
+          onClick={handleSignInWithApple}
+          disabled={loading}
+          className="w-full h-11 md:h-10 rounded-xl md:rounded-md border border-border text-sm font-medium flex items-center justify-center gap-2 hover:bg-secondary active:bg-secondary transition-colors disabled:opacity-50 mt-2"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+          </svg>
+          Continue with Apple
         </button>
 
         {/* Divider */}

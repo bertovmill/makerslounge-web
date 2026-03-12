@@ -219,7 +219,7 @@ export default function Home() {
     e.preventDefault();
     const fullQuery = query.trim();
     if (!fullQuery) return;
-    router.push(`/matcher?q=${encodeURIComponent(fullQuery)}`);
+    router.push(`/auth?q=${encodeURIComponent(fullQuery)}`);
   }
 
   return (
