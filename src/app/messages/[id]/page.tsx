@@ -295,7 +295,7 @@ export default function ConversationPage() {
   const profileHref = otherUser?.username ? `/p/${otherUser.username}` : `/profile/${otherUser?.id}`;
 
   return (
-    <div className="max-w-lg mx-auto flex flex-col h-[calc(100dvh-2.75rem-env(safe-area-inset-top)-50px-env(safe-area-inset-bottom))] md:h-[calc(100dvh-3.5rem)]">
+    <div className="max-w-lg mx-auto flex flex-col h-[calc(100dvh-2.75rem-env(safe-area-inset-top)-50px-env(safe-area-inset-bottom))] lg:h-[calc(100dvh-3.5rem)]">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
         <button
@@ -469,9 +469,12 @@ export default function ConversationPage() {
             style={{ fieldSizing: "content" } as React.CSSProperties}
           />
           <button
+            onMouseDown={(e) => {
+              e.preventDefault(); // Prevent textarea blur so keyboard stays open
+            }}
             onClick={handleSend}
             disabled={!newMessage.trim() || sending}
-            className="p-2 rounded-full bg-primary text-primary-foreground disabled:opacity-40 transition-opacity shrink-0"
+            className="p-2 rounded-full bg-primary text-primary-foreground disabled:opacity-40 transition-opacity shrink-0 touch-manipulation"
           >
             <Send className="w-4 h-4" />
           </button>
