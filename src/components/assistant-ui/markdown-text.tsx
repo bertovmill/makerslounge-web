@@ -84,7 +84,7 @@ const defaultComponents = memoizeMarkdownComponents({
     if (isInternal) {
       return (
         <Link
-          href={href}
+          href={href!}
           className={cn("text-foreground underline underline-offset-2 hover:opacity-70 font-medium", className)}
           {...props}
         />
