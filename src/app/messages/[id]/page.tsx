@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, MoreHorizontal, Flag, Ban } from "lucide-react";
 import Link from "next/link";
 import { Capacitor } from "@capacitor/core";
 
@@ -33,6 +33,12 @@ export default function ConversationPage() {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [limitError, setLimitError] = useState<string | null>(null);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportSubmitted, setReportSubmitted] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -148,29 +154,59 @@ export default function ConversationPage() {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
+  async function handleReport() {
+    if (!user || !otherUser || !reportReason) return;
+    await supabase.from("reports").insert({
+      reporter_id: user.id,
+      reported_user_id: otherUser.id,
+      reason: reportReason,
+      details: reportDetails || null,
+    });
+    setReportSubmitted(true);
+    setTimeout(() => {
+      setShowReportModal(false);
+      setReportSubmitted(false);
+      setReportReason("");
+      setReportDetails("");
+    }, 2000);
+  }
+
+  async function handleBlock() {
+    if (!user || !otherUser) return;
+    await supabase.from("blocked_users").insert({
+      blocker_id: user.id,
+      blocked_id: otherUser.id,
+    });
+    setBlocked(true);
+    setShowMenu(false);
+  }
+
   async function handleSend() {
     if (!newMessage.trim() || sending || !user) return;
     setLimitError(null);
 
-    // Check message limit
-    try {
-      const res = await fetch("/api/messages/check-limit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id }),
-      });
-      const check = await res.json();
+    // Skip message limit check on native iOS (Apple IAP requirement)
+    if (!Capacitor.isNativePlatform()) {
+      // Check message limit
+      try {
+        const res = await fetch("/api/messages/check-limit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.id }),
+        });
+        const check = await res.json();
 
-      if (!check.allowed) {
-        if (check.reason === "subscription_required") {
-          setLimitError("Subscribe to MakersLounge to send messages.");
-        } else if (check.reason === "limit_reached") {
-          setLimitError("You've hit the message limit for your monthly subscription. Your limit resets next billing cycle.");
+        if (!check.allowed) {
+          if (check.reason === "subscription_required") {
+            setLimitError("Subscribe to MakersLounge to send messages.");
+          } else if (check.reason === "limit_reached") {
+            setLimitError("You've hit the message limit for your monthly subscription. Your limit resets next billing cycle.");
+          }
+          return;
         }
-        return;
+      } catch {
+        // If check fails, allow the message (fail open)
       }
-    } catch {
-      // If check fails, allow the message (fail open)
     }
 
     const content = newMessage.trim();
@@ -260,7 +296,7 @@ export default function ConversationPage() {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <Link href={profileHref} className="flex items-center gap-2.5 min-w-0">
+        <Link href={profileHref} className="flex items-center gap-2.5 min-w-0 flex-1">
           <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground text-xs font-medium overflow-hidden shrink-0">
             {otherUser?.photo_url ? (
               <img
@@ -276,7 +312,86 @@ export default function ConversationPage() {
             {otherUser?.name || "Anonymous"}
           </span>
         </Link>
+        <div className="relative ml-auto">
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
+          >
+            <MoreHorizontal className="w-5 h-5" />
+          </button>
+          {showMenu && (
+            <div className="absolute right-0 top-full mt-1 w-48 bg-card border border-border rounded-lg shadow-lg z-10 overflow-hidden">
+              <button
+                onClick={() => { setShowReportModal(true); setShowMenu(false); }}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left hover:bg-secondary transition-colors"
+              >
+                <Flag className="w-4 h-4" />
+                Report user
+              </button>
+              <button
+                onClick={handleBlock}
+                disabled={blocked}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left text-red-500 hover:bg-secondary transition-colors disabled:opacity-50"
+              >
+                <Ban className="w-4 h-4" />
+                {blocked ? "Blocked" : "Block user"}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setShowReportModal(false)}>
+          <div className="bg-card rounded-xl p-5 w-full max-w-sm border border-border" onClick={(e) => e.stopPropagation()}>
+            {reportSubmitted ? (
+              <p className="text-sm text-center text-muted-foreground py-4">Report submitted. Thank you.</p>
+            ) : (
+              <>
+                <h3 className="text-base font-semibold mb-3">Report {otherUser?.name || "this user"}</h3>
+                <div className="space-y-2 mb-3">
+                  {["Spam", "Harassment or bullying", "Inappropriate content", "Misinformation", "Other"].map((reason) => (
+                    <label key={reason} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="radio"
+                        name="report-reason"
+                        value={reason}
+                        checked={reportReason === reason}
+                        onChange={() => setReportReason(reason)}
+                        className="accent-primary"
+                      />
+                      {reason}
+                    </label>
+                  ))}
+                </div>
+                <textarea
+                  placeholder="Additional details (optional)"
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  rows={2}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm mb-3 resize-none focus:outline-none focus:ring-1 focus:ring-primary/50"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleReport}
+                    disabled={!reportReason}
+                    className="flex-1 py-2 text-sm font-medium rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+                  >
+                    Submit Report
+                  </button>
+                  <button
+                    onClick={() => setShowReportModal(false)}
+                    className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">

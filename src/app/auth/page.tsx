@@ -86,6 +86,34 @@ function AuthContent() {
     return () => subscription.unsubscribe();
   }, [router, searchParams]);
 
+  const handleAppleOAuthViaBrowser = async () => {
+    // Use OAuth flow via in-app browser (same approach as Google sign-in)
+    if (Capacitor.isNativePlatform()) {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "apple",
+        options: {
+          redirectTo: "com.makerslounge.app://auth-callback",
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) {
+        setMessage(error.message);
+        setLoading(false);
+        return;
+      }
+      if (data?.url) {
+        const { Browser } = await import("@capacitor/browser");
+        await Browser.open({ url: data.url, presentationStyle: "popover" });
+      }
+      setLoading(false);
+    } else {
+      await supabase.auth.signInWithOAuth({
+        provider: "apple",
+        options: { redirectTo: `${window.location.origin}/auth` },
+      });
+    }
+  };
+
   const handleSignInWithApple = async () => {
     setLoading(true);
     setMessage("");
@@ -103,18 +131,21 @@ function AuthContent() {
           token: result.response.identityToken!,
         });
         if (error) setMessage(error.message);
+        setLoading(false);
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : "Apple Sign In failed";
+        // If native plugin is not available, fall back to OAuth via browser
+        if (errorMessage.includes("not implemented") || errorMessage.includes("not available")) {
+          await handleAppleOAuthViaBrowser();
+          return;
+        }
         if (!errorMessage.includes("canceled") && !errorMessage.includes("cancelled")) {
           setMessage(errorMessage);
         }
+        setLoading(false);
       }
-      setLoading(false);
     } else {
-      await supabase.auth.signInWithOAuth({
-        provider: "apple",
-        options: { redirectTo: `${window.location.origin}/auth` },
-      });
+      await handleAppleOAuthViaBrowser();
     }
   };
 

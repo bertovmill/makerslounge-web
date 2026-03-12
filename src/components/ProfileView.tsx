@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ExternalLink, MessageCircle } from "lucide-react";
+import { ExternalLink, MessageCircle, MoreHorizontal, Flag, Ban } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useState } from "react";
@@ -27,6 +27,12 @@ export default function ProfileView({ profile }: ProfileViewProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [startingChat, setStartingChat] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportSubmitted, setReportSubmitted] = useState(false);
+  const [blocked, setBlocked] = useState(false);
 
   async function handleMessage() {
     if (!user) {
@@ -66,6 +72,33 @@ export default function ProfileView({ profile }: ProfileViewProps) {
     } else if (error) {
       console.error("Failed to create conversation:", error);
     }
+  }
+
+  async function handleReport() {
+    if (!user || !reportReason) return;
+    await supabase.from("reports").insert({
+      reporter_id: user.id,
+      reported_user_id: profile.id,
+      reason: reportReason,
+      details: reportDetails || null,
+    });
+    setReportSubmitted(true);
+    setTimeout(() => {
+      setShowReportModal(false);
+      setReportSubmitted(false);
+      setReportReason("");
+      setReportDetails("");
+    }, 2000);
+  }
+
+  async function handleBlock() {
+    if (!user) return;
+    await supabase.from("blocked_users").insert({
+      blocker_id: user.id,
+      blocked_id: profile.id,
+    });
+    setBlocked(true);
+    setShowMenu(false);
   }
 
   const initials = profile.name
@@ -111,9 +144,9 @@ export default function ProfileView({ profile }: ProfileViewProps) {
         </div>
       </div>
 
-      {/* Message button (don't show on own profile) */}
+      {/* Message + Report/Block (don't show on own profile) */}
       {user && user.id !== profile.id && (
-        <div className="mb-6">
+        <div className="mb-6 flex items-center gap-2">
           <button
             onClick={handleMessage}
             disabled={startingChat}
@@ -122,6 +155,85 @@ export default function ProfileView({ profile }: ProfileViewProps) {
             <MessageCircle className="w-4 h-4" />
             Message
           </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="p-2 rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+            {showMenu && (
+              <div className="absolute left-0 top-full mt-1 w-48 bg-card border border-border rounded-lg shadow-lg z-10 overflow-hidden">
+                <button
+                  onClick={() => { setShowReportModal(true); setShowMenu(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left hover:bg-secondary transition-colors"
+                >
+                  <Flag className="w-4 h-4" />
+                  Report user
+                </button>
+                <button
+                  onClick={handleBlock}
+                  disabled={blocked}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left text-red-500 hover:bg-secondary transition-colors disabled:opacity-50"
+                >
+                  <Ban className="w-4 h-4" />
+                  {blocked ? "Blocked" : "Block user"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setShowReportModal(false)}>
+          <div className="bg-card rounded-xl p-5 w-full max-w-sm border border-border" onClick={(e) => e.stopPropagation()}>
+            {reportSubmitted ? (
+              <p className="text-sm text-center text-muted-foreground py-4">Report submitted. Thank you.</p>
+            ) : (
+              <>
+                <h3 className="text-base font-semibold mb-3">Report {profile.name || "this user"}</h3>
+                <div className="space-y-2 mb-3">
+                  {["Spam", "Harassment or bullying", "Inappropriate content", "Misinformation", "Other"].map((reason) => (
+                    <label key={reason} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="radio"
+                        name="report-reason"
+                        value={reason}
+                        checked={reportReason === reason}
+                        onChange={() => setReportReason(reason)}
+                        className="accent-primary"
+                      />
+                      {reason}
+                    </label>
+                  ))}
+                </div>
+                <textarea
+                  placeholder="Additional details (optional)"
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  rows={2}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm mb-3 resize-none focus:outline-none focus:ring-1 focus:ring-primary/50"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleReport}
+                    disabled={!reportReason}
+                    className="flex-1 py-2 text-sm font-medium rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+                  >
+                    Submit Report
+                  </button>
+                  <button
+                    onClick={() => setShowReportModal(false)}
+                    className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
 
