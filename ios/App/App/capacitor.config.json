@@ -1,0 +1,37 @@
+{
+	"appId": "com.makerslounge.app",
+	"appName": "MakersLounge",
+	"webDir": "out",
+	"server": {
+		"url": "https://makerslounge.vercel.app",
+		"cleartext": false
+	},
+	"ios": {
+		"contentInset": "automatic",
+		"allowsLinkPreview": false,
+		"scrollEnabled": true,
+		"preferredContentMode": "mobile"
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchAutoHide": true,
+			"launchShowDuration": 1500,
+			"backgroundColor": "#faf9f7",
+			"showSpinner": false
+		},
+		"Keyboard": {
+			"resize": "body",
+			"style": "light"
+		},
+		"StatusBar": {
+			"style": "light"
+		}
+	},
+	"packageClassList": [
+		"AppPlugin",
+		"CAPBrowserPlugin",
+		"KeyboardPlugin",
+		"SplashScreenPlugin",
+		"StatusBarPlugin"
+	]
+}
