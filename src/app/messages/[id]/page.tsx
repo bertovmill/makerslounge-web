@@ -6,7 +6,6 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft, Send, MoreHorizontal, Flag, Ban } from "lucide-react";
 import Link from "next/link";
-import { Capacitor } from "@capacitor/core";
 import { containsObjectionableContent } from "@/lib/content-filter";
 
 interface Message {
@@ -200,32 +199,6 @@ export default function ConversationPage() {
     if (filterResult.flagged) {
       setLimitError(filterResult.reason || "This message violates our community guidelines.");
       return;
-    }
-
-    // Skip message limit check on native iOS (Apple IAP requirement)
-    if (!Capacitor.isNativePlatform()) {
-      // Check message limit
-      try {
-        const res = await fetch("/api/messages/check-limit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: user.id }),
-        });
-        if (res.ok) {
-          const check = await res.json();
-          if (!check.allowed) {
-            if (check.reason === "subscription_required") {
-              setLimitError("Subscribe to MakersLounge to send messages.");
-            } else if (check.reason === "limit_reached") {
-              setLimitError("You've hit the message limit for your monthly subscription. Your limit resets next billing cycle.");
-            }
-            return;
-          }
-        }
-        // If response is not ok (404, 500, etc.), fail open and allow the message
-      } catch {
-        // If check fails, allow the message (fail open)
-      }
     }
 
     const content = newMessage.trim();
@@ -463,11 +436,6 @@ export default function ConversationPage() {
         {limitError && (
           <div className="mb-3 p-3 rounded-lg bg-secondary text-sm text-center">
             <p className="text-muted-foreground">{limitError}</p>
-            {limitError.includes("Subscribe") && !Capacitor.isNativePlatform() && (
-              <Link href="/settings" className="text-primary font-medium text-xs mt-1 inline-block hover:underline">
-                Upgrade now
-              </Link>
-            )}
           </div>
         )}
         <div className="flex items-end gap-2">
