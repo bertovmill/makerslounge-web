@@ -8,7 +8,7 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   const { messages, userId }: { messages: UIMessage[]; userId?: string } = await req.json();
@@ -56,8 +56,9 @@ Help makers find the right people to collaborate with, get feedback from, hire, 
 WORKFLOW:
 1. Understand what the user needs (ask a quick clarifying question if vague)
 2. Search the community using your tools — try multiple approaches if the first doesn't yield great results
-3. Present 2-5 recommendations with a clear reason for each match
-4. Offer to introduce them (send_intro_message tool)
+3. For promising matches, dig deeper: check their recent posts (search_posts) and research their social links (web_search_person) to give richer context
+4. Present 2-5 recommendations with a clear reason for each match
+5. Offer to introduce them (send_intro_message tool)
 
 FORMATTING:
 - Every person's name MUST be a clickable markdown link to their profile: [**Name**](/p/username)
@@ -253,6 +254,105 @@ IMPORTANT:
         },
       },
 
+      search_posts: {
+        description:
+          "Search through community members' recent posts/projects by keyword. Posts reveal what people are actively thinking about, building, and sharing. Use this to find people based on their recent activity and interests.",
+        inputSchema: z.object({
+          query: z.string().describe("Search keyword to match against post titles and descriptions"),
+        }),
+        execute: async ({ query }: { query: string }) => {
+          const searchTerm = `%${query}%`;
+          const { data, error } = await supabaseAdmin
+            .from("projects")
+            .select(
+              "id, title, description, created_at, user_id, profiles!inner(id, name, username, bio, skills, photo_url)"
+            )
+            .or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`)
+            .order("created_at", { ascending: false })
+            .limit(15);
+
+          if (error) return { error: "Search failed" };
+          if (!data || data.length === 0)
+            return { results: [], message: "No posts found matching that query" };
+
+          const results = data.map((post) => {
+            const p = post.profiles as unknown as {
+              id: string;
+              name: string | null;
+              username: string | null;
+              bio: string | null;
+              skills: string[] | null;
+              photo_url: string | null;
+            };
+            return {
+              post_title: post.title,
+              post_description: post.description?.slice(0, 200) || null,
+              posted_at: post.created_at,
+              author: formatProfile({
+                id: p.id,
+                name: p.name,
+                username: p.username,
+                bio: p.bio,
+                skills: p.skills,
+                photo_url: p.photo_url,
+              }),
+            };
+          });
+
+          return { results, count: results.length };
+        },
+      },
+
+      web_search_person: {
+        description:
+          "Research a person by searching the web for their social links (LinkedIn, Twitter/X, website). Use this to get deeper context about a potential match — their work history, public projects, tweets, etc. Only use after you've found a promising match via other tools.",
+        inputSchema: z.object({
+          person_name: z.string().describe("The person's name"),
+          urls: z
+            .array(z.string())
+            .describe("Social URLs to research (LinkedIn, Twitter, website)"),
+        }),
+        execute: async ({ person_name, urls }: { person_name: string; urls: string[] }) => {
+          const results: { url: string; summary: string }[] = [];
+
+          for (const url of urls.slice(0, 3)) {
+            try {
+              const res = await fetch(url, {
+                headers: {
+                  "User-Agent": "MakersLounge-Bot/1.0",
+                  Accept: "text/html",
+                },
+                signal: AbortSignal.timeout(5000),
+              });
+
+              if (!res.ok) {
+                results.push({ url, summary: `Could not access (${res.status})` });
+                continue;
+              }
+
+              const html = await res.text();
+              // Extract text content, strip tags, limit to useful amount
+              const textContent = html
+                .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+                .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+                .replace(/<[^>]+>/g, " ")
+                .replace(/\s+/g, " ")
+                .trim()
+                .slice(0, 2000);
+
+              results.push({ url, summary: textContent || "No readable content" });
+            } catch {
+              results.push({ url, summary: "Failed to fetch" });
+            }
+          }
+
+          return {
+            person: person_name,
+            research: results,
+          };
+        },
+      },
+
       send_intro_message: {
         description:
           "Send an introductory message to a maker to start a conversation. Use when the user explicitly wants to connect with someone. This creates a new conversation thread.",
@@ -347,7 +447,7 @@ IMPORTANT:
         },
       },
     },
-    stopWhen: stepCountIs(6),
+    stopWhen: stepCountIs(10),
   });
 
   return result.toUIMessageStreamResponse();

@@ -30,8 +30,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <div className={`hidden lg:block ${collapsed ? "ml-16" : "ml-60"} transition-[margin] duration-200 ease-in-out`}>
         {children}
       </div>
-      {/* Mobile/Tablet: no sidebar offset */}
-      <div className="lg:hidden overflow-x-hidden">
+      {/* Mobile/Tablet: no sidebar offset, bottom padding for tab bar */}
+      <div className="lg:hidden overflow-x-hidden pb-[calc(50px+env(safe-area-inset-bottom,0px))]">
         {children}
       </div>
     </main>
