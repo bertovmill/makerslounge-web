@@ -47,6 +47,15 @@ export default function ConversationPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
+  // Hide mobile bottom tab bar on conversation page so input is accessible
+  useEffect(() => {
+    const bottomNav = document.querySelector("nav.md\\:hidden.fixed.bottom-0") as HTMLElement | null;
+    if (bottomNav) bottomNav.style.display = "none";
+    return () => {
+      if (bottomNav) bottomNav.style.display = "";
+    };
+  }, []);
+
   // Load conversation data
   useEffect(() => {
     if (authLoading) return;
@@ -202,16 +211,18 @@ export default function ConversationPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: user.id }),
         });
-        const check = await res.json();
-
-        if (!check.allowed) {
-          if (check.reason === "subscription_required") {
-            setLimitError("Subscribe to MakersLounge to send messages.");
-          } else if (check.reason === "limit_reached") {
-            setLimitError("You've hit the message limit for your monthly subscription. Your limit resets next billing cycle.");
+        if (res.ok) {
+          const check = await res.json();
+          if (!check.allowed) {
+            if (check.reason === "subscription_required") {
+              setLimitError("Subscribe to MakersLounge to send messages.");
+            } else if (check.reason === "limit_reached") {
+              setLimitError("You've hit the message limit for your monthly subscription. Your limit resets next billing cycle.");
+            }
+            return;
           }
-          return;
         }
+        // If response is not ok (404, 500, etc.), fail open and allow the message
       } catch {
         // If check fails, allow the message (fail open)
       }
@@ -219,6 +230,8 @@ export default function ConversationPage() {
 
     const content = newMessage.trim();
     setNewMessage("");
+    // Reset textarea height after clearing
+    if (inputRef.current) inputRef.current.style.height = "auto";
     setSending(true);
 
     // Optimistic update
@@ -295,7 +308,7 @@ export default function ConversationPage() {
   const profileHref = otherUser?.username ? `/p/${otherUser.username}` : `/profile/${otherUser?.id}`;
 
   return (
-    <div className="max-w-lg mx-auto flex flex-col h-[calc(100dvh-2.75rem-env(safe-area-inset-top)-50px-env(safe-area-inset-bottom))] lg:h-[calc(100dvh-3.5rem)]">
+    <div className="max-w-lg mx-auto flex flex-col h-[calc(100dvh-2.75rem-env(safe-area-inset-top,0px))] md:h-[calc(100dvh-3.5rem)]">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
         <button
@@ -446,7 +459,7 @@ export default function ConversationPage() {
       </div>
 
       {/* Input */}
-      <div className="border-t border-border px-4 py-3">
+      <div className="border-t border-border px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] md:pb-3">
         {limitError && (
           <div className="mb-3 p-3 rounded-lg bg-secondary text-sm text-center">
             <p className="text-muted-foreground">{limitError}</p>
@@ -461,12 +474,17 @@ export default function ConversationPage() {
           <textarea
             ref={inputRef}
             value={newMessage}
-            onChange={(e) => { setNewMessage(e.target.value); setLimitError(null); }}
+            onChange={(e) => {
+              setNewMessage(e.target.value);
+              setLimitError(null);
+              // Auto-resize textarea
+              e.target.style.height = "auto";
+              e.target.style.height = Math.min(e.target.scrollHeight, 128) + "px";
+            }}
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             rows={1}
             className="flex-1 resize-none bg-secondary rounded-xl px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 max-h-32"
-            style={{ fieldSizing: "content" } as React.CSSProperties}
           />
           <button
             onMouseDown={(e) => {
