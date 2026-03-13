@@ -33,7 +33,7 @@ import { type FC, useState, useCallback, useRef } from "react";
 export const Thread: FC = () => {
   return (
     <ThreadPrimitive.Root
-      className="aui-root aui-thread-root @container flex h-full flex-col bg-background"
+      className="aui-root aui-thread-root @container flex h-full flex-col bg-background overflow-x-hidden"
       style={{
         ["--thread-max-width" as string]: "42rem",
       }}
@@ -57,7 +57,7 @@ export const Thread: FC = () => {
         />
       </ThreadPrimitive.Viewport>
 
-      <div className="relative mx-auto flex w-full max-w-(--thread-max-width) flex-col gap-2 px-4 pb-4">
+      <div className="relative mx-auto flex w-full max-w-(--thread-max-width) flex-col gap-2 px-4 pb-4 overflow-hidden">
         <ThreadScrollToBottom />
         <Composer />
         <p className="text-[11px] text-muted-foreground/40 text-center select-none">
@@ -136,7 +136,7 @@ const Composer: FC = () => {
       <div className="flex w-full flex-col rounded-2xl border border-border/60 bg-background shadow-sm transition-all has-[textarea:focus-visible]:border-foreground/20 has-[textarea:focus-visible]:shadow-md">
         <ComposerPrimitive.Input
           placeholder="What are you looking for?"
-          className="max-h-40 min-h-12 w-full resize-none bg-transparent px-4 pt-3 pb-2 text-sm outline-none placeholder:text-muted-foreground/60 focus-visible:ring-0"
+          className="max-h-40 min-h-12 w-full resize-none bg-transparent px-4 pt-3 pb-2 text-base md:text-sm outline-none placeholder:text-muted-foreground/60 focus-visible:ring-0"
           rows={1}
           autoFocus
           aria-label="Message input"
@@ -214,6 +214,8 @@ const TOOL_LABELS: Record<string, string> = {
   get_maker_profile: "Looking up profile",
   find_looking_for: "Finding matches",
   browse_community: "Browsing community",
+  search_posts: "Searching posts",
+  web_search_person: "Researching online",
   send_intro_message: "Sending intro",
 };
 
@@ -327,10 +329,10 @@ const ChainOfThought: FC = () => {
 const AssistantMessage: FC = () => {
   return (
     <MessagePrimitive.Root
-      className="fade-in slide-in-from-bottom-1 relative mx-auto w-full max-w-(--thread-max-width) animate-in py-4 duration-200"
+      className="fade-in slide-in-from-bottom-1 relative mx-auto w-full max-w-(--thread-max-width) animate-in py-4 duration-200 overflow-hidden"
       data-role="assistant"
     >
-      <div className="wrap-break-word text-foreground leading-relaxed text-[15px]">
+      <div className="wrap-break-word break-words text-foreground leading-relaxed text-[15px] min-w-0">
         <MessagePrimitive.Parts
           components={{
             Text: MarkdownText,

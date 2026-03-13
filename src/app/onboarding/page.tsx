@@ -165,11 +165,18 @@ export default function OnboardingPage() {
     );
   }
 
+  // Scroll to top on step change
+  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    containerRef.current?.scrollTo(0, 0);
+  }, [currentStep]);
+
   const step = STEPS[currentStep];
   const isLastStep = currentStep === STEPS.length - 1;
 
   return (
-    <div className="min-h-svh flex items-start md:items-center justify-center px-4 py-12 overflow-y-auto">
+    <div ref={containerRef} className="min-h-svh flex items-start md:items-center justify-center px-4 py-12 overflow-y-auto overflow-x-hidden">
       <div className="w-full max-w-md md:max-w-lg">
         {/* Progress */}
         <div className="mb-8">
@@ -203,7 +210,7 @@ export default function OnboardingPage() {
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   placeholder="John"
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                  className="w-full h-11 px-3 rounded-md border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
                   autoFocus
                 />
               </div>
@@ -214,7 +221,7 @@ export default function OnboardingPage() {
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="Doe"
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                  className="w-full h-11 px-3 rounded-md border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
                 />
               </div>
             </div>
@@ -233,7 +240,7 @@ export default function OnboardingPage() {
                       setProjects(updated);
                     }}
                     placeholder={index === 0 ? "e.g., A marketplace for local artisans" : "Another project..."}
-                    className="flex-1 h-10 px-3 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                    className="flex-1 h-11 px-3 rounded-md border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
                     autoFocus={index === 0}
                   />
                   {speechSupported && (
@@ -289,14 +296,14 @@ export default function OnboardingPage() {
                   <label className="block text-sm font-medium mb-1.5">
                     {field.label} {field.required && <span className="text-destructive">*</span>}
                   </label>
-                  <div className="flex items-center h-10 rounded-md border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
+                  <div className="flex items-center h-11 rounded-md border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
                     <span className="text-xs text-muted-foreground pl-3 pr-1 shrink-0">{field.prefix}</span>
                     <input
                       type="text"
                       value={field.value}
                       onChange={(e) => field.set(e.target.value)}
                       placeholder="username"
-                      className="flex-1 h-full pr-3 text-sm outline-none bg-transparent"
+                      className="flex-1 h-full pr-3 text-base md:text-sm outline-none bg-transparent"
                       autoFocus={field.label === "LinkedIn"}
                     />
                   </div>

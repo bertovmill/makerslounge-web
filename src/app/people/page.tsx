@@ -139,7 +139,7 @@ function PeopleContent() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name or bio..."
-              className="w-full h-9 md:h-10 pl-9 md:pl-10 pr-9 md:pr-10 rounded-[10px] md:rounded-md bg-secondary md:bg-background md:border md:border-input text-[15px] md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+              className="w-full h-9 md:h-10 pl-9 md:pl-10 pr-9 md:pr-10 rounded-[10px] md:rounded-md bg-secondary md:bg-background md:border md:border-input text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
             />
             {hasFilters && (
               <button
