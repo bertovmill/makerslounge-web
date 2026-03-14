@@ -106,9 +106,9 @@ function PeopleContent() {
   const hasFilters = searchQuery || selectedSkills.length > 0;
 
   return (
-    <div className="flex min-h-[calc(100dvh-3.5rem)]">
+    <div className="flex min-h-0">
       {/* Main content — shrinks when drawer opens */}
-      <div className="flex-1 min-w-0 overflow-y-auto">
+      <div className="flex-1 min-w-0">
         <div className="max-w-5xl mx-auto px-4 py-6 md:py-8">
           {/* Header */}
           <div className="mb-5 md:mb-8 flex items-start justify-between">
