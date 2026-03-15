@@ -12,7 +12,7 @@ export default function SettingsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Subscription
+  // Subscription (web only — hidden on native iOS per App Store guidelines)
   const [isPremium, setIsPremium] = useState(false);
   const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
@@ -40,16 +40,18 @@ export default function SettingsPage() {
       }
       setUser(user);
 
-      // Fetch subscription status
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_premium, stripe_customer_id")
-        .eq("id", user.id)
-        .single();
+      // Fetch subscription status (web only — not needed on native iOS)
+      if (!Capacitor.isNativePlatform()) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_premium, stripe_customer_id")
+          .eq("id", user.id)
+          .single();
 
-      if (profile) {
-        setIsPremium(profile.is_premium || false);
-        setStripeCustomerId(profile.stripe_customer_id || null);
+        if (profile) {
+          setIsPremium(profile.is_premium || false);
+          setStripeCustomerId(profile.stripe_customer_id || null);
+        }
       }
 
       setLoading(false);

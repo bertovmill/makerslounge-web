@@ -59,6 +59,7 @@
     "rehype-highlight": "^7.0.2",
     "remark-gfm": "^4.0.1",
     "remotion": "^4.0.417",
+    "resend": "^6.9.3",
     "stripe": "^20.3.0",
     "tailwind-merge": "^3.4.0",
     "tldraw": "^4.2.1",

@@ -161,6 +161,18 @@ export default function ProfileView({ profile }: ProfileViewProps) {
         </div>
       </div>
 
+      {/* Edit profile (own profile) */}
+      {user && user.id === profile.id && (
+        <div className="mb-6">
+          <Link
+            href="/profile"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+          >
+            Edit Profile
+          </Link>
+        </div>
+      )}
+
       {/* Message + Report/Block (don't show on own profile) */}
       {user && user.id !== profile.id && (
         <div className="mb-6 flex items-center gap-2">

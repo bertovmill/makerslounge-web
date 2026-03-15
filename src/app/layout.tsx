@@ -12,9 +12,11 @@ const instrumentSerif = Instrument_Serif({
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import AppShell from "@/components/AppShell";
+import FeedbackButton from "@/components/FeedbackButton";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { SidebarProvider } from "@/context/SidebarContext";
+import { FeedbackProvider } from "@/context/FeedbackContext";
 
 export const metadata: Metadata = {
   title: "MakersLounge",
@@ -56,8 +58,11 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <SidebarProvider>
-              <Sidebar />
-              <AppShell>{children}</AppShell>
+              <FeedbackProvider>
+                <Sidebar />
+                <AppShell>{children}</AppShell>
+                <FeedbackButton />
+              </FeedbackProvider>
             </SidebarProvider>
           </AuthProvider>
         </ThemeProvider>

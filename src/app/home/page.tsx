@@ -191,6 +191,49 @@ export default function HomePage() {
     }
   }
 
+  async function handlePaste(e: React.ClipboardEvent) {
+    const items = e.clipboardData?.items;
+    if (!items || !user) return;
+
+    const imageFiles: File[] = [];
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) imageFiles.push(file);
+      }
+    }
+    if (imageFiles.length === 0) return;
+
+    e.preventDefault();
+    setUploading(true);
+    setComposeFocused(true);
+    try {
+      const newUrls: string[] = [];
+      for (const file of imageFiles) {
+        const ext = file.type.split("/")[1] || "png";
+        const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
+        const filePath = `projects/${user.id}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("media")
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("media").getPublicUrl(filePath);
+
+        newUrls.push(publicUrl);
+      }
+      setMediaUrls((prev) => [...prev, ...newUrls]);
+    } catch (err) {
+      console.error("Paste upload error:", err);
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function handlePost() {
     if (!title.trim() || !user) return;
 
@@ -267,6 +310,7 @@ export default function HomePage() {
           className={`rounded-2xl border transition-colors ${
             composeFocused ? "border-border bg-card shadow-sm" : "border-border/60 bg-card/50"
           }`}
+          onPaste={handlePaste}
         >
           <div className="px-4 pt-4">
             <textarea

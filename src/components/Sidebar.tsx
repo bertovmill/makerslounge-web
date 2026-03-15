@@ -14,10 +14,12 @@ import {
   Sparkles,
   PanelLeft,
   BarChart3,
+  MessageSquarePlus,
 } from "lucide-react";
 import UserMenu from "./UserMenu";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useFeedback } from "@/context/FeedbackContext";
 
 const NAV_ITEMS = [
   { href: "/home", label: "Home", icon: Home },
@@ -41,6 +43,7 @@ export default function Sidebar() {
   const { user } = useAuth();
   const pathname = usePathname();
   const { collapsed, toggleCollapsed } = useSidebar();
+  const { openFeedback } = useFeedback();
   const [unreadCount, setUnreadCount] = useState(0);
   const [logoHovered, setLogoHovered] = useState(false);
 
@@ -182,6 +185,21 @@ export default function Sidebar() {
           ))}
         </nav>
 
+        {/* Feedback button — pinned to bottom */}
+        <div className={cn("border-t border-border py-3", collapsed ? "px-1.5" : "px-2")}>
+          <button
+            onClick={openFeedback}
+            className={cn(
+              "flex items-center rounded-lg text-sm transition-colors w-full",
+              collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2",
+              "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+            )}
+            title={collapsed ? "Send Feedback" : undefined}
+          >
+            <MessageSquarePlus className="w-[18px] h-[18px] shrink-0" strokeWidth={1.8} />
+            {!collapsed && "Feedback"}
+          </button>
+        </div>
       </aside>
 
       {/* Desktop: User menu in top-right corner */}

@@ -121,6 +121,17 @@ export default function FeedbackButton() {
       screenshot_url: screenshotUrl,
     });
 
+    // Send email notification (fire-and-forget)
+    fetch("/api/feedback/notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        email: user.email || null,
+        screenshotUrl,
+      }),
+    }).catch(() => {}); // don't block on notification failure
+
     setLoading(false);
     setSubmitted(true);
     setMessage("");
@@ -140,8 +151,8 @@ export default function FeedbackButton() {
   return (
     <>
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="glass-card p-8 max-w-md w-full relative">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+          <Card className="bg-background border border-border p-8 max-w-md w-full relative">
             <button
               onClick={() => closeFeedback()}
               className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"

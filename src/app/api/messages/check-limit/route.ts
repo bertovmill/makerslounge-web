@@ -26,13 +26,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    // Not a subscriber
-    if (!profile.is_premium) {
-      return NextResponse.json({
-        allowed: false,
-        reason: "subscription_required",
-      });
-    }
+    // Allow all users to message (premium gate removed for App Store compliance —
+    // iOS apps cannot gate features behind external subscriptions without IAP)
 
     // Check if we need to auto-reset (safety net if webhook missed)
     let messagesUsed = profile.messages_used || 0;

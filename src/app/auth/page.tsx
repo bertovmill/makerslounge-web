@@ -17,6 +17,8 @@ function AuthContent() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  // Start with checking=true so the login form doesn't flash during OAuth redirects
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   // Persist pending query so it survives OAuth redirects
   useEffect(() => {
@@ -54,7 +56,12 @@ function AuthContent() {
     };
 
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) checkOnboardingStatus(user.id);
+      if (user) {
+        checkOnboardingStatus(user.id);
+      } else {
+        // No existing session — safe to show the login form
+        setCheckingAuth(false);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -126,11 +133,35 @@ function AuthContent() {
           redirectURI: "https://makerslounge.com",
           scopes: "email name",
         });
-        const { error } = await supabase.auth.signInWithIdToken({
+        const { data, error } = await supabase.auth.signInWithIdToken({
           provider: "apple",
           token: result.response.identityToken!,
         });
-        if (error) setMessage(error.message);
+        if (error) {
+          setMessage(error.message);
+          setLoading(false);
+          return;
+        }
+        // Explicitly navigate after successful native sign-in
+        // (onAuthStateChange may not fire reliably in Capacitor WebView)
+        if (data.session?.user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("onboarding_completed")
+            .eq("id", data.session.user.id)
+            .single();
+
+          const pendingQuery = localStorage.getItem("pendingMatcherQuery");
+
+          if (!profile || !profile.onboarding_completed) {
+            router.push("/onboarding");
+          } else if (pendingQuery) {
+            localStorage.removeItem("pendingMatcherQuery");
+            router.push(`/matcher?q=${encodeURIComponent(pendingQuery)}`);
+          } else {
+            router.push("/home");
+          }
+        }
         setLoading(false);
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : "Apple Sign In failed";
@@ -200,6 +231,14 @@ function AuthContent() {
     }
     setLoading(false);
   };
+
+  if (checkingAuth) {
+    return (
+      <div className="h-svh flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-muted-foreground/30 border-t-foreground rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-svh flex items-center justify-center px-4 overflow-hidden pt-[env(safe-area-inset-top,48px)]">
