@@ -2,18 +2,27 @@
 
 import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSidebar } from "@/context/SidebarContext";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, onboardingCompleted } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const { collapsed } = useSidebar();
 
   // Scroll to top on page navigation (iOS-like behavior)
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
+
+  // Enforce onboarding: redirect authenticated users who haven't completed it
+  useEffect(() => {
+    const isAuthPage = pathname === "/" || pathname === "/auth" || pathname === "/onboarding";
+    if (user && onboardingCompleted === false && !isAuthPage) {
+      router.replace("/onboarding");
+    }
+  }, [user, onboardingCompleted, pathname, router]);
 
   const isFullPage = pathname === "/" || pathname === "/auth" || pathname === "/onboarding";
 
