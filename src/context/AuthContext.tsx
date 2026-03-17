@@ -28,15 +28,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-      if (user) {
-        fetchOnboardingStatus(user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user ?? null;
       setUser(u);
@@ -48,15 +39,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
+    // Initial session check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) {
+        fetchOnboardingStatus(u.id).then(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    });
+
     return () => subscription.unsubscribe();
   }, []);
-
-  // Mark loading done once we have user + onboarding status
-  useEffect(() => {
-    if (user !== null && onboardingCompleted !== null) {
-      setLoading(false);
-    }
-  }, [user, onboardingCompleted]);
 
   const isAdmin = user?.email === "bertmill19@gmail.com";
 
