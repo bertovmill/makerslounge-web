@@ -46,7 +46,7 @@ export default function MatcherDrawer({ open, onClose }: MatcherDrawerProps) {
             : "translate-y-full md:translate-y-0 md:w-0 md:opacity-0 md:overflow-hidden md:border-l-0"
         )}
       >
-        <div className="flex flex-col h-full md:h-[calc(100dvh-3.5rem)] md:sticky md:top-14 w-full md:w-[420px]">
+        <div className="flex flex-col h-full md:h-[calc(100dvh-3.5rem)] md:sticky md:top-14 w-full md:w-[420px] pb-[calc(50px+env(safe-area-inset-bottom,0px))] md:pb-0">
           {/* Header */}
           <div className="flex items-center justify-between h-14 px-4 border-b border-border shrink-0">
             <h2 className="text-sm font-semibold">AI Matcher</h2>
