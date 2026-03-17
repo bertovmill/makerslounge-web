@@ -118,7 +118,7 @@ export default function Navbar() {
           {!user && (
             <Link
               href="/auth"
-              className="text-sm font-medium px-4 py-1.5 rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+              className="text-sm font-medium px-4 py-1.5 rounded-md bg-gradient-blue text-white hover:opacity-90 transition-opacity"
             >
               Sign in
             </Link>
@@ -147,7 +147,7 @@ export default function Navbar() {
           ) : (
             <Link
               href="/auth"
-              className="text-sm font-medium px-3 py-1 rounded-full bg-primary text-primary-foreground active:opacity-80"
+              className="text-sm font-medium px-3 py-1 rounded-full bg-gradient-blue text-white active:opacity-80"
             >
               Sign in
             </Link>

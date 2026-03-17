@@ -3,10 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ExternalLink, MessageCircle, MoreHorizontal, Flag, Ban } from "lucide-react";
+import { ExternalLink, MessageCircle, MoreHorizontal, Flag, Ban, Mic } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useState, useEffect } from "react";
+import { PodcastWithGuests, fetchPodcastsByGuest, formatDuration } from "@/lib/podcasts";
 
 interface ProfileViewProps {
   profile: {
@@ -37,6 +38,7 @@ export default function ProfileView({ profile }: ProfileViewProps) {
   const [posts, setPosts] = useState<
     { id: string; title: string; description: string | null; media_urls: string[] | null; created_at: string }[]
   >([]);
+  const [podcasts, setPodcasts] = useState<PodcastWithGuests[]>([]);
 
   useEffect(() => {
     async function fetchPosts() {
@@ -49,6 +51,7 @@ export default function ProfileView({ profile }: ProfileViewProps) {
       if (data) setPosts(data);
     }
     fetchPosts();
+    fetchPodcastsByGuest(profile.id).then(setPodcasts);
   }, [profile.id]);
 
   async function handleMessage() {
@@ -360,6 +363,37 @@ export default function ProfileView({ profile }: ProfileViewProps) {
                   {new Date(post.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                 </p>
               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Podcasts */}
+      {podcasts.length > 0 && (
+        <div className="mt-6 md:mt-8">
+          <h2 className="text-[13px] md:text-sm font-medium text-muted-foreground md:text-foreground mb-3">Podcasts</h2>
+          <div className="space-y-3">
+            {podcasts.map((ep) => (
+              <Link
+                key={ep.id}
+                href={`/podcasts/${ep.slug}`}
+                className="block rounded-xl bg-card md:bg-muted/30 border border-border/50 p-4 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-start gap-3">
+                  <Mic className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">{ep.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      {ep.episode_number && (
+                        <span className="text-[11px] text-muted-foreground">Ep. {ep.episode_number}</span>
+                      )}
+                      {ep.duration_seconds && (
+                        <span className="text-[11px] text-muted-foreground">{formatDuration(ep.duration_seconds)}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         </div>

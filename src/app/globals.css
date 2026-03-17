@@ -60,11 +60,21 @@
   --input: #e8e5e0;
   --ring: #4A9FE5;
 
+  /* Blue accent system */
+  --blue-start: #4A9FE5;
+  --blue-mid: #6DB3F0;
+  --blue-end: #89C4F4;
+  --blue-glow: rgba(74, 159, 229, 0.25);
+  --gradient-blue: linear-gradient(135deg, #4A9FE5 0%, #6DB3F0 50%, #89C4F4 100%);
+  --gradient-blue-subtle: linear-gradient(135deg, rgba(74, 159, 229, 0.08) 0%, rgba(137, 196, 244, 0.04) 100%);
+  --gradient-blue-vibrant: linear-gradient(135deg, #3B8BD4 0%, #4A9FE5 30%, #89C4F4 70%, #A8D4F7 100%);
+
   /* Shadows & accents */
   --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.03);
   --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.07), 0 2px 6px rgba(0, 0, 0, 0.04);
   --shadow-input-focus: 0 0 0 3px rgba(74, 159, 229, 0.12);
+  --shadow-blue-glow: 0 0 20px rgba(74, 159, 229, 0.15), 0 0 60px rgba(74, 159, 229, 0.05);
   --primary-gradient: linear-gradient(135deg, #4A9FE5 0%, #3b8ad4 100%);
   --surface-shine: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 50%);
 }
@@ -95,11 +105,21 @@
   --input: #2e2d2a;
   --ring: #5eb0f0;
 
+  /* Blue accent system */
+  --blue-start: #5EB0F0;
+  --blue-mid: #7AC0F5;
+  --blue-end: #99D1FA;
+  --blue-glow: rgba(94, 176, 240, 0.3);
+  --gradient-blue: linear-gradient(135deg, #5EB0F0 0%, #7AC0F5 50%, #99D1FA 100%);
+  --gradient-blue-subtle: linear-gradient(135deg, rgba(94, 176, 240, 0.1) 0%, rgba(153, 209, 250, 0.05) 100%);
+  --gradient-blue-vibrant: linear-gradient(135deg, #4A9CE0 0%, #5EB0F0 30%, #99D1FA 70%, #B8E0FC 100%);
+
   /* Shadows & accents — dark mode */
   --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 1px rgba(255, 255, 255, 0.05);
   --shadow-card-hover: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 1px rgba(255, 255, 255, 0.08);
   --shadow-input-focus: 0 0 0 3px rgba(94, 176, 240, 0.15);
+  --shadow-blue-glow: 0 0 25px rgba(94, 176, 240, 0.2), 0 0 80px rgba(94, 176, 240, 0.08);
   --primary-gradient: linear-gradient(135deg, #5eb0f0 0%, #4a9ce0 100%);
   --surface-shine: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 50%);
 }
@@ -228,4 +248,85 @@ html {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* --- Blue gradient accent system --- */
+
+/* Gradient text — use sparingly on hero headings or key labels */
+.text-gradient-blue {
+  background: var(--gradient-blue);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Gradient background for buttons, badges, or small accent areas */
+.bg-gradient-blue {
+  background: var(--gradient-blue);
+}
+
+/* Subtle gradient wash — for section backgrounds or cards */
+.bg-gradient-blue-subtle {
+  background: var(--gradient-blue-subtle);
+}
+
+/* Vibrant gradient — for hero sections or special moments */
+.bg-gradient-blue-vibrant {
+  background: var(--gradient-blue-vibrant);
+}
+
+/* Blue glow shadow — for cards or elements that need pop */
+.shadow-blue-glow {
+  box-shadow: var(--shadow-blue-glow);
+}
+
+/* Gradient border — pill/badge/card outline effect */
+.border-gradient-blue {
+  position: relative;
+  background-clip: padding-box;
+  border: 1px solid transparent;
+}
+.border-gradient-blue::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--gradient-blue);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Grainy texture overlay — add to gradient backgrounds for depth */
+.grain-overlay {
+  position: relative;
+}
+.grain-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+}
+
+/* Blue accent dot — tiny status/decorative dot */
+.dot-blue {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gradient-blue);
+  box-shadow: 0 0 8px var(--blue-glow);
+}
+
+/* Gradient divider line */
+.divider-gradient-blue {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--blue-start), var(--blue-end), transparent);
+  border: none;
 }

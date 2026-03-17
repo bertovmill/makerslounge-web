@@ -241,7 +241,7 @@ export default function Home() {
           </button>
           <Link
             href="/auth"
-            className="text-xs sm:text-sm font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-md bg-foreground text-background hover:opacity-90 transition-opacity"
+            className="text-xs sm:text-sm font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-md bg-gradient-blue text-white hover:opacity-90 transition-opacity"
           >
             Sign in
           </Link>
@@ -257,14 +257,14 @@ export default function Home() {
       {/* Hero — Manus-style centered layout */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pb-12 sm:pb-24">
         <h1 className="text-[1.75rem] sm:text-5xl md:text-[3.5rem] tracking-tight leading-[1.15] mb-6 sm:mb-10 text-center">
-          How can the community
+          How can the <span className="text-gradient-blue">community</span>
           <br />
           help you?
         </h1>
 
         {/* Input box */}
         <form onSubmit={handleSubmit} className="w-full max-w-[640px] mb-4 sm:mb-6">
-          <div className="relative rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="relative rounded-2xl border border-border bg-card shadow-sm overflow-hidden focus-within:shadow-blue-glow focus-within:border-[var(--blue-start)]/30 transition-all duration-300">
             <textarea
               ref={textareaRef}
               value={query}
@@ -282,7 +282,7 @@ export default function Home() {
             <div className="absolute bottom-3 right-3">
               <button
                 type="submit"
-                className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-30"
+                className="w-8 h-8 rounded-full bg-gradient-blue text-white flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-30"
                 disabled={!query.trim()}
               >
                 <ArrowUp className="w-4 h-4" />
