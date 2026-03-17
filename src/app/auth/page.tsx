@@ -269,7 +269,7 @@ function AuthContent() {
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block mb-6">
-            <img src="/logo.svg" alt="MakersLounge" className="w-12 h-12 mx-auto dark:hidden" />
+            <img src="/logo-blue.svg" alt="MakersLounge" className="w-12 h-12 mx-auto dark:hidden" />
             <img src="/logo-light.svg" alt="MakersLounge" className="w-12 h-12 mx-auto hidden dark:block" />
           </Link>
           <h1 className="text-2xl mb-1">
