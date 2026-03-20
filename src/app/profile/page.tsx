@@ -6,7 +6,15 @@ import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import SkillsInput from "@/components/SkillsInput";
 import Link from "next/link";
-import { ExternalLink, Upload, Check } from "lucide-react";
+import {
+  ExternalLink,
+  Upload,
+  Check,
+  Camera,
+  Linkedin,
+  Globe,
+  Instagram,
+} from "lucide-react";
 
 interface Profile {
   id: string;
@@ -54,13 +62,20 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push("/"); return; }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/");
+        return;
+      }
       setUser(user);
 
       const { data: existingProfile } = await supabase
         .from("profiles")
-        .select("id, username, name, first_name, last_name, photo_url, bio, skills, looking_for_skills, currently_building, linkedin, twitter, instagram, website")
+        .select(
+          "id, username, name, first_name, last_name, photo_url, bio, skills, looking_for_skills, currently_building, linkedin, twitter, instagram, website"
+        )
         .eq("id", user.id)
         .single();
 
@@ -70,7 +85,10 @@ export default function ProfilePage() {
         const newProfile = {
           id: user.id,
           username: null,
-          name: user.user_metadata?.full_name || user.email?.split("@")[0] || "",
+          name:
+            user.user_metadata?.full_name ||
+            user.email?.split("@")[0] ||
+            "",
           first_name: null,
           last_name: null,
           photo_url: user.user_metadata?.avatar_url || null,
@@ -126,7 +144,9 @@ export default function ProfilePage() {
     }
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
@@ -140,10 +160,15 @@ export default function ProfilePage() {
         .upload(filePath, file, { upsert: true });
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage.from("media").getPublicUrl(filePath);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("media").getPublicUrl(filePath);
       setProfile({ ...profile, photo_url: publicUrl });
 
-      await supabase.from("profiles").update({ photo_url: publicUrl }).eq("id", user.id);
+      await supabase
+        .from("profiles")
+        .update({ photo_url: publicUrl })
+        .eq("id", user.id);
     } catch (error) {
       console.error("Upload error:", error);
     } finally {
@@ -159,163 +184,316 @@ export default function ProfilePage() {
     );
   }
 
-  const profileUrl = profile.username ? `/p/${profile.username}` : `/profile/${user?.id}`;
-  const initials = profile.name
-    ?.split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "?";
+  const profileUrl = profile.username
+    ? `/p/${profile.username}`
+    : `/profile/${user?.id}`;
+  const initials =
+    profile.name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "?";
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6 md:py-8 pb-24">
+    <div className="max-w-lg mx-auto px-4 py-6 md:py-12 pb-24">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 md:mb-8">
-        <h1 className="text-[28px] md:text-2xl font-bold md:font-semibold tracking-tight">Edit profile</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-2xl font-bold tracking-tight">Edit profile</h1>
         <Link
           href={profileUrl}
           target="_blank"
-          className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5"
+          className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
         >
           View public profile
           <ExternalLink className="w-3.5 h-3.5" />
         </Link>
       </div>
 
-      <div className="space-y-6">
-        {/* Avatar */}
+      {/* Profile header card */}
+      <div className="rounded-xl bg-card border border-border/50 p-5 mb-4">
         <div className="flex items-center gap-4">
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="relative w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-muted-foreground font-semibold overflow-hidden group"
+            className="relative w-20 h-20 rounded-full bg-secondary flex items-center justify-center text-muted-foreground font-semibold text-lg overflow-hidden group shrink-0"
           >
             {profile.photo_url ? (
-              <img src={profile.photo_url} alt="" className="w-full h-full object-cover" />
+              <img
+                src={profile.photo_url}
+                alt=""
+                className="w-full h-full object-cover"
+              />
             ) : (
               initials
             )}
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Upload className="w-4 h-4 text-white" />
+              <Camera className="w-5 h-5 text-white" />
             </div>
           </button>
-          <div>
+          <div className="flex-1 min-w-0">
+            <p className="text-lg font-semibold truncate">
+              {profile.first_name || profile.last_name
+                ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim()
+                : profile.name || "Your name"}
+            </p>
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="text-sm font-medium hover:underline"
+              className="text-sm text-primary hover:underline mt-0.5"
             >
               {uploading ? "Uploading..." : "Change photo"}
             </button>
-            <p className="text-xs text-muted-foreground">JPG, PNG. Max 5MB.</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {/* Basic info card */}
+        <div className="rounded-xl bg-card border border-border/50 p-5">
+          <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wide mb-4">
+            Basic info
+          </h2>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">
+                  First name
+                </label>
+                <input
+                  type="text"
+                  value={profile.first_name || ""}
+                  onChange={(e) =>
+                    setProfile({
+                      ...profile,
+                      first_name: e.target.value,
+                      name: `${e.target.value} ${profile.last_name || ""}`.trim(),
+                    })
+                  }
+                  className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 transition-shadow"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">
+                  Last name
+                </label>
+                <input
+                  type="text"
+                  value={profile.last_name || ""}
+                  onChange={(e) =>
+                    setProfile({
+                      ...profile,
+                      last_name: e.target.value,
+                      name: `${profile.first_name || ""} ${e.target.value}`.trim(),
+                    })
+                  }
+                  className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 transition-shadow"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5">
+                Username
+              </label>
+              <div className="flex items-center h-10 rounded-lg border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1 transition-shadow">
+                <span className="text-xs text-muted-foreground pl-3 pr-1 shrink-0">
+                  makerslounge.ca/p/
+                </span>
+                <input
+                  type="text"
+                  value={profile.username || ""}
+                  onChange={(e) =>
+                    setProfile({
+                      ...profile,
+                      username: e.target.value
+                        .toLowerCase()
+                        .replace(/[^a-z0-9-_]/g, ""),
+                    })
+                  }
+                  placeholder="yourname"
+                  className="flex-1 h-full pr-3 text-sm outline-none bg-transparent"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Bio</label>
+              <textarea
+                value={profile.bio || ""}
+                onChange={(e) =>
+                  setProfile({ ...profile, bio: e.target.value })
+                }
+                placeholder="Tell people about yourself..."
+                rows={3}
+                className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm outline-none resize-none focus:ring-2 focus:ring-ring focus:ring-offset-1 transition-shadow"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Name */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium mb-1.5">First name</label>
-            <input
-              type="text"
-              value={profile.first_name || ""}
-              onChange={(e) => setProfile({ ...profile, first_name: e.target.value, name: `${e.target.value} ${profile.last_name || ""}`.trim() })}
-              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Last name</label>
-            <input
-              type="text"
-              value={profile.last_name || ""}
-              onChange={(e) => setProfile({ ...profile, last_name: e.target.value, name: `${profile.first_name || ""} ${e.target.value}`.trim() })}
-              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-            />
-          </div>
-        </div>
-
-        {/* Username */}
-        <div>
-          <label className="block text-sm font-medium mb-1.5">Username</label>
-          <div className="flex items-center h-10 rounded-md border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
-            <span className="text-xs text-muted-foreground pl-3 pr-1">makerslounge.com/p/</span>
-            <input
-              type="text"
-              value={profile.username || ""}
-              onChange={(e) => setProfile({ ...profile, username: e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, "") })}
-              placeholder="yourname"
-              className="flex-1 h-full pr-3 text-sm outline-none bg-transparent"
-            />
-          </div>
-        </div>
-
-        {/* Bio */}
-        <div>
-          <label className="block text-sm font-medium mb-1.5">Bio</label>
-          <textarea
-            value={profile.bio || ""}
-            onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-            placeholder="Tell people about yourself..."
-            rows={3}
-            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm outline-none resize-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-          />
-        </div>
-
-        {/* Currently building */}
-        <div>
-          <label className="block text-sm font-medium mb-1.5">Currently building</label>
+        {/* Currently building card */}
+        <div className="rounded-xl bg-card border border-border/50 p-5">
+          <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wide mb-4">
+            Currently building
+          </h2>
           <textarea
             value={profile.currently_building || ""}
-            onChange={(e) => setProfile({ ...profile, currently_building: e.target.value })}
+            onChange={(e) =>
+              setProfile({ ...profile, currently_building: e.target.value })
+            }
             placeholder="What are you working on?"
             rows={2}
-            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm outline-none resize-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+            className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm outline-none resize-none focus:ring-2 focus:ring-ring focus:ring-offset-1 transition-shadow"
           />
         </div>
 
-        {/* Skills */}
-        <div>
-          <label className="block text-sm font-medium mb-1.5">Your skills</label>
-          <SkillsInput skills={profile.skills || []} onChange={(skills) => setProfile({ ...profile, skills })} maxSkills={10} />
+        {/* Skills card */}
+        <div className="rounded-xl bg-card border border-border/50 p-5">
+          <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wide mb-4">
+            Your skills
+          </h2>
+          <SkillsInput
+            skills={profile.skills || []}
+            onChange={(skills) => setProfile({ ...profile, skills })}
+            maxSkills={10}
+          />
         </div>
 
-        {/* Looking for */}
-        <div>
-          <label className="block text-sm font-medium mb-1.5">Looking for</label>
+        {/* Looking for card */}
+        <div className="rounded-xl bg-card border border-border/50 p-5">
+          <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wide mb-4">
+            Looking for
+          </h2>
           <SkillsInput
             skills={profile.looking_for_skills || []}
-            onChange={(looking_for_skills) => setProfile({ ...profile, looking_for_skills })}
+            onChange={(looking_for_skills) =>
+              setProfile({ ...profile, looking_for_skills })
+            }
             maxSkills={10}
             mode="looking_for"
           />
         </div>
 
-        {/* Social links */}
-        <div>
-          <label className="block text-sm font-medium mb-3">Social links</label>
-          <div className="space-y-2">
+        {/* Social links card */}
+        <div className="rounded-xl bg-card border border-border/50 p-5">
+          <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wide mb-4">
+            Social links
+          </h2>
+          <div className="space-y-3">
             {[
-              { label: "LinkedIn", key: "linkedin" as const, placeholder: "https://linkedin.com/in/..." },
-              { label: "X (Twitter)", key: "twitter" as const, placeholder: "https://x.com/..." },
-              { label: "Instagram", key: "instagram" as const, placeholder: "https://instagram.com/..." },
-              { label: "Website", key: "website" as const, placeholder: "https://yoursite.com" },
-            ].map((field) => (
-              <input
-                key={field.key}
-                type="text"
-                value={profile[field.key] || ""}
-                onChange={(e) => setProfile({ ...profile, [field.key]: e.target.value })}
-                placeholder={field.placeholder}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-              />
-            ))}
+              {
+                label: "LinkedIn",
+                key: "linkedin" as const,
+                prefix: "linkedin.com/in/",
+                placeholder: "yourname",
+                icon: Linkedin,
+              },
+              {
+                label: "X (Twitter)",
+                key: "twitter" as const,
+                prefix: "x.com/",
+                placeholder: "handle",
+                icon: () => (
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="w-4 h-4"
+                    fill="currentColor"
+                  >
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                ),
+              },
+              {
+                label: "Instagram",
+                key: "instagram" as const,
+                prefix: "instagram.com/",
+                placeholder: "handle",
+                icon: Instagram,
+              },
+              {
+                label: "Website",
+                key: "website" as const,
+                prefix: "https://",
+                placeholder: "yoursite.com",
+                icon: Globe,
+              },
+            ].map((field) => {
+              // Extract the slug/handle from a full URL for display
+              const fullValue = profile[field.key] || "";
+              const displayValue =
+                field.key === "website"
+                  ? fullValue.replace(/^https?:\/\//, "")
+                  : fullValue
+                      .replace(/^https?:\/\/(www\.)?/, "")
+                      .replace(
+                        new RegExp(
+                          `^${field.prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`,
+                          "i"
+                        ),
+                        ""
+                      )
+                      .replace(/^\//, "")
+                      .replace(/\/$/, "");
+
+              const handleChange = (input: string) => {
+                if (field.key === "website") {
+                  // For website, store with https:// prefix
+                  const clean = input.replace(/^https?:\/\//, "");
+                  setProfile({
+                    ...profile,
+                    [field.key]: clean ? `https://${clean}` : "",
+                  });
+                } else {
+                  // For social links, store the full URL
+                  const clean = input
+                    .replace(/^https?:\/\/(www\.)?/, "")
+                    .replace(
+                      new RegExp(
+                        `^${field.prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`,
+                        "i"
+                      ),
+                      ""
+                    )
+                    .replace(/^\//, "")
+                    .replace(/\/$/, "");
+                  setProfile({
+                    ...profile,
+                    [field.key]: clean
+                      ? `https://${field.prefix}${clean}`
+                      : "",
+                  });
+                }
+              };
+
+              return (
+                <div key={field.key} className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground shrink-0">
+                    <field.icon className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 flex items-center h-10 rounded-lg border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1 transition-shadow">
+                    <span className="text-xs text-muted-foreground pl-3 pr-0.5 shrink-0">
+                      {field.prefix}
+                    </span>
+                    <input
+                      type="text"
+                      value={displayValue}
+                      onChange={(e) => handleChange(e.target.value)}
+                      placeholder={field.placeholder}
+                      className="flex-1 h-full pr-3 text-sm outline-none bg-transparent"
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Save */}
+        {/* Save button */}
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full h-11 md:h-10 rounded-xl md:rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 active:opacity-80 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
         >
           {saved ? (
             <>
@@ -330,7 +508,13 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handlePhotoUpload}
+        className="hidden"
+      />
     </div>
   );
 }

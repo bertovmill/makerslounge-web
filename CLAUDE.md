@@ -38,8 +38,18 @@ MakersLounge is a Next.js 16 app for connecting makers/builders. It uses the App
 - `profiles` - User profiles with username, bio, skills, social links
 - `projects` - User portfolio projects with media_urls array
 
+### Auth & Onboarding
+- OAuth (Google, Apple) redirects back to `/auth`, which checks `profiles.name` to determine if the user needs onboarding
+- **Do NOT use the `onboarding_completed` column** — it was never migrated to production
+- New users (no `profiles.name`) are sent to `/onboarding` — a single page asking for name and project(s)
+- Users can skip onboarding and go straight to `/home`
+- Production domain is `makerslounge.ca` (not `.com`)
+
 ### Key Routes
-- `/` - Homepage with project feed
+- `/` - Landing page (redirects authenticated users to `/home`)
+- `/auth` - Login/signup (Google, Apple, email)
+- `/onboarding` - Simple onboarding (name + projects)
+- `/home` - Main feed (authenticated)
 - `/profile` - Edit own profile (authenticated)
 - `/profile/[id]` - View user profile by ID
 - `/p/[username]` - Public profile by username
