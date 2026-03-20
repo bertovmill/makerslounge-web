@@ -20,6 +20,29 @@ function AuthContent() {
   // Start with checking=true so the login form doesn't flash during OAuth redirects
   const [checkingAuth, setCheckingAuth] = useState(true);
 
+  const redirectAfterAuth = async (userId: string) => {
+    // Check if profile has a name — if not, send to onboarding
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("name")
+      .eq("id", userId)
+      .single();
+
+    if (!profile?.name) {
+      router.push("/onboarding");
+      return;
+    }
+
+    const pendingQuery = searchParams.get("q") || localStorage.getItem("pendingMatcherQuery");
+
+    if (pendingQuery) {
+      localStorage.removeItem("pendingMatcherQuery");
+      router.push(`/matcher?q=${encodeURIComponent(pendingQuery)}`);
+    } else {
+      router.push("/home");
+    }
+  };
+
   // Persist pending query so it survives OAuth redirects
   useEffect(() => {
     const q = searchParams.get("q");
@@ -31,23 +54,15 @@ function AuthContent() {
   useEffect(() => {
     let hasRedirected = false;
 
-    const handleAuthRedirect = async () => {
+    const handleAuthRedirect = async (userId: string) => {
       if (hasRedirected) return;
       hasRedirected = true;
-
-      const pendingQuery = searchParams.get("q") || localStorage.getItem("pendingMatcherQuery");
-
-      if (pendingQuery) {
-        localStorage.removeItem("pendingMatcherQuery");
-        router.push(`/matcher?q=${encodeURIComponent(pendingQuery)}`);
-      } else {
-        router.push("/home");
-      }
+      await redirectAfterAuth(userId);
     };
 
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
-        handleAuthRedirect();
+        handleAuthRedirect(user.id);
       } else {
         // No existing session — safe to show the login form
         setCheckingAuth(false);
@@ -55,7 +70,7 @@ function AuthContent() {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) handleAuthRedirect();
+      if (session?.user) handleAuthRedirect(session.user.id);
     });
 
     // Listen for deep link callback from native OAuth
@@ -135,14 +150,7 @@ function AuthContent() {
         // Explicitly navigate after successful native sign-in
         // (onAuthStateChange may not fire reliably in Capacitor WebView)
         if (data.session?.user) {
-          const pendingQuery = localStorage.getItem("pendingMatcherQuery");
-
-          if (pendingQuery) {
-            localStorage.removeItem("pendingMatcherQuery");
-            router.push(`/matcher?q=${encodeURIComponent(pendingQuery)}`);
-          } else {
-            router.push("/home");
-          }
+          await redirectAfterAuth(data.session.user.id);
         }
         setLoading(false);
       } catch (err: unknown) {
