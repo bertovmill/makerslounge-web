@@ -18,13 +18,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   // Enforce onboarding: redirect authenticated users who haven't completed it
   useEffect(() => {
-    const isAuthPage = pathname === "/" || pathname === "/auth" || pathname === "/onboarding";
+    const isAuthPage = pathname === "/" || pathname === "/auth" || pathname.startsWith("/onboarding");
     if (user && onboardingCompleted === false && !isAuthPage) {
       router.replace("/onboarding");
     }
   }, [user, onboardingCompleted, pathname, router]);
 
-  const isFullPage = pathname === "/" || pathname === "/auth" || pathname === "/onboarding";
+  const isFullPage = pathname === "/" || pathname === "/auth" || pathname.startsWith("/onboarding");
 
   if (isFullPage || !user) {
     return <main>{children}</main>;
