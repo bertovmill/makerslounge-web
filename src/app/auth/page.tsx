@@ -31,23 +31,13 @@ function AuthContent() {
   useEffect(() => {
     let hasRedirected = false;
 
-    const checkOnboardingStatus = async (userId: string) => {
+    const handleAuthRedirect = async () => {
       if (hasRedirected) return;
       hasRedirected = true;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("onboarding_completed")
-        .eq("id", userId)
-        .single();
-
-      // Check both URL param and localStorage (URL param for direct navigation,
-      // localStorage for after OAuth redirect where URL param is lost)
       const pendingQuery = searchParams.get("q") || localStorage.getItem("pendingMatcherQuery");
 
-      if (!profile || !profile.onboarding_completed) {
-        router.push("/onboarding");
-      } else if (pendingQuery) {
+      if (pendingQuery) {
         localStorage.removeItem("pendingMatcherQuery");
         router.push(`/matcher?q=${encodeURIComponent(pendingQuery)}`);
       } else {
@@ -57,7 +47,7 @@ function AuthContent() {
 
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
-        checkOnboardingStatus(user.id);
+        handleAuthRedirect();
       } else {
         // No existing session — safe to show the login form
         setCheckingAuth(false);
@@ -65,7 +55,7 @@ function AuthContent() {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) checkOnboardingStatus(session.user.id);
+      if (session?.user) handleAuthRedirect();
     });
 
     // Listen for deep link callback from native OAuth
@@ -130,7 +120,7 @@ function AuthContent() {
         const { SignInWithApple } = await import("@capacitor-community/apple-sign-in");
         const result = await SignInWithApple.authorize({
           clientId: "com.makerslounge.app",
-          redirectURI: "https://makerslounge.com",
+          redirectURI: "https://makerslounge.ca",
           scopes: "email name",
         });
         const { data, error } = await supabase.auth.signInWithIdToken({
@@ -145,17 +135,9 @@ function AuthContent() {
         // Explicitly navigate after successful native sign-in
         // (onAuthStateChange may not fire reliably in Capacitor WebView)
         if (data.session?.user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("onboarding_completed")
-            .eq("id", data.session.user.id)
-            .single();
-
           const pendingQuery = localStorage.getItem("pendingMatcherQuery");
 
-          if (!profile || !profile.onboarding_completed) {
-            router.push("/onboarding");
-          } else if (pendingQuery) {
+          if (pendingQuery) {
             localStorage.removeItem("pendingMatcherQuery");
             router.push(`/matcher?q=${encodeURIComponent(pendingQuery)}`);
           } else {

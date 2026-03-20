@@ -157,17 +157,7 @@ export default function Home() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("onboarding_completed")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile || !profile.onboarding_completed) {
-        window.location.href = "/onboarding";
-      } else {
-        window.location.href = "/home";
-      }
+      window.location.href = "/home";
     };
 
     checkAuth();
