@@ -51,3 +51,31 @@ MakersLounge is a Next.js 16 app for connecting makers/builders. It uses the App
 Required in `.env.local`:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+## Branding & Assets
+
+**Logos**: All logo variants live in `public/` and `Makerslounge-Branding/`:
+- `logo-luma.png` / `logo-luma.svg` — Luma event profile logo
+- `luma-banner.png` / `luma-banner.svg` — Luma event banner (mission statement on blue gradient)
+- `logo-banner-blue.png` / `logo-banner-blue.svg` — Blue banner logo
+- `logo-instagram.png` / `logo-instagram.svg` — Instagram profile logo
+- `linkedin-banner.png` / `linkedin-banner.svg` — LinkedIn banner
+
+**Brand colors**: Blue gradient (#6AC4F7 → #3A9FF3 → #1A7DE8), white text/logo
+
+**Makerslounge logo SVG path**: The "M" flame mark path data is stored in the Luma cover SVG template at `/maker-mondays-cover.svg` in the project root (used by the scheduled task).
+
+## Recurring Events
+
+### Maker Mondays
+- **What**: Weekly builder meetup — no talks, just makers building, creating, and shipping together
+- **Tagline**: "Build. Connect. Create."
+- **Luma RSVP link**: luma.com/makermonday3
+- **Cover image**: 1080x1080 PNG, bold & energetic style with geometric accents on blue gradient, Makerslounge logo, "MAKER MONDAYS" title, date, and tagline
+- **Scheduled task**: `maker-mondays-cover` runs every Friday at 9am to auto-generate the next Monday's cover image using cairosvg
+- **Social posting**: Captions go out on LinkedIn, X, and Instagram — hype & energetic tone, include Luma RSVP link
+- **Hashtags**: #MakerMondays #Makerslounge #BuildInPublic #AI #TorontoTech #Startups #Community
+
+### Toronto Tech Week (May 25–29, 2026)
+- **Makerslounge event**: "Build in Public - Toronto Edition" — May 28 at 6:00 PM
+- **Listed alongside**: Robinhood, Spotify, Carta, Vector Institute, Scale AI, Google Developers Group, and others

@@ -4,89 +4,41 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
+import { Mic, MicOff, Github, ArrowRight, Loader2 } from "lucide-react";
 import SkillsInput from "@/components/SkillsInput";
-import { ArrowLeft, ArrowRight, Mic, MicOff, X, Plus } from "lucide-react";
-
-interface SpeechRecognitionEvent {
-  results: { [index: number]: { [index: number]: { transcript: string } } };
-}
-
-interface SpeechRecognitionInstance extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start(): void;
-  stop(): void;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: (() => void) | null;
-  onend: (() => void) | null;
-}
-
-const STEPS = [
-  { id: "name", question: "What's your name?", subtitle: "How should we introduce you?" },
-  { id: "building", question: "What are you building?", subtitle: "A side project, startup, or passion project" },
-  { id: "superpowers", question: "What are your skills?", subtitle: "What do you bring to the table?" },
-  { id: "looking_for", question: "Who do you want to meet?", subtitle: "What skills are you looking for?" },
-  { id: "socials", question: "Where can people find you?", subtitle: "Add your social links" },
-];
+import ProfilePreview, { type ProfileData } from "@/components/onboarding/ProfilePreview";
+import { getGitHubAuthUrl } from "@/lib/github-oauth";
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [step, setStep] = useState(0); // 0 = form step 1, 1 = form step 2, 2 = preview
 
+  // Form state
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [projects, setProjects] = useState<string[]>([""]);
   const [skills, setSkills] = useState<string[]>([]);
   const [lookingForSkills, setLookingForSkills] = useState<string[]>([]);
-
-  const [listeningIndex, setListeningIndex] = useState<number | null>(null);
-  const [speechSupported, setSpeechSupported] = useState(false);
-  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
-
   const [linkedin, setLinkedin] = useState("");
   const [twitter, setTwitter] = useState("");
   const [instagram, setInstagram] = useState("");
   const [website, setWebsite] = useState("");
 
-  useEffect(() => {
-    const SR = (window as unknown as Record<string, unknown>).SpeechRecognition || (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
-    setSpeechSupported(!!SR);
-  }, []);
+  // Voice state
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [activeField, setActiveField] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
-  const toggleListening = useCallback((index: number) => {
-    if (listeningIndex === index && recognitionRef.current) {
-      recognitionRef.current.stop();
-      return;
-    }
-    if (recognitionRef.current) recognitionRef.current.stop();
-
-    const SR = (window as unknown as Record<string, unknown>).SpeechRecognition || (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
-    if (!SR) return;
-
-    const recognition = new (SR as new () => SpeechRecognitionInstance)();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = "en-US";
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = event.results[0][0].transcript;
-      setProjects(prev => {
-        const updated = [...prev];
-        updated[index] = prev[index] ? `${prev[index]} ${transcript}` : transcript;
-        return updated;
-      });
-    };
-    recognition.onerror = () => { setListeningIndex(null); recognitionRef.current = null; };
-    recognition.onend = () => { setListeningIndex(null); recognitionRef.current = null; };
-
-    recognitionRef.current = recognition;
-    setListeningIndex(index);
-    recognition.start();
-  }, [listeningIndex]);
+  // Profile preview state
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -120,41 +72,134 @@ export default function OnboardingPage() {
     checkAuth();
   }, [router]);
 
-  const canProceed = () => {
-    switch (currentStep) {
-      case 0: return firstName.trim().length > 0 && lastName.trim().length > 0;
-      case 1: return projects.some(p => p.trim().length > 0);
-      case 2: return skills.length > 0;
-      case 3: return lookingForSkills.length > 0;
-      case 4: return linkedin.trim().length > 0;
-      default: return false;
+  // Voice recording
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.stop();
     }
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    setIsRecording(false);
+  }, []);
+
+  const startRecording = useCallback(async (field: string) => {
+    if (isRecording) { stopRecording(); return; }
+    setActiveField(field);
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus" : "audio/webm";
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      // Silence detection
+      const audioContext = new AudioContext();
+      audioContextRef.current = audioContext;
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 512;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      let silenceStart: number | null = null;
+
+      const checkSilence = () => {
+        if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== "recording") return;
+        analyser.getByteFrequencyData(dataArray);
+        const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+        if (avg < 10) {
+          if (!silenceStart) silenceStart = Date.now();
+          else if (Date.now() - silenceStart > 2000) { stopRecording(); return; }
+        } else { silenceStart = null; }
+        silenceTimerRef.current = setTimeout(checkSilence, 100);
+      };
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        audioContext.close();
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        if (audioChunksRef.current.length === 0) return;
+
+        setIsTranscribing(true);
+        try {
+          const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+          const formData = new FormData();
+          formData.append("audio", audioBlob, "recording.webm");
+          const res = await fetch("/api/voice/transcribe", { method: "POST", body: formData });
+          if (!res.ok) throw new Error("Transcription failed");
+          const { text } = await res.json();
+
+          if (text?.trim()) {
+            // Route transcribed text to the active field
+            switch (field) {
+              case "firstName": setFirstName(prev => prev ? `${prev} ${text.trim()}` : text.trim()); break;
+              case "lastName": setLastName(prev => prev ? `${prev} ${text.trim()}` : text.trim()); break;
+              case "project0": setProjects(prev => { const u = [...prev]; u[0] = prev[0] ? `${prev[0]} ${text.trim()}` : text.trim(); return u; }); break;
+              case "project1": setProjects(prev => { const u = [...prev]; u[1] = (prev[1] || "") ? `${prev[1]} ${text.trim()}` : text.trim(); return u; }); break;
+            }
+          }
+        } catch (err) {
+          console.error("Transcription error:", err);
+        } finally {
+          setIsTranscribing(false);
+          setActiveField(null);
+        }
+      };
+
+      mediaRecorder.start(250);
+      setIsRecording(true);
+      checkSilence();
+    } catch (err) {
+      console.error("Mic access error:", err);
+      setActiveField(null);
+    }
+  }, [isRecording, stopRecording]);
+
+  const MicButton = ({ field }: { field: string }) => {
+    const isActive = isRecording && activeField === field;
+    const isThisTranscribing = isTranscribing && activeField === field;
+    return (
+      <button
+        type="button"
+        onClick={() => startRecording(field)}
+        disabled={isTranscribing}
+        className={`shrink-0 w-10 h-10 rounded-md border flex items-center justify-center transition-all ${
+          isActive
+            ? "border-destructive bg-destructive/10 text-destructive animate-pulse"
+            : "border-input text-muted-foreground hover:text-foreground hover:border-foreground/30"
+        } disabled:opacity-50`}
+        title={isActive ? "Stop recording" : "Speak to fill"}
+      >
+        {isThisTranscribing ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : isActive ? (
+          <MicOff className="w-4 h-4" />
+        ) : (
+          <Mic className="w-4 h-4" />
+        )}
+      </button>
+    );
   };
 
-  const handleComplete = async () => {
-    if (!user) return;
-    setSaving(true);
-    try {
-      const { error } = await supabase.from("profiles").upsert({
-        id: user.id,
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        name: `${firstName.trim()} ${lastName.trim()}`,
-        currently_building: JSON.stringify(projects.filter(p => p.trim())),
-        skills,
-        looking_for_skills: lookingForSkills,
-        linkedin: linkedin.trim() ? `https://linkedin.com/in/${linkedin.trim()}` : null,
-        twitter: twitter.trim() ? `https://x.com/${twitter.trim()}` : null,
-        instagram: instagram.trim() ? `https://instagram.com/${instagram.trim()}` : null,
-        website: website.trim() ? `https://${website.trim()}` : null,
-        onboarding_completed: true,
-      });
-      if (error) throw error;
-      router.push("/people");
-    } catch (error) {
-      console.error("Error saving profile:", error);
-      setSaving(false);
-    }
+  // Navigation
+  const canProceedStep0 = firstName.trim().length > 0 && projects.some(p => p.trim().length > 0);
+  const canProceedStep1 = skills.length > 0;
+
+  const handleContinueToPreview = () => {
+    setProfileData({
+      firstName, lastName,
+      projects: projects.filter(p => p.trim()),
+      skills, lookingForSkills,
+      linkedin, twitter, instagram, website,
+    });
+    setStep(2);
   };
 
   if (loading) {
@@ -165,174 +210,182 @@ export default function OnboardingPage() {
     );
   }
 
-  // Scroll to top on step change
-  const containerRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    containerRef.current?.scrollTo(0, 0);
-  }, [currentStep]);
-
-  const step = STEPS[currentStep];
-  const isLastStep = currentStep === STEPS.length - 1;
+  // Profile preview
+  if (step === 2 && profileData && user) {
+    return (
+      <ProfilePreview
+        data={profileData}
+        userId={user.id}
+        onBack={() => setStep(1)}
+      />
+    );
+  }
 
   return (
-    <div ref={containerRef} className="min-h-svh flex items-start md:items-center justify-center px-4 py-12 overflow-y-auto overflow-x-hidden">
+    <div className="min-h-svh flex items-start md:items-center justify-center px-4 py-12 overflow-y-auto">
       <div className="w-full max-w-md md:max-w-lg">
         {/* Progress */}
         <div className="mb-8">
           <div className="flex gap-1">
-            {STEPS.map((_, i) => (
+            {[0, 1].map(i => (
               <div
                 key={i}
-                className={`h-1 flex-1 rounded-full transition-colors ${
-                  i <= currentStep ? "bg-primary" : "bg-border"
-                }`}
+                className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? "bg-primary" : "bg-border"}`}
               />
             ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Step {currentStep + 1} of {STEPS.length}
-          </p>
+          <p className="text-xs text-muted-foreground mt-2">Step {step + 1} of 2</p>
         </div>
 
-        {/* Question */}
-        <h1 className="text-[24px] md:text-2xl font-bold md:font-semibold tracking-tight mb-1">{step.question}</h1>
-        <p className="text-[13px] md:text-sm text-muted-foreground mb-6">{step.subtitle}</p>
+        {step === 0 ? (
+          <>
+            <h1 className="text-[24px] md:text-2xl font-bold md:font-semibold tracking-tight mb-1">
+              Tell us about yourself
+            </h1>
+            <p className="text-[13px] md:text-sm text-muted-foreground mb-6">
+              Your name and what you&apos;re working on
+            </p>
 
-        {/* Inputs */}
-        <div className="mb-8">
-          {currentStep === 0 && (
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium mb-1.5">First name</label>
-                <input
-                  type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="John"
-                  className="w-full h-11 px-3 rounded-md border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-                  autoFocus
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1.5">Last name</label>
-                <input
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Doe"
-                  className="w-full h-11 px-3 rounded-md border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-                />
-              </div>
-            </div>
-          )}
-
-          {currentStep === 1 && (
-            <div className="space-y-2">
-              {projects.map((project, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={project}
-                    onChange={(e) => {
-                      const updated = [...projects];
-                      updated[index] = e.target.value;
-                      setProjects(updated);
-                    }}
-                    placeholder={index === 0 ? "e.g., A marketplace for local artisans" : "Another project..."}
-                    className="flex-1 h-11 px-3 rounded-md border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-                    autoFocus={index === 0}
-                  />
-                  {speechSupported && (
-                    <button
-                      type="button"
-                      onClick={() => toggleListening(index)}
-                      className="shrink-0 w-10 h-10 rounded-md border border-input flex items-center justify-center text-muted-foreground hover:text-foreground"
-                    >
-                      {listeningIndex === index ? <MicOff className="w-4 h-4 text-destructive" /> : <Mic className="w-4 h-4" />}
-                    </button>
-                  )}
-                  {projects.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => setProjects(projects.filter((_, i) => i !== index))}
-                      className="shrink-0 w-10 h-10 rounded-md border border-input flex items-center justify-center text-muted-foreground hover:text-destructive"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              {projects.length < 5 && (
-                <button
-                  type="button"
-                  onClick={() => setProjects([...projects, ""])}
-                  className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add another
-                </button>
-              )}
-            </div>
-          )}
-
-          {currentStep === 2 && (
-            <SkillsInput skills={skills} onChange={setSkills} maxSkills={10} />
-          )}
-
-          {currentStep === 3 && (
-            <SkillsInput skills={lookingForSkills} onChange={setLookingForSkills} maxSkills={10} mode="looking_for" />
-          )}
-
-          {currentStep === 4 && (
-            <div className="space-y-3">
-              {[
-                { label: "LinkedIn", prefix: "linkedin.com/in/", value: linkedin, set: setLinkedin, required: true },
-                { label: "X (Twitter)", prefix: "x.com/", value: twitter, set: setTwitter },
-                { label: "Instagram", prefix: "instagram.com/", value: instagram, set: setInstagram },
-                { label: "Website", prefix: "https://", value: website, set: setWebsite },
-              ].map((field) => (
-                <div key={field.label}>
-                  <label className="block text-sm font-medium mb-1.5">
-                    {field.label} {field.required && <span className="text-destructive">*</span>}
-                  </label>
-                  <div className="flex items-center h-11 rounded-md border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
-                    <span className="text-xs text-muted-foreground pl-3 pr-1 shrink-0">{field.prefix}</span>
+            <div className="space-y-4 mb-6">
+              {/* Name fields */}
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium mb-1.5">First name</label>
+                  <div className="flex gap-2">
                     <input
                       type="text"
-                      value={field.value}
-                      onChange={(e) => field.set(e.target.value)}
-                      placeholder="username"
-                      className="flex-1 h-full pr-3 text-base md:text-sm outline-none bg-transparent"
-                      autoFocus={field.label === "LinkedIn"}
+                      value={firstName}
+                      onChange={e => setFirstName(e.target.value)}
+                      placeholder="John"
+                      className="flex-1 h-11 px-3 rounded-md border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                      autoFocus
                     />
+                    <MicButton field="firstName" />
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium mb-1.5">Last name</label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={e => setLastName(e.target.value)}
+                    placeholder="Doe"
+                    className="w-full h-11 px-3 rounded-md border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                  />
+                </div>
+              </div>
 
-        {/* Navigation */}
-        <div className="flex gap-3">
-          {currentStep > 0 && (
+              {/* Project fields */}
+              <div>
+                <label className="block text-sm font-medium mb-1.5">What are you building?</label>
+                {projects.map((project, i) => (
+                  <div key={i} className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={project}
+                      onChange={e => {
+                        const u = [...projects]; u[i] = e.target.value; setProjects(u);
+                      }}
+                      placeholder={i === 0 ? "e.g., A marketplace for local artisans" : "Another project..."}
+                      className="flex-1 h-11 px-3 rounded-md border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                    />
+                    <MicButton field={`project${i}`} />
+                  </div>
+                ))}
+                {projects.length < 3 && (
+                  <button
+                    type="button"
+                    onClick={() => setProjects([...projects, ""])}
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    + Add another
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* GitHub shortcut */}
             <button
-              onClick={() => setCurrentStep(currentStep - 1)}
-              className="h-11 md:h-10 px-4 rounded-xl md:rounded-md border border-border text-sm font-medium hover:bg-secondary active:bg-secondary transition-colors flex items-center gap-2"
+              onClick={() => { window.location.href = getGitHubAuthUrl(); }}
+              className="w-full flex items-center gap-3 p-3 rounded-lg border border-dashed border-border hover:bg-secondary/50 transition-colors text-left mb-6"
             >
-              <ArrowLeft className="w-4 h-4" />
-              Back
+              <Github className="w-5 h-5 text-muted-foreground shrink-0" />
+              <span className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">Import from GitHub</span> — auto-fill from your repos
+              </span>
             </button>
-          )}
-          <button
-            onClick={isLastStep ? handleComplete : () => setCurrentStep(currentStep + 1)}
-            disabled={!canProceed() || saving}
-            className="flex-1 h-11 md:h-10 rounded-xl md:rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {saving ? "Saving..." : isLastStep ? "Get started" : "Continue"}
-            {!isLastStep && !saving && <ArrowRight className="w-4 h-4" />}
-          </button>
-        </div>
+
+            {/* Continue */}
+            <button
+              onClick={() => setStep(1)}
+              disabled={!canProceedStep0}
+              className="w-full h-11 md:h-10 rounded-xl md:rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              Continue
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </>
+        ) : (
+          <>
+            <h1 className="text-[24px] md:text-2xl font-bold md:font-semibold tracking-tight mb-1">
+              Skills & connections
+            </h1>
+            <p className="text-[13px] md:text-sm text-muted-foreground mb-6">
+              What you bring and who you want to meet
+            </p>
+
+            <div className="space-y-6 mb-8">
+              <div>
+                <label className="block text-sm font-medium mb-2">Your skills</label>
+                <SkillsInput skills={skills} onChange={setSkills} maxSkills={10} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Who do you want to meet?</label>
+                <SkillsInput skills={lookingForSkills} onChange={setLookingForSkills} maxSkills={10} mode="looking_for" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Social links <span className="text-muted-foreground font-normal">(optional)</span></label>
+                <div className="space-y-2">
+                  {[
+                    { label: "LinkedIn", prefix: "linkedin.com/in/", value: linkedin, set: setLinkedin },
+                    { label: "X", prefix: "x.com/", value: twitter, set: setTwitter },
+                    { label: "Instagram", prefix: "instagram.com/", value: instagram, set: setInstagram },
+                    { label: "Website", prefix: "https://", value: website, set: setWebsite },
+                  ].map(field => (
+                    <div key={field.label} className="flex items-center h-10 rounded-md border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
+                      <span className="text-xs text-muted-foreground pl-3 pr-1 shrink-0">{field.prefix}</span>
+                      <input
+                        type="text"
+                        value={field.value}
+                        onChange={e => field.set(e.target.value)}
+                        placeholder="username"
+                        className="flex-1 h-full pr-3 text-sm outline-none bg-transparent"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep(0)}
+                className="h-11 md:h-10 px-4 rounded-xl md:rounded-md border border-border text-sm font-medium hover:bg-secondary transition-colors"
+              >
+                Back
+              </button>
+              <button
+                onClick={handleContinueToPreview}
+                disabled={!canProceedStep1}
+                className="flex-1 h-11 md:h-10 rounded-xl md:rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                Preview profile
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
