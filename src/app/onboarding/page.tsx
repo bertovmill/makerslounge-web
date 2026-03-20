@@ -42,32 +42,36 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push("/auth"); return; }
-      setUser(user);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { router.push("/auth"); return; }
+        setUser(user);
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("onboarding_completed, name, first_name, last_name")
-        .eq("id", user.id)
-        .single();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("onboarding_completed, name, first_name, last_name")
+          .eq("id", user.id)
+          .single();
 
-      if (profile?.onboarding_completed) { router.push("/people"); return; }
+        if (profile?.onboarding_completed) { router.push("/people"); return; }
 
-      if (profile?.first_name) {
-        setFirstName(profile.first_name);
-        setLastName(profile.last_name || "");
-      } else if (profile?.name) {
-        const parts = profile.name.split(" ");
-        setFirstName(parts[0] || "");
-        setLastName(parts.slice(1).join(" ") || "");
-      } else if (user.user_metadata?.full_name) {
-        const parts = user.user_metadata.full_name.split(" ");
-        setFirstName(parts[0] || "");
-        setLastName(parts.slice(1).join(" ") || "");
+        if (profile?.first_name) {
+          setFirstName(profile.first_name);
+          setLastName(profile.last_name || "");
+        } else if (profile?.name) {
+          const parts = profile.name.split(" ");
+          setFirstName(parts[0] || "");
+          setLastName(parts.slice(1).join(" ") || "");
+        } else if (user.user_metadata?.full_name) {
+          const parts = user.user_metadata.full_name.split(" ");
+          setFirstName(parts[0] || "");
+          setLastName(parts.slice(1).join(" ") || "");
+        }
+      } catch (error) {
+        console.error("Onboarding auth check error:", error);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
     checkAuth();
   }, [router]);
