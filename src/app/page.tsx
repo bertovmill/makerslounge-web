@@ -311,6 +311,12 @@ export default function Home() {
                   handleSubmit(e);
                 }
               }}
+              onFocus={() => {
+                // On iOS, the keyboard can cover the textarea — scroll it into view
+                setTimeout(() => {
+                  textareaRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                }, 300);
+              }}
               placeholder="Describe what you're looking for..."
               rows={2}
               className="w-full resize-none bg-transparent px-4 sm:px-5 pt-3 sm:pt-4 pb-10 sm:pb-12 text-sm sm:text-[15px] placeholder:text-muted-foreground/60 focus:outline-none"
