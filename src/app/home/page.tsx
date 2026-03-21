@@ -59,7 +59,7 @@ function HomeContent() {
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <div className="max-md:h-[calc(100dvh-2.75rem-50px)] md:h-dvh overflow-hidden">
+      <div className="max-md:h-[calc(100dvh-2.75rem-50px-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] md:h-dvh overflow-hidden">
         <Thread />
       </div>
     </AssistantRuntimeProvider>

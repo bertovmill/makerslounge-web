@@ -1,11 +1,15 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
+const isDev = process.env.CAPACITOR_ENV !== "production";
+
 const config: CapacitorConfig = {
   appId: "com.makerslounge.app",
   appName: "MakersLounge",
   webDir: "out",
   server: {
-    url: "https://makerslounge.vercel.app",
+    url: isDev
+      ? "https://dev.makerslounge.ca"
+      : "https://makerslounge.vercel.app",
     cleartext: false,
   },
   ios: {

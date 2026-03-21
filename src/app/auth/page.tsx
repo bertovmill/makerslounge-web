@@ -78,7 +78,18 @@ function AuthContent() {
       import("@capacitor/app").then(({ App }) => {
         App.addListener("appUrlOpen", async ({ url }) => {
           if (url.includes("auth-callback")) {
-            // Extract tokens from the URL hash fragment
+            // Close the in-app browser first
+            import("@capacitor/browser").then(({ Browser }) => Browser.close());
+
+            // Try PKCE flow first (Supabase v2+ default): exchange code for session
+            const urlObj = new URL(url);
+            const code = urlObj.searchParams.get("code");
+            if (code) {
+              await supabase.auth.exchangeCodeForSession(code);
+              return;
+            }
+
+            // Fallback: extract tokens from the URL hash fragment (implicit flow)
             const hashPart = url.split("#")[1];
             if (hashPart) {
               const params = new URLSearchParams(hashPart);
@@ -88,8 +99,6 @@ function AuthContent() {
                 await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
               }
             }
-            // Close the in-app browser
-            import("@capacitor/browser").then(({ Browser }) => Browser.close());
           }
         });
       });
