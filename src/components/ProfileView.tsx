@@ -561,7 +561,7 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
             </h2>
             <div className="rounded-xl bg-card border border-border/50 p-4">
               <InlineEdit
-                value={profile.currently_building || ""}
+                value={(profile.currently_building || "").replace(/[\[\]"]/g, '')}
                 onSave={(val) => saveField("currently_building", val)}
                 isOwner={isOwner}
                 placeholder="What are you working on?"

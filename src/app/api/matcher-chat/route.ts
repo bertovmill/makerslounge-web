@@ -56,13 +56,14 @@ Help makers find the right people to collaborate with, get feedback from, hire, 
 WORKFLOW:
 1. Understand what the user needs (ask a quick clarifying question if vague)
 2. Search the community using your tools — try multiple approaches if the first doesn't yield great results
-3. For promising matches, dig deeper: check their recent posts (search_posts) and research their social links (web_search_person) to give richer context
+3. For promising matches, dig deeper: check their recent posts (search_posts), podcast appearances (search_podcasts), and research their social links (web_search_person) to give richer context
 4. Present 2-5 recommendations with a clear reason for each match
 5. Offer to introduce them (send_intro_message tool)
 
 FORMATTING:
 - Every person's name MUST be a clickable markdown link to their profile: [**Name**](/p/username)
 - The profile_url field is included in search results — always use it for the link
+- For podcast results, link to the episode using the podcast_url field: [Episode Title](/podcasts/slug)
 - Show key info: skills, what they're building, and WHY they're a match
 - Use bullet points for multiple recommendations
 - Keep it conversational, not list-heavy
@@ -251,6 +252,65 @@ IMPORTANT:
             top_skills: topSkills,
             sample_members: (data || []).slice(0, 10).map(formatProfile),
           };
+        },
+      },
+
+      search_podcasts: {
+        description:
+          "Search published podcast episodes by keyword. Matches against title, description, and transcript. Use this to find podcast episodes on a topic or featuring a specific person. Returns episode info along with guest profiles.",
+        inputSchema: z.object({
+          query: z.string().describe("Search keyword — topic, person name, or subject"),
+        }),
+        execute: async ({ query }: { query: string }) => {
+          const searchTerm = `%${query}%`;
+          const { data, error } = await supabaseAdmin
+            .from("podcasts")
+            .select("id, title, slug, description, transcript, audio_url, cover_image_url, duration_seconds, episode_number, published_at")
+            .eq("is_published", true)
+            .or(
+              `title.ilike.${searchTerm},description.ilike.${searchTerm},transcript.ilike.${searchTerm}`
+            )
+            .order("published_at", { ascending: false })
+            .limit(10);
+
+          if (error) return { error: "Podcast search failed" };
+          if (!data || data.length === 0)
+            return { results: [], message: "No podcast episodes found matching that query" };
+
+          // Fetch guests for each podcast
+          const results = await Promise.all(
+            data.map(async (podcast) => {
+              const { data: guestRows } = await supabaseAdmin
+                .from("podcast_guests")
+                .select("profile_id")
+                .eq("podcast_id", podcast.id);
+
+              let guests: ReturnType<typeof formatProfile>[] = [];
+              if (guestRows && guestRows.length > 0) {
+                const { data: profiles } = await supabaseAdmin
+                  .from("profiles")
+                  .select("id, name, username, bio, skills, photo_url")
+                  .in("id", guestRows.map((r) => r.profile_id));
+
+                if (profiles) {
+                  guests = profiles.map(formatProfile);
+                }
+              }
+
+              return {
+                title: podcast.title,
+                description: podcast.description?.slice(0, 300) || null,
+                episode_number: podcast.episode_number,
+                published_at: podcast.published_at,
+                podcast_url: `/podcasts/${podcast.slug}`,
+                audio_url: podcast.audio_url,
+                duration_seconds: podcast.duration_seconds,
+                guests,
+              };
+            })
+          );
+
+          return { results, count: results.length };
         },
       },
 
