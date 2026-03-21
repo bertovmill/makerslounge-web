@@ -138,13 +138,24 @@ function AuthContent() {
           redirectURI: "https://makerslounge.ca",
           scopes: "email name",
         });
+
+        // Validate identity token before proceeding — on iPad, the native plugin
+        // can complete authentication but return a null/empty token
+        const idToken = result?.response?.identityToken;
+        if (!idToken) {
+          console.warn("Apple Sign-In: no identity token returned, falling back to OAuth");
+          await handleAppleOAuthViaBrowser();
+          return;
+        }
+
         const { data, error } = await supabase.auth.signInWithIdToken({
           provider: "apple",
-          token: result.response.identityToken!,
+          token: idToken,
         });
         if (error) {
-          setMessage(error.message);
-          setLoading(false);
+          // If token exchange fails, fall back to OAuth flow
+          console.warn("Apple Sign-In: signInWithIdToken failed, falling back to OAuth:", error.message);
+          await handleAppleOAuthViaBrowser();
           return;
         }
         // Explicitly navigate after successful native sign-in
@@ -161,7 +172,10 @@ function AuthContent() {
           return;
         }
         if (!errorMessage.includes("canceled") && !errorMessage.includes("cancelled")) {
-          setMessage(errorMessage);
+          // On any unexpected error, try OAuth as fallback instead of showing error
+          console.warn("Apple Sign-In: native plugin error, falling back to OAuth:", errorMessage);
+          await handleAppleOAuthViaBrowser();
+          return;
         }
         setLoading(false);
       }

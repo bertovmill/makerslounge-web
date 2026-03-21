@@ -1,21 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Capacitor } from "@capacitor/core";
 
+// Lazily load subscription UI so premium-related strings stay out of the
+// main bundle on native iOS (App Store guideline 3.1.1 compliance).
+const SubscriptionSection = lazy(() => import("@/components/SubscriptionSection"));
+
 export default function SettingsPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const isNative = Capacitor.isNativePlatform();
 
   // Subscription (web only — hidden on native iOS per App Store guidelines)
   const [isPremium, setIsPremium] = useState(false);
   const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null);
-  const [upgradeLoading, setUpgradeLoading] = useState(false);
 
   // Password change
   const [newPassword, setNewPassword] = useState("");
@@ -41,7 +45,7 @@ export default function SettingsPage() {
       setUser(user);
 
       // Fetch subscription status (web only — not needed on native iOS)
-      if (!Capacitor.isNativePlatform()) {
+      if (!isNative) {
         const { data: profile } = await supabase
           .from("profiles")
           .select("is_premium, stripe_customer_id")
@@ -57,38 +61,6 @@ export default function SettingsPage() {
       setLoading(false);
     });
   }, [router]);
-
-  const handleUpgrade = async () => {
-    if (!user) return;
-    setUpgradeLoading(true);
-    try {
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, userEmail: user.email }),
-      });
-      const { url } = await res.json();
-      if (url) window.location.href = url;
-    } catch (err) {
-      console.error("Upgrade error:", err);
-    }
-    setUpgradeLoading(false);
-  };
-
-  const handleManageSubscription = async () => {
-    if (!stripeCustomerId) return;
-    try {
-      const res = await fetch("/api/stripe/portal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerId: stripeCustomerId }),
-      });
-      const { url } = await res.json();
-      if (url) window.location.href = url;
-    } catch (err) {
-      console.error("Portal error:", err);
-    }
-  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,34 +139,15 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* Subscription — hidden on native iOS (Apple requires IAP) */}
-      {!Capacitor.isNativePlatform() && (
-        <section className="mb-6 md:mb-8">
-          <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wider mb-2 md:mb-4 px-1 md:px-0 md:text-lg md:font-semibold md:normal-case md:tracking-normal md:text-foreground">Subscription</h2>
-          <div className="rounded-xl md:rounded-lg bg-card md:border md:border-border p-4">
-            {isPremium ? (
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">MakersLounge Pro</p>
-                  <p className="text-xs text-muted-foreground">100 messages/month included</p>
-                </div>
-                <Button variant="outline" onClick={handleManageSubscription}>
-                  Manage
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Free plan</p>
-                  <p className="text-xs text-muted-foreground">Subscribe to unlock messaging</p>
-                </div>
-                <Button onClick={handleUpgrade} disabled={upgradeLoading}>
-                  {upgradeLoading ? "Loading..." : "Upgrade — $10/mo"}
-                </Button>
-              </div>
-            )}
-          </div>
-        </section>
+      {/* Subscription — web only, lazy-loaded to keep premium strings out of native bundle */}
+      {!isNative && user && (
+        <Suspense fallback={null}>
+          <SubscriptionSection
+            user={user}
+            isPremium={isPremium}
+            stripeCustomerId={stripeCustomerId}
+          />
+        </Suspense>
       )}
 
       {/* Change Password */}

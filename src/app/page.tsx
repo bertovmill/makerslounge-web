@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/context/ThemeContext";
-import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight } from "lucide-react";
+import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 
@@ -231,26 +231,72 @@ export default function Home() {
           </button>
           <Link
             href="/auth"
-            className="text-xs sm:text-sm font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-md bg-gradient-blue text-white hover:opacity-90 transition-opacity"
+            className="text-xs sm:text-sm font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
           >
             Sign in
           </Link>
           <Link
             href="/auth?mode=signup"
-            className="text-xs sm:text-sm font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-md border border-border hover:bg-secondary transition-colors"
+            className="text-xs sm:text-sm font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-md bg-gradient-blue text-white hover:opacity-90 transition-opacity"
           >
-            Sign up
+            Get Started
           </Link>
         </div>
       </header>
 
-      {/* Hero — Manus-style centered layout */}
+      {/* Hero */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pb-12 sm:pb-24">
-        <h1 className="text-[1.75rem] sm:text-5xl md:text-[3.5rem] tracking-tight leading-[1.15] mb-6 sm:mb-10 text-center">
-          How can the <span className="text-gradient-blue">community</span>
+        <h1 className="text-[1.75rem] sm:text-5xl md:text-[3.5rem] tracking-tight leading-[1.15] mb-3 sm:mb-4 text-center">
+          Where <span className="text-gradient-blue">makers</span> build
           <br />
-          help you?
+          together
         </h1>
+
+        <p className="text-sm sm:text-lg text-muted-foreground text-center max-w-md mb-5 sm:mb-8">
+          Connect with builders, share projects, and find collaborators in your city.
+        </p>
+
+        {/* Primary CTA */}
+        <div className="flex flex-col items-center gap-3 mb-8 sm:mb-12">
+          <Link
+            href="/auth?mode=signup"
+            className="inline-flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-gradient-blue text-white text-sm sm:text-base font-medium hover:opacity-90 transition-opacity shadow-blue-glow"
+          >
+            Join the Community
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            href="/people"
+            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            or explore makers first
+          </Link>
+        </div>
+
+        {/* Social proof */}
+        <div className="flex items-center gap-2 mb-8 sm:mb-12">
+          <div className="flex -space-x-2">
+            {["#4A9FE5", "#F59E0B", "#10B981", "#8B5CF6", "#EC4899"].map((color, i) => (
+              <div
+                key={i}
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-background flex items-center justify-center text-[10px] sm:text-xs font-medium text-white"
+                style={{ backgroundColor: color }}
+              >
+                {["B", "S", "A", "K", "M"][i]}
+              </div>
+            ))}
+          </div>
+          <span className="text-xs sm:text-sm text-muted-foreground">
+            Join 150+ makers in Toronto
+          </span>
+        </div>
+
+        {/* Divider */}
+        <div className="w-full max-w-[640px] flex items-center gap-3 mb-6 sm:mb-8">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs text-muted-foreground/60">or tell us what you need</span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
 
         {/* Input box */}
         <form onSubmit={handleSubmit} className="w-full max-w-[640px] mb-4 sm:mb-6">

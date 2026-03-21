@@ -7,14 +7,13 @@ import { useAuth } from "@/context/AuthContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { cn } from "@/lib/utils";
 import {
-  Home,
-  Users,
+  Search,
   Calendar,
   MessageCircle,
-  Sparkles,
   PanelLeft,
   BarChart3,
   MessageSquarePlus,
+  Newspaper,
 } from "lucide-react";
 import UserMenu from "./UserMenu";
 import { useEffect, useState } from "react";
@@ -22,9 +21,8 @@ import { supabase } from "@/lib/supabase";
 import { useFeedback } from "@/context/FeedbackContext";
 
 const NAV_ITEMS = [
-  { href: "/home", label: "Home", icon: Home },
-  { href: "/matcher", label: "Get Matched", icon: Sparkles },
-  { href: "/people", label: "People", icon: Users },
+  { href: "/home", label: "Home", icon: Search },
+  { href: "/updates", label: "Updates", icon: Newspaper },
   { href: "/community", label: "Community", icon: BarChart3 },
   { href: "/messages", label: "Messages", icon: MessageCircle },
   { href: "/events", label: "Events", icon: Calendar },
@@ -33,8 +31,8 @@ const NAV_ITEMS = [
 // Profile and Settings are now in UserMenu dropdown
 
 const MOBILE_TABS = [
-  { href: "/home", label: "Home", icon: Home },
-  { href: "/people", label: "People", icon: Users },
+  { href: "/home", label: "Home", icon: Search },
+  { href: "/updates", label: "Updates", icon: Newspaper },
   { href: "/community", label: "Community", icon: BarChart3 },
   { href: "/messages", label: "Messages", icon: MessageCircle },
 ];
