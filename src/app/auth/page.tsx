@@ -78,15 +78,22 @@ function AuthContent() {
       import("@capacitor/app").then(({ App }) => {
         App.addListener("appUrlOpen", async ({ url }) => {
           if (url.includes("auth-callback")) {
-            // Close the in-app browser first
-            import("@capacitor/browser").then(({ Browser }) => Browser.close());
+            // Close the in-app browser
+            import("@capacitor/browser").then(({ Browser }) => Browser.close()).catch(() => {});
 
-            // Try PKCE flow first (Supabase v2+ default): exchange code for session
-            const urlObj = new URL(url);
-            const code = urlObj.searchParams.get("code");
-            if (code) {
-              await supabase.auth.exchangeCodeForSession(code);
-              return;
+            // Extract code from query params (PKCE flow — Supabase v2+ default)
+            // Use string parsing since custom URL schemes may not work with new URL()
+            const queryString = url.split("?")[1]?.split("#")[0];
+            if (queryString) {
+              const params = new URLSearchParams(queryString);
+              const code = params.get("code");
+              if (code) {
+                const { error } = await supabase.auth.exchangeCodeForSession(code);
+                if (error) {
+                  console.error("OAuth code exchange failed:", error.message);
+                }
+                return;
+              }
             }
 
             // Fallback: extract tokens from the URL hash fragment (implicit flow)
@@ -130,7 +137,7 @@ function AuthContent() {
     } else {
       await supabase.auth.signInWithOAuth({
         provider: "apple",
-        options: { redirectTo: `${window.location.origin}/auth` },
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
     }
   };
@@ -164,6 +171,7 @@ function AuthContent() {
         if (error) {
           // If token exchange fails, fall back to OAuth flow
           console.warn("Apple Sign-In: signInWithIdToken failed, falling back to OAuth:", error.message);
+          setMessage("Trying alternative sign-in...");
           await handleAppleOAuthViaBrowser();
           return;
         }
@@ -171,8 +179,10 @@ function AuthContent() {
         // (onAuthStateChange may not fire reliably in Capacitor WebView)
         if (data.session?.user) {
           await redirectAfterAuth(data.session.user.id);
+        } else {
+          setMessage("Sign in succeeded but no session was returned. Please try again.");
+          setLoading(false);
         }
-        setLoading(false);
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : "Apple Sign In failed";
         // If native plugin is not available, fall back to OAuth via browser
@@ -219,7 +229,7 @@ function AuthContent() {
       // Web: normal redirect
       await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${window.location.origin}/auth` },
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
     }
   };
