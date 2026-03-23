@@ -102,7 +102,7 @@ export default function SkillsInput({
     <div className="relative">
       {/* Current skills as tags */}
       {skills.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-2">
+        <div className="flex flex-wrap gap-2 mb-3">
           {skills.map((skill) => (
             <span
               key={skill}
@@ -123,45 +123,9 @@ export default function SkillsInput({
         </div>
       )}
 
-      {/* Input field */}
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => {
-          setInput(e.target.value);
-          setShowSuggestions(true);
-        }}
-        onKeyDown={handleKeyDown}
-        onFocus={() => setShowSuggestions(true)}
-        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-        className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-        placeholder={skills.length >= maxSkills ? "Max skills reached" : "Type a skill and press Enter..."}
-        disabled={skills.length >= maxSkills}
-      />
-
-      {/* Suggestions dropdown */}
-      {showSuggestions && input && filteredSuggestions.length > 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-          {filteredSuggestions.slice(0, 6).map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => addSkill(suggestion)}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-secondary first:rounded-t-lg last:rounded-b-lg"
-            >
-              {suggestion}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <p className="text-xs text-muted-foreground mt-1">
-        {skills.length}/{maxSkills} skills - Press Enter or comma to add
-      </p>
-
       {/* Quick-select pills */}
       {showQuickSelect && (
-        <div className="mt-4 space-y-3">
+        <div className="space-y-3">
           {categories.map((category) => (
             <div key={category.label}>
               <p className="text-xs font-medium text-muted-foreground mb-1.5">{category.label}</p>
@@ -198,6 +162,44 @@ export default function SkillsInput({
           ))}
         </div>
       )}
+
+      {/* Input field at the bottom */}
+      <div className="relative mt-4">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => {
+            setInput(e.target.value);
+            setShowSuggestions(true);
+          }}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setShowSuggestions(true)}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          className="w-full h-10 px-4 border border-input rounded-xl bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+          placeholder={skills.length >= maxSkills ? "Max skills reached" : "Anything we missed? Type and press Enter..."}
+          disabled={skills.length >= maxSkills}
+        />
+
+        {/* Suggestions dropdown */}
+        {showSuggestions && input && filteredSuggestions.length > 0 && (
+          <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto">
+            {filteredSuggestions.slice(0, 6).map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => addSkill(suggestion)}
+                className="w-full px-4 py-2 text-left text-sm hover:bg-secondary first:rounded-t-xl last:rounded-b-xl"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <p className="text-xs text-muted-foreground mt-1">
+          {skills.length}/{maxSkills} selected
+        </p>
+      </div>
     </div>
   );
 }

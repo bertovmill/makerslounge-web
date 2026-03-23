@@ -15,6 +15,7 @@ import {
   MessageSquarePlus,
   Newspaper,
   Users,
+  UserCircle,
 } from "lucide-react";
 import UserMenu from "./UserMenu";
 import { useEffect, useState } from "react";
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
   { href: "/community", label: "Community", icon: BarChart3 },
   { href: "/messages", label: "Messages", icon: MessageCircle },
   { href: "/events", label: "Events", icon: Calendar },
+  { href: "/profile", label: "Profile", icon: UserCircle },
 ];
 
 // Profile and Settings are now in UserMenu dropdown
@@ -37,6 +39,7 @@ const MOBILE_TABS = [
   { href: "/updates", label: "Updates", icon: Newspaper },
   { href: "/people", label: "People", icon: Users },
   { href: "/messages", label: "Messages", icon: MessageCircle },
+  { href: "/profile", label: "Profile", icon: UserCircle },
 ];
 
 export default function Sidebar() {
