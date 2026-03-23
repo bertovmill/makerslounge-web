@@ -101,7 +101,7 @@ Respond with ONLY a JSON object (no markdown, no explanation) in this exact form
     // Call Claude API
     const anthropic = new Anthropic({ apiKey });
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 512,
       messages: [{ role: "user", content: prompt }],
     });
