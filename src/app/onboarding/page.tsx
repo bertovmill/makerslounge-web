@@ -9,25 +9,29 @@ import { AnimatePresence, motion } from "motion/react";
 import SkillsInput from "@/components/SkillsInput";
 import { DottedGlowBackground } from "@/components/ui/dotted-glow-background";
 
+const TOTAL_STEPS = 4;
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(1);
-  const [direction, setDirection] = useState(1); // 1 = forward, -1 = back
+  const [direction, setDirection] = useState(1);
 
-  // Step 1 fields
+  // Step 1: About you
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [currentlyBuilding, setCurrentlyBuilding] = useState("");
+
+  // Step 2: Skills
   const [skills, setSkills] = useState<string[]>([]);
 
-  // Step 2 fields
+  // Step 3: Looking for
   const [lookingForNote, setLookingForNote] = useState("");
   const [lookingForPeople, setLookingForPeople] = useState<string[]>([]);
 
-  // Step 3 fields
+  // Step 4: Socials
   const [linkedin, setLinkedin] = useState("");
   const [instagram, setInstagram] = useState("");
   const [twitter, setTwitter] = useState("");
@@ -46,15 +50,23 @@ export default function OnboardingPage() {
           .eq("id", user.id)
           .single();
 
-        if (profile?.name) {
+        // Already onboarded — has a name
+        if (profile?.name?.trim()) {
           router.push("/home");
           return;
         }
 
-        if (user.user_metadata?.full_name) {
+        if (profile?.first_name) {
+          setFirstName(profile.first_name);
+          setLastName(profile.last_name || "");
+        } else if (user.user_metadata?.full_name) {
           const parts = user.user_metadata.full_name.split(" ");
           setFirstName(parts[0] || "");
           setLastName(parts.slice(1).join(" ") || "");
+        }
+
+        if (profile?.currently_building) {
+          setCurrentlyBuilding(profile.currently_building);
         }
       } catch (error) {
         console.error("Onboarding auth check error:", error);
@@ -103,9 +115,9 @@ export default function OnboardingPage() {
     firstName.trim().length > 0 &&
     currentlyBuilding.trim().length > 0;
 
-  const canProceedStep2 = lookingForNote.trim().length > 0;
+  const canProceedStep3 = lookingForNote.trim().length > 0;
 
-  const canSaveStep3 = linkedin.trim().length > 0;
+  const canSave = linkedin.trim().length > 0;
 
   const slideVariants = {
     enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0 }),
@@ -122,8 +134,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-svh relative overflow-hidden">
-      {/* Dotted glow background */}
+    <div className="h-svh relative overflow-hidden">
       <DottedGlowBackground
         className="pointer-events-none"
         opacity={0.4}
@@ -139,11 +150,11 @@ export default function OnboardingPage() {
         speedScale={0.8}
       />
 
-      <div className="relative z-10 flex items-start md:items-center justify-center min-h-svh px-4 py-12">
-        <div className="w-full max-w-md bg-background/70 backdrop-blur-xl rounded-2xl p-6 md:p-8 shadow-sm border border-border/40">
+      <div className="relative z-10 flex items-center justify-center h-svh px-4">
+        <div className="w-full max-w-md bg-background/70 backdrop-blur-xl rounded-2xl p-5 md:p-8 shadow-sm border border-border/40 max-h-[calc(100svh-2rem)] flex flex-col">
           {/* Step indicator */}
-          <div className="flex items-center gap-2 mb-6">
-            {[1, 2, 3].map((s) => (
+          <div className="flex items-center gap-2 mb-4 shrink-0">
+            {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((s) => (
               <motion.div
                 key={s}
                 className="h-1.5 flex-1 rounded-full"
@@ -159,6 +170,7 @@ export default function OnboardingPage() {
           </div>
 
           <AnimatePresence mode="wait" custom={direction}>
+            {/* Step 1: Name + What you're working on */}
             {step === 1 && (
               <motion.div
                 key="step1"
@@ -168,19 +180,19 @@ export default function OnboardingPage() {
                 animate="center"
                 exit="exit"
                 transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="flex flex-col flex-1 min-h-0"
               >
-                <h1 className="text-2xl font-semibold tracking-tight mb-1">
+                <h1 className="text-xl font-semibold tracking-tight mb-0.5">
                   Welcome to MakersLounge
                 </h1>
-                <p className="text-sm text-muted-foreground mb-8">
+                <p className="text-sm text-muted-foreground mb-5">
                   Tell us about yourself and what you&apos;re building.
                 </p>
 
-                <div className="space-y-5">
-                  {/* Name */}
+                <div className="space-y-4">
                   <div className="flex gap-3">
                     <div className="flex-1">
-                      <label className="block text-sm font-medium mb-1.5">
+                      <label className="block text-sm font-medium mb-1">
                         First name <span className="text-destructive">*</span>
                       </label>
                       <input
@@ -188,25 +200,24 @@ export default function OnboardingPage() {
                         value={firstName}
                         onChange={e => setFirstName(e.target.value)}
                         placeholder="John"
-                        className="w-full h-11 px-4 rounded-xl border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                        className="w-full h-10 px-4 rounded-xl border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
                         autoFocus
                       />
                     </div>
                     <div className="flex-1">
-                      <label className="block text-sm font-medium mb-1.5">Last name</label>
+                      <label className="block text-sm font-medium mb-1">Last name</label>
                       <input
                         type="text"
                         value={lastName}
                         onChange={e => setLastName(e.target.value)}
                         placeholder="Doe"
-                        className="w-full h-11 px-4 rounded-xl border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                        className="w-full h-10 px-4 rounded-xl border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
                       />
                     </div>
                   </div>
 
-                  {/* Currently building */}
                   <div>
-                    <label className="block text-sm font-medium mb-1.5">
+                    <label className="block text-sm font-medium mb-1">
                       What are you working on? <span className="text-destructive">*</span>
                     </label>
                     <textarea
@@ -214,35 +225,25 @@ export default function OnboardingPage() {
                       onChange={e => setCurrentlyBuilding(e.target.value)}
                       placeholder="e.g., Building a marketplace for local artisans using AI"
                       rows={2}
-                      className="w-full px-3 py-2.5 rounded-xl border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 resize-none"
-                    />
-                  </div>
-
-                  {/* Skills */}
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5">
-                      Your top skills
-                    </label>
-                    <SkillsInput
-                      skills={skills}
-                      onChange={setSkills}
-                      maxSkills={8}
-                      mode="skills"
+                      className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 resize-none"
                     />
                   </div>
                 </div>
 
-                <button
-                  onClick={() => goTo(2)}
-                  disabled={!canProceedStep1}
-                  className="w-full h-11 md:h-10 mt-8 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  Next
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+                <div className="mt-auto pt-5">
+                  <button
+                    onClick={() => goTo(2)}
+                    disabled={!canProceedStep1}
+                    className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    Next
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
               </motion.div>
             )}
 
+            {/* Step 2: Skills */}
             {step === 2 && (
               <motion.div
                 key="step2"
@@ -252,34 +253,80 @@ export default function OnboardingPage() {
                 animate="center"
                 exit="exit"
                 transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="flex flex-col flex-1 min-h-0"
               >
-                <h1 className="text-2xl font-semibold tracking-tight mb-1">
+                <h1 className="text-xl font-semibold tracking-tight mb-0.5">
+                  Your top skills
+                </h1>
+                <p className="text-sm text-muted-foreground mb-5">
+                  Select what you&apos;re great at.
+                </p>
+
+                <div className="flex-1 min-h-0 overflow-y-auto -mx-1 px-1">
+                  <SkillsInput
+                    skills={skills}
+                    onChange={setSkills}
+                    maxSkills={8}
+                    mode="skills"
+                  />
+                </div>
+
+                <div className="flex gap-3 mt-auto pt-5 shrink-0">
+                  <button
+                    onClick={() => goTo(1)}
+                    className="h-11 px-4 rounded-xl border border-input text-sm font-medium hover:bg-secondary transition-colors flex items-center gap-2"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back
+                  </button>
+                  <button
+                    onClick={() => goTo(3)}
+                    className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                  >
+                    Next
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 3: Looking for */}
+            {step === 3 && (
+              <motion.div
+                key="step3"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="flex flex-col flex-1 min-h-0"
+              >
+                <h1 className="text-xl font-semibold tracking-tight mb-0.5">
                   What are you looking for?
                 </h1>
-                <p className="text-sm text-muted-foreground mb-8">
+                <p className="text-sm text-muted-foreground mb-5">
                   Help us connect you with the right people.
                 </p>
 
-                <div className="space-y-5">
-                  {/* Looking for note */}
+                <div className="space-y-4 flex-1 min-h-0 overflow-y-auto -mx-1 px-1">
                   <div>
-                    <label className="block text-sm font-medium mb-1.5">
-                      Describe what you&apos;re looking for <span className="text-destructive">*</span>
+                    <label className="block text-sm font-medium mb-1">
+                      Describe what you need <span className="text-destructive">*</span>
                     </label>
                     <textarea
                       value={lookingForNote}
                       onChange={e => setLookingForNote(e.target.value)}
-                      placeholder="e.g., Looking for a technical co-founder to help build the MVP, and a designer to nail the brand identity"
-                      rows={3}
-                      className="w-full px-3 py-2.5 rounded-xl border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 resize-none"
+                      placeholder="e.g., Looking for a technical co-founder and a designer to nail the brand"
+                      rows={2}
+                      className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 resize-none"
                       autoFocus
                     />
                   </div>
 
-                  {/* Looking for people types */}
                   <div>
-                    <label className="block text-sm font-medium mb-1.5">
-                      What kind of people are you looking for?
+                    <label className="block text-sm font-medium mb-1">
+                      Types of people
                     </label>
                     <SkillsInput
                       skills={lookingForPeople}
@@ -290,18 +337,18 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-3 mt-8">
+                <div className="flex gap-3 mt-auto pt-5 shrink-0">
                   <button
-                    onClick={() => goTo(1)}
-                    className="h-11 md:h-10 px-4 rounded-xl border border-input text-sm font-medium hover:bg-secondary transition-colors flex items-center gap-2"
+                    onClick={() => goTo(2)}
+                    className="h-11 px-4 rounded-xl border border-input text-sm font-medium hover:bg-secondary transition-colors flex items-center gap-2"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     Back
                   </button>
                   <button
-                    onClick={() => goTo(3)}
-                    disabled={!canProceedStep2}
-                    className="flex-1 h-11 md:h-10 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                    onClick={() => goTo(4)}
+                    disabled={!canProceedStep3}
+                    className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     Next
                     <ArrowRight className="w-4 h-4" />
@@ -310,31 +357,32 @@ export default function OnboardingPage() {
               </motion.div>
             )}
 
-            {step === 3 && (
+            {/* Step 4: Socials */}
+            {step === 4 && (
               <motion.div
-                key="step3"
+                key="step4"
                 custom={direction}
                 variants={slideVariants}
                 initial="enter"
                 animate="center"
                 exit="exit"
                 transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="flex flex-col flex-1 min-h-0"
               >
-                <h1 className="text-2xl font-semibold tracking-tight mb-1">
+                <h1 className="text-xl font-semibold tracking-tight mb-0.5">
                   Connect your socials
                 </h1>
-                <p className="text-sm text-muted-foreground mb-8">
+                <p className="text-sm text-muted-foreground mb-5">
                   Help others find and connect with you.
                 </p>
 
-                <div className="space-y-4">
-                  {/* LinkedIn - mandatory */}
+                <div className="space-y-3">
                   <div>
-                    <label className="flex items-center gap-2 text-sm font-medium mb-1.5">
+                    <label className="flex items-center gap-2 text-sm font-medium mb-1">
                       <Linkedin className="w-4 h-4" />
                       LinkedIn <span className="text-destructive">*</span>
                     </label>
-                    <div className="flex h-11 rounded-xl border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
+                    <div className="flex h-10 rounded-xl border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
                       <span className="flex items-center px-3 bg-muted text-muted-foreground text-sm border-r border-input shrink-0">
                         linkedin.com/in/
                       </span>
@@ -349,13 +397,12 @@ export default function OnboardingPage() {
                     </div>
                   </div>
 
-                  {/* Instagram */}
                   <div>
-                    <label className="flex items-center gap-2 text-sm font-medium mb-1.5">
+                    <label className="flex items-center gap-2 text-sm font-medium mb-1">
                       <Instagram className="w-4 h-4" />
                       Instagram
                     </label>
-                    <div className="flex h-11 rounded-xl border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
+                    <div className="flex h-10 rounded-xl border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
                       <span className="flex items-center px-3 bg-muted text-muted-foreground text-sm border-r border-input shrink-0">
                         instagram.com/
                       </span>
@@ -369,15 +416,14 @@ export default function OnboardingPage() {
                     </div>
                   </div>
 
-                  {/* X / Twitter */}
                   <div>
-                    <label className="flex items-center gap-2 text-sm font-medium mb-1.5">
+                    <label className="flex items-center gap-2 text-sm font-medium mb-1">
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                       </svg>
                       X (Twitter)
                     </label>
-                    <div className="flex h-11 rounded-xl border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
+                    <div className="flex h-10 rounded-xl border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
                       <span className="flex items-center px-3 bg-muted text-muted-foreground text-sm border-r border-input shrink-0">
                         x.com/
                       </span>
@@ -391,13 +437,12 @@ export default function OnboardingPage() {
                     </div>
                   </div>
 
-                  {/* Website / Portfolio */}
                   <div>
-                    <label className="flex items-center gap-2 text-sm font-medium mb-1.5">
+                    <label className="flex items-center gap-2 text-sm font-medium mb-1">
                       <Globe className="w-4 h-4" />
-                      Personal website / Portfolio
+                      Website / Portfolio
                     </label>
-                    <div className="flex h-11 rounded-xl border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
+                    <div className="flex h-10 rounded-xl border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
                       <span className="flex items-center px-3 bg-muted text-muted-foreground text-sm border-r border-input shrink-0">
                         https://
                       </span>
@@ -412,18 +457,18 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-3 mt-8">
+                <div className="flex gap-3 mt-auto pt-5 shrink-0">
                   <button
-                    onClick={() => goTo(2)}
-                    className="h-11 md:h-10 px-4 rounded-xl border border-input text-sm font-medium hover:bg-secondary transition-colors flex items-center gap-2"
+                    onClick={() => goTo(3)}
+                    className="h-11 px-4 rounded-xl border border-input text-sm font-medium hover:bg-secondary transition-colors flex items-center gap-2"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     Back
                   </button>
                   <button
                     onClick={handleSave}
-                    disabled={!canSaveStep3 || saving}
-                    className="flex-1 h-11 md:h-10 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                    disabled={!canSave || saving}
+                    className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {saving ? (
                       <>

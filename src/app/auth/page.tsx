@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Mail } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { DottedGlowBackground } from "@/components/ui/dotted-glow-background";
 
@@ -12,11 +12,9 @@ function AuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(searchParams.get("mode") === "signup");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
   // Start with checking=true so the login form doesn't flash during OAuth redirects
   const [checkingAuth, setCheckingAuth] = useState(true);
 
@@ -234,23 +232,22 @@ function AuthContent() {
     }
   };
 
-  const handleSignInWithEmail = async (e: React.FormEvent) => {
+  const handleSendMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
-    if (isSignUp) {
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) {
-        setMessage(error.message);
-      } else if (data.user && !data.session) {
-        setMessage("Account created! You can now sign in.");
-        setIsSignUp(false);
-        setPassword("");
-      }
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      setMessage(error.message);
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) setMessage(error.message);
+      setMagicLinkSent(true);
     }
     setLoading(false);
   };
@@ -340,74 +337,55 @@ function AuthContent() {
           </div>
         </div>
 
-        {/* Email form */}
-        <form onSubmit={handleSignInWithEmail} className="space-y-3">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium mb-1.5">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium mb-1.5">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-10 px-3 pr-10 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-                required
-                minLength={6}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+        {/* Magic link form */}
+        {magicLinkSent ? (
+          <div className="text-center py-4">
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <Mail className="w-6 h-6 text-primary" />
             </div>
-            {isSignUp && (
-              <p className="text-xs text-muted-foreground mt-1">At least 6 characters</p>
-            )}
+            <h2 className="text-lg font-medium mb-1">Check your email</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              We sent a sign-in link to <span className="font-medium text-foreground">{email}</span>
+            </p>
+            <button
+              type="button"
+              onClick={() => { setMagicLinkSent(false); setMessage(""); }}
+              className="text-sm text-primary hover:underline"
+            >
+              Use a different email
+            </button>
           </div>
+        ) : (
+          <form onSubmit={handleSendMagicLink} className="space-y-3">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium mb-1.5">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full h-10 px-4 rounded-xl border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                required
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-11 md:h-10 rounded-xl md:rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50"
-          >
-            {loading ? "Loading..." : isSignUp ? "Create account" : "Sign in"}
-          </button>
-        </form>
-
-        {/* Toggle */}
-        <p className="text-sm text-center mt-6 text-muted-foreground">
-          {isSignUp ? "Already have an account?" : "New to MakersLounge?"}{" "}
-          <button
-            type="button"
-            onClick={() => { setIsSignUp(!isSignUp); setMessage(""); }}
-            className="text-primary font-medium hover:underline"
-          >
-            {isSignUp ? "Sign in" : "Sign up"}
-          </button>
-        </p>
+            <button
+              type="submit"
+              disabled={loading || !email.trim()}
+              className="w-full h-11 md:h-10 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <Mail className="w-4 h-4" />
+              {loading ? "Sending..." : "Send sign-in link"}
+            </button>
+          </form>
+        )}
 
         {/* Message */}
         {message && (
-          <div className="mt-4 p-3 rounded-md bg-secondary text-sm text-center text-muted-foreground">
+          <div className="mt-4 p-3 rounded-xl bg-secondary text-sm text-center text-muted-foreground">
             {message}
           </div>
         )}

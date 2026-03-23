@@ -16,6 +16,7 @@ import {
   Newspaper,
   Users,
   UserCircle,
+  LogOut,
 } from "lucide-react";
 import UserMenu from "./UserMenu";
 import { useEffect, useState } from "react";
@@ -29,10 +30,7 @@ const NAV_ITEMS = [
   { href: "/community", label: "Community", icon: BarChart3 },
   { href: "/messages", label: "Messages", icon: MessageCircle },
   { href: "/events", label: "Events", icon: Calendar },
-  { href: "/profile", label: "Profile", icon: UserCircle },
 ];
-
-// Profile and Settings are now in UserMenu dropdown
 
 const MOBILE_TABS = [
   { href: "/home", label: "Home", icon: Search },
@@ -188,8 +186,22 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        {/* Feedback button — pinned to bottom */}
-        <div className={cn("border-t border-border py-3", collapsed ? "px-1.5" : "px-2")}>
+        {/* Bottom section — Profile, Feedback, Log out */}
+        <div className={cn("border-t border-border py-3 space-y-0.5", collapsed ? "px-1.5" : "px-2")}>
+          <Link
+            href="/profile"
+            title={collapsed ? "Profile" : undefined}
+            className={cn(
+              "flex items-center rounded-lg text-sm transition-colors w-full",
+              collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2",
+              isActive("/profile")
+                ? "text-foreground bg-secondary font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+            )}
+          >
+            <UserCircle className="w-[18px] h-[18px] shrink-0" strokeWidth={isActive("/profile") ? 2.2 : 1.8} />
+            {!collapsed && "Profile"}
+          </Link>
           <button
             onClick={openFeedback}
             className={cn(
@@ -201,6 +213,21 @@ export default function Sidebar() {
           >
             <MessageSquarePlus className="w-[18px] h-[18px] shrink-0" strokeWidth={1.8} />
             {!collapsed && "Feedback"}
+          </button>
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.href = "/";
+            }}
+            className={cn(
+              "flex items-center rounded-lg text-sm transition-colors w-full",
+              collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2",
+              "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+            )}
+            title={collapsed ? "Log out" : undefined}
+          >
+            <LogOut className="w-[18px] h-[18px] shrink-0" strokeWidth={1.8} />
+            {!collapsed && "Log out"}
           </button>
         </div>
       </aside>
