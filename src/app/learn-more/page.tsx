@@ -30,7 +30,8 @@ const STEPS = [
 ];
 
 export default function LearnMorePage() {
-  const { resolved, toggleTheme } = useTheme();
+  const { resolved, setTheme } = useTheme();
+  const toggleTheme = () => setTheme(resolved === "dark" ? "light" : "dark");
 
   return (
     <div className="h-svh flex flex-col">
