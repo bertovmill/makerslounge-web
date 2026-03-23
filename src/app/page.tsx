@@ -5,9 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/context/ThemeContext";
-import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight } from "lucide-react";
+import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, Instagram, Linkedin, Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
+import { AnimatedLogo } from "@/components/AnimatedLogo";
+import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 
 interface ActionIdea {
   label: string;
@@ -175,6 +177,7 @@ export default function Home() {
   const toggleTheme = () => setTheme(resolved === "dark" ? "light" : "dark");
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeSub, setActiveSub] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -213,15 +216,25 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-svh flex flex-col">
+    <div className="min-h-svh flex flex-col relative overflow-hidden">
+      {/* Background layers */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1a2a4a]/30 via-transparent to-[#1a1a2e]/20 dark:from-[#1a2a4a]/60 dark:via-transparent dark:to-[#1a1a2e]/40" />
+        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-[#3A9FF3]/10 dark:bg-[#3A9FF3]/15 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[#6AC4F7]/8 dark:bg-[#6AC4F7]/10 blur-[100px]" />
+        <div className="absolute inset-0 grain-overlay h-full w-full" />
+      </div>
+
       {/* Nav */}
-      <header className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <header className="relative z-20 flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <Link href="/" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
           <Image src="/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
           <Image src="/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
           <span className="text-base sm:text-xl font-sans font-normal tracking-normal">makerslounge</span>
         </Link>
-        <div className="flex items-center gap-2">
+
+        {/* Desktop nav */}
+        <div className="hidden sm:flex items-center gap-2">
           <button
             onClick={toggleTheme}
             className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md"
@@ -229,67 +242,155 @@ export default function Home() {
           >
             {resolved === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
+          <a
+            href="/learn-more"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Learn More
+          </a>
           <Link
             href="/auth"
-            className="text-xs sm:text-sm font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+            className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
           >
             Sign in
           </Link>
           <Link
             href="/auth?mode=signup"
-            className="text-xs sm:text-sm font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-md bg-gradient-blue text-white hover:opacity-90 transition-opacity"
+            className="text-sm font-medium px-4 py-2 rounded-md bg-gradient-blue text-white hover:opacity-90 transition-opacity"
           >
             Get Started
           </Link>
         </div>
+
+        {/* Mobile hamburger */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="sm:hidden p-2 text-foreground/70 hover:text-foreground transition-colors"
+          aria-label="Toggle menu"
+        >
+          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
       </header>
 
+      {/* Mobile menu overlay */}
+      {mobileMenuOpen && (
+        <div className="sm:hidden fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+          <div className="flex items-center justify-between px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+            <Link href="/" className="flex items-center gap-1.5" onClick={() => setMobileMenuOpen(false)}>
+              <Image src="/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
+              <Image src="/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
+              <span className="text-base font-sans font-normal tracking-normal">makerslounge</span>
+            </Link>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="p-2 text-foreground/70 hover:text-foreground transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <nav className="flex-1 flex flex-col items-center justify-center gap-6">
+            <a
+              href="/learn-more"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-lg font-medium text-foreground/80 hover:text-foreground transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Learn More
+            </a>
+            <Link
+              href="/auth"
+              className="text-lg font-medium text-foreground/80 hover:text-foreground transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/auth?mode=signup"
+              className="text-lg font-medium px-8 py-3 rounded-full bg-gradient-blue text-white hover:opacity-90 transition-opacity"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Get Started
+            </Link>
+            <button
+              onClick={() => { toggleTheme(); setMobileMenuOpen(false); }}
+              className="text-lg font-medium text-foreground/60 hover:text-foreground transition-colors flex items-center gap-2"
+            >
+              {resolved === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              {resolved === "dark" ? "Light mode" : "Dark mode"}
+            </button>
+          </nav>
+        </div>
+      )}
+
       {/* Hero */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pb-12 sm:pb-24">
-        <h1 className="text-[1.75rem] sm:text-5xl md:text-[3.5rem] tracking-tight leading-[1.15] mb-3 sm:mb-4 text-center">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pb-12 sm:pb-24">
+        {/* Light glow behind title */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[75%] w-[500px] h-[400px] sm:w-[700px] sm:h-[500px] rounded-full bg-white/60 dark:bg-white/[0.04] blur-[100px] pointer-events-none" />
+
+        {/* Animated logo above title */}
+        <AnimatedLogo className="relative w-14 h-14 sm:w-20 sm:h-20 mb-5 sm:mb-6" />
+
+        <h1 className="relative text-3xl sm:text-5xl md:text-[3.5rem] font-semibold tracking-tight leading-[1.15] mb-3 sm:mb-5 text-center text-foreground">
           Where <span className="text-gradient-blue">makers</span> build
           <br />
           together
         </h1>
 
-        <p className="text-sm sm:text-lg text-muted-foreground text-center max-w-md mb-5 sm:mb-8">
-          Connect with builders, share projects, and find collaborators in your city.
+        <p className="text-base sm:text-lg text-foreground/80 dark:text-foreground/60 text-center max-w-md mb-6 sm:mb-10 leading-relaxed">
+          Our mission is to empower makers to build, connect, and thrive in the age of AI.
         </p>
 
         {/* Primary CTA */}
-        <div className="flex flex-col items-center gap-3 mb-8 sm:mb-12">
-          <Link
-            href="/auth?mode=signup"
-            className="inline-flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-gradient-blue text-white text-sm sm:text-base font-medium hover:opacity-90 transition-opacity shadow-blue-glow"
-          >
-            Join the Community
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-          <Link
-            href="/people"
-            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            or explore makers first
+        <div className="flex flex-col items-center gap-3 mb-6 sm:mb-8">
+          <Link href="/auth?mode=signup">
+            <HoverBorderGradient
+              containerClassName="rounded-full"
+              as="div"
+              className="dark:bg-black bg-white text-foreground dark:text-white flex items-center gap-2 px-6 sm:px-8 py-2 sm:py-2.5 text-sm sm:text-base font-medium"
+            >
+              Join the Community
+              <ArrowRight className="w-4 h-4" />
+            </HoverBorderGradient>
           </Link>
         </div>
 
-        {/* Social proof */}
-        <div className="flex items-center gap-2 mb-8 sm:mb-12">
-          <div className="flex -space-x-2">
-            {["#4A9FE5", "#F59E0B", "#10B981", "#8B5CF6", "#EC4899"].map((color, i) => (
-              <div
-                key={i}
-                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-background flex items-center justify-center text-[10px] sm:text-xs font-medium text-white"
-                style={{ backgroundColor: color }}
-              >
-                {["B", "S", "A", "K", "M"][i]}
-              </div>
-            ))}
-          </div>
-          <span className="text-xs sm:text-sm text-muted-foreground">
-            Join 150+ makers in Toronto
-          </span>
+        {/* Social links */}
+        <div className="flex items-center gap-1 mb-8 sm:mb-12">
+          <span className="text-xs sm:text-sm text-foreground/60 dark:text-muted-foreground/60 mr-2">Follow us</span>
+          <a
+            href="https://lu.ma/makerslounge"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs sm:text-sm text-foreground/60 dark:text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C12 2 14 8.5 12 12C10 8.5 12 2 12 2ZM12 22C12 22 10 15.5 12 12C14 15.5 12 22 12 22ZM2 12C2 12 8.5 10 12 12C8.5 14 2 12 2 12ZM22 12C22 12 15.5 14 12 12C15.5 10 22 12 22 12Z" />
+            </svg>
+            Luma
+          </a>
+          <a
+            href="https://instagram.com/makersloungeto"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs sm:text-sm text-foreground/60 dark:text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+          >
+            <Instagram className="w-3.5 h-3.5" />
+            Instagram
+          </a>
+          <a
+            href="https://linkedin.com/company/makerslounge"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs sm:text-sm text-foreground/60 dark:text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+          >
+            <Linkedin className="w-3.5 h-3.5" />
+            LinkedIn
+          </a>
         </div>
+
 
         {/* Divider */}
         <div className="w-full max-w-[640px] flex items-center gap-3 mb-6 sm:mb-8">
@@ -407,6 +508,7 @@ export default function Home() {
             </div>
           )}
         </div>
+
       </main>
     </div>
   );

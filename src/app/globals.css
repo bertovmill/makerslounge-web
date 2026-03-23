@@ -29,6 +29,16 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --animate-aurora: aurora 60s linear infinite;
+}
+
+@keyframes aurora {
+  from {
+    background-position: 50% 50%, 50% 50%;
+  }
+  to {
+    background-position: 350% 50%, 350% 50%;
+  }
 }
 
 :root {
@@ -254,6 +264,12 @@ html {
 
 /* Gradient text — use sparingly on hero headings or key labels */
 .text-gradient-blue {
+  background: linear-gradient(135deg, #2B7DC9 0%, #3A8FDB 50%, #4A9FE5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+:is(.dark *).text-gradient-blue {
   background: var(--gradient-blue);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

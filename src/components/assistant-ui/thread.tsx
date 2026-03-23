@@ -2,6 +2,7 @@ import { MarkdownText } from "@/components/assistant-ui/markdown-text";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 import {
   ActionBarPrimitive,
   AuiIf,
@@ -28,9 +29,44 @@ import {
   LoaderIcon,
   Sparkles,
 } from "lucide-react";
-import { type FC, useState, useCallback, useRef } from "react";
+import { type FC, useState, useCallback, useRef, useEffect } from "react";
+
+const WELCOME_KEY = "makerslounge_home_welcomed";
+
+const FirstTimeWelcome: FC<{ onDismiss: () => void }> = ({ onDismiss }) => {
+  useEffect(() => {
+    const timer = setTimeout(onDismiss, 6000);
+    return () => clearTimeout(timer);
+  }, [onDismiss]);
+
+  return (
+    <div
+      className="fade-in animate-in duration-300 absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-20 w-[min(22rem,calc(100%-2rem))]"
+      onClick={onDismiss}
+    >
+      <div className="rounded-xl border border-primary/20 bg-background shadow-lg px-4 py-3 text-center cursor-pointer">
+        <p className="text-sm font-medium text-foreground">
+          Welcome to MakersLounge!
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Search for any maker in the community — find collaborators, co-founders, or people with the skills you need.
+        </p>
+        <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 size-3 rotate-45 border-r border-b border-primary/20 bg-background" />
+      </div>
+    </div>
+  );
+};
 
 export const Thread: FC = () => {
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem(WELCOME_KEY)) {
+      setShowWelcome(true);
+      localStorage.setItem(WELCOME_KEY, "1");
+    }
+  }, []);
+
   return (
     <ThreadPrimitive.Root
       className="aui-root aui-thread-root @container flex h-full flex-col bg-background overflow-x-hidden"
@@ -38,6 +74,9 @@ export const Thread: FC = () => {
         ["--thread-max-width" as string]: "42rem",
       }}
     >
+      {/* Subtle blue gradient at the top */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-32 z-10 bg-gradient-to-b from-blue-500/[0.06] to-transparent" />
+
       <ThreadPrimitive.Viewport
         turnAnchor="top"
         className="aui-thread-viewport relative flex flex-1 flex-col overflow-y-auto scroll-smooth px-4 pt-8"
@@ -59,7 +98,10 @@ export const Thread: FC = () => {
 
       <div className="relative mx-auto flex w-full max-w-(--thread-max-width) flex-col gap-2 px-4 pb-4 overflow-hidden">
         <ThreadScrollToBottom />
-        <Composer />
+        {showWelcome && (
+          <FirstTimeWelcome onDismiss={() => setShowWelcome(false)} />
+        )}
+        <Composer highlight={showWelcome} />
         <p className="text-[11px] text-muted-foreground/40 text-center select-none">
           AI matches are based on community profiles and may not be perfect.
         </p>
@@ -86,8 +128,16 @@ const ThreadWelcome: FC = () => {
   return (
     <div className="mx-auto flex w-full max-w-(--thread-max-width) grow flex-col justify-center">
       <div className="flex flex-col items-center text-center mb-8 px-4">
-        <div className="flex items-center justify-center size-12 rounded-2xl bg-foreground/5 mb-4">
-          <Sparkles className="size-6 text-foreground/60" />
+        <div className="relative flex items-center justify-center size-14 mb-4">
+          <Image
+            src="/logo-blue.png"
+            alt="MakersLounge"
+            width={40}
+            height={40}
+            className="drop-shadow-sm"
+          />
+          <Sparkles className="absolute -top-1 -right-1 size-4 text-blue-400/70" />
+          <Sparkles className="absolute -bottom-0.5 -left-1.5 size-3 text-blue-300/50" />
         </div>
         <h1 className="fade-in slide-in-from-bottom-2 animate-in fill-mode-both font-semibold text-3xl tracking-tight duration-300">
           Find your match
@@ -130,10 +180,15 @@ const ThreadSuggestions: FC = () => {
   );
 };
 
-const Composer: FC = () => {
+const Composer: FC<{ highlight?: boolean }> = ({ highlight }) => {
   return (
     <ComposerPrimitive.Root className="relative flex w-full flex-col">
-      <div className="flex w-full flex-col rounded-2xl border border-border/60 bg-background shadow-sm transition-all has-[textarea:focus-visible]:border-foreground/20 has-[textarea:focus-visible]:shadow-md">
+      <div className={cn(
+        "flex w-full flex-col rounded-2xl border bg-background shadow-sm transition-all has-[textarea:focus-visible]:border-foreground/20 has-[textarea:focus-visible]:shadow-md",
+        highlight
+          ? "border-primary/40 shadow-[0_0_0_2px_rgba(var(--primary),0.15)] ring-2 ring-primary/20"
+          : "border-border/60",
+      )}>
         <ComposerPrimitive.Input
           placeholder="What are you looking for?"
           className="max-h-40 min-h-12 w-full resize-none bg-transparent px-4 pt-3 pb-2 text-base md:text-sm outline-none placeholder:text-muted-foreground/60 focus-visible:ring-0"
