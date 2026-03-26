@@ -28,7 +28,6 @@
 		}
 	},
 	"packageClassList": [
-		"SignInWithApple",
 		"AppPlugin",
 		"CAPBrowserPlugin",
 		"KeyboardPlugin",

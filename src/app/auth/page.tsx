@@ -112,14 +112,23 @@ function AuthContent() {
     return () => subscription.unsubscribe();
   }, [router, searchParams]);
 
-  const handleAppleOAuthViaBrowser = async () => {
-    // Use OAuth flow via in-app browser (same approach as Google sign-in)
+  const handleSignInWithApple = async () => {
+    setLoading(true);
+    setMessage("");
+
     if (Capacitor.isNativePlatform()) {
+      // Use OAuth via in-app browser (same proven approach as Google sign-in).
+      // The native @capacitor-community/apple-sign-in plugin is incompatible
+      // with Capacitor 8 and fails silently on iPad — OAuth works reliably.
+      // Use implicit flow (response_type=token) instead of PKCE — the PKCE
+      // code verifier is stored in the WebView but lost when the page reloads
+      // while the in-app browser is open.
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "apple",
         options: {
           redirectTo: "com.makerslounge.app://auth-callback",
           skipBrowserRedirect: true,
+          queryParams: { response_type: "token" },
         },
       });
       if (error) {
@@ -129,7 +138,7 @@ function AuthContent() {
       }
       if (data?.url) {
         const { Browser } = await import("@capacitor/browser");
-        await Browser.open({ url: data.url, presentationStyle: "popover" });
+        await Browser.open({ url: data.url, presentationStyle: "fullscreen" });
       }
       setLoading(false);
     } else {
@@ -140,77 +149,18 @@ function AuthContent() {
     }
   };
 
-  const handleSignInWithApple = async () => {
-    setLoading(true);
-    setMessage("");
-
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const { SignInWithApple } = await import("@capacitor-community/apple-sign-in");
-        const result = await SignInWithApple.authorize({
-          clientId: "com.makerslounge.app",
-          redirectURI: "https://makerslounge.ca",
-          scopes: "email name",
-        });
-
-        // Validate identity token before proceeding — on iPad, the native plugin
-        // can complete authentication but return a null/empty token
-        const idToken = result?.response?.identityToken;
-        if (!idToken) {
-          console.warn("Apple Sign-In: no identity token returned, falling back to OAuth");
-          await handleAppleOAuthViaBrowser();
-          return;
-        }
-
-        const { data, error } = await supabase.auth.signInWithIdToken({
-          provider: "apple",
-          token: idToken,
-        });
-        if (error) {
-          // If token exchange fails, fall back to OAuth flow
-          console.warn("Apple Sign-In: signInWithIdToken failed, falling back to OAuth:", error.message);
-          setMessage("Trying alternative sign-in...");
-          await handleAppleOAuthViaBrowser();
-          return;
-        }
-        // Explicitly navigate after successful native sign-in
-        // (onAuthStateChange may not fire reliably in Capacitor WebView)
-        if (data.session?.user) {
-          await redirectAfterAuth(data.session.user.id);
-        } else {
-          setMessage("Sign in succeeded but no session was returned. Please try again.");
-          setLoading(false);
-        }
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : "Apple Sign In failed";
-        // If native plugin is not available, fall back to OAuth via browser
-        if (errorMessage.includes("not implemented") || errorMessage.includes("not available")) {
-          await handleAppleOAuthViaBrowser();
-          return;
-        }
-        if (!errorMessage.includes("canceled") && !errorMessage.includes("cancelled")) {
-          // On any unexpected error, try OAuth as fallback instead of showing error
-          console.warn("Apple Sign-In: native plugin error, falling back to OAuth:", errorMessage);
-          await handleAppleOAuthViaBrowser();
-          return;
-        }
-        setLoading(false);
-      }
-    } else {
-      await handleAppleOAuthViaBrowser();
-    }
-  };
-
   const handleSignInWithGoogle = async () => {
     setLoading(true);
 
     if (Capacitor.isNativePlatform()) {
-      // Native: open in-app browser (SFSafariViewController — bottom sheet)
+      // Native: open in-app browser (SFSafariViewController).
+      // Use implicit flow to avoid PKCE verifier loss between WebView and browser.
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: "com.makerslounge.app://auth-callback",
           skipBrowserRedirect: true,
+          queryParams: { response_type: "token" },
         },
       });
       if (error) {
