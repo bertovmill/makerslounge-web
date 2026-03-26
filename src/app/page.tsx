@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/context/ThemeContext";
-import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, Instagram, Linkedin, Menu, X } from "lucide-react";
+import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, Instagram, Linkedin, Menu, X, Mic, Play, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { AnimatedLogo } from "@/components/AnimatedLogo";
@@ -391,6 +391,46 @@ export default function Home() {
           </a>
         </div>
 
+        {/* Podcast Section */}
+        <div className="w-full max-w-[640px] mb-8 sm:mb-12">
+          <div className="rounded-2xl border border-border bg-card/50 backdrop-blur-sm overflow-hidden">
+            <div className="flex items-center gap-4 p-4 sm:p-5">
+              {/* Podcast icon */}
+              <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-[#6AC4F7] to-[#1A7DE8] flex items-center justify-center">
+                <Mic className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-[#3A9FF3]">Podcast</span>
+                  <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-green-500 font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                    New
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">The MakersLounge Podcast</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground/80 line-clamp-1">Stories from builders, creators, and makers shaping the future.</p>
+              </div>
+
+              {/* Listen button */}
+              <Link
+                href="/podcast"
+                className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-foreground text-background text-xs sm:text-sm font-medium hover:opacity-80 transition-opacity"
+              >
+                <Play className="w-3 h-3 fill-current" />
+                Listen
+              </Link>
+            </div>
+
+            {/* Latest episode preview */}
+            <div className="border-t border-border px-4 sm:px-5 py-3 flex items-center gap-3">
+              <span className="text-[10px] sm:text-xs text-muted-foreground/60 uppercase tracking-wide flex-shrink-0">Latest</span>
+              <p className="text-xs sm:text-sm text-foreground/80 truncate">Episode 1: Why We Build — The Maker Mindset</p>
+              <ExternalLink className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
+            </div>
+          </div>
+        </div>
 
         {/* Divider */}
         <div className="w-full max-w-[640px] flex items-center gap-3 mb-6 sm:mb-8">
