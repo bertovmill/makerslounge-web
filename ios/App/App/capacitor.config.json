@@ -3,7 +3,7 @@
 	"appName": "MakersLounge",
 	"webDir": "out",
 	"server": {
-		"url": "https://dev.makerslounge.ca",
+		"url": "https://makerslounge.vercel.app",
 		"cleartext": false
 	},
 	"ios": {
