@@ -18,7 +18,10 @@ import {
   Instagram,
   Globe,
   Github,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+import PodcastPlayer from "@/components/PodcastPlayer";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
@@ -174,6 +177,67 @@ function SocialIcon({
     >
       <Icon className="w-4 h-4" />
     </a>
+  );
+}
+
+function PodcastCard({ episode }: { episode: PodcastWithGuests }) {
+  const [showTranscript, setShowTranscript] = useState(false);
+
+  return (
+    <div className="rounded-xl bg-card border border-border/50 p-4">
+      <div className="flex items-start gap-3">
+        <Mic className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-foreground">{episode.title}</p>
+          <div className="flex items-center gap-2 mt-1">
+            {episode.episode_number && (
+              <span className="text-[11px] text-muted-foreground">
+                Ep. {episode.episode_number}
+              </span>
+            )}
+            {episode.duration_seconds && (
+              <span className="text-[11px] text-muted-foreground">
+                {formatDuration(episode.duration_seconds)}
+              </span>
+            )}
+          </div>
+          {episode.description && (
+            <p className="text-xs text-muted-foreground mt-2">{episode.description}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Audio Player */}
+      {episode.audio_url && (
+        <div className="mt-3">
+          <PodcastPlayer audioUrl={episode.audio_url} title={episode.title} />
+        </div>
+      )}
+
+      {/* Transcript Toggle */}
+      {episode.transcript && (
+        <div className="mt-3">
+          <button
+            onClick={() => setShowTranscript(!showTranscript)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            {showTranscript ? (
+              <ChevronUp className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
+            {showTranscript ? "Hide transcript" : "Show transcript"}
+          </button>
+          {showTranscript && (
+            <div className="mt-2 rounded-lg border border-border bg-muted/30 p-4">
+              <div className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed max-h-96 overflow-y-auto">
+                {episode.transcript}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -349,6 +413,16 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 md:py-12 pb-24">
+      {/* Back to people */}
+      {!isOwner && (
+        <Link
+          href="/people"
+          className="text-sm text-muted-foreground hover:text-foreground mb-6 inline-block"
+        >
+          &larr; Back to People
+        </Link>
+      )}
+
       {/* Save status indicator */}
       {isOwner && saveStatus !== "idle" && (
         <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-border shadow-lg text-xs font-medium animate-in fade-in slide-in-from-top-2">
@@ -702,48 +776,14 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
             Podcasts
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {podcasts.map((ep) => (
-              <Link
-                key={ep.id}
-                href={`/podcasts/${ep.slug}`}
-                className="block rounded-xl bg-card border border-border/50 p-4 hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <Mic className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground">
-                      {ep.title}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      {ep.episode_number && (
-                        <span className="text-[11px] text-muted-foreground">
-                          Ep. {ep.episode_number}
-                        </span>
-                      )}
-                      {ep.duration_seconds && (
-                        <span className="text-[11px] text-muted-foreground">
-                          {formatDuration(ep.duration_seconds)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Link>
+              <PodcastCard key={ep.id} episode={ep} />
             ))}
           </div>
         </div>
       )}
 
-      {/* Back */}
-      <div className="mt-10 pt-6 border-t border-border">
-        <Link
-          href="/people"
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          &larr; Back to people
-        </Link>
-      </div>
 
       {/* Hidden file input for photo upload */}
       {isOwner && (

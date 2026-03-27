@@ -17,6 +17,7 @@ import {
   Users,
   UserCircle,
   LogOut,
+  Shield,
 } from "lucide-react";
 import UserMenu from "./UserMenu";
 import { useEffect, useState } from "react";
@@ -32,16 +33,8 @@ const NAV_ITEMS = [
   { href: "/events", label: "Events", icon: Calendar },
 ];
 
-const MOBILE_TABS = [
-  { href: "/home", label: "Home", icon: Search },
-  { href: "/updates", label: "Updates", icon: Newspaper },
-  { href: "/people", label: "People", icon: Users },
-  { href: "/messages", label: "Messages", icon: MessageCircle },
-  { href: "/profile", label: "Profile", icon: UserCircle },
-];
-
 export default function Sidebar() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const pathname = usePathname();
   const { collapsed, toggleCollapsed } = useSidebar();
   const { openFeedback } = useFeedback();
@@ -100,10 +93,10 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Desktop: Left sidebar */}
+      {/* Left sidebar — always visible, collapsed on small screens */}
       <aside
         className={cn(
-          "hidden lg:flex flex-col h-svh fixed left-0 top-0 border-r border-border bg-background z-50 transition-[width] duration-200 ease-in-out",
+          "flex flex-col h-svh fixed left-0 top-0 border-r border-border bg-background z-50 transition-[width] duration-200 ease-in-out",
           collapsed ? "w-16" : "w-60"
         )}
       >
@@ -202,6 +195,22 @@ export default function Sidebar() {
             <UserCircle className="w-[18px] h-[18px] shrink-0" strokeWidth={isActive("/profile") ? 2.2 : 1.8} />
             {!collapsed && "Profile"}
           </Link>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              title={collapsed ? "Admin" : undefined}
+              className={cn(
+                "flex items-center rounded-lg text-sm transition-colors w-full",
+                collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2",
+                isActive("/admin")
+                  ? "text-foreground bg-secondary font-medium"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+              )}
+            >
+              <Shield className="w-[18px] h-[18px] shrink-0" strokeWidth={isActive("/admin") ? 2.2 : 1.8} />
+              {!collapsed && "Admin"}
+            </Link>
+          )}
           <button
             onClick={openFeedback}
             className={cn(
@@ -232,48 +241,10 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* Desktop: User menu in top-right corner */}
-      <div className="hidden lg:flex fixed top-3 right-4 z-[60]">
+      {/* User menu in top-right corner */}
+      <div className="fixed top-3 right-4 z-[60]">
         <UserMenu />
       </div>
-
-      {/* Mobile: Top bar */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-[calc(2.75rem+env(safe-area-inset-top))] px-4 pt-[env(safe-area-inset-top)] border-b border-border/50 bg-background/80 backdrop-blur-lg">
-        <Link href="/home" className="flex items-center gap-1.5">
-          <Image src="/logo.svg" alt="MakersLounge" width={16} height={17} className="dark:hidden" />
-          <Image src="/logo-light.svg" alt="MakersLounge" width={16} height={17} className="hidden dark:block" />
-          <span className="text-base font-sans font-normal tracking-normal text-foreground">makerslounge</span>
-        </Link>
-        <UserMenu />
-      </header>
-      <div className="lg:hidden h-[calc(2.75rem+env(safe-area-inset-top))]" />
-
-      {/* Mobile: Bottom tab bar */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t border-border/50 pb-[env(safe-area-inset-bottom,0px)]">
-        <div className="flex items-center justify-around h-[50px]">
-          {MOBILE_TABS.map(({ href, label, icon: Icon }) => {
-            const active = isActive(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "relative flex flex-col items-center justify-center gap-[2px] w-full h-full active:opacity-60 transition-opacity",
-                  active ? "text-primary" : "text-muted-foreground"
-                )}
-              >
-                <Icon className="w-[22px] h-[22px]" strokeWidth={active ? 2.2 : 1.8} />
-                <span className="text-[10px] font-medium leading-none">{label}</span>
-                {href === "/messages" && unreadCount > 0 && (
-                  <span className="absolute top-0.5 left-1/2 ml-1.5 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-medium flex items-center justify-center">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
     </>
   );
 }

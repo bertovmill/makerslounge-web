@@ -7,6 +7,7 @@ export interface PodcastRow {
   description: string | null;
   transcript: string | null;
   audio_url: string | null;
+  video_url: string | null;
   cover_image_url: string | null;
   duration_seconds: number | null;
   episode_number: number | null;
@@ -144,6 +145,7 @@ export async function createPodcast(data: {
   description?: string;
   transcript?: string;
   audio_url?: string;
+  video_url?: string;
   cover_image_url?: string;
   duration_seconds?: number;
   episode_number?: number;
@@ -216,6 +218,24 @@ export async function uploadPodcastAudio(
 ): Promise<{ url: string | null; error?: string }> {
   const ext = file.name.split(".").pop();
   const path = `${podcastId}/audio.${ext}`;
+
+  const { error } = await supabase.storage
+    .from("podcasts")
+    .upload(path, file, { upsert: true });
+
+  if (error) return { url: null, error: error.message };
+
+  const { data } = supabase.storage.from("podcasts").getPublicUrl(path);
+  return { url: data.publicUrl };
+}
+
+// Upload video file
+export async function uploadPodcastVideo(
+  podcastId: string,
+  file: File
+): Promise<{ url: string | null; error?: string }> {
+  const ext = file.name.split(".").pop();
+  const path = `${podcastId}/video.${ext}`;
 
   const { error } = await supabase.storage
     .from("podcasts")

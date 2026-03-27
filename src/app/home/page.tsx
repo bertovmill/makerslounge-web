@@ -12,16 +12,16 @@ import { Thread } from "@/components/assistant-ui/thread";
 import { DeepgramDictationAdapter } from "@/lib/deepgram-dictation-adapter";
 
 function HomeContent() {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   const router = useRouter();
 
   const transport = useMemo(
     () =>
       new AssistantChatTransport({
         api: "/api/matcher-chat",
-        body: { userId: user?.id },
+        body: { userId: user?.id, isAdmin },
       }),
-    [user?.id],
+    [user?.id, isAdmin],
   );
 
   const adapters = useMemo(

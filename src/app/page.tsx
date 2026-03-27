@@ -257,10 +257,10 @@ export default function Home() {
             Sign in
           </Link>
           <Link
-            href="/auth?mode=signup"
+            href="/auth?mode=apply"
             className="text-sm font-medium px-4 py-2 rounded-md bg-gradient-blue text-white hover:opacity-90 transition-opacity"
           >
-            Get Started
+            Apply to Join
           </Link>
         </div>
 
@@ -308,11 +308,11 @@ export default function Home() {
               Sign in
             </Link>
             <Link
-              href="/auth?mode=signup"
+              href="/auth?mode=apply"
               className="text-lg font-medium px-8 py-3 rounded-full bg-gradient-blue text-white hover:opacity-90 transition-opacity"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Get Started
+              Apply to Join
             </Link>
             <button
               onClick={() => { toggleTheme(); setMobileMenuOpen(false); }}
@@ -345,13 +345,13 @@ export default function Home() {
 
         {/* Primary CTA */}
         <div className="flex flex-col items-center gap-3 mb-6 sm:mb-8">
-          <Link href="/auth?mode=signup">
+          <Link href="/auth?mode=apply">
             <HoverBorderGradient
               containerClassName="rounded-full"
               as="div"
               className="dark:bg-black bg-white text-foreground dark:text-white flex items-center gap-2 px-6 sm:px-8 py-2 sm:py-2.5 text-sm sm:text-base font-medium"
             >
-              Join the Community
+              Apply to Join
               <ArrowRight className="w-4 h-4" />
             </HoverBorderGradient>
           </Link>
@@ -415,7 +415,7 @@ export default function Home() {
 
               {/* Listen button */}
               <Link
-                href="/podcast"
+                href="/auth"
                 className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-foreground text-background text-xs sm:text-sm font-medium hover:opacity-80 transition-opacity"
               >
                 <Play className="w-3 h-3 fill-current" />
@@ -424,11 +424,11 @@ export default function Home() {
             </div>
 
             {/* Latest episode preview */}
-            <div className="border-t border-border px-4 sm:px-5 py-3 flex items-center gap-3">
+            <Link href="/auth" className="border-t border-border px-4 sm:px-5 py-3 flex items-center gap-3 hover:bg-muted/30 transition-colors">
               <span className="text-[10px] sm:text-xs text-muted-foreground/60 uppercase tracking-wide flex-shrink-0">Latest</span>
-              <p className="text-xs sm:text-sm text-foreground/80 truncate">Episode 1: Why We Build — The Maker Mindset</p>
+              <p className="text-xs sm:text-sm text-foreground/80 truncate">A Chat with Fayaz</p>
               <ExternalLink className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
-            </div>
+            </Link>
           </div>
         </div>
 
@@ -453,10 +453,12 @@ export default function Home() {
                 }
               }}
               onFocus={() => {
-                // On iOS, the keyboard can cover the textarea — scroll it into view
-                setTimeout(() => {
-                  textareaRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                }, 300);
+                // On iOS, the keyboard can cover the textarea — scroll it into view (mobile only)
+                if (window.innerWidth < 768) {
+                  setTimeout(() => {
+                    textareaRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }, 300);
+                }
               }}
               placeholder="Describe what you're looking for..."
               rows={2}

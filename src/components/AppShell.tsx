@@ -22,15 +22,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <>
-      {/* Desktop sidebar offset */}
-      <main className={`hidden lg:block ${collapsed ? "lg:ml-16" : "lg:ml-60"} transition-[margin] duration-200 ease-in-out`}>
-        {children}
-      </main>
-      {/* Mobile/Tablet: no sidebar offset, bottom padding for tab bar */}
-      <main className="lg:hidden pb-[calc(50px+env(safe-area-inset-bottom,0px))]">
-        {children}
-      </main>
-    </>
+    <main className={`${collapsed ? "ml-16" : "ml-60"} transition-[margin] duration-200 ease-in-out`}>
+      {children}
+    </main>
   );
 }

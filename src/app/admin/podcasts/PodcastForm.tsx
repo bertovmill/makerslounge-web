@@ -17,6 +17,7 @@ import {
   uploadPodcastAudio,
   uploadPodcastCover,
 } from "@/lib/podcasts";
+import { supabase } from "@/lib/supabase";
 
 interface PodcastFormProps {
   userId: string;
@@ -183,6 +184,26 @@ export default function PodcastForm({ userId, podcast }: PodcastFormProps) {
       for (const guest of guests) {
         await addGuest(result.id, guest.id);
       }
+    }
+
+    // Auto-post to updates feed when publishing a new podcast
+    // (only if it wasn't previously published)
+    const wasPublished = isEditing && podcast?.is_published;
+    if (publish && !wasPublished) {
+      const guestNames = guests.map((g) => g.name || g.username || "").filter(Boolean);
+      const guestLine = guestNames.length > 0
+        ? `\n\nFeaturing: ${guestNames.join(", ")}`
+        : "";
+      const podcastSlug = isEditing ? podcast.slug : slug.trim();
+
+      // Include audio URL as a hidden marker for inline playback in the feed
+      const audioMarker = audioUrl ? `\n\n[podcast-audio:${audioUrl}]` : "";
+      await supabase.from("projects").insert({
+        user_id: userId,
+        title: `New Podcast: ${title.trim()}`,
+        description: `${description.trim() || `Check out our latest episode — ${title.trim()}`}${guestLine}${audioMarker}`,
+        media_urls: coverUrl ? [coverUrl] : null,
+      });
     }
 
     router.push("/admin/podcasts");

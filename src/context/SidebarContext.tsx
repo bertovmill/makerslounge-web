@@ -14,11 +14,13 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsedState] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount, auto-collapse on narrow screens
   useEffect(() => {
     const saved = localStorage.getItem("sidebar-collapsed");
     if (saved !== null) {
       setCollapsedState(saved === "true");
+    } else if (window.innerWidth < 1024) {
+      setCollapsedState(true);
     }
     setMounted(true);
   }, []);

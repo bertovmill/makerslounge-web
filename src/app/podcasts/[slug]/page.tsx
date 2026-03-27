@@ -72,13 +72,27 @@ export default function PodcastEpisodePage() {
         )}
       </div>
 
-      {/* Cover image */}
-      {podcast.cover_image_url && (
-        <img
-          src={podcast.cover_image_url}
-          alt={podcast.title}
-          className="w-full rounded-xl mb-6 object-cover max-h-80"
-        />
+      {/* Video Player */}
+      {podcast.video_url ? (
+        <div className="mb-8">
+          <video
+            src={podcast.video_url}
+            controls
+            poster={podcast.cover_image_url || undefined}
+            className="w-full rounded-xl"
+          />
+        </div>
+      ) : (
+        <>
+          {/* Cover image (shown when no video) */}
+          {podcast.cover_image_url && (
+            <img
+              src={podcast.cover_image_url}
+              alt={podcast.title}
+              className="w-full rounded-xl mb-6 object-cover max-h-80"
+            />
+          )}
+        </>
       )}
 
       {/* Audio Player */}

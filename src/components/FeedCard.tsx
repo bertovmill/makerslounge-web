@@ -511,12 +511,34 @@ export default function FeedCard({
             <h3 className="font-semibold text-[15px] mb-1 whitespace-pre-wrap">{project.title}</h3>
             {project.description && (
               <p className="text-muted-foreground text-[15px] leading-relaxed whitespace-pre-wrap">
-                <Linkify>{project.description}</Linkify>
+                <Linkify>{project.description.replace(/\n?\n?\[podcast-audio:[^\]]+\]/g, "")}</Linkify>
               </p>
             )}
           </>
         )}
       </div>
+
+      {/* Inline podcast player */}
+      {(() => {
+        const audioMatch = project.description?.match(/\[podcast-audio:(https?:\/\/[^\]]+)\]/);
+        if (!audioMatch) return null;
+        return (
+          <div className="mb-3 rounded-xl border border-border/40 bg-gradient-to-r from-[#6AC4F7]/5 to-[#1A7DE8]/5 p-3">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#6AC4F7] to-[#1A7DE8] flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2H3v2a9 9 0 0 0 8 8.94V23h2v-2.06A9 9 0 0 0 21 12v-2h-2z"/></svg>
+              </div>
+              <span className="text-xs font-medium text-[#3A9FF3]">Podcast Episode</span>
+            </div>
+            <audio
+              controls
+              preload="metadata"
+              className="w-full h-10 [&::-webkit-media-controls-panel]:bg-transparent"
+              src={audioMatch[1]}
+            />
+          </div>
+        );
+      })()}
 
       {/* Media */}
       {project.media_urls && project.media_urls.length > 0 && (

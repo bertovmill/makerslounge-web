@@ -58,15 +58,6 @@ const FirstTimeWelcome: FC<{ onDismiss: () => void }> = ({ onDismiss }) => {
 };
 
 export const Thread: FC = () => {
-  const [showWelcome, setShowWelcome] = useState(false);
-
-  useEffect(() => {
-    if (!localStorage.getItem(WELCOME_KEY)) {
-      setShowWelcome(true);
-      localStorage.setItem(WELCOME_KEY, "1");
-    }
-  }, []);
-
   return (
     <ThreadPrimitive.Root
       className="aui-root aui-thread-root @container flex h-full flex-col bg-background overflow-x-hidden"
@@ -96,16 +87,15 @@ export const Thread: FC = () => {
         />
       </ThreadPrimitive.Viewport>
 
-      <div className="relative mx-auto flex w-full max-w-(--thread-max-width) flex-col gap-2 px-4 pb-4 overflow-hidden">
-        <ThreadScrollToBottom />
-        {showWelcome && (
-          <FirstTimeWelcome onDismiss={() => setShowWelcome(false)} />
-        )}
-        <Composer highlight={showWelcome} />
-        <p className="text-[11px] text-muted-foreground/40 text-center select-none">
-          AI matches are based on community profiles and may not be perfect.
-        </p>
-      </div>
+      <AuiIf condition={(s) => !s.thread.isEmpty}>
+        <div className="relative mx-auto flex w-full max-w-(--thread-max-width) flex-col gap-2 px-4 pb-4 overflow-hidden">
+          <ThreadScrollToBottom />
+          <Composer />
+          <p className="text-[11px] text-muted-foreground/40 text-center select-none">
+            AI matches are based on community profiles and may not be perfect.
+          </p>
+        </div>
+      </AuiIf>
     </ThreadPrimitive.Root>
   );
 };
@@ -125,6 +115,15 @@ const ThreadScrollToBottom: FC = () => {
 };
 
 const ThreadWelcome: FC = () => {
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem(WELCOME_KEY + "_inline")) {
+      setShowWelcome(true);
+      localStorage.setItem(WELCOME_KEY + "_inline", "1");
+    }
+  }, []);
+
   return (
     <div className="mx-auto flex w-full max-w-(--thread-max-width) grow flex-col justify-center">
       <div className="flex flex-col items-center text-center mb-8 px-4">
@@ -147,6 +146,15 @@ const ThreadWelcome: FC = () => {
         </p>
       </div>
       <ThreadSuggestions />
+      <div className="relative mx-auto flex w-full max-w-(--thread-max-width) flex-col gap-2 px-4 mt-6">
+        {showWelcome && (
+          <FirstTimeWelcome onDismiss={() => setShowWelcome(false)} />
+        )}
+        <Composer highlight={showWelcome} />
+        <p className="text-[11px] text-muted-foreground/40 text-center select-none">
+          AI matches are based on community profiles and may not be perfect.
+        </p>
+      </div>
     </div>
   );
 };

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import { Search, X } from "lucide-react";
 
 interface Profile {
@@ -13,9 +14,11 @@ interface Profile {
   skills: string[] | null;
   photo_url: string | null;
   currently_building: string | null;
+  _type?: "profile" | "community";
 }
 
 export default function PeoplePage() {
+  const { isAdmin } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -27,11 +30,40 @@ export default function PeoplePage() {
         .from("profiles")
         .select("id, username, name, bio, skills, photo_url, currently_building")
         .order("name", { ascending: true });
-      setProfiles(data || []);
+
+      const allProfiles: Profile[] = (data || []).map((p) => ({ ...p, _type: "profile" as const }));
+
+      // Admin sees all community contacts; others see public ones
+      if (isAdmin) {
+        const { data: contacts } = await supabase
+          .from("community_contacts")
+          .select("id, name, first_name, last_name, summary, skills")
+          .order("name", { ascending: true });
+
+        if (contacts) {
+          const registeredEmails = new Set((data || []).map((p: Record<string, unknown>) => p.email));
+          for (const c of contacts) {
+            const displayName = c.name || [c.first_name, c.last_name].filter(Boolean).join(" ");
+            if (!displayName) continue;
+            allProfiles.push({
+              id: c.id,
+              username: null,
+              name: displayName,
+              bio: c.summary,
+              skills: c.skills,
+              photo_url: null,
+              currently_building: null,
+              _type: "community",
+            });
+          }
+        }
+      }
+
+      setProfiles(allProfiles);
       setLoading(false);
     }
     fetchProfiles();
-  }, []);
+  }, [isAdmin]);
 
   // All unique skills sorted by frequency
   const allSkills = useMemo(() => {
@@ -148,8 +180,14 @@ export default function PeoplePage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((profile) => (
             <Link
-              key={profile.id}
-              href={profile.username ? `/p/${profile.username}` : `/profile/${profile.id}`}
+              key={`${profile._type}-${profile.id}`}
+              href={
+                profile._type === "community"
+                  ? `/community/${profile.id}`
+                  : profile.username
+                    ? `/p/${profile.username}`
+                    : `/profile/${profile.id}`
+              }
               className="group rounded-xl border border-border bg-background p-5 hover:border-foreground/20 transition-colors"
             >
               <div className="flex items-start gap-3.5 mb-3">
@@ -162,16 +200,31 @@ export default function PeoplePage() {
                     className="w-11 h-11 rounded-full object-cover shrink-0"
                   />
                 ) : (
-                  <div className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                    <span className="text-sm font-medium text-muted-foreground">
+                  <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${
+                    profile._type === "community"
+                      ? "bg-primary/10"
+                      : "bg-secondary"
+                  }`}>
+                    <span className={`text-sm font-medium ${
+                      profile._type === "community"
+                        ? "text-primary"
+                        : "text-muted-foreground"
+                    }`}>
                       {profile.name?.charAt(0)?.toUpperCase() || "?"}
                     </span>
                   </div>
                 )}
                 <div className="min-w-0">
-                  <h3 className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
-                    {profile.name}
-                  </h3>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+                      {profile.name}
+                    </h3>
+                    {profile._type === "community" && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary shrink-0">
+                        Community
+                      </span>
+                    )}
+                  </div>
                   {profile.currently_building && (
                     <p className="text-xs text-muted-foreground truncate">
                       Building {profile.currently_building.replace(/[\[\]"]/g, '')}

@@ -30,6 +30,12 @@ export async function GET(request: NextRequest) {
     if (!error) {
       // Check if user has completed onboarding (has a name set)
       if (data.session?.user) {
+        // Auto-match community contact on signup/login
+        await supabase.rpc("match_community_contact", {
+          p_user_id: data.session.user.id,
+          p_user_email: data.session.user.email,
+        });
+
         const { data: profile } = await supabase
           .from("profiles")
           .select("name")

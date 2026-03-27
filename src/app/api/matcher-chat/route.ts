@@ -11,7 +11,7 @@ const supabaseAdmin = createClient(
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  const { messages, userId }: { messages: UIMessage[]; userId?: string } = await req.json();
+  const { messages, userId, isAdmin }: { messages: UIMessage[]; userId?: string; isAdmin?: boolean } = await req.json();
 
   if (!messages || messages.length === 0) {
     return new Response(JSON.stringify({ error: "No messages provided" }), {
@@ -72,7 +72,9 @@ IMPORTANT:
 - Never invent or hallucinate profiles — always use tools to find real people
 - If no results, suggest broadening the search or try alternative terms
 - You can chain multiple tool calls to refine results
-- When the user wants to connect, use send_intro_message to start a conversation${userContext}`;
+- When the user wants to connect, use send_intro_message to start a conversation${isAdmin ? `
+
+ADMIN MODE: You have access to the full community database including community contacts (event attendees who haven't signed up yet). These show as type "community_contact" in results and link to /community/[id]. When presenting community contacts, note they are "community members" (not yet registered). You can still recommend them for introductions.` : ""}${userContext}`;
 
   const result = streamText({
     model: anthropic("claude-sonnet-4-20250514"),
@@ -99,13 +101,28 @@ IMPORTANT:
             .limit(15);
 
           if (error) return { error: "Search failed" };
-          if (!data || data.length === 0)
+
+          const results = (data || []).map(formatProfile);
+
+          // Admin: also search community contacts
+          if (isAdmin) {
+            const { data: contacts } = await supabaseAdmin
+              .from("community_contacts")
+              .select("id, name, first_name, last_name, summary, skills, company, role, source, linkedin, metadata")
+              .or(
+                `name.ilike.${searchTerm},first_name.ilike.${searchTerm},last_name.ilike.${searchTerm},summary.ilike.${searchTerm},company.ilike.${searchTerm}`
+              )
+              .limit(15);
+
+            if (contacts) {
+              results.push(...contacts.map(formatCommunityContact));
+            }
+          }
+
+          if (results.length === 0)
             return { results: [], message: "No makers found matching that query" };
 
-          return {
-            results: data.map(formatProfile),
-            count: data.length,
-          };
+          return { results, count: results.length };
         },
       },
 
@@ -150,10 +167,33 @@ IMPORTANT:
             );
           }
 
-          return {
-            results: filtered.map(formatProfile),
-            count: filtered.length,
-          };
+          const results = filtered.map(formatProfile);
+
+          // Admin: also search community contacts by skills
+          if (isAdmin) {
+            const { data: contacts } = await supabaseAdmin
+              .from("community_contacts")
+              .select("id, name, first_name, last_name, summary, skills, company, role, source, linkedin, metadata")
+              .overlaps("skills", skills);
+
+            if (contacts) {
+              let filteredContacts = contacts;
+              if (match_all) {
+                filteredContacts = contacts.filter((c) =>
+                  skills.every((skill) =>
+                    c.skills?.some(
+                      (s: string) =>
+                        s.toLowerCase().includes(skill.toLowerCase()) ||
+                        skill.toLowerCase().includes(s.toLowerCase())
+                    )
+                  )
+                );
+              }
+              results.push(...filteredContacts.map(formatCommunityContact));
+            }
+          }
+
+          return { results, count: results.length };
         },
       },
 
@@ -242,13 +282,33 @@ IMPORTANT:
             });
           });
 
+          let communityCount = 0;
+          if (isAdmin) {
+            const { count: cc } = await supabaseAdmin
+              .from("community_contacts")
+              .select("id", { count: "exact", head: true });
+            communityCount = cc || 0;
+
+            // Include community contact skills in the tally
+            const { data: contacts } = await supabaseAdmin
+              .from("community_contacts")
+              .select("skills");
+            contacts?.forEach((c) => {
+              c.skills?.forEach((s: string) => {
+                allSkills[s] = (allSkills[s] || 0) + 1;
+              });
+            });
+          }
+
           const topSkills = Object.entries(allSkills)
             .sort(([, a], [, b]) => b - a)
             .slice(0, 15)
             .map(([skill, cnt]) => ({ skill, count: cnt }));
 
           return {
-            total_members: count || 0,
+            total_members: (count || 0) + communityCount,
+            registered_members: count || 0,
+            community_contacts: communityCount,
             top_skills: topSkills,
             sample_members: (data || []).slice(0, 10).map(formatProfile),
           };
@@ -511,6 +571,47 @@ IMPORTANT:
   });
 
   return result.toUIMessageStreamResponse();
+}
+
+function formatCommunityContact(c: {
+  id: string;
+  name: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  summary?: string | null;
+  skills?: string[] | null;
+  company?: string | null;
+  role?: string | null;
+  source?: string[] | null;
+  linkedin?: string | null;
+  metadata?: Record<string, string> | null;
+}) {
+  const displayName = c.name || [c.first_name, c.last_name].filter(Boolean).join(" ") || "Unknown";
+  const profile: Record<string, unknown> = {
+    id: c.id,
+    name: displayName,
+    profile_url: `/community/${c.id}`,
+    type: "community_contact",
+  };
+  if (c.summary) profile.bio = c.summary;
+  if (c.skills?.length) profile.skills = c.skills;
+  if (c.company) profile.company = c.company;
+  if (c.role) profile.role = c.role;
+  if (c.source?.length) profile.events_attended = c.source;
+  if (c.linkedin) profile.linkedin = c.linkedin;
+  // Include useful metadata (projects, superpowers, etc.)
+  if (c.metadata) {
+    const interesting: Record<string, string> = {};
+    for (const [k, v] of Object.entries(c.metadata)) {
+      const kl = k.toLowerCase();
+      if (kl.includes("project") || kl.includes("skill") || kl.includes("superpower") ||
+          kl.includes("building") || kl.includes("help") || kl.includes("phase")) {
+        interesting[k] = v;
+      }
+    }
+    if (Object.keys(interesting).length > 0) profile.additional_info = interesting;
+  }
+  return profile;
 }
 
 function formatProfile(p: {
