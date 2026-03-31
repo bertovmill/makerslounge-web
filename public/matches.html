@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Matches — MakersLounge</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f9f8f6;
+      color: #1a1a1a;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e5e5e5;
+      padding: 20px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-inner {
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-dot {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #e8754a, #d4522a);
+      border-radius: 8px;
+    }
+
+    .brand-name {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    h1 span {
+      color: #e8754a;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 14px;
+      background: #f4f4f4;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="text"]:focus {
+      border-color: #e8754a;
+      background: #fff;
+    }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .person-card {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .person-header {
+      padding: 16px 20px;
+      background: #fafafa;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      user-select: none;
+    }
+
+    .person-header:hover { background: #f5f5f5; }
+
+    .person-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e8754a22, #e8754a44);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 15px;
+      color: #e8754a;
+      flex-shrink: 0;
+    }
+
+    .person-info { flex: 1; min-width: 0; }
+
+    .person-name {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+
+    .person-role {
+      font-size: 12px;
+      color: #999;
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chevron {
+      color: #bbb;
+      font-size: 18px;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .person-card.open .chevron { transform: rotate(180deg); }
+
+    .matches-list {
+      display: none;
+      padding: 4px 0 8px;
+    }
+
+    .person-card.open .matches-list { display: block; }
+
+    .match-item {
+      display: flex;
+      gap: 14px;
+      padding: 14px 20px;
+      border-bottom: 1px solid #f5f5f5;
+    }
+
+    .match-item:last-child { border-bottom: none; }
+
+    .match-number {
+      font-size: 11px;
+      font-weight: 700;
+      color: #e8754a;
+      width: 18px;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+
+    .match-content { flex: 1; min-width: 0; }
+
+    .match-name {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+
+    .match-role {
+      font-size: 12px;
+      color: #999;
+      margin-top: 1px;
+    }
+
+    .match-reason {
+      font-size: 13px;
+      color: #555;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 48px 24px;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    .empty-note {
+      background: #fff;
+      border: 1px dashed #e0e0e0;
+      border-radius: 14px;
+      padding: 20px;
+      font-size: 13px;
+      color: #aaa;
+      text-align: center;
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      font-size: 12px;
+      color: #ccc;
+    }
+
+    @media (max-width: 480px) {
+      main { padding: 16px; }
+      header { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <span class="brand-name">MakersLounge</span>
+    </div>
+    <div>
+      <h1>Your <span>Top 3 Matches</span> Tonight</h1>
+      <p class="subtitle">AI-powered connections — find your name and meet your people.</p>
+    </div>
+    <input type="text" id="search" placeholder="Search your name..." oninput="filterCards()" />
+  </div>
+</header>
+
+<main id="cards">
+
+  <!-- VIMAL KUMAR -->
+  <div class="person-card" data-name="vimal kumar">
+    <div class="person-header" onclick="toggle(this)">
+      <div class="person-avatar">V</div>
+      <div class="person-info">
+        <div class="person-name">Vimal Kumar</div>
+        <div class="person-role">AI &amp; Machine Learning · PwC Canada</div>
+      </div>
+      <div class="chevron">&#8964;</div>
+    </div>
+    <div class="matches-list">
+      <div class="match-item">
+        <div class="match-number">1</div>
+        <div class="match-content">
+          <div class="match-name">Geethanjali Velusamy</div>
+          <div class="match-role">Business Analyst · Building an AI networking app</div>
+          <div class="match-reason">She is building an AI-powered networking platform and is actively looking for help with AI automations — right in your wheelhouse with LangChain, LLMs, and Azure.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">2</div>
+        <div class="match-content">
+          <div class="match-name">Michael B. Li</div>
+          <div class="match-role">Founder · Lenavix (AI for M&amp;A legal due diligence)</div>
+          <div class="match-reason">Building AI infrastructure for document-heavy legal workflows and needs deep LLM and GenAI expertise — exactly what you do at PwC.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">3</div>
+        <div class="match-content">
+          <div class="match-name">Olisa Nwobbi</div>
+          <div class="match-role">AI Engineer · Cloud &amp; workflow automation</div>
+          <div class="match-reason">Wants to deepen into AI strategy and go-to-market — a great peer conversation about what it looks like to operationalize GenAI in enterprise settings.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GEETHANJALI VELUSAMY -->
+  <div class="person-card" data-name="geethanjali velusamy">
+    <div class="person-header" onclick="toggle(this)">
+      <div class="person-avatar">G</div>
+      <div class="person-info">
+        <div class="person-name">Geethanjali Velusamy</div>
+        <div class="person-role">Business Analyst · Building AI networking app</div>
+      </div>
+      <div class="chevron">&#8964;</div>
+    </div>
+    <div class="matches-list">
+      <div class="match-item">
+        <div class="match-number">1</div>
+        <div class="match-content">
+          <div class="match-name">Vimal Kumar</div>
+          <div class="match-role">GenAI &amp; LLM Specialist · PwC Canada</div>
+          <div class="match-reason">GenAI and LLM expert who can directly help you build the AI automation layer of your networking app.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">2</div>
+        <div class="match-content">
+          <div class="match-name">Simon Kubbinga</div>
+          <div class="match-role">Solana Canada Lead · Superteam Canada</div>
+          <div class="match-reason">Has built one of Toronto's most active builder communities from scratch — a goldmine of knowledge for growing your networking platform.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">3</div>
+        <div class="match-content">
+          <div class="match-name">Mohit Gulati</div>
+          <div class="match-role">Product Lead AI · Rakuten · Building Auspicia.homes</div>
+          <div class="match-reason">10+ years launching AI and media products at scale, strong in community and content strategy — great person to think through your app's growth with.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PATRICK CONNORS -->
+  <div class="person-card" data-name="patrick connors">
+    <div class="person-header" onclick="toggle(this)">
+      <div class="person-avatar">P</div>
+      <div class="person-info">
+        <div class="person-name">Patrick Connors</div>
+        <div class="person-role">Founder · my1on1</div>
+      </div>
+      <div class="chevron">&#8964;</div>
+    </div>
+    <div class="matches-list">
+      <div class="match-item">
+        <div class="match-number">1</div>
+        <div class="match-content">
+          <div class="match-name">Sheila Xu</div>
+          <div class="match-role">Chief of Staff · ReBlink</div>
+          <div class="match-reason">Lives and breathes structured 1:1s in her Chief of Staff role — she is your target user and can give you sharp, honest product feedback on my1on1.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">2</div>
+        <div class="match-content">
+          <div class="match-name">Michael B. Li</div>
+          <div class="match-role">Founder · Lenavix · Antler EIR</div>
+          <div class="match-reason">Currently at Antler building in the AI workflow space — founder-to-founder perspective on product direction and early traction.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">3</div>
+        <div class="match-content">
+          <div class="match-name">Mohit Gulati</div>
+          <div class="match-role">Product Lead AI · Rakuten</div>
+          <div class="match-reason">Has launched 9 products reaching 100M+ users — great person to pressure-test your roadmap and go-to-market thinking.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAM LE -->
+  <div class="person-card" data-name="tam le">
+    <div class="person-header" onclick="toggle(this)">
+      <div class="person-avatar">T</div>
+      <div class="person-info">
+        <div class="person-name">Tam Le</div>
+        <div class="person-role">Full-Stack Developer · wholy.sh</div>
+      </div>
+      <div class="chevron">&#8964;</div>
+    </div>
+    <div class="matches-list">
+      <div class="match-item">
+        <div class="match-number">1</div>
+        <div class="match-content">
+          <div class="match-name">Simon Kubbinga</div>
+          <div class="match-role">Solana Canada Lead · Superteam Canada</div>
+          <div class="match-reason">Community building, outreach, and getting people talking about your product are his core strengths — exactly what you said you need help with.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">2</div>
+        <div class="match-content">
+          <div class="match-name">Patrick Connors</div>
+          <div class="match-role">Founder · my1on1</div>
+          <div class="match-reason">Sales-focused founder who can share what is actually working for him in early customer conversations and getting product feedback.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">3</div>
+        <div class="match-content">
+          <div class="match-name">Sheila Xu</div>
+          <div class="match-role">Chief of Staff · ReBlink</div>
+          <div class="match-reason">Strong finance and operations background with experience structuring business narratives — can help you sharpen your communication and positioning.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIGUEL TWAHIRWA -->
+  <div class="person-card" data-name="miguel twahirwa">
+    <div class="person-header" onclick="toggle(this)">
+      <div class="person-avatar">M</div>
+      <div class="person-info">
+        <div class="person-name">Miguel Twahirwa</div>
+        <div class="person-role">Full-Stack Builder · StageRiq · AI athlete platform</div>
+      </div>
+      <div class="chevron">&#8964;</div>
+    </div>
+    <div class="matches-list">
+      <div class="match-item">
+        <div class="match-number">1</div>
+        <div class="match-content">
+          <div class="match-name">Mohit Gulati</div>
+          <div class="match-role">Product Lead AI · Rakuten · Filmmaker</div>
+          <div class="match-reason">Has serious filmmaking and visual production skills and works at the intersection of AI and media — can directly help with your photography and content gap.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">2</div>
+        <div class="match-content">
+          <div class="match-name">Sheila Xu</div>
+          <div class="match-role">Chief of Staff · Ex-RBC Capital Markets · Ex-CPP Investments</div>
+          <div class="match-reason">Deep investment banking and private equity background — she knows how to construct a compelling fundraising narrative for investors.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">3</div>
+        <div class="match-content">
+          <div class="match-name">Simon Kubbinga</div>
+          <div class="match-role">Solana Canada Lead · Superteam Canada</div>
+          <div class="match-reason">Pitching and fundraising specialist who has helped multiple Toronto projects get off the ground — great person to refine your investor story with.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OLISA NWOBBI -->
+  <div class="person-card" data-name="olisa nwobbi">
+    <div class="person-header" onclick="toggle(this)">
+      <div class="person-avatar">O</div>
+      <div class="person-info">
+        <div class="person-name">Olisa Nwobbi</div>
+        <div class="person-role">AI Engineer · Cloud &amp; workflow automation</div>
+      </div>
+      <div class="chevron">&#8964;</div>
+    </div>
+    <div class="matches-list">
+      <div class="match-item">
+        <div class="match-number">1</div>
+        <div class="match-content">
+          <div class="match-name">Vimal Kumar</div>
+          <div class="match-role">GenAI &amp; LLM Specialist · PwC Canada</div>
+          <div class="match-reason">Doing exactly what you want to be doing — operationalizing GenAI in enterprise workflows. Great mentor and peer for where you want to take your career.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">2</div>
+        <div class="match-content">
+          <div class="match-name">Michael B. Li</div>
+          <div class="match-role">Founder · Lenavix · AI governance advisor</div>
+          <div class="match-reason">Bridges AI strategy, governance, and go-to-market at Lenavix and Antler — exactly the positioning you are trying to build toward.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">3</div>
+        <div class="match-content">
+          <div class="match-name">Mohit Gulati</div>
+          <div class="match-role">Product Lead AI · Rakuten</div>
+          <div class="match-reason">Has taken AI products from zero to 100M+ end consumers — can give you a grounded picture of what the AI GTM path actually looks like in practice.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHEILA XU -->
+  <div class="person-card" data-name="sheila xu">
+    <div class="person-header" onclick="toggle(this)">
+      <div class="person-avatar">S</div>
+      <div class="person-info">
+        <div class="person-name">Sheila Xu</div>
+        <div class="person-role">Chief of Staff · ReBlink · Building Arbo.xyz</div>
+      </div>
+      <div class="chevron">&#8964;</div>
+    </div>
+    <div class="matches-list">
+      <div class="match-item">
+        <div class="match-number">1</div>
+        <div class="match-content">
+          <div class="match-name">Simon Kubbinga</div>
+          <div class="match-role">Solana Canada Lead · Superteam Canada</div>
+          <div class="match-reason">Pitching, fundraising, and social media are literally his listed strengths — he has grown communities and raised support for multiple projects in Toronto.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">2</div>
+        <div class="match-content">
+          <div class="match-name">Miguel Twahirwa</div>
+          <div class="match-role">Full-Stack Builder · StageRiq</div>
+          <div class="match-reason">Building multiple consumer apps and understands early-stage growth — can share what is working for him on content, distribution, and keeping momentum.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">3</div>
+        <div class="match-content">
+          <div class="match-name">Mohit Gulati</div>
+          <div class="match-role">Product Lead AI · Rakuten · UX &amp; media</div>
+          <div class="match-reason">Deep expertise in UX, social media strategy, and content for large audiences — can help you think through Arbo's growth story and brand.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOHIT GULATI -->
+  <div class="person-card" data-name="mohit gulati">
+    <div class="person-header" onclick="toggle(this)">
+      <div class="person-avatar">M</div>
+      <div class="person-info">
+        <div class="person-name">Mohit Gulati</div>
+        <div class="person-role">Product Lead AI · Rakuten · Building Auspicia.homes</div>
+      </div>
+      <div class="chevron">&#8964;</div>
+    </div>
+    <div class="matches-list">
+      <div class="match-item">
+        <div class="match-number">1</div>
+        <div class="match-content">
+          <div class="match-name">Vimal Kumar</div>
+          <div class="match-role">GenAI &amp; LLM Specialist · PwC Canada</div>
+          <div class="match-reason">GenAI and LLM specialist who can go deep on the AI side of Auspicia.homes and your broader product work at Rakuten.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">2</div>
+        <div class="match-content">
+          <div class="match-name">Michael B. Li</div>
+          <div class="match-role">Founder · Lenavix · Antler EIR</div>
+          <div class="match-reason">Building AI workflow automation and is at Antler right now — great exchange on AI product strategy, positioning, and what early traction looks like.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">3</div>
+        <div class="match-content">
+          <div class="match-name">Sheila Xu</div>
+          <div class="match-role">Chief of Staff · Ex-CPP Investments · Ex-RBC</div>
+          <div class="match-reason">Strong finance and M&amp;A instincts from CPP and RBC — good person to pressure-test the business model and funding approach for Auspicia.homes.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERHII SHARIPOV -->
+  <div class="person-card" data-name="serhii sharipov">
+    <div class="person-header" onclick="toggle(this)">
+      <div class="person-avatar">S</div>
+      <div class="person-info">
+        <div class="person-name">Serhii Sharipov</div>
+        <div class="person-role">Software Developer · track-squats.vercel.app</div>
+      </div>
+      <div class="chevron">&#8964;</div>
+    </div>
+    <div class="matches-list">
+      <div class="match-item">
+        <div class="match-number">1</div>
+        <div class="match-content">
+          <div class="match-name">Tam Le</div>
+          <div class="match-role">Full-Stack Developer · wholy.sh</div>
+          <div class="match-reason">Full-stack developer who has shipped React Native apps, a production mobile app, and a full-stack agency — lots of shared technical ground to trade builder notes.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">2</div>
+        <div class="match-content">
+          <div class="match-name">Vimal Kumar</div>
+          <div class="match-role">GenAI &amp; LLM Specialist · PwC Canada</div>
+          <div class="match-reason">Can help you think through how to layer AI features into track-squats and future projects to make them more intelligent and sticky.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">3</div>
+        <div class="match-content">
+          <div class="match-name">Miguel Twahirwa</div>
+          <div class="match-role">Full-Stack Builder · StageRiq</div>
+          <div class="match-reason">Another builder juggling multiple apps across web and mobile — good peer to trade feedback and ideas with at the same stage.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIMON KUBBINGA -->
+  <div class="person-card" data-name="simon kubbinga">
+    <div class="person-header" onclick="toggle(this)">
+      <div class="person-avatar">S</div>
+      <div class="person-info">
+        <div class="person-name">Simon Kubbinga</div>
+        <div class="person-role">Solana Canada Lead · Superteam Canada</div>
+      </div>
+      <div class="chevron">&#8964;</div>
+    </div>
+    <div class="matches-list">
+      <div class="match-item">
+        <div class="match-number">1</div>
+        <div class="match-content">
+          <div class="match-name">Michael B. Li</div>
+          <div class="match-role">Founder · Lenavix · Antler EIR</div>
+          <div class="match-reason">Actively fundraising at Antler and building Lenavix — your pitching and fundraising background is exactly what he needs right now.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">2</div>
+        <div class="match-content">
+          <div class="match-name">Sheila Xu</div>
+          <div class="match-role">Chief of Staff · ReBlink · Building Arbo.xyz</div>
+          <div class="match-reason">Has a finance and investment background and is now building a consumer product and looking to grow its audience — your community and social media skills can directly help her.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">3</div>
+        <div class="match-content">
+          <div class="match-name">Geethanjali Velusamy</div>
+          <div class="match-role">Business Analyst · Building AI networking app</div>
+          <div class="match-reason">Building an AI networking platform focused on community growth — your experience building Superteam Canada is directly relevant to what she is trying to do.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MICHAEL B. LI -->
+  <div class="person-card" data-name="michael b. li michael li">
+    <div class="person-header" onclick="toggle(this)">
+      <div class="person-avatar">M</div>
+      <div class="person-info">
+        <div class="person-name">Michael B. Li</div>
+        <div class="person-role">Founder · Lenavix · Antler EIR</div>
+      </div>
+      <div class="chevron">&#8964;</div>
+    </div>
+    <div class="matches-list">
+      <div class="match-item">
+        <div class="match-number">1</div>
+        <div class="match-content">
+          <div class="match-name">Simon Kubbinga</div>
+          <div class="match-role">Solana Canada Lead · Superteam Canada</div>
+          <div class="match-reason">Pitching and fundraising are his core strengths and he has done it for multiple Toronto projects — great person to sharpen your Lenavix investor story with.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">2</div>
+        <div class="match-content">
+          <div class="match-name">Sheila Xu</div>
+          <div class="match-role">Chief of Staff · Ex-RBC Capital Markets · Ex-CPP Investments</div>
+          <div class="match-reason">Deep M&amp;A and due diligence experience from RBC and CPP — she is exactly the type of customer Lenavix is built for and can validate your product from the inside.</div>
+        </div>
+      </div>
+      <div class="match-item">
+        <div class="match-number">3</div>
+        <div class="match-content">
+          <div class="match-name">Vimal Kumar</div>
+          <div class="match-role">GenAI &amp; LLM Specialist · PwC Canada</div>
+          <div class="match-reason">GenAI and LLM specialist who can go deep on the technical and AI governance side of what you are building at Lenavix.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KAIWEN LIU -->
+  <div class="person-card" data-name="kaiwen liu">
+    <div class="person-header" onclick="toggle(this)">
+      <div class="person-avatar">K</div>
+      <div class="person-info">
+        <div class="person-name">Kaiwen Liu</div>
+        <div class="person-role">MakersLounge member</div>
+      </div>
+      <div class="chevron">&#8964;</div>
+    </div>
+    <div class="matches-list">
+      <div style="padding: 20px; text-align: center; font-size: 13px; color: #aaa;">
+        We didn't have enough profile info to generate matches for you this time.<br/>
+        Come find Berto at the event and he'll personally introduce you to the right people!
+      </div>
+    </div>
+  </div>
+
+  <!-- SHYAMAL BHATT -->
+  <div class="person-card" data-name="shyamal bhatt">
+    <div class="person-header" onclick="toggle(this)">
+      <div class="person-avatar">S</div>
+      <div class="person-info">
+        <div class="person-name">Shyamal Bhatt</div>
+        <div class="person-role">MakersLounge member</div>
+      </div>
+      <div class="chevron">&#8964;</div>
+    </div>
+    <div class="matches-list">
+      <div style="padding: 20px; text-align: center; font-size: 13px; color: #aaa;">
+        We didn't have enough profile info to generate matches for you this time.<br/>
+        Come find Berto at the event and he'll personally introduce you to the right people!
+      </div>
+    </div>
+  </div>
+
+  <!-- ALEXANDER GALEA -->
+  <div class="person-card" data-name="alexander galea">
+    <div class="person-header" onclick="toggle(this)">
+      <div class="person-avatar">A</div>
+      <div class="person-info">
+        <div class="person-name">Alexander Galea</div>
+        <div class="person-role">MakersLounge member</div>
+      </div>
+      <div class="chevron">&#8964;</div>
+    </div>
+    <div class="matches-list">
+      <div style="padding: 20px; text-align: center; font-size: 13px; color: #aaa;">
+        We didn't have enough profile info to generate matches for you this time.<br/>
+        Come find Berto at the event and he'll personally introduce you to the right people!
+      </div>
+    </div>
+  </div>
+
+  <!-- THE HUMAN PUZZLE (NADEEN) -->
+  <div class="person-card" data-name="the human puzzle nadeen">
+    <div class="person-header" onclick="toggle(this)">
+      <div class="person-avatar">N</div>
+      <div class="person-info">
+        <div class="person-name">The Human Puzzle (Nadeen)</div>
+        <div class="person-role">MakersLounge member</div>
+      </div>
+      <div class="chevron">&#8964;</div>
+    </div>
+    <div class="matches-list">
+      <div style="padding: 20px; text-align: center; font-size: 13px; color: #aaa;">
+        We didn't have enough profile info to generate matches for you this time.<br/>
+        Come find Berto at the event and he'll personally introduce you to the right people!
+      </div>
+    </div>
+  </div>
+
+  <div id="no-results" class="no-results" style="display:none;">
+    No one found. Try a different name.
+  </div>
+
+</main>
+
+<footer>Made with love by MakersLounge · Toronto</footer>
+
+<script>
+  function toggle(header) {
+    const card = header.closest('.person-card');
+    card.classList.toggle('open');
+  }
+
+  function filterCards() {
+    const q = document.getElementById('search').value.toLowerCase().trim();
+    const cards = document.querySelectorAll('.person-card');
+    let visible = 0;
+    cards.forEach(card => {
+      const name = card.dataset.name || '';
+      const show = !q || name.includes(q);
+      card.style.display = show ? '' : 'none';
+      if (show) {
+        visible++;
+        if (q) card.classList.add('open');
+      }
+    });
+    document.getElementById('no-results').style.display = visible === 0 ? '' : 'none';
+  }
+</script>
+
+</body>
+</html>
