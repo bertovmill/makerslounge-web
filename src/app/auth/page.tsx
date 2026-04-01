@@ -4,370 +4,118 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { ArrowLeft, Eye, EyeOff, Check, ChevronRight } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { DottedGlowBackground } from "@/components/ui/dotted-glow-background";
-import SkillsInput from "@/components/SkillsInput";
 
-// --------------- Application Form ---------------
+// --------------- Sign Up Form ---------------
 
-function ApplicationForm({ onBack }: { onBack: () => void }) {
-  const [step, setStep] = useState(1);
+function SignUpForm({ onSignIn }: { onSignIn: () => void }) {
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [building, setBuilding] = useState("");
-  const [helpWith, setHelpWith] = useState("");
-  const [skills, setSkills] = useState<string[]>([]);
-  const [lookingFor, setLookingFor] = useState<string[]>([]);
-  const [linkedin, setLinkedin] = useState("");
-  const [twitter, setTwitter] = useState("");
-  const [instagram, setInstagram] = useState("");
-  const [website, setWebsite] = useState("");
-  const [howHeard, setHowHeard] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [message, setMessage] = useState("");
 
-  const handleSubmit = async () => {
-    if (!linkedin.trim()) {
-      setError("LinkedIn is required");
-      return;
-    }
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
-    setError("");
+    setMessage("");
 
-    const socials: Record<string, string> = {};
-    if (twitter.trim()) socials.twitter = twitter.trim();
-    if (instagram.trim()) socials.instagram = instagram.trim();
-    if (website.trim()) socials.website = website.trim();
-
-    const { error: insertError } = await supabase.from("applications").insert({
+    const { error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
-      name: name.trim(),
-      what_are_you_building: building.trim() || null,
-      help_with: helpWith.trim() || null,
-      skills: skills.length > 0 ? skills : null,
-      looking_for_skills: lookingFor.length > 0 ? lookingFor : null,
-      linkedin: `https://linkedin.com/in/${linkedin.trim()}`,
-      other_socials: Object.keys(socials).length > 0 ? socials : null,
-      how_did_you_hear: howHeard.trim() || null,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
 
-    if (insertError) {
-      setError(insertError.message);
-      setLoading(false);
-      return;
+    if (error) {
+      setMessage(error.message);
     }
-
-    // Notify admin
-    fetch("/api/applications/notify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        building: building.trim(),
-        linkedin: linkedin.trim() ? `https://linkedin.com/in/${linkedin.trim()}` : null,
-      }),
-    }).catch(() => {});
-
-    setSubmitted(true);
     setLoading(false);
   };
 
-  const STEP_SUBTITLES = [
-    "Join a curated community of makers and builders",
-    "Tell us about what you're working on",
-    "Select what you're great at",
-    "Help us connect you with the right people",
-    "Connect your socials",
-  ];
-
-  if (submitted) {
-    return (
-      <div className="text-center py-4">
-        <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-5">
-          <Check className="w-8 h-8 text-green-500" />
-        </div>
-        <h2 className="text-xl font-semibold mb-2">Application Submitted</h2>
-        <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-          Thanks for applying, {name.split(" ")[0]}! We&apos;ll review your application and
-          send you an email when you&apos;re approved to join.
-        </p>
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to home
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <>
-      {/* Back */}
-      <button
-        onClick={step === 1 ? onBack : () => setStep(step - 1)}
-        className={`flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors ${step >= 3 ? "mb-3" : "mb-6"}`}
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back
-      </button>
-
-      {/* Header — compact on skills/socials steps */}
-      {step < 3 ? (
-        <div className="text-center mb-6">
-          <Link href="/" className="inline-block mb-5">
-            <img src="/logo-blue.svg" alt="MakersLounge" className="w-12 h-12 mx-auto dark:hidden" />
-            <img src="/logo-light.svg" alt="MakersLounge" className="w-12 h-12 mx-auto hidden dark:block" />
-          </Link>
-          <h1 className="text-2xl mb-1">Apply to Join</h1>
-          <p className="text-sm text-muted-foreground">{STEP_SUBTITLES[step - 1]}</p>
-        </div>
-      ) : (
-        <div className="text-center mb-3">
-          <h1 className="text-lg font-semibold mb-0.5">{STEP_SUBTITLES[step - 1]}</h1>
-        </div>
-      )}
-
-      {/* Step indicator */}
-      <div className={`flex items-center gap-2 justify-center ${step >= 3 ? "mb-3" : "mb-6"}`}>
-        {[1, 2, 3, 4, 5].map((s) => (
-          <div
-            key={s}
-            className={`h-1.5 rounded-full transition-all ${
-              s === step ? "w-8 bg-[#3A9FF3]" : s < step ? "w-8 bg-[#3A9FF3]/40" : "w-8 bg-border"
-            }`}
-          />
-        ))}
+      <div className="text-center mb-5">
+        <Link href="/" className="inline-block mb-4">
+          <img src="/logo-blue.svg" alt="MakersLounge" className="w-10 h-10 mx-auto dark:hidden" />
+          <img src="/logo-light.svg" alt="MakersLounge" className="w-10 h-10 mx-auto hidden dark:block" />
+        </Link>
+        <h1 className="text-xl font-semibold mb-0.5">Create an account</h1>
+        <p className="text-sm text-muted-foreground">Join a community of makers and builders</p>
       </div>
 
-      {/* Step 1: Email */}
-      {step === 1 && (
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="apply-email" className="block text-sm font-medium mb-1.5">
-              Email
-            </label>
+      <form onSubmit={handleSignUp} className="space-y-2.5">
+        <div>
+          <label htmlFor="signup-email" className="block text-sm font-medium mb-1.5">
+            Email
+          </label>
+          <input
+            id="signup-email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full h-10 px-4 rounded-xl border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="signup-password" className="block text-sm font-medium mb-1.5">
+            Password
+          </label>
+          <div className="relative">
             <input
-              id="apply-email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full h-10 px-4 rounded-xl border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-              autoFocus
+              id="signup-password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Min. 6 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full h-10 px-4 pr-10 rounded-xl border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+              required
+              minLength={6}
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
           </div>
-          <button
-            onClick={() => setStep(2)}
-            disabled={!email.trim() || !email.includes("@")}
-            className="w-full h-11 md:h-10 rounded-xl bg-gradient-blue text-white text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center gap-1.5"
-          >
-            Continue
-            <ChevronRight className="w-4 h-4" />
-          </button>
         </div>
-      )}
 
-      {/* Step 2: Name + Building + Help needed */}
-      {step === 2 && (
-        <div className="flex flex-col min-h-0 flex-1 gap-3">
-          <div className="overflow-y-auto min-h-0 flex-1 space-y-3 -mx-1 px-1">
-            <div>
-              <label htmlFor="apply-name" className="block text-sm font-medium mb-1.5">
-                Name <span className="text-destructive">*</span>
-              </label>
-              <input
-                id="apply-name"
-                type="text"
-                placeholder="Your full name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full h-10 px-4 rounded-xl border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-                autoFocus
-              />
-            </div>
-
-            <div>
-              <label htmlFor="apply-building" className="block text-sm font-medium mb-1.5">
-                What are you building? <span className="text-destructive">*</span>
-              </label>
-              <textarea
-                id="apply-building"
-                placeholder="Tell us about your project, startup, or what you're working on..."
-                value={building}
-                onChange={(e) => setBuilding(e.target.value)}
-                rows={3}
-                className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 resize-none"
-              />
-              <p className={`text-xs mt-1 ${building.trim().length >= 50 ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
-                {building.trim().length}/50 characters minimum
-              </p>
-            </div>
-
-            <div>
-              <label htmlFor="apply-help" className="block text-sm font-medium mb-1.5">
-                What could you use help with?
-              </label>
-              <textarea
-                id="apply-help"
-                placeholder="e.g. Finding a technical co-founder, getting design feedback, marketing strategy..."
-                value={helpWith}
-                onChange={(e) => setHelpWith(e.target.value)}
-                rows={2}
-                className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 resize-none"
-              />
-            </div>
-          </div>
-
-          <button
-            onClick={() => setStep(3)}
-            disabled={!name.trim() || building.trim().length < 50}
-            className="w-full h-11 md:h-10 shrink-0 rounded-xl bg-gradient-blue text-white text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center gap-1.5"
-          >
-            Continue
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Step 3: Your top skills */}
-      {step === 3 && (
-        <div className="flex flex-col min-h-0 flex-1 gap-3">
-          <div className="overflow-y-auto min-h-0 flex-1 -mx-1 px-1">
-            <SkillsInput
-              skills={skills}
-              onChange={setSkills}
-              maxSkills={6}
-              mode="skills"
-            />
-          </div>
-
-          <button
-            onClick={() => setStep(4)}
-            className="w-full h-11 md:h-10 shrink-0 rounded-xl bg-gradient-blue text-white text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity flex items-center justify-center gap-1.5"
-          >
-            Continue
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Step 4: Skills looking for */}
-      {step === 4 && (
-        <div className="flex flex-col min-h-0 flex-1 gap-3">
-          <div className="overflow-y-auto min-h-0 flex-1 -mx-1 px-1">
-            <SkillsInput
-              skills={lookingFor}
-              onChange={setLookingFor}
-              maxSkills={6}
-              mode="looking_for"
-            />
-          </div>
-
-          <button
-            onClick={() => setStep(5)}
-            className="w-full h-11 md:h-10 shrink-0 rounded-xl bg-gradient-blue text-white text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity flex items-center justify-center gap-1.5"
-          >
-            Continue
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Step 5: Socials */}
-      {step === 5 && (
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium mb-1.5">
-              LinkedIn <span className="text-destructive">*</span>
-            </label>
-            <div className="flex items-center h-10 rounded-xl border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
-              <span className="pl-4 text-sm text-muted-foreground select-none whitespace-nowrap">linkedin.com/in/</span>
-              <input
-                id="apply-linkedin"
-                type="text"
-                placeholder="yourprofile"
-                value={linkedin}
-                onChange={(e) => setLinkedin(e.target.value)}
-                className="flex-1 h-full pr-4 bg-transparent text-sm outline-none"
-                autoFocus
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Other socials</label>
-            <div className="space-y-2">
-              <div className="flex items-center h-10 rounded-xl border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
-                <span className="pl-4 text-sm text-muted-foreground select-none whitespace-nowrap">x.com/</span>
-                <input
-                  type="text"
-                  placeholder="handle"
-                  value={twitter}
-                  onChange={(e) => setTwitter(e.target.value)}
-                  className="flex-1 h-full pr-4 bg-transparent text-sm outline-none"
-                />
-              </div>
-              <div className="flex items-center h-10 rounded-xl border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
-                <span className="pl-4 text-sm text-muted-foreground select-none whitespace-nowrap">instagram.com/</span>
-                <input
-                  type="text"
-                  placeholder="handle"
-                  value={instagram}
-                  onChange={(e) => setInstagram(e.target.value)}
-                  className="flex-1 h-full pr-4 bg-transparent text-sm outline-none"
-                />
-              </div>
-              <input
-                type="text"
-                placeholder="Personal website or portfolio URL"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                className="w-full h-10 px-4 rounded-xl border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="apply-how" className="block text-sm font-medium mb-1.5">
-              How did you hear about us?
-            </label>
-            <input
-              id="apply-how"
-              type="text"
-              placeholder="e.g. Maker Mondays, LinkedIn, a friend..."
-              value={howHeard}
-              onChange={(e) => setHowHeard(e.target.value)}
-              className="w-full h-10 px-4 rounded-xl border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-            />
-          </div>
-
-          {error && (
-            <div className="p-3 rounded-xl bg-red-500/10 text-sm text-center text-red-600">
-              {error}
-            </div>
+        <button
+          type="submit"
+          disabled={loading || !email.trim() || password.length < 6}
+          className="w-full h-11 md:h-10 rounded-xl bg-gradient-blue text-white text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center"
+        >
+          {loading ? (
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            "Create Account"
           )}
+        </button>
+      </form>
 
-          <button
-            onClick={handleSubmit}
-            disabled={loading || !linkedin.trim()}
-            className="w-full h-11 md:h-10 rounded-xl bg-gradient-blue text-white text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center"
-          >
-            {loading ? (
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              "Submit Application"
-            )}
-          </button>
+      <button
+        type="button"
+        onClick={onSignIn}
+        className="w-full text-sm text-muted-foreground mt-3 hover:text-foreground transition-colors"
+      >
+        Already have an account? <span className="font-medium text-foreground">Sign in</span>
+      </button>
+
+      {message && (
+        <div className="mt-3 p-2.5 rounded-xl bg-secondary text-sm text-center text-muted-foreground">
+          {message}
         </div>
       )}
 
-      {/* Footer */}
-      <p className="text-xs text-muted-foreground text-center mt-6">
+      <p className="text-xs text-muted-foreground text-center mt-5">
         By continuing, you agree to our Terms of Service and Privacy Policy
       </p>
     </>
@@ -376,9 +124,8 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
 
 // --------------- Sign In Form ---------------
 
-function SignInForm({ onApply }: { onApply: () => void }) {
+function SignInForm({ onSignUp }: { onSignUp: () => void }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -455,7 +202,6 @@ function SignInForm({ onApply }: { onApply: () => void }) {
 
   return (
     <>
-      {/* Back button */}
       <button
         onClick={() => router.back()}
         className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
@@ -464,7 +210,6 @@ function SignInForm({ onApply }: { onApply: () => void }) {
         Back
       </button>
 
-      {/* Header */}
       <div className="text-center mb-5">
         <Link href="/" className="inline-block mb-4">
           <img src="/logo-blue.svg" alt="MakersLounge" className="w-10 h-10 mx-auto dark:hidden" />
@@ -474,7 +219,6 @@ function SignInForm({ onApply }: { onApply: () => void }) {
         <p className="text-sm text-muted-foreground">Sign in to your account</p>
       </div>
 
-      {/* Email & Password form */}
       <form onSubmit={handleEmailAuth} className="space-y-2.5">
         <div>
           <label htmlFor="email" className="block text-sm font-medium mb-1.5">
@@ -529,16 +273,14 @@ function SignInForm({ onApply }: { onApply: () => void }) {
         </button>
       </form>
 
-      {/* Toggle to apply */}
       <button
         type="button"
-        onClick={onApply}
+        onClick={onSignUp}
         className="w-full text-sm text-muted-foreground mt-3 hover:text-foreground transition-colors"
       >
-        Don&apos;t have an account? <span className="font-medium text-foreground">Apply to Join</span>
+        Don&apos;t have an account? <span className="font-medium text-foreground">Sign up</span>
       </button>
 
-      {/* Divider */}
       <div className="relative my-4">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-border" />
@@ -548,7 +290,6 @@ function SignInForm({ onApply }: { onApply: () => void }) {
         </div>
       </div>
 
-      {/* Social buttons */}
       <div className="space-y-2">
         <button
           onClick={handleSignInWithGoogle}
@@ -576,14 +317,12 @@ function SignInForm({ onApply }: { onApply: () => void }) {
         </button>
       </div>
 
-      {/* Message */}
       {message && (
         <div className="mt-3 p-2.5 rounded-xl bg-secondary text-sm text-center text-muted-foreground">
           {message}
         </div>
       )}
 
-      {/* Footer */}
       <p className="text-xs text-muted-foreground text-center mt-5">
         By continuing, you agree to our Terms of Service and Privacy Policy
       </p>
@@ -597,23 +336,54 @@ function AuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode");
-  const [isApplying, setIsApplying] = useState(mode === "apply" || mode === "signup");
+  const [isSigningUp, setIsSigningUp] = useState(mode === "signup");
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  const redirectAfterAuth = async (userId: string) => {
+  const mergeContactIfExists = async (userId: string, email: string) => {
+    const { data: contact } = await supabase
+      .from("community_contacts")
+      .select("id, skills, summary, linkedin, twitter, instagram, website")
+      .eq("email", email.toLowerCase())
+      .is("matched_profile_id", null)
+      .maybeSingle();
+
+    if (!contact) return;
+
     const { data: profile } = await supabase
       .from("profiles")
-      .select("name, application_status")
+      .select("skills, bio, linkedin, twitter, instagram, website")
+      .eq("id", userId)
+      .single();
+
+    const updates: Record<string, unknown> = {};
+    if (!profile?.skills?.length && contact.skills?.length) updates.skills = contact.skills;
+    if (!profile?.bio && contact.summary) updates.bio = contact.summary;
+    if (!profile?.linkedin && contact.linkedin) updates.linkedin = contact.linkedin;
+    if (!profile?.twitter && contact.twitter) updates.twitter = contact.twitter;
+    if (!profile?.instagram && contact.instagram) updates.instagram = contact.instagram;
+    if (!profile?.website && contact.website) updates.website = contact.website;
+
+    if (Object.keys(updates).length > 0) {
+      await supabase.from("profiles").update(updates).eq("id", userId);
+    }
+
+    await supabase
+      .from("community_contacts")
+      .update({ matched_profile_id: userId, matched_at: new Date().toISOString() })
+      .eq("id", contact.id);
+  };
+
+  const redirectAfterAuth = async (userId: string, email?: string) => {
+    if (email) await mergeContactIfExists(userId, email);
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("name")
       .eq("id", userId)
       .single();
 
     if (!profile?.name) {
       router.push("/onboarding");
-      return;
-    }
-
-    if (profile.application_status !== "approved") {
-      router.push("/pending");
       return;
     }
 
@@ -637,22 +407,22 @@ function AuthContent() {
   useEffect(() => {
     let hasRedirected = false;
 
-    const handleAuthRedirect = async (userId: string) => {
+    const handleAuthRedirect = async (userId: string, email?: string) => {
       if (hasRedirected) return;
       hasRedirected = true;
-      await redirectAfterAuth(userId);
+      await redirectAfterAuth(userId, email);
     };
 
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
-        handleAuthRedirect(user.id);
+        handleAuthRedirect(user.id, user.email);
       } else {
         setCheckingAuth(false);
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) handleAuthRedirect(session.user.id);
+      if (session?.user) handleAuthRedirect(session.user.id, session.user.email);
     });
 
     if (Capacitor.isNativePlatform()) {
@@ -714,10 +484,10 @@ function AuthContent() {
         speedScale={0.8}
       />
       <div className="relative z-10 w-full max-w-sm max-h-[calc(100svh-4rem)] my-auto bg-white/60 dark:bg-black/40 backdrop-blur-xl rounded-2xl p-5 md:p-6 flex flex-col">
-        {isApplying ? (
-          <ApplicationForm onBack={() => setIsApplying(false)} />
+        {isSigningUp ? (
+          <SignUpForm onSignIn={() => setIsSigningUp(false)} />
         ) : (
-          <SignInForm onApply={() => setIsApplying(true)} />
+          <SignInForm onSignUp={() => setIsSigningUp(true)} />
         )}
       </div>
     </div>
