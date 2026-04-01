@@ -38,6 +38,7 @@ interface ProfileData {
   bio: string | null;
   skills: string[] | null;
   looking_for_skills: string[] | null;
+  looking_for_help: string | null;
   currently_building: string | null;
   linkedin: string | null;
   twitter: string | null;
@@ -266,6 +267,12 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
     }[]
   >([]);
   const [podcasts, setPodcasts] = useState<PodcastWithGuests[]>([]);
+  const [eventNotes, setEventNotes] = useState<
+    { id: string; meetup_name: string; notes: string | null; created_at: string }[]
+  >([]);
+
+  const ADMIN_EMAIL = "bertmill19@gmail.com";
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   const isOwner = !!(user && user.id === profile.id);
 
@@ -282,6 +289,16 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
     fetchPosts();
     fetchPodcastsByGuest(profile.id).then(setPodcasts);
   }, [profile.id]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    supabase
+      .from("profile_event_notes")
+      .select("id, meetup_name, notes, created_at")
+      .eq("profile_id", profile.id)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setEventNotes(data || []));
+  }, [isAdmin, profile.id]);
 
   // Save a field to the database
   const saveField = async (field: string, value: unknown) => {
@@ -702,6 +719,25 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
           </section>
         )}
 
+        {/* Looking for help with */}
+        {(profile.looking_for_help || isOwner) && (
+          <section>
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Looking for help with
+            </h2>
+            <div className="rounded-xl bg-card border border-border/50 p-4">
+              <InlineEdit
+                value={profile.looking_for_help || ""}
+                onSave={(val) => saveField("looking_for_help", val)}
+                isOwner={isOwner}
+                placeholder="What do you need help with?"
+                className="text-sm text-foreground"
+                multiline
+              />
+            </div>
+          </section>
+        )}
+
         {/* Social links — shown as editable list for owner if empty */}
         {socialLinks.length === 0 && isOwner && (
           <section>
@@ -784,6 +820,35 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
         </div>
       )}
 
+
+      {/* Events — admin only */}
+      {isAdmin && eventNotes.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+            Events
+            <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-600 font-medium">Admin only</span>
+          </h2>
+          <div className="space-y-3">
+            {eventNotes.map((note) => (
+              <div key={note.id} className="rounded-xl bg-card border border-border/50 p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-medium">{note.meetup_name}</p>
+                  <span className="text-[11px] text-muted-foreground/50 shrink-0">
+                    {new Date(note.created_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
+                {note.notes && (
+                  <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{note.notes}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Hidden file input for photo upload */}
       {isOwner && (
