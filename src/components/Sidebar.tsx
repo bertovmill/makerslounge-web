@@ -18,6 +18,7 @@ import {
   UserCircle,
   LogOut,
   Shield,
+  Sparkles,
 } from "lucide-react";
 import UserMenu from "./UserMenu";
 import { useEffect, useState } from "react";
@@ -30,6 +31,7 @@ const NAV_ITEMS = [
   { href: "/people", label: "People", icon: Users },
   { href: "/community", label: "Community", icon: BarChart3 },
   { href: "/messages", label: "Messages", icon: MessageCircle },
+  { href: "/meetup-matcher", label: "Matcher", icon: Sparkles },
   { href: "/events", label: "Events", icon: Calendar },
 ];
 

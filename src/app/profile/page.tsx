@@ -26,6 +26,7 @@ interface Profile {
   bio: string | null;
   skills: string[] | null;
   looking_for_skills: string[] | null;
+  looking_for_help: string | null;
   currently_building: string | null;
   linkedin: string | null;
   twitter: string | null;
@@ -53,6 +54,7 @@ export default function ProfilePage() {
     bio: "",
     skills: [],
     looking_for_skills: [],
+    looking_for_help: null,
     currently_building: null,
     linkedin: "",
     twitter: "",
@@ -74,7 +76,7 @@ export default function ProfilePage() {
       const { data: existingProfile } = await supabase
         .from("profiles")
         .select(
-          "id, username, name, first_name, last_name, photo_url, bio, skills, looking_for_skills, currently_building, linkedin, twitter, instagram, website"
+          "id, username, name, first_name, last_name, photo_url, bio, skills, looking_for_skills, looking_for_help, currently_building, linkedin, twitter, instagram, website"
         )
         .eq("id", user.id)
         .single();
@@ -95,6 +97,7 @@ export default function ProfilePage() {
           bio: "",
           skills: [],
           looking_for_skills: [],
+          looking_for_help: null,
           currently_building: null,
           linkedin: "",
           twitter: "",
@@ -125,6 +128,7 @@ export default function ProfilePage() {
           bio: profile.bio,
           skills: profile.skills,
           looking_for_skills: profile.looking_for_skills,
+          looking_for_help: profile.looking_for_help,
           currently_building: profile.currently_building,
           linkedin: profile.linkedin,
           twitter: profile.twitter,
@@ -372,6 +376,22 @@ export default function ProfilePage() {
             }
             maxSkills={10}
             mode="looking_for"
+          />
+        </div>
+
+        {/* Looking for help card */}
+        <div className="rounded-xl bg-card border border-border/50 p-5">
+          <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wide mb-4">
+            Looking for help with
+          </h2>
+          <textarea
+            value={profile.looking_for_help || ""}
+            onChange={(e) =>
+              setProfile({ ...profile, looking_for_help: e.target.value })
+            }
+            placeholder="e.g. Finding B2B customers, fundraising, design feedback..."
+            rows={3}
+            className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm outline-none resize-none focus:ring-2 focus:ring-ring focus:ring-offset-1 transition-shadow"
           />
         </div>
 

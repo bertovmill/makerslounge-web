@@ -81,25 +81,27 @@ export default function ApplicationsAdmin() {
         prev.map((a) => (a.id === id ? { ...a, status } : a))
       );
 
-      // Send approval email
-      if (status === "approved") {
-        const app = applications.find((a) => a.id === id);
-        if (app) {
-          try {
-            await fetch("/api/applications/approve", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                applicationId: id,
-                email: app.email,
-                name: app.name,
-              }),
-            });
-          } catch (e) {
-            console.error("Failed to send approval email:", e);
-          }
+      const app = applications.find((a) => a.id === id);
+
+      // Also update the profile's application_status via the approve API
+      // (the API handles finding the profile by email)
+      if (app && (status === "approved" || status === "rejected")) {
+        try {
+          await fetch("/api/applications/approve", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              applicationId: id,
+              email: app.email,
+              name: app.name,
+              status,
+            }),
+          });
+        } catch (e) {
+          console.error("Failed to update profile status:", e);
         }
       }
+
     }
   };
 

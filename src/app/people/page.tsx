@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
-import { Search, X } from "lucide-react";
+import { Search, X, UserPlus } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -17,53 +17,100 @@ interface Profile {
   _type?: "profile" | "community";
 }
 
+interface AddPersonForm {
+  name: string;
+  email: string;
+  bio: string;
+  skills: string;
+  company: string;
+  role: string;
+}
+
+const EMPTY_FORM: AddPersonForm = { name: "", email: "", bio: "", skills: "", company: "", role: "" };
+
 export default function PeoplePage() {
   const { isAdmin } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState<AddPersonForm>(EMPTY_FORM);
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchProfiles() {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, username, name, bio, skills, photo_url, currently_building")
+  async function fetchProfiles() {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, username, name, bio, skills, photo_url, currently_building")
+      .order("name", { ascending: true });
+
+    const allProfiles: Profile[] = (data || []).map((p) => ({ ...p, _type: "profile" as const }));
+
+    if (isAdmin) {
+      const { data: contacts } = await supabase
+        .from("community_contacts")
+        .select("id, name, first_name, last_name, summary, skills")
         .order("name", { ascending: true });
 
-      const allProfiles: Profile[] = (data || []).map((p) => ({ ...p, _type: "profile" as const }));
-
-      // Admin sees all community contacts; others see public ones
-      if (isAdmin) {
-        const { data: contacts } = await supabase
-          .from("community_contacts")
-          .select("id, name, first_name, last_name, summary, skills")
-          .order("name", { ascending: true });
-
-        if (contacts) {
-          const registeredEmails = new Set((data || []).map((p: Record<string, unknown>) => p.email));
-          for (const c of contacts) {
-            const displayName = c.name || [c.first_name, c.last_name].filter(Boolean).join(" ");
-            if (!displayName) continue;
-            allProfiles.push({
-              id: c.id,
-              username: null,
-              name: displayName,
-              bio: c.summary,
-              skills: c.skills,
-              photo_url: null,
-              currently_building: null,
-              _type: "community",
-            });
-          }
+      if (contacts) {
+        for (const c of contacts) {
+          const displayName = c.name || [c.first_name, c.last_name].filter(Boolean).join(" ");
+          if (!displayName) continue;
+          allProfiles.push({
+            id: c.id,
+            username: null,
+            name: displayName,
+            bio: c.summary,
+            skills: c.skills,
+            photo_url: null,
+            currently_building: null,
+            _type: "community",
+          });
         }
       }
-
-      setProfiles(allProfiles);
-      setLoading(false);
     }
+
+    setProfiles(allProfiles);
+    setLoading(false);
+  }
+
+  useEffect(() => {
     fetchProfiles();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
+
+  async function handleAddPerson(e: React.FormEvent) {
+    e.preventDefault();
+    if (!addForm.name.trim()) return;
+    setAddLoading(true);
+    setAddError(null);
+
+    const skillsArray = addForm.skills
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const { error } = await supabase.from("community_contacts").insert({
+      name: addForm.name.trim(),
+      email: addForm.email.trim() || null,
+      summary: addForm.bio.trim() || null,
+      skills: skillsArray.length ? skillsArray : null,
+      company: addForm.company.trim() || null,
+      role: addForm.role.trim() || null,
+    });
+
+    if (error) {
+      setAddError(error.message);
+      setAddLoading(false);
+      return;
+    }
+
+    setAddLoading(false);
+    setShowAddModal(false);
+    setAddForm(EMPTY_FORM);
+    await fetchProfiles();
+  }
 
   // All unique skills sorted by frequency
   const allSkills = useMemo(() => {
@@ -117,13 +164,24 @@ export default function PeoplePage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 md:py-8">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-[28px] md:text-2xl font-bold md:font-semibold tracking-tight mb-0.5">
-          People
-        </h1>
-        <p className="text-[13px] md:text-sm text-muted-foreground">
-          {filtered.length} maker{filtered.length !== 1 ? "s" : ""} in the community
-        </p>
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-[28px] md:text-2xl font-bold md:font-semibold tracking-tight mb-0.5">
+            People
+          </h1>
+          <p className="text-[13px] md:text-sm text-muted-foreground">
+            {filtered.length} maker{filtered.length !== 1 ? "s" : ""} in the community
+          </p>
+        </div>
+        {isAdmin && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+          >
+            <UserPlus className="w-4 h-4" />
+            Add person
+          </button>
+        )}
       </div>
 
       {/* Search */}
@@ -258,6 +316,121 @@ export default function PeoplePage() {
               )}
             </Link>
           ))}
+        </div>
+      )}
+      {/* Add Person Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+            onClick={() => setShowAddModal(false)}
+          />
+          <div className="relative w-full max-w-md rounded-xl border border-border bg-background shadow-xl p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-base font-semibold">Add person</h2>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddPerson} className="space-y-4">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                  Name <span className="text-destructive">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Full name"
+                  value={addForm.name}
+                  onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Company</label>
+                  <input
+                    type="text"
+                    placeholder="Acme Inc."
+                    value={addForm.company}
+                    onChange={(e) => setAddForm((f) => ({ ...f, company: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Role</label>
+                  <input
+                    type="text"
+                    placeholder="Founder, Engineer..."
+                    value={addForm.role}
+                    onChange={(e) => setAddForm((f) => ({ ...f, role: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Email</label>
+                <input
+                  type="email"
+                  placeholder="optional"
+                  value={addForm.email}
+                  onChange={(e) => setAddForm((f) => ({ ...f, email: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Bio / Summary</label>
+                <textarea
+                  rows={3}
+                  placeholder="What are they working on?"
+                  value={addForm.bio}
+                  onChange={(e) => setAddForm((f) => ({ ...f, bio: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                  Skills <span className="font-normal">(comma-separated)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="React, AI, Design..."
+                  value={addForm.skills}
+                  onChange={(e) => setAddForm((f) => ({ ...f, skills: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                />
+              </div>
+
+              {addError && (
+                <p className="text-xs text-destructive">{addError}</p>
+              )}
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 px-4 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addLoading || !addForm.name.trim()}
+                  className="flex-1 px-4 py-2 rounded-lg bg-foreground text-background text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                >
+                  {addLoading ? "Adding..." : "Add person"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

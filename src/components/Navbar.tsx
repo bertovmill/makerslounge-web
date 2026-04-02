@@ -6,13 +6,14 @@ import { useAuth } from "@/context/AuthContext";
 import Logo from "./Logo";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/context/ThemeContext";
-import { Users, Calendar, User, Settings, Sun, Moon, MessageCircle } from "lucide-react";
+import { Users, Calendar, User, Settings, Sun, Moon, MessageCircle, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 const NAV_ITEMS = [
   { href: "/people", label: "People", icon: Users },
   { href: "/messages", label: "Messages", icon: MessageCircle, authRequired: true },
+  { href: "/meetup-matcher", label: "Matcher", icon: Sparkles, authRequired: true },
   { href: "/events", label: "Events", icon: Calendar },
   { href: "/profile", label: "Profile", icon: User, authRequired: true },
 ];
