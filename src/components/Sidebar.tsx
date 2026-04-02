@@ -24,6 +24,7 @@ import UserMenu from "./UserMenu";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useFeedback } from "@/context/FeedbackContext";
+import { Menu, X } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/home", label: "Home", icon: Search },
@@ -42,6 +43,7 @@ export default function Sidebar() {
   const { openFeedback } = useFeedback();
   const [unreadCount, setUnreadCount] = useState(0);
   const [logoHovered, setLogoHovered] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const isHidden = pathname === "/" || pathname === "/auth" || pathname === "/onboarding";
 
@@ -86,6 +88,9 @@ export default function Sidebar() {
     };
   }, [user]);
 
+  // Close mobile drawer on navigation
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
+
   if (isHidden || !user) return null;
 
   function isActive(href: string) {
@@ -95,10 +100,109 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Left sidebar — always visible, collapsed on small screens */}
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="md:hidden fixed top-3 left-4 z-50 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+        aria-label="Open menu"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+
+      {/* Mobile drawer overlay */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-[60] flex">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
+          {/* Drawer */}
+          <div className="relative flex flex-col w-72 h-full bg-background border-r border-border shadow-xl">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-4">
+              <Link href="/home" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
+                <Image src="/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
+                <Image src="/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
+                <span className="text-lg font-sans font-normal tracking-normal text-foreground">makerslounge</span>
+              </Link>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Nav */}
+            <nav className="flex-1 px-2 space-y-0.5">
+              {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
+                    isActive(href)
+                      ? "text-foreground bg-secondary font-medium"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                  )}
+                >
+                  <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={isActive(href) ? 2.2 : 1.8} />
+                  {label}
+                  {href === "/messages" && unreadCount > 0 && (
+                    <span className="ml-auto w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-medium flex items-center justify-center">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </nav>
+            {/* Bottom */}
+            <div className="border-t border-border py-3 px-2 space-y-0.5">
+              <Link
+                href="/profile"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
+                  isActive("/profile") ? "text-foreground bg-secondary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                )}
+              >
+                <UserCircle className="w-[18px] h-[18px] shrink-0" strokeWidth={isActive("/profile") ? 2.2 : 1.8} />
+                Profile
+              </Link>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
+                    isActive("/admin") ? "text-foreground bg-secondary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                  )}
+                >
+                  <Shield className="w-[18px] h-[18px] shrink-0" strokeWidth={isActive("/admin") ? 2.2 : 1.8} />
+                  Admin
+                </Link>
+              )}
+              <button
+                onClick={openFeedback}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors w-full text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+              >
+                <MessageSquarePlus className="w-[18px] h-[18px] shrink-0" strokeWidth={1.8} />
+                Feedback
+              </button>
+              <button
+                onClick={async () => { await supabase.auth.signOut(); window.location.href = "/"; }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors w-full text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+              >
+                <LogOut className="w-[18px] h-[18px] shrink-0" strokeWidth={1.8} />
+                Log out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Left sidebar — desktop only */}
       <aside
         className={cn(
-          "flex flex-col h-svh fixed left-0 top-0 border-r border-border bg-background z-50 transition-[width] duration-200 ease-in-out",
+          "hidden md:flex flex-col h-svh fixed left-0 top-0 border-r border-border bg-background z-50 transition-[width] duration-200 ease-in-out",
           collapsed ? "w-16" : "w-60"
         )}
       >
@@ -243,8 +347,8 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* User menu in top-right corner */}
-      <div className="fixed top-3 right-4 z-[60]">
+      {/* User menu in top-right corner — desktop only */}
+      <div className="hidden md:block fixed top-3 right-4 z-[60]">
         <UserMenu />
       </div>
     </>
