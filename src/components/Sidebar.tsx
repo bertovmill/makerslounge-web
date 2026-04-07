@@ -19,6 +19,7 @@ import {
   LogOut,
   Shield,
   Sparkles,
+  Palette,
 } from "lucide-react";
 import UserMenu from "./UserMenu";
 import { useEffect, useState } from "react";
@@ -34,6 +35,7 @@ const NAV_ITEMS = [
   { href: "/messages", label: "Messages", icon: MessageCircle },
   { href: "/meetup-matcher", label: "Matcher", icon: Sparkles },
   { href: "/events", label: "Events", icon: Calendar },
+  { href: "/brand", label: "Branding", icon: Palette },
 ];
 
 export default function Sidebar() {

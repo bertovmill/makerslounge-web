@@ -331,6 +331,7 @@ function BusinessCardPreview({ side, svgRef }: { side: "front" | "back"; svgRef?
 const NAV_ITEMS = [
   { id: "positioning", label: "Positioning" },
   { id: "logo", label: "Logo" },
+  { id: "logo-files", label: "Logo Files" },
   { id: "colors", label: "Colors" },
   { id: "typography", label: "Typography" },
   { id: "gradients", label: "Gradients" },
@@ -627,6 +628,49 @@ export default function BrandPage() {
               <LogoIcon size={48} />
               <span className="text-xs text-white/80">On Brand Gradient</span>
             </div>
+          </div>
+        </Section>
+
+        {/* ── Logo Files ── */}
+        <Section
+          id="logo-files"
+          title="Logo Files"
+          description="Download any logo variant as SVG or PNG. Use the appropriate version for each platform."
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { src: "/logo.svg", png: "/logo.png", label: "Logo (default)", bg: "bg-white border" },
+              { src: "/logo-light.svg", label: "Logo (light / dark bg)", bg: "bg-gray-900" },
+              { src: "/logo-blue.svg", png: "/logo-blue.png", label: "Logo (blue)", bg: "bg-white border" },
+              { src: "/logo-white.png", label: "Logo (white)", bg: "bg-[#1A7DE8]" },
+              { src: "/logo-instagram.svg", png: "/logo-instagram.png", label: "Instagram profile", bg: "bg-white border" },
+              { src: "/logo-instagram-blue.svg", png: "/logo-instagram-blue.png", label: "Instagram profile (blue)", bg: "bg-white border" },
+              { src: "/logo-luma.svg", png: "/logo-luma.png", label: "Luma profile", bg: "bg-white border" },
+              { src: "/logo-banner-blue.svg", png: "/logo-banner-blue.png", label: "Banner (blue)", bg: "bg-[#1A7DE8]", wide: true },
+              { src: "/luma-banner.svg", png: "/luma-banner.png", label: "Luma banner", bg: "bg-[#1A7DE8]", wide: true },
+              { src: "/linkedin-banner.svg", png: "/linkedin-banner.png", label: "LinkedIn banner", bg: "bg-[#1A7DE8]", wide: true },
+            ].map(({ src, png, label, bg, wide }) => (
+              <Card key={src} className={`p-4 border-0 ${wide ? "sm:col-span-2 lg:col-span-3" : ""}`}>
+                <div className={`rounded-lg flex items-center justify-center p-6 mb-4 ${bg}`} style={{ height: wide ? "8rem" : "8rem" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={src}
+                    alt={label}
+                    className="max-h-full max-w-full object-contain"
+                    style={{ maxHeight: wide ? "5rem" : "4rem" }}
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium">{label}</span>
+                  <div className="flex gap-2">
+                    {src.endsWith(".svg") && <StaticFileDownload href={src} label="SVG" />}
+                    {(png || src.endsWith(".png")) && (
+                      <StaticFileDownload href={png ?? src} label="PNG" />
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
         </Section>
 

@@ -6,9 +6,10 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
-import { Linkedin, Globe } from "lucide-react";
+import { Linkedin, Globe, Pencil, X, Check } from "lucide-react";
 
 interface CommunityContact {
   id: string;
@@ -28,7 +29,9 @@ interface CommunityContact {
   phone: string | null;
   visibility: string;
   metadata: Record<string, string> | null;
+  notes: string | null;
   matched_profile_id: string | null;
+  updated_at: string | null;
 }
 
 export default function CommunityProfilePage() {
@@ -39,6 +42,14 @@ export default function CommunityProfilePage() {
   const [contact, setContact] = useState<CommunityContact | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    first_name: "", last_name: "", name: "",
+    company: "", role: "", phone: "",
+    linkedin: "", twitter: "", instagram: "", website: "",
+    summary: "", skills: "", source: "", notes: "",
+  });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const fetch = async () => {
@@ -54,6 +65,12 @@ export default function CommunityProfilePage() {
         setNotFound(true);
       } else {
         setContact(data);
+        setEditForm({
+          first_name: data.first_name || "", last_name: data.last_name || "", name: data.name || "",
+          company: data.company || "", role: data.role || "", phone: data.phone || "",
+          linkedin: data.linkedin || "", twitter: data.twitter || "", instagram: data.instagram || "", website: data.website || "",
+          summary: data.summary || "", skills: (data.skills || []).join(", "), source: (data.source || []).join(", "), notes: data.notes || "",
+        });
       }
       setLoading(false);
     };
@@ -209,7 +226,7 @@ export default function CommunityProfilePage() {
 
       {/* Admin actions */}
       {isAdmin && (
-        <div className="border-t border-border pt-6 mt-8">
+        <div className="border-t border-border pt-6 mt-8 space-y-4">
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
@@ -225,8 +242,26 @@ export default function CommunityProfilePage() {
             >
               {contact.visibility === "public" ? "Make Private" : "Make Public"}
             </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (!editing) {
+                  setEditForm({
+                    first_name: contact.first_name || "", last_name: contact.last_name || "", name: contact.name || "",
+                    company: contact.company || "", role: contact.role || "", phone: contact.phone || "",
+                    linkedin: contact.linkedin || "", twitter: contact.twitter || "", instagram: contact.instagram || "", website: contact.website || "",
+                    summary: contact.summary || "", skills: (contact.skills || []).join(", "), source: (contact.source || []).join(", "), notes: contact.notes || "",
+                  });
+                }
+                setEditing(!editing);
+              }}
+            >
+              {editing ? <X className="w-4 h-4 mr-1" /> : <Pencil className="w-4 h-4 mr-1" />}
+              {editing ? "Cancel" : "Quick Edit"}
+            </Button>
             <Link href={`/admin/contacts/${contact.id}`}>
-              <Button variant="ghost" size="sm">Edit Contact</Button>
+              <Button variant="ghost" size="sm">Full Edit</Button>
             </Link>
             {contact.email && (
               <span className="text-xs text-muted-foreground ml-auto">
@@ -234,6 +269,153 @@ export default function CommunityProfilePage() {
               </span>
             )}
           </div>
+
+          {editing && (
+            <Card className="p-4 space-y-5 border-primary/20 bg-primary/5">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Admin — Quick Edit</p>
+                {contact.updated_at && (
+                  <p className="text-xs text-muted-foreground">
+                    Last updated: {new Date(contact.updated_at).toLocaleString()}
+                  </p>
+                )}
+              </div>
+
+              {/* Name */}
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Name</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">First Name</label>
+                    <Input value={editForm.first_name} onChange={(e) => setEditForm((f) => ({ ...f, first_name: e.target.value }))} placeholder="First name" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Last Name</label>
+                    <Input value={editForm.last_name} onChange={(e) => setEditForm((f) => ({ ...f, last_name: e.target.value }))} placeholder="Last name" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs text-muted-foreground mb-1 block">Display Name</label>
+                    <Input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="Full display name" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Work */}
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Work</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Company</label>
+                    <Input value={editForm.company} onChange={(e) => setEditForm((f) => ({ ...f, company: e.target.value }))} placeholder="Company" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Role</label>
+                    <Input value={editForm.role} onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))} placeholder="Job title" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs text-muted-foreground mb-1 block">Phone</label>
+                    <Input value={editForm.phone} onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))} placeholder="Phone number" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Social */}
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Social Links</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <label className="text-xs text-muted-foreground mb-1 block">LinkedIn URL</label>
+                    <Input value={editForm.linkedin} onChange={(e) => setEditForm((f) => ({ ...f, linkedin: e.target.value }))} placeholder="https://linkedin.com/in/..." />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Twitter / X</label>
+                    <Input value={editForm.twitter} onChange={(e) => setEditForm((f) => ({ ...f, twitter: e.target.value }))} placeholder="@handle or URL" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Instagram</label>
+                    <Input value={editForm.instagram} onChange={(e) => setEditForm((f) => ({ ...f, instagram: e.target.value }))} placeholder="@handle" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs text-muted-foreground mb-1 block">Website</label>
+                    <Input value={editForm.website} onChange={(e) => setEditForm((f) => ({ ...f, website: e.target.value }))} placeholder="https://..." />
+                  </div>
+                </div>
+              </div>
+
+              {/* Bio & metadata */}
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Bio & Tags</p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Bio / Summary</label>
+                    <textarea
+                      value={editForm.summary}
+                      onChange={(e) => setEditForm((f) => ({ ...f, summary: e.target.value }))}
+                      placeholder="What this person does, what they're building..."
+                      rows={4}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Skills (comma-separated)</label>
+                    <Input value={editForm.skills} onChange={(e) => setEditForm((f) => ({ ...f, skills: e.target.value }))} placeholder="React, Python, Design" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Events / Sources (comma-separated)</label>
+                    <Input value={editForm.source} onChange={(e) => setEditForm((f) => ({ ...f, source: e.target.value }))} placeholder="Maker Mondays #3, Toronto Tech Week" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Notes (admin only)</label>
+                    <textarea
+                      value={editForm.notes}
+                      onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))}
+                      placeholder="Internal notes about this person..."
+                      rows={2}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                size="sm"
+                disabled={saving}
+                onClick={async () => {
+                  setSaving(true);
+                  const now = new Date().toISOString();
+                  const payload = {
+                    first_name: editForm.first_name.trim() || null,
+                    last_name: editForm.last_name.trim() || null,
+                    name: editForm.name.trim() || null,
+                    company: editForm.company.trim() || null,
+                    role: editForm.role.trim() || null,
+                    phone: editForm.phone.trim() || null,
+                    linkedin: editForm.linkedin.trim() || null,
+                    twitter: editForm.twitter.trim() || null,
+                    instagram: editForm.instagram.trim() || null,
+                    website: editForm.website.trim() || null,
+                    summary: editForm.summary.trim() || null,
+                    skills: editForm.skills.split(",").map((s) => s.trim()).filter(Boolean),
+                    source: editForm.source.split(",").map((s) => s.trim()).filter(Boolean),
+                    notes: editForm.notes.trim() || null,
+                    updated_at: now,
+                  };
+                  const { error } = await supabase
+                    .from("community_contacts")
+                    .update(payload)
+                    .eq("id", contact.id);
+                  if (!error) {
+                    setContact({ ...contact, ...payload, updated_at: now });
+                    setEditing(false);
+                  }
+                  setSaving(false);
+                }}
+              >
+                <Check className="w-4 h-4 mr-1" />
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+            </Card>
+          )}
         </div>
       )}
     </div>
