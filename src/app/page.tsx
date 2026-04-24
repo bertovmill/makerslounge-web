@@ -575,6 +575,35 @@ export default function Home() {
         </div>
 
       </main>
+
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-border bg-card/30 backdrop-blur-sm">
+        <div className="max-w-[640px] mx-auto px-4 sm:px-6 py-8 sm:py-10">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
+            {/* Brand */}
+            <div className="flex flex-col items-center sm:items-start gap-2">
+              <Link href="/" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
+                <Image src="/logo.svg" alt="MakersLounge" width={16} height={17} className="dark:hidden" />
+                <Image src="/logo-light.svg" alt="MakersLounge" width={16} height={17} className="hidden dark:block" />
+                <span className="text-sm font-sans font-normal">makerslounge</span>
+              </Link>
+              <p className="text-xs text-muted-foreground/60">Build. Connect. Create.</p>
+            </div>
+
+            {/* Links */}
+            <div className="flex items-center gap-4 sm:gap-6 text-xs text-muted-foreground/60">
+              <a href="https://lu.ma/makerslounge" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Luma</a>
+              <a href="https://instagram.com/makersloungeto" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Instagram</a>
+              <a href="https://linkedin.com/company/makerslounge" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">LinkedIn</a>
+              <a href="/learn-more" className="hover:text-foreground transition-colors">About</a>
+            </div>
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-border/50 text-center">
+            <p className="text-[11px] text-muted-foreground/40">&copy; {new Date().getFullYear()} MakersLounge. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
