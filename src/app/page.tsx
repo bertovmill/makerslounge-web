@@ -260,7 +260,7 @@ export default function Home() {
             href="/auth?mode=apply"
             className="text-sm font-medium px-4 py-2 rounded-md bg-gradient-blue text-white hover:opacity-90 transition-opacity"
           >
-            Apply to Join
+            Join Now
           </Link>
         </div>
 
@@ -312,7 +312,7 @@ export default function Home() {
               className="text-lg font-medium px-8 py-3 rounded-full bg-gradient-blue text-white hover:opacity-90 transition-opacity"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Apply to Join
+              Join Now
             </Link>
             <button
               onClick={() => { toggleTheme(); setMobileMenuOpen(false); }}
@@ -351,7 +351,7 @@ export default function Home() {
               as="div"
               className="dark:bg-black bg-white text-foreground dark:text-white flex items-center gap-2 px-6 sm:px-8 py-2 sm:py-2.5 text-sm sm:text-base font-medium"
             >
-              Apply to Join
+              Join Now — $10/mo
               <ArrowRight className="w-4 h-4" />
             </HoverBorderGradient>
           </Link>
