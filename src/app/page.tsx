@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/context/ThemeContext";
-import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, Instagram, Linkedin, Menu, X, Mic, Play, ExternalLink } from "lucide-react";
+import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, Instagram, Linkedin, Menu, X, Mic, Play, ExternalLink, Zap, BookOpen, Heart, PartyPopper } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { AnimatedLogo } from "@/components/AnimatedLogo";
@@ -389,6 +389,29 @@ export default function Home() {
             <Linkedin className="w-3.5 h-3.5" />
             LinkedIn
           </a>
+        </div>
+
+        {/* Values Section */}
+        <div className="w-full max-w-[640px] mb-8 sm:mb-12">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            {[
+              { icon: Zap, label: "Hustle", description: "We ship fast, iterate often, and never stop building." },
+              { icon: BookOpen, label: "Learning", description: "Every maker is a student. We grow by sharing knowledge." },
+              { icon: Heart, label: "Community", description: "We lift each other up. Your win is our win." },
+              { icon: PartyPopper, label: "Fun", description: "Building should be exciting. We celebrate the joy of creating." },
+            ].map((value) => (
+              <div
+                key={value.label}
+                className="flex flex-col items-center text-center p-4 sm:p-5 rounded-2xl border border-border bg-card/50 backdrop-blur-sm"
+              >
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-[#6AC4F7] to-[#1A7DE8] flex items-center justify-center mb-3">
+                  <value.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </div>
+                <h3 className="text-sm sm:text-base font-semibold text-foreground mb-1">{value.label}</h3>
+                <p className="text-[11px] sm:text-xs text-muted-foreground/80 leading-relaxed">{value.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Podcast Section */}
