@@ -180,7 +180,26 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeSub, setActiveSub] = useState<string | null>(null);
+  const [latestPost, setLatestPost] = useState<{
+    slug: string;
+    title: string;
+    excerpt: string;
+  } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    supabase
+      .from("blog_posts")
+      .select("slug,title,excerpt")
+      .eq("is_published", true)
+      .lte("published_at", new Date().toISOString())
+      .order("published_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setLatestPost(data);
+      });
+  }, []);
 
   const category = ACTION_TREE.find((c) => c.label === activeCategory);
   const sub = category?.subs.find((s) => s.label === activeSub);
@@ -455,6 +474,54 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Blog Section */}
+        <div className="w-full max-w-[640px] mb-8 sm:mb-12">
+          <div className="rounded-2xl border border-border bg-card/50 backdrop-blur-sm overflow-hidden">
+            <div className="flex items-center gap-4 p-4 sm:p-5">
+              {/* Blog icon */}
+              <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-[#6AC4F7] to-[#1A7DE8] flex items-center justify-center">
+                <BookOpen className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-[#3A9FF3]">Blog</span>
+                  {latestPost && (
+                    <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-green-500 font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                      New
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">Stories from the maker community</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground/80 line-clamp-1">Insights, lessons, and recaps from Toronto's makers.</p>
+              </div>
+
+              {/* Read button */}
+              <Link
+                href="/blog"
+                className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-foreground text-background text-xs sm:text-sm font-medium hover:opacity-80 transition-opacity"
+              >
+                <BookOpen className="w-3 h-3" />
+                Read
+              </Link>
+            </div>
+
+            {/* Latest post preview */}
+            {latestPost && (
+              <Link
+                href={`/blog/${latestPost.slug}`}
+                className="border-t border-border px-4 sm:px-5 py-3 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+              >
+                <span className="text-[10px] sm:text-xs text-muted-foreground/60 uppercase tracking-wide flex-shrink-0">Latest</span>
+                <p className="text-xs sm:text-sm text-foreground/80 truncate">{latestPost.title}</p>
+                <ExternalLink className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
+              </Link>
+            )}
+          </div>
+        </div>
+
         {/* Divider */}
         <div className="w-full max-w-[640px] flex items-center gap-3 mb-6 sm:mb-8">
           <div className="flex-1 h-px bg-border" />
@@ -592,6 +659,7 @@ export default function Home() {
 
             {/* Links */}
             <div className="flex items-center gap-4 sm:gap-6 text-xs text-muted-foreground/60">
+              <Link href="/blog" className="hover:text-foreground transition-colors">Blog</Link>
               <a href="https://lu.ma/makerslounge" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Luma</a>
               <a href="https://instagram.com/makersloungeto" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Instagram</a>
               <a href="https://linkedin.com/company/makerslounge" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">LinkedIn</a>
