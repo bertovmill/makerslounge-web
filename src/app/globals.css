@@ -208,9 +208,9 @@ html {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Account for bottom nav on mobile */
+/* Account for bottom nav on mobile (skip full-page layouts like landing/auth) */
 @media (max-width: 767px) {
-  main {
+  main.app-main {
     padding-bottom: 4.5rem;
   }
 }

@@ -22,7 +22,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <main className={`${collapsed ? "md:ml-16" : "md:ml-60"} transition-[margin] duration-200 ease-in-out`}>
+    <main className={`app-main ${collapsed ? "md:ml-16" : "md:ml-60"} transition-[margin] duration-200 ease-in-out`}>
       {children}
     </main>
   );

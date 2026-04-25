@@ -326,7 +326,7 @@ export default function Home() {
       )}
 
       {/* Hero */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pb-12 sm:pb-24">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pb-4 sm:pb-8">
         {/* Light glow behind title */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[75%] w-[500px] h-[400px] sm:w-[700px] sm:h-[500px] rounded-full bg-white/60 dark:bg-white/[0.04] blur-[100px] pointer-events-none" />
 
