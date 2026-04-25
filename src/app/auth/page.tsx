@@ -468,7 +468,7 @@ function AuthContent() {
   }
 
   return (
-    <div className="relative h-svh flex items-center justify-center px-4 overflow-hidden py-8 pt-[max(2rem,env(safe-area-inset-top,48px))]">
+    <div className="relative min-h-svh flex items-center justify-center px-4 overflow-x-hidden py-8 pt-[max(2rem,env(safe-area-inset-top,48px))]">
       <DottedGlowBackground
         className="pointer-events-none"
         opacity={0.8}
