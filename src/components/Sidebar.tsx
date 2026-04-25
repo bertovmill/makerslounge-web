@@ -20,6 +20,7 @@ import {
   Shield,
   Sparkles,
   Palette,
+  BookOpen,
 } from "lucide-react";
 import UserMenu from "./UserMenu";
 import { useEffect, useState } from "react";
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
   { href: "/messages", label: "Messages", icon: MessageCircle },
   { href: "/meetup-matcher", label: "Matcher", icon: Sparkles },
   { href: "/events", label: "Events", icon: Calendar },
+  { href: "/blog", label: "Blog", icon: BookOpen },
   { href: "/brand", label: "Branding", icon: Palette },
 ];
 
