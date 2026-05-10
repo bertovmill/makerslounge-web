@@ -263,14 +263,12 @@ export default function Home() {
           >
             {resolved === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-          <a
-            href="/learn-more"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/about"
             className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
           >
-            Learn More
-          </a>
+            About Us
+          </Link>
           <Link
             href="/auth"
             className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
@@ -312,15 +310,13 @@ export default function Home() {
             </button>
           </div>
           <nav className="flex-1 flex flex-col items-center justify-center gap-6">
-            <a
-              href="/learn-more"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/about"
               className="text-lg font-medium text-foreground/80 hover:text-foreground transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Learn More
-            </a>
+              About Us
+            </Link>
             <Link
               href="/auth"
               className="text-lg font-medium text-foreground/80 hover:text-foreground transition-colors"
@@ -698,7 +694,7 @@ export default function Home() {
               <a href="https://lu.ma/makerslounge" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Luma</a>
               <a href="https://instagram.com/makersloungeto" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Instagram</a>
               <a href="https://linkedin.com/company/makerslounge" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">LinkedIn</a>
-              <a href="/learn-more" className="hover:text-foreground transition-colors">About</a>
+              <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
             </div>
           </div>
 

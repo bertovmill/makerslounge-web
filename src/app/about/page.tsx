@@ -87,16 +87,16 @@ export default function AboutPage() {
               <div className="space-y-4 text-muted-foreground leading-relaxed">
                 <p>
                   I started MakersLounge because I know how hard it is to find the right people
-                  to build with. You have an idea you&apos;re excited about, maybe even a prototype,
-                  but finding a collaborator who complements your skills? That&apos;s the real challenge.
+                  to build with. You have an idea you&apos;re excited about, maybe even a prototype.
+                  But finding a collaborator who complements your skills? That&apos;s the real challenge.
                 </p>
                 <p>
-                  I&apos;ve been there—searching for a technical partner, a design collaborator,
+                  I&apos;ve been there, searching for a technical partner, a design collaborator,
                   or just someone who gets as excited about the same problems as I do.
                   It shouldn&apos;t be that hard.
                 </p>
                 <p>
-                  So I built this place. No gatekeeping, no cliques—just a welcoming space
+                  So I built this place. No gatekeeping, no cliques. Just a welcoming space
                   where your half-baked ideas are celebrated and the right connections happen naturally.
                 </p>
               </div>
@@ -276,32 +276,55 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <Card className="glass-card p-8 text-center hover:scale-[1.02] transition-transform duration-300">
               <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden">
                 <img
-                  src="/makerslounge-photos/demo-day.jpeg"
-                  alt="Berto Mill presenting at MakersLounge"
+                  src="/Berto Mill_Headshot.jpg"
+                  alt="Berto Mill"
                   className="w-full h-full object-cover object-top"
                 />
               </div>
               <h3 className="font-semibold text-xl mb-1">Berto Mill</h3>
-              <p className="text-primary font-medium mb-4">Co-founder</p>
+              <p className="text-primary font-medium mb-4">Founder</p>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Multi-disciplinary builder who loves wearing many hats—from code to design to business.
-                Started MakersLounge after struggling to find collaborators.
+                Berto started MakersLounge after experiencing firsthand how isolating it can be to build alone.
+                He was deep in projects but had no one to build with, and knew others felt the same way.
+                That frustration became the spark for a community where makers never have to go at it solo.
               </p>
             </Card>
 
             <Card className="glass-card p-8 text-center hover:scale-[1.02] transition-transform duration-300">
-              <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                <span className="text-3xl">K</span>
+              <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden">
+                <img
+                  src="/katy-headshot.jpeg"
+                  alt="Katy Rozanova"
+                  className="w-full h-full object-cover object-top"
+                />
               </div>
               <h3 className="font-semibold text-xl mb-1">Katy Rozanova</h3>
               <p className="text-primary font-medium mb-4">Co-founder</p>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Passionate about building community and connecting makers with the right people
-                to bring their ideas to life.
+                Katy gave Berto the push to turn his desire to build with others into an actual community.
+                She was pivotal in setting up the social presence, bringing in early members, and shaping
+                MakersLounge from an idea into a real group of people showing up and creating together.
+              </p>
+            </Card>
+
+            <Card className="glass-card p-8 text-center hover:scale-[1.02] transition-transform duration-300">
+              <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden">
+                <img
+                  src="/vimal-headshot.jpeg"
+                  alt="Vimal"
+                  className="w-full h-full object-cover object-top"
+                />
+              </div>
+              <h3 className="font-semibold text-xl mb-1">Vimal</h3>
+              <p className="text-primary font-medium mb-4">Lead AI Instructor</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Vimal was the very first AI instructor at MakersLounge. With a deep background in artificial
+                intelligence, he brought hands-on workshops and real expertise to the community from day one,
+                helping makers learn to build with AI.
               </p>
             </Card>
           </div>
