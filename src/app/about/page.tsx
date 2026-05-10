@@ -1,9 +1,19 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useTheme } from "@/context/ThemeContext";
+import { Sun, Moon, Menu, X } from "lucide-react";
 
 export default function AboutPage() {
+  const { resolved, setTheme } = useTheme();
+  const toggleTheme = () => setTheme(resolved === "dark" ? "light" : "dark");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Subtle warm gradient background */}
@@ -11,6 +21,102 @@ export default function AboutPage() {
         <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-gradient-to-bl from-primary/8 via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 w-[600px] h-[400px] bg-gradient-to-tr from-accent/10 via-transparent to-transparent" />
       </div>
+
+      {/* Nav */}
+      <header className="relative z-20 flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <Link href="/" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
+          <Image src="/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
+          <Image src="/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
+          <span className="text-base sm:text-xl font-sans font-normal tracking-normal">makerslounge</span>
+        </Link>
+
+        {/* Desktop nav */}
+        <div className="hidden sm:flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md"
+            aria-label="Toggle theme"
+          >
+            {resolved === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+          <Link
+            href="/"
+            className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Home
+          </Link>
+          <Link
+            href="/auth"
+            className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/auth"
+            className="text-sm font-medium px-4 py-2 rounded-md bg-gradient-blue text-white hover:opacity-90 transition-opacity"
+          >
+            Join Now
+          </Link>
+        </div>
+
+        {/* Mobile hamburger */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="sm:hidden p-2 text-foreground/70 hover:text-foreground transition-colors"
+          aria-label="Toggle menu"
+        >
+          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </header>
+
+      {/* Mobile menu overlay */}
+      {mobileMenuOpen && (
+        <div className="sm:hidden fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+          <div className="flex items-center justify-between px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+            <Link href="/" className="flex items-center gap-1.5" onClick={() => setMobileMenuOpen(false)}>
+              <Image src="/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
+              <Image src="/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
+              <span className="text-base font-sans font-normal tracking-normal">makerslounge</span>
+            </Link>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="p-2 text-foreground/70 hover:text-foreground transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <nav className="flex-1 flex flex-col items-center justify-center gap-6">
+            <Link
+              href="/"
+              className="text-lg font-medium text-foreground/80 hover:text-foreground transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Home
+            </Link>
+            <Link
+              href="/auth"
+              className="text-lg font-medium text-foreground/80 hover:text-foreground transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/auth"
+              className="text-lg font-medium px-8 py-3 rounded-full bg-gradient-blue text-white hover:opacity-90 transition-opacity"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Join Now
+            </Link>
+            <button
+              onClick={() => { toggleTheme(); setMobileMenuOpen(false); }}
+              className="text-lg font-medium text-foreground/60 hover:text-foreground transition-colors flex items-center gap-2"
+            >
+              {resolved === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              {resolved === "dark" ? "Light mode" : "Dark mode"}
+            </button>
+          </nav>
+        </div>
+      )}
 
       {/* Hero / Mission Section */}
       <section className="relative">
