@@ -22,6 +22,7 @@ import {
   Palette,
   BookOpen,
   Trophy,
+  Info,
 } from "lucide-react";
 import UserMenu from "./UserMenu";
 import { useEffect, useState } from "react";
@@ -40,6 +41,7 @@ const NAV_ITEMS = [
   { href: "/hackathons", label: "Hackathons", icon: Trophy },
   { href: "/blog", label: "Blog", icon: BookOpen },
   { href: "/brand", label: "Branding", icon: Palette },
+  { href: "/about", label: "About Us", icon: Info },
 ];
 
 export default function Sidebar() {
