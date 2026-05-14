@@ -382,11 +382,11 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             <Card className="glass-card p-8 text-center hover:scale-[1.02] transition-transform duration-300">
               <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden">
                 <img
-                  src="/Berto Mill_Headshot.jpg"
+                  src="/headshots/Berto Mill_Headshot.jpg"
                   alt="Berto Mill"
                   className="w-full h-full object-cover object-top"
                 />
@@ -403,7 +403,7 @@ export default function AboutPage() {
             <Card className="glass-card p-8 text-center hover:scale-[1.02] transition-transform duration-300">
               <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden">
                 <img
-                  src="/katy-headshot.jpeg"
+                  src="/headshots/katy-headshot.jpeg"
                   alt="Katy Rozanova"
                   className="w-full h-full object-cover object-top"
                 />
@@ -420,7 +420,7 @@ export default function AboutPage() {
             <Card className="glass-card p-8 text-center hover:scale-[1.02] transition-transform duration-300">
               <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden">
                 <img
-                  src="/vimal-headshot.jpeg"
+                  src="/headshots/vimal-headshot.jpeg"
                   alt="Vimal"
                   className="w-full h-full object-cover object-top"
                 />
@@ -431,6 +431,24 @@ export default function AboutPage() {
                 Vimal was the very first AI instructor at MakersLounge. With a deep background in artificial
                 intelligence, he brought hands-on workshops and real expertise to the community from day one,
                 helping makers learn to build with AI.
+              </p>
+            </Card>
+
+            <Card className="glass-card p-8 text-center hover:scale-[1.02] transition-transform duration-300">
+              <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden">
+                <img
+                  src="/headshots/tanisha_headshot.jpeg"
+                  alt="Tanisha"
+                  className="w-full h-full object-cover object-top"
+                />
+              </div>
+              <h3 className="font-semibold text-xl mb-1">Tanisha</h3>
+              <p className="text-primary font-medium mb-4">Events Organizer</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Tanisha came to several MakersLounge events as a regular before stepping up to help run them.
+                An Associate AI Product Manager by trade, she brings the discipline of agile delivery and a
+                user-centric mindset to every event — making sure each one feels intentional, welcoming, and
+                worth showing up for.
               </p>
             </Card>
           </div>

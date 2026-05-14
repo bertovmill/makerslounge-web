@@ -1,5 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
 import { supabase } from "@/lib/supabase";
+
+async function sendWelcomeEmail(email: string) {
+  if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM_EMAIL) {
+    console.warn("Resend env vars missing — skipping welcome email");
+    return;
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
+  const { error } = await resend.emails.send({
+    from: `MakersLounge <${process.env.RESEND_FROM_EMAIL}>`,
+    to: email,
+    subject: "Welcome to MakersLounge",
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; color: #1a1a1a;">
+        <h1 style="font-size: 24px; margin-bottom: 16px;">Welcome to MakersLounge 👋</h1>
+        <p style="font-size: 16px; line-height: 1.5;">Thanks for subscribing! You'll be the first to hear about:</p>
+        <ul style="font-size: 16px; line-height: 1.6;">
+          <li>New podcast episodes</li>
+          <li>Upcoming events like Maker Mondays</li>
+          <li>Maker stories and what we're building</li>
+        </ul>
+        <p style="font-size: 16px; line-height: 1.5; margin-top: 24px;">Build. Connect. Create.</p>
+        <p style="font-size: 14px; color: #666; margin-top: 32px;">
+          — The MakersLounge team<br/>
+          <a href="https://makerslounge.ca" style="color: #3A9FF3;">makerslounge.ca</a>
+        </p>
+      </div>
+    `,
+  });
+
+  if (error) {
+    console.error("Resend welcome email error:", error);
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,6 +99,8 @@ export async function POST(request: NextRequest) {
         throw updateError;
       }
 
+      await sendWelcomeEmail(normalizedEmail);
+
       return NextResponse.json(
         {
           message: "Subscription reactivated successfully",
@@ -93,6 +131,8 @@ export async function POST(request: NextRequest) {
       }
       throw insertError;
     }
+
+    await sendWelcomeEmail(normalizedEmail);
 
     return NextResponse.json(
       {

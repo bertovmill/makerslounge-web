@@ -15,7 +15,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     window.scrollTo(0, 0);
   }, [pathname]);
 
-  const isFullPage = pathname === "/" || pathname === "/auth" || pathname.startsWith("/onboarding");
+  const isFullPage =
+    pathname === "/" ||
+    pathname === "/auth" ||
+    pathname.startsWith("/onboarding") ||
+    pathname === "/hackathon";
 
   if (isFullPage || !user) {
     return <main>{children}</main>;

@@ -10,6 +10,11 @@ import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { AnimatedLogo } from "@/components/AnimatedLogo";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
+import NewsletterPopup, { OPEN_NEWSLETTER_EVENT } from "@/components/NewsletterPopup";
+
+const openNewsletterPopup = () => {
+  window.dispatchEvent(new CustomEvent(OPEN_NEWSLETTER_EVENT));
+};
 
 interface ActionIdea {
   label: string;
@@ -269,6 +274,12 @@ export default function Home() {
           >
             About Us
           </Link>
+          <button
+            onClick={openNewsletterPopup}
+            className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Newsletter
+          </button>
           <Link
             href="/auth"
             className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
@@ -317,6 +328,12 @@ export default function Home() {
             >
               About Us
             </Link>
+            <button
+              onClick={() => { setMobileMenuOpen(false); openNewsletterPopup(); }}
+              className="text-lg font-medium text-foreground/80 hover:text-foreground transition-colors"
+            >
+              Newsletter
+            </button>
             <Link
               href="/auth"
               className="text-lg font-medium text-foreground/80 hover:text-foreground transition-colors"
@@ -703,6 +720,8 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      <NewsletterPopup />
     </div>
   );
 }

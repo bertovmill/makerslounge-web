@@ -18,7 +18,7 @@ export default function PublicProfilePage() {
     const fetchProfile = async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, name, photo_url, bio, skills, looking_for_skills, currently_building, linkedin, twitter, instagram, website")
+        .select("id, name, photo_url, bio, skills, looking_for_skills, looking_for_help, currently_building, linkedin, twitter, instagram, website, linkedin_data")
         .eq("id", userId)
         .single();
 

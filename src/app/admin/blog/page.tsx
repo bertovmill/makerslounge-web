@@ -72,6 +72,20 @@ export default async function AdminBlogPage() {
                             Featured
                           </Badge>
                         )}
+                        {post.tags?.includes("newsletter") && (
+                          <Badge
+                            variant="outline"
+                            className={
+                              post.newsletter_sent_at
+                                ? "border-green-500 text-green-600"
+                                : "border-blue-500 text-blue-600"
+                            }
+                          >
+                            {post.newsletter_sent_at
+                              ? `Newsletter sent ${new Date(post.newsletter_sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+                              : "Newsletter (not sent)"}
+                          </Badge>
+                        )}
                       </div>
 
                       <p className="text-sm text-muted-foreground mb-3 line-clamp-2">

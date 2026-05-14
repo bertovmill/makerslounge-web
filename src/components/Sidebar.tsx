@@ -49,7 +49,7 @@ export default function Sidebar() {
   const [logoHovered, setLogoHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const isHidden = pathname === "/" || pathname === "/auth" || pathname === "/onboarding";
+  const isHidden = pathname === "/" || pathname === "/auth" || pathname === "/onboarding" || pathname === "/hackathon";
 
   useEffect(() => {
     if (!user) return;

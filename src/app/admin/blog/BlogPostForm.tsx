@@ -61,19 +61,45 @@ export default function BlogPostForm({ userId, post }: BlogPostFormProps) {
       return;
     }
 
+    const parsedTags = tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0);
+
+    const shouldSendNewsletter =
+      publish &&
+      parsedTags.includes("newsletter") &&
+      !post?.newsletter_sent_at;
+
+    if (shouldSendNewsletter) {
+      let subCount: number | null = null;
+      try {
+        const res = await fetch("/api/newsletter/send", { method: "GET" });
+        if (res.ok) {
+          const data = await res.json();
+          subCount = data.activeSubscribers ?? null;
+        }
+      } catch {}
+
+      const label =
+        subCount !== null
+          ? `Send this newsletter to ${subCount} subscriber${subCount === 1 ? "" : "s"}?`
+          : "Send this newsletter to all active subscribers?";
+
+      if (!window.confirm(`${label}\n\nPublishing will email the full post via Resend. This can't be undone.`)) {
+        return;
+      }
+    }
+
     setIsSaving(true);
 
-    // Determine publish date
     let finalPublishDate = null;
     if (publish) {
       if (publishDate) {
-        // Use scheduled date
         finalPublishDate = new Date(publishDate).toISOString();
       } else if (post?.published_at) {
-        // Keep existing publish date
         finalPublishDate = post.published_at;
       } else {
-        // Publish now
         finalPublishDate = new Date().toISOString();
       }
     }
@@ -85,10 +111,7 @@ export default function BlogPostForm({ userId, post }: BlogPostFormProps) {
       content: content.trim(),
       cover_image: coverImage.trim() || null,
       author_id: userId,
-      tags: tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag.length > 0),
+      tags: parsedTags,
       read_time_minutes: parseInt(readTimeMinutes) || 5,
       is_featured: isFeatured,
       is_published: publish,
@@ -99,13 +122,35 @@ export default function BlogPostForm({ userId, post }: BlogPostFormProps) {
       ? await updatePost(post.id, postData)
       : await createPost(postData);
 
-    if (result.success) {
-      router.push("/admin/blog");
-      router.refresh();
-    } else {
+    if (!result.success) {
       alert(`Error saving post: ${result.error}`);
       setIsSaving(false);
+      return;
     }
+
+    if (shouldSendNewsletter) {
+      const postId = result.data?.id;
+      if (postId) {
+        try {
+          const res = await fetch("/api/newsletter/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ postId }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            alert(`Post saved, but newsletter send failed: ${data.error || "Unknown error"}`);
+          } else {
+            alert(`Newsletter sent to ${data.sentCount}/${data.totalRecipients} subscribers.`);
+          }
+        } catch (e) {
+          alert(`Post saved, but newsletter send failed: ${e instanceof Error ? e.message : "Unknown error"}`);
+        }
+      }
+    }
+
+    router.push("/admin/blog");
+    router.refresh();
   };
 
   return (

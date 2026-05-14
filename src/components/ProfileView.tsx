@@ -20,6 +20,10 @@ import {
   Github,
   ChevronDown,
   ChevronUp,
+  Briefcase,
+  GraduationCap,
+  MapPin,
+  Sparkles,
 } from "lucide-react";
 import PodcastPlayer from "@/components/PodcastPlayer";
 import { useAuth } from "@/context/AuthContext";
@@ -30,6 +34,32 @@ import {
   fetchPodcastsByGuest,
   formatDuration,
 } from "@/lib/podcasts";
+
+interface LinkedinRole {
+  title: string;
+  company: string;
+  start_date: string | null;
+  end_date?: string | null;
+  description: string | null;
+}
+
+interface LinkedinEducation {
+  school: string;
+  degree: string | null;
+  field: string | null;
+  years: string | null;
+}
+
+interface LinkedinData {
+  summary: string;
+  headline: string;
+  location: string | null;
+  current_role: (Omit<LinkedinRole, "end_date">) | null;
+  past_roles: LinkedinRole[];
+  education: LinkedinEducation[];
+  skills: string[];
+  notable_links: { label: string; url: string }[];
+}
 
 interface ProfileData {
   id: string;
@@ -44,6 +74,7 @@ interface ProfileData {
   twitter: string | null;
   instagram: string | null;
   website: string | null;
+  linkedin_data: LinkedinData | null;
 }
 
 interface ProfileViewProps {
@@ -270,6 +301,10 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
   const [eventNotes, setEventNotes] = useState<
     { id: string; meetup_name: string; notes: string | null; created_at: string }[]
   >([]);
+  const [showEnrichPanel, setShowEnrichPanel] = useState(false);
+  const [enrichText, setEnrichText] = useState("");
+  const [enriching, setEnriching] = useState(false);
+  const [enrichError, setEnrichError] = useState<string | null>(null);
 
   const ADMIN_EMAIL = "bertmill19@gmail.com";
   const isAdmin = user?.email === ADMIN_EMAIL;
@@ -389,6 +424,31 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
       setReportReason("");
       setReportDetails("");
     }, 2000);
+  }
+
+  async function handleEnrich() {
+    if (enriching || !enrichText.trim()) return;
+    setEnriching(true);
+    setEnrichError(null);
+    try {
+      const res = await fetch(`/api/profiles/${profile.id}/enrich`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ linkedinText: enrichText }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setEnrichError(json.error || "Enrichment failed");
+        return;
+      }
+      setProfile((prev) => ({ ...prev, linkedin_data: json.data }));
+      setEnrichText("");
+      setShowEnrichPanel(false);
+    } catch (err) {
+      setEnrichError("Network error — try again");
+    } finally {
+      setEnriching(false);
+    }
   }
 
   async function handleBlock() {
@@ -663,6 +723,129 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
           </section>
         )}
 
+        {/* Background — from LinkedIn enrichment */}
+        {profile.linkedin_data && (
+          <section>
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Background
+            </h2>
+            <div className="rounded-xl bg-card border border-border/50 p-4 space-y-4">
+              {/* Headline + location */}
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  {profile.linkedin_data.headline}
+                </p>
+                {profile.linkedin_data.location && (
+                  <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    {profile.linkedin_data.location}
+                  </p>
+                )}
+              </div>
+
+              {/* Current role */}
+              {profile.linkedin_data.current_role && (
+                <div>
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                    <Briefcase className="w-3 h-3" />
+                    Now
+                  </p>
+                  <p className="text-sm text-foreground">
+                    <span className="font-medium">{profile.linkedin_data.current_role.title}</span>
+                    {profile.linkedin_data.current_role.company && (
+                      <span className="text-muted-foreground"> · {profile.linkedin_data.current_role.company}</span>
+                    )}
+                    {profile.linkedin_data.current_role.start_date && (
+                      <span className="text-muted-foreground text-xs"> · {profile.linkedin_data.current_role.start_date} – Present</span>
+                    )}
+                  </p>
+                  {profile.linkedin_data.current_role.description && (
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      {profile.linkedin_data.current_role.description}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Past roles */}
+              {profile.linkedin_data.past_roles.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                    Previously
+                  </p>
+                  <div className="space-y-2">
+                    {profile.linkedin_data.past_roles.map((role, i) => (
+                      <div key={i}>
+                        <p className="text-sm text-foreground">
+                          <span className="font-medium">{role.title}</span>
+                          {role.company && (
+                            <span className="text-muted-foreground"> · {role.company}</span>
+                          )}
+                          {(role.start_date || role.end_date) && (
+                            <span className="text-muted-foreground text-xs">
+                              {" "}· {role.start_date || ""}
+                              {role.start_date && role.end_date ? " – " : ""}
+                              {role.end_date || ""}
+                            </span>
+                          )}
+                        </p>
+                        {role.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                            {role.description}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Education */}
+              {profile.linkedin_data.education.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                    <GraduationCap className="w-3 h-3" />
+                    Education
+                  </p>
+                  <div className="space-y-1">
+                    {profile.linkedin_data.education.map((edu, i) => (
+                      <p key={i} className="text-sm text-foreground">
+                        <span className="font-medium">{edu.school}</span>
+                        {(edu.degree || edu.field) && (
+                          <span className="text-muted-foreground">
+                            {" "}· {[edu.degree, edu.field].filter(Boolean).join(", ")}
+                          </span>
+                        )}
+                        {edu.years && (
+                          <span className="text-muted-foreground text-xs"> · {edu.years}</span>
+                        )}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Notable links */}
+              {profile.linkedin_data.notable_links.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {profile.linkedin_data.notable_links.map((link, i) => (
+                    <a
+                      key={i}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary text-xs text-foreground hover:bg-secondary/70 transition-colors"
+                    >
+                      {link.label}
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Skills */}
         {((profile.skills && profile.skills.length > 0) || isOwner) && (
           <section>
@@ -820,6 +1003,64 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
         </div>
       )}
 
+
+      {/* Enrich from LinkedIn — admin only */}
+      {isAdmin && (
+        <div className="mt-8">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+            Enrich from LinkedIn
+            <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-600 font-medium">Admin only</span>
+          </h2>
+          <div className="rounded-xl bg-card border border-border/50 p-4">
+            {!showEnrichPanel ? (
+              <button
+                onClick={() => setShowEnrichPanel(true)}
+                className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-secondary hover:bg-secondary/70 transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                {profile.linkedin_data ? "Re-enrich profile" : "Enrich this profile"}
+              </button>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Paste the About + Experience + Education sections from their LinkedIn. Claude will extract structured data and save it to the profile.
+                </p>
+                <textarea
+                  value={enrichText}
+                  onChange={(e) => setEnrichText(e.target.value)}
+                  placeholder="Paste LinkedIn content here..."
+                  rows={10}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-primary/50"
+                />
+                {enrichError && (
+                  <p className="text-xs text-red-500">{enrichError}</p>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleEnrich}
+                    disabled={enriching || enrichText.trim().length < 50}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {enriching ? "Parsing..." : "Parse & save"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowEnrichPanel(false);
+                      setEnrichText("");
+                      setEnrichError(null);
+                    }}
+                    disabled={enriching}
+                    className="px-3 py-1.5 text-xs font-medium rounded-lg bg-secondary hover:bg-secondary/70 transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Events — admin only */}
       {isAdmin && eventNotes.length > 0 && (

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { toPng } from "html-to-image";
+import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import ScreenshotEditor from "./ScreenshotEditor";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { useFeedback } from "@/context/FeedbackContext";
 import { useState } from "react";
 
 export default function FeedbackButton() {
+  const pathname = usePathname();
   const { isOpen: showModal, openFeedback, closeFeedback } = useFeedback();
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -145,6 +147,10 @@ export default function FeedbackButton() {
 
   // Don't render anything if still checking auth or user is not authenticated
   if (checkingAuth || !user) {
+    return null;
+  }
+
+  if (pathname === "/hackathon") {
     return null;
   }
 
