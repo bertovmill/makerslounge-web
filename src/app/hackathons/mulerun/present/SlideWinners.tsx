@@ -51,6 +51,25 @@ export default function SlideWinners() {
   const labelFor = (i: number) => ["3rd place", "2nd place", "1st place"][i];
   const ptsLabelFor = (i: number) => ["Bronze", "Silver", "Gold"][i];
 
+  // Metallic medal styling per podium index (0 = bronze, 1 = silver, 2 = gold).
+  const medalTier = [
+    {
+      gradient: "from-[#E8A87C] via-[#B36A3A] to-[#6F3B1A]",
+      ring: "ring-[#6F3B1A]/50",
+      text: "text-amber-50",
+    },
+    {
+      gradient: "from-white via-[#C9C9C9] to-[#6F6F6F]",
+      ring: "ring-zinc-500/40",
+      text: "text-zinc-900",
+    },
+    {
+      gradient: "from-[#FFE978] via-[#E8B500] to-[#8A6200]",
+      ring: "ring-amber-700/50",
+      text: "text-amber-950",
+    },
+  ];
+
   return (
     <div className="grid h-full grid-rows-[auto_1fr_auto] gap-[clamp(1rem,3vh,2rem)]">
       <div className="flex items-center justify-between gap-4">
@@ -110,15 +129,24 @@ export default function SlideWinners() {
                   }`}
                 >
                   <div
-                    className={`flex size-[clamp(3rem,5vw,5rem)] items-center justify-center rounded-full font-mono text-xs uppercase tracking-[0.18em] ${
+                    className={`relative flex size-[clamp(3.5rem,5.5vw,5.5rem)] items-center justify-center rounded-full ${
                       revealed
-                        ? isFirst
-                          ? "bg-background/15 text-background"
-                          : "bg-foreground text-background"
-                        : "bg-border/50 text-muted-foreground"
+                        ? `bg-gradient-to-br ${medalTier[i].gradient} shadow-[0_8px_24px_rgba(0,0,0,0.22)] ring-2 ring-inset ${medalTier[i].ring}`
+                        : "border-2 border-dashed border-border bg-card/40"
                     }`}
+                    aria-label={revealed ? `${ptsLabelFor(i)} medal` : "Medal hidden"}
                   >
-                    {i + 1}
+                    {revealed ? (
+                      <span
+                        className={`font-serif text-[clamp(1.6rem,2.6vw,2.6rem)] font-semibold leading-none ${medalTier[i].text}`}
+                      >
+                        {3 - i}
+                      </span>
+                    ) : (
+                      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50">
+                        ?
+                      </span>
+                    )}
                   </div>
                   <div className="flex min-w-0 flex-col gap-1">
                     <span

@@ -1,11 +1,24 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { RotateCcw, Shuffle } from "lucide-react";
+import { RotateCcw, Shuffle, Sparkles, Trash2 } from "lucide-react";
 
 const QR_URL = "https://makerslounge.ca/hackathons/mulerun/demo-signup";
 const MAX_DEMOS = 10;
 const POLL_MS = 5000;
+
+const TEST_TEAMS: ReadonlyArray<{ team_name: string; name: string; project: string }> = [
+  { team_name: "MoodMakers", name: "Alice & Bob", project: "An agent that books restaurants by text." },
+  { team_name: "PixelPulse", name: "Charlie", project: "Realtime whiteboard with AI sketch suggestions." },
+  { team_name: "ByteForge", name: "Dana & Eli", project: "Code review bot that learns your team's style." },
+  { team_name: "LoopHaus", name: "Finn", project: "Habit tracker that hypes you up with an LLM coach." },
+  { team_name: "StackSprout", name: "Greta & Hank", project: "Onboarding playbooks generated from a Slack archive." },
+  { team_name: "VoltCraft", name: "Iris", project: "Voice-to-doc transcriber tuned for engineers." },
+  { team_name: "NimbusKit", name: "Jack & Kit", project: "Cloud infra summarizer for non-engineers." },
+  { team_name: "KernelKitchen", name: "Lena", project: "Recipe generator from a photo of your fridge." },
+  { team_name: "DriftLab", name: "Mia & Nico", project: "Anomaly detection on real-time analytics streams." },
+  { team_name: "AtlasMind", name: "Owen", project: "RAG over your personal note vault." },
+];
 
 type Demo = {
   id: string;
@@ -19,6 +32,7 @@ export default function SlideDemoLineup() {
   const [shownIds, setShownIds] = useState<string[]>([]);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [seeding, setSeeding] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -60,6 +74,54 @@ export default function SlideDemoLineup() {
   const reset = () => {
     setShownIds([]);
     setCurrentId(null);
+  };
+
+  const seedTestTeams = async () => {
+    if (demos.length >= MAX_DEMOS || seeding) return;
+    setSeeding(true);
+    try {
+      // Sequential so the server-side MAX_DEMOS cap stays authoritative.
+      for (const team of TEST_TEAMS) {
+        const res = await fetch("/api/mulerun/demos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(team),
+        });
+        if (res.status === 409) break; // hit the cap, stop quietly
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          window.alert(body?.error ?? "Couldn't seed test teams.");
+          break;
+        }
+      }
+      await load();
+    } catch {
+      window.alert("Network error while seeding. Try again.");
+    } finally {
+      setSeeding(false);
+    }
+  };
+
+  const clearAll = async () => {
+    if (demos.length === 0) return;
+    const ok = window.confirm(
+      `Delete all ${demos.length} submission${demos.length === 1 ? "" : "s"}? This can't be undone.`
+    );
+    if (!ok) return;
+    try {
+      const res = await fetch("/api/mulerun/demos?all=1", { method: "DELETE" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        window.alert(body?.error ?? "Couldn't clear submissions.");
+        return;
+      }
+      setShownIds([]);
+      setCurrentId(null);
+      setDemos([]);
+      load();
+    } catch {
+      window.alert("Network error. Try again.");
+    }
   };
 
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=${encodeURIComponent(
@@ -165,14 +227,32 @@ export default function SlideDemoLineup() {
 
       {/* Controls */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-        <button
-          onClick={reset}
-          disabled={shownIds.length === 0}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
-        >
-          <RotateCcw className="size-3" strokeWidth={2} />
-          Reset lineup
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={reset}
+            disabled={shownIds.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
+          >
+            <RotateCcw className="size-3" strokeWidth={2} />
+            Reset lineup
+          </button>
+          <button
+            onClick={clearAll}
+            disabled={demos.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-full border border-destructive/30 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-destructive transition-colors hover:bg-destructive/5 disabled:opacity-30"
+          >
+            <Trash2 className="size-3" strokeWidth={2} />
+            Clear submissions
+          </button>
+          <button
+            onClick={seedTestTeams}
+            disabled={demos.length >= MAX_DEMOS || seeding}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
+          >
+            <Sparkles className="size-3" strokeWidth={2} />
+            {seeding ? "Seeding…" : "Seed test teams"}
+          </button>
+        </div>
         <button
           onClick={pickNext}
           disabled={remaining.length === 0}

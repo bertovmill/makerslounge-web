@@ -32,7 +32,7 @@ export type Slide = {
 
 export const SLIDES: Slide[] = [
   { n: 1, slug: "title", title: "Title", Component: SlideTitle },
-  { n: 2, slug: "tonight", title: "Tonight", Component: SlideTonight },
+  { n: 2, slug: "about", title: "About", Component: SlideAbout },
   { n: 3, slug: "partners", title: "Partners", Component: SlidePartners },
   { n: 4, slug: "house-rules", title: "House rules", Component: SlideLogistics },
   { n: 5, slug: "schedule", title: "Schedule", Component: SlideSchedule },
@@ -176,25 +176,60 @@ function SlideTitle() {
   );
 }
 
-function SlideTonight() {
+function SlideAbout() {
+  const channels = [
+    {
+      tag: "01",
+      name: "Community platform",
+      body: "Profiles, projects, and the matcher — built so makers can find collaborators who fill the gaps.",
+    },
+    {
+      tag: "02",
+      name: "Events in Toronto",
+      body: "Maker Mondays, hack nights, and meetups where builders ship and connect in person.",
+    },
+    {
+      tag: "03",
+      name: "AI workshops",
+      body: "Hands-on sessions to help makers leverage AI tools and stay ahead of the curve.",
+    },
+    {
+      tag: "04",
+      name: "Podcast",
+      body: "Candid conversations with founders — the wins, the struggles, everything in between.",
+    },
+  ];
   return (
-    <div className="grid h-full grid-rows-[auto_1fr_auto]">
-      <Eyebrow n={1} label="Tonight" />
-      <div className="flex flex-col justify-center gap-[clamp(1rem,3vh,2.5rem)]">
-        <h2 className="max-w-[18ch] font-serif text-[clamp(2.5rem,8.5vw,8rem)] leading-[0.95] tracking-tight">
-          One night. One agent. One demo.
-        </h2>
-        <p className="max-w-[55ch] text-[clamp(1.05rem,1.6vw,1.6rem)] text-muted-foreground">
-          This isn&apos;t a workshop — it&apos;s a competition. You have a couple of hours to design, build, and pitch your own AI agent using MuleRun. Best builds take home the prizes.
-        </p>
+    <div className="grid h-full grid-rows-[auto_1fr] gap-[clamp(1rem,3vh,2rem)]">
+      <Eyebrow n={1} label="About" />
+      <div className="flex flex-col justify-center gap-[clamp(1.25rem,3vh,2.5rem)]">
+        <div className="flex flex-col gap-3">
+          <h2 className="max-w-[20ch] font-serif text-[clamp(2.5rem,7.5vw,7rem)] leading-[0.92] tracking-tight">
+            What is Makers&apos; Lounge?
+          </h2>
+          <p className="max-w-[60ch] text-[clamp(1rem,1.5vw,1.4rem)] text-muted-foreground">
+            A Toronto community for builders. First-time creator or seasoned founder — we&apos;re here to help passionate people find their people, because finding the right collaborators shouldn&apos;t be that hard.
+          </p>
+        </div>
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {channels.map((c) => (
+            <li
+              key={c.tag}
+              className="flex flex-col gap-2.5 rounded-lg border border-border bg-card/30 p-3 transition-colors hover:border-foreground/40 hover:bg-card/60 sm:p-4"
+            >
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                {c.tag}
+              </span>
+              <h3 className="font-serif text-[clamp(1.15rem,1.8vw,1.6rem)] leading-tight tracking-tight">
+                {c.name}
+              </h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {c.body}
+              </p>
+            </li>
+          ))}
+        </ul>
       </div>
-      <StatRow
-        items={[
-          { value: "2h", label: "To build" },
-          { value: "$15", label: "MuleRun credits each" },
-          { value: "Top 3", label: "Cash prizes" },
-        ]}
-      />
     </div>
   );
 }
@@ -496,43 +531,36 @@ function SlideJudging() {
 }
 
 function SlideDemos() {
-  const flow = [
-    { time: "8:15 PM", label: "Demos kick off. We call teams up in order." },
-    { time: "3 min", label: "Live on stage. Run the agent in front of the room." },
-    { time: "Wave-off", label: "Hard three-minute cap — yes, even mid-sentence." },
-    { time: "No Q&A", label: "Demo and step down. Keep the pace." },
-    { time: "~8:45 PM", label: "Last team done. Judges step out to deliberate." },
-    { time: "5–10 min", label: "Judges decide. The rest of us hang." },
-    { time: "~9:00 PM", label: "Winners announced. Prizes paid out." },
-  ];
   return (
-    <div className="grid h-full grid-rows-[auto_1fr] gap-[clamp(1rem,3vh,2rem)]">
+    <div className="grid h-full grid-rows-[auto_1fr_auto] gap-[clamp(1rem,3vh,2rem)]">
       <Eyebrow n={8} label="Demos" />
-      <div className="flex flex-col justify-center gap-[clamp(1.25rem,3vh,2.5rem)]">
-        <div className="flex flex-col gap-3">
-          <h2 className="max-w-[18ch] font-serif text-[clamp(2.5rem,8vw,7rem)] leading-[0.92] tracking-tight">
+      <div className="grid min-h-0 items-center gap-[clamp(1.5rem,4vw,4rem)] lg:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="flex flex-col gap-[clamp(1rem,2.5vh,2rem)]">
+          <h2 className="font-serif text-[clamp(3rem,10vw,10rem)] leading-[0.9] tracking-tight">
             Demo time.
           </h2>
-          <p className="max-w-[55ch] text-[clamp(1rem,1.5vw,1.4rem)] text-muted-foreground">
-            Up to 10 teams. Three minutes each. No questions.
+          <p className="max-w-[40ch] text-[clamp(1.05rem,1.6vw,1.5rem)] text-muted-foreground">
+            Three minutes each. No questions. Wave-off at three — yes, even mid-sentence.
           </p>
         </div>
-        <ul className="flex flex-col">
-          {flow.map((row) => (
-            <li
-              key={row.time}
-              className="grid grid-cols-[6rem_1fr] items-baseline gap-4 border-t border-border py-[clamp(0.55rem,1.3vh,0.9rem)] last:border-b sm:grid-cols-[9rem_1fr]"
-            >
-              <span className="font-mono text-[clamp(0.85rem,1.3vw,1.05rem)] tabular-nums text-foreground">
-                {row.time}
-              </span>
-              <span className="font-serif text-[clamp(1.1rem,2vw,1.6rem)] tracking-tight">
-                {row.label}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div className="hidden justify-end lg:flex">
+          <Image
+            src="/hackathons/mulerun/demo-time.png"
+            alt="Glass stopwatch"
+            width={1024}
+            height={1024}
+            priority
+            className="h-[clamp(16rem,48vh,36rem)] w-auto object-contain drop-shadow-[0_24px_60px_rgba(26,125,232,0.35)]"
+          />
+        </div>
       </div>
+      <StatRow
+        items={[
+          { value: "3 min", label: "Per team" },
+          { value: "10", label: "Teams max" },
+          { value: "No Q&A", label: "Demo and step down" },
+        ]}
+      />
     </div>
   );
 }
@@ -669,9 +697,18 @@ function SlidePartners() {
 
 function SlideBuild() {
   const reminders = [
-    "Any desk, any room — ping pong breaks welcome",
-    "Pizza + water only — please leave the kitchen snacks",
-    "No photos around the office",
+    {
+      image: "/hackathons/mulerun/build/pingpong.png",
+      text: "Any desk, any room — ping pong breaks welcome",
+    },
+    {
+      image: "/hackathons/mulerun/build/pizza.png",
+      text: "Pizza + water only — please leave the kitchen snacks",
+    },
+    {
+      image: "/hackathons/mulerun/build/nophotos.png",
+      text: "No photos around the office",
+    },
   ];
   return (
     <div className="grid h-full grid-rows-[auto_1fr_auto]">
@@ -683,11 +720,22 @@ function SlideBuild() {
         <p className="max-w-[55ch] text-[clamp(1rem,1.6vw,1.5rem)] text-muted-foreground">
           The clock is on. Demos at 8:15. Win or learn — either way, you&apos;ll ship something tonight.
         </p>
-        <ul className="flex flex-wrap gap-x-4 gap-y-1.5 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground/80">
-          {reminders.map((r, i) => (
-            <li key={r} className="flex items-center gap-3">
-              {i > 0 && <span aria-hidden className="text-muted-foreground/40">·</span>}
-              <span>{r}</span>
+        <ul className="grid gap-[clamp(1rem,2vw,2rem)] sm:grid-cols-3">
+          {reminders.map((r) => (
+            <li
+              key={r.text}
+              className="flex items-center gap-3 sm:flex-col sm:items-start sm:gap-2"
+            >
+              <Image
+                src={r.image}
+                alt=""
+                width={1024}
+                height={1024}
+                className="size-[clamp(3.5rem,7vw,6rem)] shrink-0 object-contain mix-blend-multiply"
+              />
+              <span className="font-mono text-[clamp(0.8rem,1.05vw,1rem)] uppercase tracking-[0.14em] text-muted-foreground">
+                {r.text}
+              </span>
             </li>
           ))}
         </ul>
