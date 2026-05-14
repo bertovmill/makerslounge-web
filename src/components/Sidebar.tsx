@@ -126,8 +126,8 @@ export default function Sidebar() {
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-4">
               <Link href="/home" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
-                <Image src="/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
-                <Image src="/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
+                <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
+                <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
                 <span className="text-lg font-sans font-normal tracking-normal text-foreground">makerslounge</span>
               </Link>
               <button
@@ -225,8 +225,8 @@ export default function Sidebar() {
                 <PanelLeft className="w-5 h-5 text-muted-foreground" />
               ) : (
                 <>
-                  <Image src="/logo.svg" alt="MakersLounge" width={20} height={21} className="dark:hidden" />
-                  <Image src="/logo-light.svg" alt="MakersLounge" width={20} height={21} className="hidden dark:block" />
+                  <Image src="/logos/logo.svg" alt="MakersLounge" width={20} height={21} className="dark:hidden" />
+                  <Image src="/logos/logo-light.svg" alt="MakersLounge" width={20} height={21} className="hidden dark:block" />
                 </>
               )}
               {/* Tooltip */}
@@ -240,8 +240,8 @@ export default function Sidebar() {
             /* Expanded: logo + text + toggle button */
             <div className="flex items-center justify-between">
               <Link href="/home" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
-                <Image src="/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
-                <Image src="/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
+                <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
+                <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
                 <span className="text-lg font-sans font-normal tracking-normal text-foreground">
                   makerslounge
                 </span>

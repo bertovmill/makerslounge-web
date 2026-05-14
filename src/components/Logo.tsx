@@ -13,8 +13,8 @@ export default function Logo({ className = "", href = "/", size, showText }: Log
   void showText;
   return (
     <Link href={href} className={`flex items-center gap-1.5 hover:opacity-70 transition-opacity ${className}`}>
-      <Image src="/logo-blue.svg" alt="MakersLounge" width={20} height={21} className="dark:hidden" />
-      <Image src="/logo-light.svg" alt="MakersLounge" width={20} height={21} className="hidden dark:block" />
+      <Image src="/logos/logo-blue.svg" alt="MakersLounge" width={20} height={21} className="dark:hidden" />
+      <Image src="/logos/logo-light.svg" alt="MakersLounge" width={20} height={21} className="hidden dark:block" />
       <span className="text-xl font-sans font-normal tracking-normal text-foreground">
         makerslounge
       </span>
@@ -24,6 +24,6 @@ export default function Logo({ className = "", href = "/", size, showText }: Log
 
 export function LogoIcon({ size = 32 }: { size?: number }) {
   return (
-    <Image src="/logo-blue.svg" alt="MakersLounge" width={size} height={size} />
+    <Image src="/logos/logo-blue.svg" alt="MakersLounge" width={size} height={size} />
   );
 }

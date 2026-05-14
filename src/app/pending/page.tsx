@@ -45,8 +45,8 @@ export default function PendingPage() {
       <div className="max-w-md w-full text-center">
         {/* Logo */}
         <Link href="/" className="inline-block mb-8">
-          <Image src="/logo-blue.svg" alt="MakersLounge" width={48} height={48} className="mx-auto dark:hidden" />
-          <Image src="/logo-light.svg" alt="MakersLounge" width={48} height={48} className="mx-auto hidden dark:block" />
+          <Image src="/logos/logo-blue.svg" alt="MakersLounge" width={48} height={48} className="mx-auto dark:hidden" />
+          <Image src="/logos/logo-light.svg" alt="MakersLounge" width={48} height={48} className="mx-auto hidden dark:block" />
         </Link>
 
         {/* Icon */}

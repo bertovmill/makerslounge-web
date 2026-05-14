@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       subject: "You're in! Welcome to MakersLounge",
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
-          <img src="https://makerslounge.ca/logo-blue.svg" alt="MakersLounge" width="40" height="40" style="margin-bottom: 24px;" />
+          <img src="https://makerslounge.ca/logos/logo-blue.svg" alt="MakersLounge" width="40" height="40" style="margin-bottom: 24px;" />
           <h1 style="font-size: 24px; margin-bottom: 8px;">Welcome to MakersLounge, ${name.split(" ")[0]}!</h1>
           <p style="color: #666; font-size: 16px; line-height: 1.6;">
             Great news — your application has been approved. You're now part of a curated community of makers and builders.

@@ -25,8 +25,8 @@ export default function AboutPage() {
       {/* Nav */}
       <header className="relative z-20 flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <Link href="/" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
-          <Image src="/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
-          <Image src="/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
+          <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
+          <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
           <span className="text-base sm:text-xl font-sans font-normal tracking-normal">makerslounge</span>
         </Link>
 
@@ -74,8 +74,8 @@ export default function AboutPage() {
         <div className="sm:hidden fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
             <Link href="/" className="flex items-center gap-1.5" onClick={() => setMobileMenuOpen(false)}>
-              <Image src="/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
-              <Image src="/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
+              <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
+              <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
               <span className="text-base font-sans font-normal tracking-normal">makerslounge</span>
             </Link>
             <button

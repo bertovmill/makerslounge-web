@@ -64,12 +64,12 @@ Required in `.env.local`:
 
 ## Branding & Assets
 
-**Logos**: All logo variants live in `public/` and `Makerslounge-Branding/`:
-- `logo-luma.png` / `logo-luma.svg` — Luma event profile logo
-- `luma-banner.png` / `luma-banner.svg` — Luma event banner (mission statement on blue gradient)
-- `logo-banner-blue.png` / `logo-banner-blue.svg` — Blue banner logo
-- `logo-instagram.png` / `logo-instagram.svg` — Instagram profile logo
-- `linkedin-banner.png` / `linkedin-banner.svg` — LinkedIn banner
+**Logos**: All logo variants live in `public/logos/` and `Makerslounge-Branding/`:
+- `logos/logo-luma.png` / `logos/logo-luma.svg` — Luma event profile logo
+- `logos/luma-banner.png` / `logos/luma-banner.svg` — Luma event banner (mission statement on blue gradient)
+- `logos/logo-banner-blue.png` / `logos/logo-banner-blue.svg` — Blue banner logo
+- `logos/logo-instagram.png` / `logos/logo-instagram.svg` — Instagram profile logo
+- `logos/linkedin-banner.png` / `logos/linkedin-banner.svg` — LinkedIn banner
 
 **Brand colors**: Blue gradient (#6AC4F7 → #3A9FF3 → #1A7DE8), white text/logo
 

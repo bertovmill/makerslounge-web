@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/context/ThemeContext";
-import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, Instagram, Linkedin, Menu, X, Mic, Play, ExternalLink, Zap, BookOpen, Heart, PartyPopper } from "lucide-react";
+import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, Instagram, Linkedin, Menu, X, Mic, Play, ExternalLink, BookOpen, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { AnimatedLogo } from "@/components/AnimatedLogo";
@@ -254,8 +254,8 @@ export default function Home() {
       {/* Nav */}
       <header className="relative z-20 flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <Link href="/" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
-          <Image src="/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
-          <Image src="/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
+          <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
+          <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
           <span className="text-base sm:text-xl font-sans font-normal tracking-normal">makerslounge</span>
         </Link>
 
@@ -309,8 +309,8 @@ export default function Home() {
         <div className="sm:hidden fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
             <Link href="/" className="flex items-center gap-1.5" onClick={() => setMobileMenuOpen(false)}>
-              <Image src="/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
-              <Image src="/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
+              <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
+              <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
               <span className="text-base font-sans font-normal tracking-normal">makerslounge</span>
             </Link>
             <button
@@ -462,22 +462,71 @@ export default function Home() {
         <div className="w-full max-w-[640px] mb-8 sm:mb-12">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {[
-              { icon: Zap, label: "Hustle", description: "We ship fast, iterate often, and never stop building." },
-              { icon: BookOpen, label: "Learning", description: "Every maker is a student. We grow by sharing knowledge." },
-              { icon: Heart, label: "Community", description: "We lift each other up. Your win is our win." },
-              { icon: PartyPopper, label: "Fun", description: "Building should be exciting. We celebrate the joy of creating." },
+              { image: "/values/hustle.png", label: "Hustle", description: "We ship fast, iterate often, and never stop building." },
+              { image: "/values/learning.png", label: "Learning", description: "Every maker is a student. We grow by sharing knowledge." },
+              { image: "/values/community.png", label: "Community", description: "We lift each other up. Your win is our win." },
+              { image: "/values/fun.png", label: "Fun", description: "Building should be exciting. We celebrate the joy of creating." },
             ].map((value) => (
               <div
                 key={value.label}
-                className="flex flex-col items-center text-center p-4 sm:p-5 rounded-2xl border border-border bg-card/50 backdrop-blur-sm"
+                className="group flex flex-col rounded-2xl border border-border bg-card/50 backdrop-blur-sm overflow-hidden hover:border-[#3A9FF3]/40 hover:shadow-[0_8px_30px_rgba(58,159,243,0.12)] transition-all duration-300"
               >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-[#6AC4F7] to-[#1A7DE8] flex items-center justify-center mb-3">
-                  <value.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="relative aspect-square w-full bg-gradient-to-br from-white to-blue-50/40 dark:from-[#0a1628] dark:to-[#0d1f3d] overflow-hidden">
+                  <Image
+                    src={value.image}
+                    alt={value.label}
+                    fill
+                    sizes="(max-width: 640px) 50vw, 160px"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500 dark:mix-blend-screen dark:opacity-90"
+                  />
                 </div>
-                <h3 className="text-sm sm:text-base font-semibold text-foreground mb-1">{value.label}</h3>
-                <p className="text-[11px] sm:text-xs text-muted-foreground/80 leading-relaxed">{value.description}</p>
+                <div className="p-3 sm:p-4 text-center">
+                  <h3 className="text-sm sm:text-base font-semibold text-foreground mb-1">{value.label}</h3>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground/80 leading-relaxed">{value.description}</p>
+                </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Hackathon Section */}
+        <div className="w-full max-w-[640px] mb-8 sm:mb-12">
+          <div className="rounded-2xl border border-[#3A9FF3]/40 bg-gradient-to-br from-[#3A9FF3]/[0.06] to-[#1A7DE8]/[0.1] backdrop-blur-sm overflow-hidden shadow-[0_8px_30px_rgba(58,159,243,0.12)]">
+            <div className="flex items-center gap-4 p-4 sm:p-5">
+              {/* Hackathon icon */}
+              <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-[#6AC4F7] to-[#1A7DE8] flex items-center justify-center">
+                <Trophy className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-[#3A9FF3]">Hackathon</span>
+                  <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-green-500 font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                    Tonight
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">AI Hackathon Night with MuleRun</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground/80 line-clamp-1">Thu May 14 · 6–9 PM · 510 Front St W · Cash prizes for top 3.</p>
+              </div>
+
+              {/* Details button */}
+              <Link
+                href="/hackathons/mulerun"
+                className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-foreground text-background text-xs sm:text-sm font-medium hover:opacity-80 transition-opacity"
+              >
+                <Trophy className="w-3 h-3" />
+                Details
+              </Link>
+            </div>
+
+            {/* All hackathons preview */}
+            <Link href="/hackathons" className="border-t border-[#3A9FF3]/20 px-4 sm:px-5 py-3 flex items-center gap-3 hover:bg-[#3A9FF3]/[0.04] transition-colors">
+              <span className="text-[10px] sm:text-xs text-muted-foreground/60 uppercase tracking-wide flex-shrink-0">All</span>
+              <p className="text-xs sm:text-sm text-foreground/80 truncate">Browse upcoming hackathons</p>
+              <ChevronRight className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
+            </Link>
           </div>
         </div>
 
@@ -698,8 +747,8 @@ export default function Home() {
             {/* Brand */}
             <div className="flex flex-col items-center sm:items-start gap-2">
               <Link href="/" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
-                <Image src="/logo.svg" alt="MakersLounge" width={16} height={17} className="dark:hidden" />
-                <Image src="/logo-light.svg" alt="MakersLounge" width={16} height={17} className="hidden dark:block" />
+                <Image src="/logos/logo.svg" alt="MakersLounge" width={16} height={17} className="dark:hidden" />
+                <Image src="/logos/logo-light.svg" alt="MakersLounge" width={16} height={17} className="hidden dark:block" />
                 <span className="text-sm font-sans font-normal">makerslounge</span>
               </Link>
               <p className="text-xs text-muted-foreground/60">Build. Connect. Create.</p>
@@ -707,6 +756,7 @@ export default function Home() {
 
             {/* Links */}
             <div className="flex items-center gap-4 sm:gap-6 text-xs text-muted-foreground/60">
+              <Link href="/hackathons" className="hover:text-foreground transition-colors">Hackathons</Link>
               <Link href="/blog" className="hover:text-foreground transition-colors">Blog</Link>
               <a href="https://lu.ma/makerslounge" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Luma</a>
               <a href="https://instagram.com/makersloungeto" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Instagram</a>

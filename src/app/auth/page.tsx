@@ -40,8 +40,8 @@ function SignUpForm({ onSignIn }: { onSignIn: () => void }) {
     <>
       <div className="text-center mb-5">
         <Link href="/" className="inline-block mb-4">
-          <img src="/logo-blue.svg" alt="MakersLounge" className="w-10 h-10 mx-auto dark:hidden" />
-          <img src="/logo-light.svg" alt="MakersLounge" className="w-10 h-10 mx-auto hidden dark:block" />
+          <img src="/logos/logo-blue.svg" alt="MakersLounge" className="w-10 h-10 mx-auto dark:hidden" />
+          <img src="/logos/logo-light.svg" alt="MakersLounge" className="w-10 h-10 mx-auto hidden dark:block" />
         </Link>
         <h1 className="text-xl font-semibold mb-0.5">Create an account</h1>
         <p className="text-sm text-muted-foreground">Join a community of makers and builders</p>
@@ -212,8 +212,8 @@ function SignInForm({ onSignUp }: { onSignUp: () => void }) {
 
       <div className="text-center mb-5">
         <Link href="/" className="inline-block mb-4">
-          <img src="/logo-blue.svg" alt="MakersLounge" className="w-10 h-10 mx-auto dark:hidden" />
-          <img src="/logo-light.svg" alt="MakersLounge" className="w-10 h-10 mx-auto hidden dark:block" />
+          <img src="/logos/logo-blue.svg" alt="MakersLounge" className="w-10 h-10 mx-auto dark:hidden" />
+          <img src="/logos/logo-light.svg" alt="MakersLounge" className="w-10 h-10 mx-auto hidden dark:block" />
         </Link>
         <h1 className="text-xl font-semibold mb-0.5">Welcome back</h1>
         <p className="text-sm text-muted-foreground">Sign in to your account</p>

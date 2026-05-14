@@ -129,7 +129,7 @@ const ThreadWelcome: FC = () => {
       <div className="flex flex-col items-center text-center mb-8 px-4">
         <div className="relative flex items-center justify-center size-14 mb-4">
           <Image
-            src="/logo-blue.png"
+            src="/logos/logo-blue.png"
             alt="MakersLounge"
             width={40}
             height={40}
