@@ -2,17 +2,26 @@ import {
   Briefcase,
   Building2,
   Calendar,
+  CameraOff,
   Globe,
+  Hand,
+  LogOut,
+  MapPin,
   Megaphone,
+  Navigation,
   PenLine,
   PenTool,
+  Pizza,
   Search,
   Sparkles,
+  Wifi,
 } from "lucide-react";
 import Image from "next/image";
 import SlideMuleRun from "./SlideMuleRun";
 import SlidePresentationTeams from "./SlidePresentationTeams";
 import SlideDemoLineup from "./SlideDemoLineup";
+import SlideVote from "./SlideVote";
+import SlideWinners from "./SlideWinners";
 
 export type Slide = {
   n: number;
@@ -33,9 +42,11 @@ export const SLIDES: Slide[] = [
   { n: 9, slug: "team-matches", title: "Team matches", Component: SlidePresentationTeams },
   { n: 10, slug: "prizes", title: "Prizes", Component: SlidePrizes },
   { n: 11, slug: "judging", title: "Judging", Component: SlideJudging },
-  { n: 12, slug: "demos", title: "Demos", Component: SlideDemos },
-  { n: 13, slug: "demo-lineup", title: "Demo lineup", Component: SlideDemoLineup },
-  { n: 14, slug: "build", title: "Build", Component: SlideBuild },
+  { n: 12, slug: "build", title: "Build", Component: SlideBuild },
+  { n: 13, slug: "demos", title: "Demos", Component: SlideDemos },
+  { n: 14, slug: "demo-lineup", title: "Demo lineup", Component: SlideDemoLineup },
+  { n: 15, slug: "vote", title: "Vote", Component: SlideVote },
+  { n: 16, slug: "winners", title: "Winners", Component: SlideWinners },
 ];
 
 export const SLIDE_COUNT = SLIDES.length;
@@ -113,15 +124,27 @@ function SlideTitle() {
           </span>
         </div>
       </div>
-      <div className="my-auto">
-        <h1 className="font-serif text-[clamp(3rem,12vw,11rem)] leading-[0.92] tracking-tight">
-          AI Hackathon
-          <br />
-          Night.
-        </h1>
-        <p className="mt-[clamp(1.25rem,3vh,2.25rem)] max-w-[42ch] text-[clamp(1rem,1.5vw,1.4rem)] text-muted-foreground">
-          Build an AI agent. Demo it. Win cash.
-        </p>
+      <div className="my-auto grid items-center gap-[clamp(1.5rem,4vw,4rem)] lg:grid-cols-[minmax(0,1fr)_auto]">
+        <div>
+          <h1 className="font-serif text-[clamp(3rem,12vw,11rem)] leading-[0.92] tracking-tight">
+            AI Hackathon
+            <br />
+            Night.
+          </h1>
+          <p className="mt-[clamp(1.25rem,3vh,2.25rem)] max-w-[42ch] text-[clamp(1rem,1.5vw,1.4rem)] text-muted-foreground">
+            Build an AI agent. Demo it. Win cash.
+          </p>
+        </div>
+        <div className="hidden justify-end lg:flex">
+          <Image
+            src="/logos/logo-glass-blue.png"
+            alt="MakersLounge"
+            width={1024}
+            height={1024}
+            priority
+            className="h-[clamp(16rem,40vh,32rem)] w-auto object-contain drop-shadow-[0_24px_60px_rgba(26,125,232,0.35)]"
+          />
+        </div>
       </div>
       <div className="mt-auto flex flex-col gap-6 font-mono text-sm uppercase tracking-[0.12em] text-muted-foreground sm:flex-row sm:items-end sm:justify-between sm:gap-8">
         <div className="flex flex-col gap-1">
@@ -144,7 +167,7 @@ function SlideTitle() {
               alt="Scan to follow Makerslounge on Luma"
               width={120}
               height={120}
-              className="size-[clamp(11rem,17vw,15rem)] object-contain"
+              className="size-[clamp(6rem,14vh,11rem)] object-contain"
             />
           </div>
         </div>
@@ -428,42 +451,17 @@ function SlideJudging() {
       body: "If you had another two weeks on this, what would you build next?",
     },
   ];
-  const rubricQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&data=${encodeURIComponent(
-    "https://makerslounge.ca/hackathons/mulerun/rubric"
-  )}`;
   return (
     <div className="grid h-full grid-rows-[auto_1fr] gap-[clamp(1rem,3vh,2rem)]">
       <Eyebrow n={7} label="Judging" />
       <div className="flex flex-col justify-center gap-[clamp(1.25rem,3vh,2.25rem)]">
-        <div className="grid items-start gap-[clamp(1.25rem,3vw,2.5rem)] sm:grid-cols-[minmax(0,1fr)_auto]">
-          <div className="flex flex-col gap-3">
-            <h2 className="max-w-[22ch] font-serif text-[clamp(2.25rem,6.5vw,5.5rem)] leading-[0.95] tracking-tight">
-              Pitch a workflow.
-            </h2>
-            <p className="max-w-[60ch] text-[clamp(0.95rem,1.3vw,1.2rem)] text-muted-foreground">
-              Step into the shoes of someone trying to automate parts of their job. Tell us their role, what they do, and how your set of agents fits together.
-            </p>
-          </div>
-          <div className="flex items-center gap-3 self-start">
-            <div className="flex flex-col items-end gap-1 text-right">
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                Scan for rubric
-              </span>
-              <span className="font-mono text-[10px] tracking-tight text-foreground">
-                /mulerun/rubric
-              </span>
-            </div>
-            <div className="rounded-lg border border-border bg-white p-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={rubricQrUrl}
-                alt="Scan to open the MuleRun judging rubric"
-                width={120}
-                height={120}
-                className="size-[clamp(10rem,15vw,13.75rem)] object-contain"
-              />
-            </div>
-          </div>
+        <div className="flex flex-col gap-3">
+          <h2 className="max-w-[22ch] font-serif text-[clamp(2.25rem,6.5vw,5.5rem)] leading-[0.95] tracking-tight">
+            Pitch a workflow.
+          </h2>
+          <p className="max-w-[60ch] text-[clamp(0.95rem,1.3vw,1.2rem)] text-muted-foreground">
+            Step into the shoes of someone trying to automate parts of their job. Tell us their role, what they do, and how your set of agents fits together.
+          </p>
         </div>
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {criteria.map((c) => (
@@ -542,30 +540,37 @@ function SlideDemos() {
 function SlideLogistics() {
   const rules = [
     {
+      Icon: CameraOff,
       tag: "No photos",
       body: "Active office — we're guests. Keep cameras down indoors out of respect for the teams here.",
     },
     {
+      Icon: MapPin,
       tag: "Stay in",
       body: "Stick to the event area. Please don't wander into workstations or private offices.",
     },
     {
+      Icon: LogOut,
       tag: "Stepping out",
       body: "Heading to the bathroom or leaving early? Let a host know.",
     },
     {
+      Icon: Navigation,
       tag: "Bathrooms",
       body: "By the elevators on the 4th floor.",
     },
     {
+      Icon: Pizza,
       tag: "Food",
       body: "Pizza is on the way — not the snacks in the kitchen.",
     },
     {
+      Icon: Wifi,
       tag: "WiFi",
       body: "Network + password in the top-right of every slide.",
     },
     {
+      Icon: Hand,
       tag: "Need anything",
       body: "Find Berto or anyone with a MakersLounge tee.",
     },
@@ -573,22 +578,28 @@ function SlideLogistics() {
   return (
     <div className="grid h-full grid-rows-[auto_1fr] gap-[clamp(1rem,3vh,2rem)]">
       <Eyebrow n={3} label="House rules" />
-      <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
-        <h2 className="max-w-[24ch] font-serif text-[clamp(1.75rem,4.5vw,3.75rem)] leading-[1.05] tracking-tight">
-          A few quick house rules before we get started.
+      <div className="flex flex-col justify-center gap-[clamp(1.25rem,3.5vh,2.5rem)]">
+        <h2 className="max-w-[20ch] font-serif text-[clamp(2.25rem,6vw,5.5rem)] leading-[0.95] tracking-tight">
+          A few quick house rules.
         </h2>
-        <ul className="grid gap-x-[clamp(1.5rem,4vw,3rem)] gap-y-0 sm:grid-cols-2">
+        <ul className="grid gap-[clamp(0.75rem,1.5vw,1.25rem)] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {rules.map((r) => (
             <li
               key={r.tag}
-              className="grid grid-cols-[6.5rem_1fr] items-baseline gap-3 border-t border-border py-[clamp(0.6rem,1.6vh,1.1rem)] last:border-b sm:grid-cols-[8rem_1fr] sm:gap-4"
+              className="flex flex-col gap-[clamp(0.5rem,1vw,0.85rem)] rounded-xl border border-border bg-card/30 p-[clamp(1rem,1.6vw,1.5rem)] transition-colors hover:border-foreground/40 hover:bg-card/60"
             >
-              <span className="font-mono text-xs uppercase tracking-[0.18em] text-foreground">
+              <div className="flex size-[clamp(2.25rem,3.2vw,3rem)] items-center justify-center rounded-lg bg-foreground/[0.06]">
+                <r.Icon
+                  className="size-[clamp(1.1rem,1.6vw,1.5rem)] text-foreground"
+                  strokeWidth={1.5}
+                />
+              </div>
+              <span className="font-mono text-[clamp(0.7rem,0.85vw,0.85rem)] uppercase tracking-[0.18em] text-foreground">
                 {r.tag}
               </span>
-              <span className="text-sm text-muted-foreground sm:text-base">
+              <p className="text-[clamp(0.95rem,1.2vw,1.2rem)] leading-snug text-muted-foreground">
                 {r.body}
-              </span>
+              </p>
             </li>
           ))}
         </ul>
@@ -657,6 +668,11 @@ function SlidePartners() {
 }
 
 function SlideBuild() {
+  const reminders = [
+    "Any desk, any room — ping pong breaks welcome",
+    "Pizza + water only — please leave the kitchen snacks",
+    "No photos around the office",
+  ];
   return (
     <div className="grid h-full grid-rows-[auto_1fr_auto]">
       <Eyebrow n={12} label="Go" />
@@ -667,6 +683,14 @@ function SlideBuild() {
         <p className="max-w-[55ch] text-[clamp(1rem,1.6vw,1.5rem)] text-muted-foreground">
           The clock is on. Demos at 8:15. Win or learn — either way, you&apos;ll ship something tonight.
         </p>
+        <ul className="flex flex-wrap gap-x-4 gap-y-1.5 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground/80">
+          {reminders.map((r, i) => (
+            <li key={r} className="flex items-center gap-3">
+              {i > 0 && <span aria-hidden className="text-muted-foreground/40">·</span>}
+              <span>{r}</span>
+            </li>
+          ))}
+        </ul>
       </div>
       <div className="flex flex-col gap-3 border-t border-border pt-6 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-x-5 gap-y-2 text-foreground">
