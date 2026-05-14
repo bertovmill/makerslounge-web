@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import SlideMuleRun from "./SlideMuleRun";
+import SlideDemoLineup from "./SlideDemoLineup";
 
 export type Slide = {
   n: number;
@@ -29,9 +30,10 @@ export const SLIDES: Slide[] = [
   { n: 7, slug: "prizes", title: "Prizes", Component: SlidePrizes },
   { n: 8, slug: "judging", title: "Judging", Component: SlideJudging },
   { n: 9, slug: "demos", title: "Demos", Component: SlideDemos },
-  { n: 10, slug: "house-rules", title: "House rules", Component: SlideLogistics },
-  { n: 11, slug: "partners", title: "Partners", Component: SlidePartners },
-  { n: 12, slug: "build", title: "Build", Component: SlideBuild },
+  { n: 10, slug: "demo-lineup", title: "Demo lineup", Component: SlideDemoLineup },
+  { n: 11, slug: "house-rules", title: "House rules", Component: SlideLogistics },
+  { n: 12, slug: "partners", title: "Partners", Component: SlidePartners },
+  { n: 13, slug: "build", title: "Build", Component: SlideBuild },
 ];
 
 export const SLIDE_COUNT = SLIDES.length;
@@ -504,7 +506,7 @@ function SlideLogistics() {
   ];
   return (
     <div className="grid h-full grid-rows-[auto_1fr] gap-[clamp(1rem,3vh,2rem)]">
-      <Eyebrow n={9} label="House rules" />
+      <Eyebrow n={10} label="House rules" />
       <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
         <div className="flex flex-col gap-3">
           <h2 className="max-w-[18ch] font-serif text-[clamp(2.5rem,8vw,7rem)] leading-[0.92] tracking-tight">
@@ -559,7 +561,7 @@ function SlidePartners() {
   ];
   return (
     <div className="grid h-full grid-rows-[auto_1fr]">
-      <Eyebrow n={10} label="Thank you" />
+      <Eyebrow n={11} label="Thank you" />
       <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
         <h2 className="max-w-[22ch] font-serif text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] tracking-tight">
           Tonight is made possible by our partners.
@@ -596,7 +598,7 @@ function SlidePartners() {
 function SlideBuild() {
   return (
     <div className="grid h-full grid-rows-[auto_1fr_auto]">
-      <Eyebrow n={11} label="Go" />
+      <Eyebrow n={12} label="Go" />
       <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
         <h2 className="max-w-[14ch] font-serif text-[clamp(3.5rem,14vw,14rem)] leading-[0.9] tracking-tight">
           Let&apos;s build.

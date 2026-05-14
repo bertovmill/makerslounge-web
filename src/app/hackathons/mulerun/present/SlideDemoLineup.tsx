@@ -1,0 +1,183 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { RotateCcw, Shuffle } from "lucide-react";
+
+const QR_URL = "https://makerslounge.ca/hackathons/mulerun/demo-signup";
+const MAX_DEMOS = 10;
+const POLL_MS = 5000;
+
+type Demo = {
+  id: string;
+  name: string;
+  project: string;
+};
+
+export default function SlideDemoLineup() {
+  const [demos, setDemos] = useState<Demo[]>([]);
+  const [shownIds, setShownIds] = useState<string[]>([]);
+  const [currentId, setCurrentId] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch("/api/mulerun/demos", { cache: "no-store" });
+      if (!res.ok) return;
+      const body = await res.json();
+      if (Array.isArray(body.demos)) setDemos(body.demos);
+    } catch {
+      // silent — keep last good state
+    }
+  }, []);
+
+  useEffect(() => {
+    // Polling pattern — load() sets state after async fetch. Lint flags any
+    // path that may setState inside an effect; this is the intended pattern.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+    const id = setInterval(load, POLL_MS);
+    return () => clearInterval(id);
+  }, [load]);
+
+  // Derive current from demos so a deleted team auto-clears without an effect.
+  const current = currentId
+    ? demos.find((d) => d.id === currentId) ?? null
+    : null;
+  const remaining = demos.filter((d) => !shownIds.includes(d.id));
+  const allDone = shownIds.length > 0 && remaining.length === 0;
+
+  const pickNext = () => {
+    if (remaining.length === 0) return;
+    const idx = Math.floor(Math.random() * remaining.length);
+    const next = remaining[idx];
+    setCurrentId(next.id);
+    setShownIds((prev) => [...prev, next.id]);
+  };
+
+  const reset = () => {
+    setShownIds([]);
+    setCurrentId(null);
+  };
+
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=${encodeURIComponent(
+    QR_URL
+  )}`;
+
+  return (
+    <div className="grid h-full grid-rows-[auto_1fr_auto] gap-[clamp(1rem,3vh,2rem)]">
+      {/* Eyebrow + lineup status */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          <span className="text-foreground">09</span>
+          <span className="h-px w-8 bg-border" />
+          <span>Demo lineup</span>
+        </div>
+        <div className="flex items-center gap-4 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          <span>
+            <span className="text-foreground">{shownIds.length}</span> shown
+          </span>
+          <span>
+            <span className="text-foreground">{remaining.length}</span> left
+          </span>
+          <span>
+            <span className="text-foreground">{demos.length}</span>/{MAX_DEMOS} submitted
+          </span>
+        </div>
+      </div>
+
+      {/* Hero: current team + QR */}
+      <div className="grid items-center gap-[clamp(1.5rem,4vw,4rem)] lg:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="flex min-w-0 flex-col gap-[clamp(0.75rem,2vh,1.5rem)]">
+          {current ? (
+            <>
+              <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Now demoing
+              </span>
+              <h2 className="font-serif text-[clamp(2.75rem,10vw,9rem)] leading-[0.9] tracking-tight">
+                {current.name}
+              </h2>
+              <p className="max-w-[28ch] font-serif text-[clamp(1.5rem,3.5vw,3rem)] leading-tight tracking-tight text-muted-foreground">
+                {current.project}
+              </p>
+            </>
+          ) : allDone ? (
+            <>
+              <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Wrap
+              </span>
+              <h2 className="font-serif text-[clamp(2.75rem,9vw,8rem)] leading-[0.9] tracking-tight">
+                That&apos;s a wrap.
+              </h2>
+              <p className="max-w-[28ch] font-serif text-[clamp(1.5rem,3vw,2.5rem)] leading-tight tracking-tight text-muted-foreground">
+                Judges deliberating.
+              </p>
+            </>
+          ) : demos.length === 0 ? (
+            <>
+              <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Waiting
+              </span>
+              <h2 className="font-serif text-[clamp(2.75rem,8vw,7rem)] leading-[0.9] tracking-tight">
+                Scan to submit your demo.
+              </h2>
+              <p className="max-w-[36ch] text-[clamp(0.95rem,1.3vw,1.2rem)] text-muted-foreground">
+                Up to 10 teams. We&apos;ll call you up at random.
+              </p>
+            </>
+          ) : (
+            <>
+              <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Ready
+              </span>
+              <h2 className="font-serif text-[clamp(2.75rem,8vw,7rem)] leading-[0.9] tracking-tight">
+                Press shuffle to pick the first team.
+              </h2>
+              <p className="max-w-[40ch] text-[clamp(0.95rem,1.3vw,1.2rem)] text-muted-foreground">
+                {remaining.length} team{remaining.length === 1 ? "" : "s"} in the lineup. New submissions roll in live.
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* QR — always visible so people can submit during demos */}
+        <div className="flex flex-col items-center gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Scan to submit
+          </span>
+          <div className="rounded-2xl border border-border bg-white p-[clamp(0.5rem,1.2vw,1rem)] shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={qrSrc}
+              alt="Scan to submit a demo"
+              width={420}
+              height={420}
+              className="h-[clamp(10rem,16vw,16rem)] w-[clamp(10rem,16vw,16rem)] object-contain"
+            />
+          </div>
+          <span className="font-mono text-[10px] tracking-tight text-foreground">
+            makerslounge.ca/hackathons/mulerun/demo-signup
+          </span>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+        <button
+          onClick={reset}
+          disabled={shownIds.length === 0}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
+        >
+          <RotateCcw className="size-3" strokeWidth={2} />
+          Reset lineup
+        </button>
+        <button
+          onClick={pickNext}
+          disabled={remaining.length === 0}
+          className="inline-flex items-center gap-2 rounded-lg bg-foreground px-6 py-3 font-mono text-sm uppercase tracking-[0.18em] text-background transition-opacity disabled:opacity-40"
+        >
+          <Shuffle className="size-4" strokeWidth={2} />
+          {current ? "Next team" : "Pick a team"}
+        </button>
+      </div>
+    </div>
+  );
+}
