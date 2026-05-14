@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import MarketingShell from "@/components/MarketingShell";
 
 export const metadata: Metadata = {
   title: "AI Hackathon Night with MuleRun — MakersLounge",
@@ -20,15 +21,24 @@ const MULERUN_TUTORIAL_URL =
 
 export default function MulerunHackathonPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-5xl px-[clamp(1.25rem,5vw,3rem)] pt-[clamp(3rem,10vh,7rem)] pb-[clamp(3rem,8vh,5rem)]">
-        <Link
-          href="/hackathons"
-          className="mb-[clamp(2rem,5vh,4rem)] inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground transition-opacity hover:opacity-70"
-        >
-          <ArrowLeft className="size-3.5" />
-          All hackathons
-        </Link>
+    <MarketingShell>
+      <div className="mx-auto max-w-5xl px-[clamp(1.25rem,5vw,3rem)] pt-[clamp(2rem,6vh,4rem)] pb-[clamp(3rem,8vh,5rem)] text-foreground">
+        <div className="mb-[clamp(2rem,5vh,4rem)] flex items-center justify-between gap-4">
+          <Link
+            href="/hackathons"
+            className="inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground transition-opacity hover:opacity-70"
+          >
+            <ArrowLeft className="size-3.5" />
+            All hackathons
+          </Link>
+          <Link
+            href="/hackathons/mulerun/present"
+            className="inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-[0.18em] text-foreground transition-opacity hover:opacity-70"
+          >
+            Open presentation
+            <ArrowUpRight className="size-3.5" />
+          </Link>
+        </div>
 
         <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
           <span className="text-foreground">No. 01</span>
@@ -192,7 +202,7 @@ export default function MulerunHackathonPage() {
           )}
         </section>
       </div>
-    </div>
+    </MarketingShell>
   );
 }
 

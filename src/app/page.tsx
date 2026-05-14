@@ -274,6 +274,12 @@ export default function Home() {
           >
             About Us
           </Link>
+          <Link
+            href="/hackathons"
+            className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Hackathons
+          </Link>
           <button
             onClick={openNewsletterPopup}
             className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
@@ -327,6 +333,13 @@ export default function Home() {
               onClick={() => setMobileMenuOpen(false)}
             >
               About Us
+            </Link>
+            <Link
+              href="/hackathons"
+              className="text-lg font-medium text-foreground/80 hover:text-foreground transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Hackathons
             </Link>
             <button
               onClick={() => { setMobileMenuOpen(false); openNewsletterPopup(); }}
@@ -458,37 +471,6 @@ export default function Home() {
           </a>
         </div>
 
-        {/* Values Section */}
-        <div className="w-full max-w-[640px] mb-8 sm:mb-12">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            {[
-              { image: "/values/hustle.png", label: "Hustle", description: "We ship fast, iterate often, and never stop building." },
-              { image: "/values/learning.png", label: "Learning", description: "Every maker is a student. We grow by sharing knowledge." },
-              { image: "/values/community.png", label: "Community", description: "We lift each other up. Your win is our win." },
-              { image: "/values/fun.png", label: "Fun", description: "Building should be exciting. We celebrate the joy of creating." },
-            ].map((value) => (
-              <div
-                key={value.label}
-                className="group flex flex-col rounded-2xl border border-border bg-card/50 backdrop-blur-sm overflow-hidden hover:border-[#3A9FF3]/40 hover:shadow-[0_8px_30px_rgba(58,159,243,0.12)] transition-all duration-300"
-              >
-                <div className="relative aspect-square w-full bg-gradient-to-br from-white to-blue-50/40 dark:from-[#0a1628] dark:to-[#0d1f3d] overflow-hidden">
-                  <Image
-                    src={value.image}
-                    alt={value.label}
-                    fill
-                    sizes="(max-width: 640px) 50vw, 160px"
-                    className="object-cover group-hover:scale-105 transition-transform duration-500 dark:mix-blend-screen dark:opacity-90"
-                  />
-                </div>
-                <div className="p-3 sm:p-4 text-center">
-                  <h3 className="text-sm sm:text-base font-semibold text-foreground mb-1">{value.label}</h3>
-                  <p className="text-[11px] sm:text-xs text-muted-foreground/80 leading-relaxed">{value.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Hackathon Section */}
         <div className="w-full max-w-[640px] mb-8 sm:mb-12">
           <div className="rounded-2xl border border-[#3A9FF3]/40 bg-gradient-to-br from-[#3A9FF3]/[0.06] to-[#1A7DE8]/[0.1] backdrop-blur-sm overflow-hidden shadow-[0_8px_30px_rgba(58,159,243,0.12)]">
@@ -527,6 +509,37 @@ export default function Home() {
               <p className="text-xs sm:text-sm text-foreground/80 truncate">Browse upcoming hackathons</p>
               <ChevronRight className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
             </Link>
+          </div>
+        </div>
+
+        {/* Values Section */}
+        <div className="w-full max-w-[640px] mb-8 sm:mb-12">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            {[
+              { image: "/values/hustle.png", label: "Hustle", description: "We ship fast, iterate often, and never stop building." },
+              { image: "/values/learning.png", label: "Learning", description: "Every maker is a student. We grow by sharing knowledge." },
+              { image: "/values/community.png", label: "Community", description: "We lift each other up. Your win is our win." },
+              { image: "/values/fun.png", label: "Fun", description: "Building should be exciting. We celebrate the joy of creating." },
+            ].map((value) => (
+              <div
+                key={value.label}
+                className="group flex flex-col rounded-2xl border border-border bg-card/50 backdrop-blur-sm overflow-hidden hover:border-[#3A9FF3]/40 hover:shadow-[0_8px_30px_rgba(58,159,243,0.12)] transition-all duration-300"
+              >
+                <div className="relative aspect-square w-full bg-gradient-to-br from-white to-blue-50/40 dark:from-[#0a1628] dark:to-[#0d1f3d] overflow-hidden">
+                  <Image
+                    src={value.image}
+                    alt={value.label}
+                    fill
+                    sizes="(max-width: 640px) 50vw, 160px"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500 dark:mix-blend-screen dark:opacity-90"
+                  />
+                </div>
+                <div className="p-3 sm:p-4 text-center">
+                  <h3 className="text-sm sm:text-base font-semibold text-foreground mb-1">{value.label}</h3>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground/80 leading-relaxed">{value.description}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
