@@ -507,30 +507,58 @@ function SlideLogistics() {
 }
 
 function SlidePartners() {
+  const partners = [
+    {
+      tag: "Venue + WiFi",
+      name: "Disruptive Edge",
+      logo: "/logos/partner-logos/Disruptive-Edge-SQ.png",
+      logoWidth: 512,
+      logoHeight: 512,
+      // Square logo — taller display box.
+      logoClass:
+        "h-[clamp(7rem,16vh,11rem)] w-auto max-w-full object-contain",
+    },
+    {
+      tag: "Co-host",
+      name: "Aucctus AI",
+      logo: "/logos/partner-logos/Aucctus-Full-Colour-Logo1.webp",
+      logoWidth: 2322,
+      logoHeight: 444,
+      // Wide horizontal wordmark — shorter, wider box.
+      logoClass:
+        "h-[clamp(4rem,9vh,6rem)] w-auto max-w-full object-contain",
+    },
+  ];
   return (
     <div className="grid h-full grid-rows-[auto_1fr]">
       <Eyebrow n={10} label="Thank you" />
-      <div className="flex flex-col justify-center gap-[clamp(1.25rem,3vh,2.5rem)]">
+      <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
         <h2 className="max-w-[22ch] font-serif text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] tracking-tight">
           Tonight is made possible by our partners.
         </h2>
         <div className="grid gap-[clamp(1.5rem,4vh,3rem)] md:grid-cols-2">
-          <div className="flex flex-col gap-3 border-t border-foreground pt-4">
-            <span className="font-mono text-xs uppercase tracking-[0.18em] text-foreground">
-              Venue + WiFi
-            </span>
-            <h3 className="font-serif text-[clamp(1.75rem,4vw,3rem)] leading-tight tracking-tight">
-              Disruptive Edge
-            </h3>
-          </div>
-          <div className="flex flex-col gap-3 border-t border-foreground pt-4">
-            <span className="font-mono text-xs uppercase tracking-[0.18em] text-foreground">
-              Co-host
-            </span>
-            <h3 className="font-serif text-[clamp(1.75rem,4vw,3rem)] leading-tight tracking-tight">
-              Aucctus AI
-            </h3>
-          </div>
+          {partners.map((p) => (
+            <div
+              key={p.name}
+              className="flex flex-col gap-4 border-t border-foreground pt-4"
+            >
+              <span className="font-mono text-xs uppercase tracking-[0.18em] text-foreground">
+                {p.tag}
+              </span>
+              <div className="flex flex-1 items-center justify-center rounded-lg bg-white p-[clamp(1.25rem,3vw,2rem)]">
+                <Image
+                  src={p.logo}
+                  alt={p.name}
+                  width={p.logoWidth}
+                  height={p.logoHeight}
+                  className={p.logoClass}
+                />
+              </div>
+              <h3 className="font-serif text-[clamp(1.5rem,3vw,2.25rem)] leading-tight tracking-tight">
+                {p.name}
+              </h3>
+            </div>
+          ))}
         </div>
       </div>
     </div>
