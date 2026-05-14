@@ -9,6 +9,7 @@ import {
   Search,
   Sparkles,
 } from "lucide-react";
+import Image from "next/image";
 import SlideMuleRun from "./SlideMuleRun";
 
 export type Slide = {
@@ -77,10 +78,33 @@ function StatRow({
 function SlideTitle() {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
-        <span className="text-foreground">No. 01</span>
-        <span className="h-px w-8 bg-border" />
-        <span>MakersLounge × MuleRun</span>
+      <div className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-foreground/95 py-1.5 pl-1.5 pr-3 shadow-[0_4px_20px_rgba(0,0,0,0.12)]">
+        <div className="flex size-7 items-center justify-center rounded-full bg-background">
+          <Image
+            src="/logos/logo.svg"
+            alt="MakersLounge"
+            width={28}
+            height={28}
+            priority
+            className="size-4 object-contain"
+          />
+        </div>
+        <span className="font-mono text-xs uppercase tracking-[0.18em] text-background/70">
+          ×
+        </span>
+        <div className="flex items-center gap-1.5">
+          <Image
+            src="/partners/mulerun-logo.png"
+            alt="MuleRun"
+            width={64}
+            height={64}
+            priority
+            className="size-5 rounded-sm object-contain"
+          />
+          <span className="font-mono text-xs font-medium uppercase tracking-[0.14em] text-background">
+            Mule Run
+          </span>
+        </div>
       </div>
       <div className="my-auto">
         <h1 className="font-serif text-[clamp(3rem,12vw,11rem)] leading-[0.92] tracking-tight">
@@ -382,28 +406,38 @@ function SlideJudging() {
 }
 
 function SlideDemos() {
+  const flow = [
+    { time: "8:15 PM", label: "Demos kick off. We call teams up in order." },
+    { time: "3 min", label: "Live on stage. Run the agent in front of the room." },
+    { time: "Wave-off", label: "Hard three-minute cap — yes, even mid-sentence." },
+    { time: "No Q&A", label: "Demo and step down. Keep the pace." },
+    { time: "~8:45 PM", label: "Last team done. Judges step out to deliberate." },
+    { time: "5–10 min", label: "Judges decide. The rest of us hang." },
+    { time: "~9:00 PM", label: "Winners announced. Prizes paid out." },
+  ];
   return (
-    <div className="grid h-full grid-rows-[auto_1fr]">
+    <div className="grid h-full grid-rows-[auto_1fr] gap-[clamp(1rem,3vh,2rem)]">
       <Eyebrow n={8} label="Demos" />
       <div className="flex flex-col justify-center gap-[clamp(1.25rem,3vh,2.5rem)]">
-        <h2 className="max-w-[20ch] font-serif text-[clamp(2.5rem,7.5vw,6.5rem)] leading-[0.95] tracking-tight">
-          Show, don&apos;t tell.
-        </h2>
+        <div className="flex flex-col gap-3">
+          <h2 className="max-w-[18ch] font-serif text-[clamp(2.5rem,8vw,7rem)] leading-[0.92] tracking-tight">
+            Demo time.
+          </h2>
+          <p className="max-w-[55ch] text-[clamp(1rem,1.5vw,1.4rem)] text-muted-foreground">
+            Up to 10 teams. Three minutes each. No questions.
+          </p>
+        </div>
         <ul className="flex flex-col">
-          {[
-            { tag: "Format", body: "Live demo on stage, max 3 minutes per team" },
-            { tag: "Show", body: "Run the agent in front of the room" },
-            { tag: "Then", body: "Quick Q&A from the judges" },
-          ].map((row) => (
+          {flow.map((row) => (
             <li
-              key={row.tag}
-              className="grid grid-cols-[6rem_1fr] items-baseline gap-4 border-t border-border py-[clamp(0.65rem,1.6vh,1rem)] last:border-b sm:grid-cols-[8rem_1fr]"
+              key={row.time}
+              className="grid grid-cols-[6rem_1fr] items-baseline gap-4 border-t border-border py-[clamp(0.55rem,1.3vh,0.9rem)] last:border-b sm:grid-cols-[9rem_1fr]"
             >
-              <span className="font-mono text-xs uppercase tracking-[0.18em] text-foreground">
-                {row.tag}
+              <span className="font-mono text-[clamp(0.85rem,1.3vw,1.05rem)] tabular-nums text-foreground">
+                {row.time}
               </span>
-              <span className="font-serif text-[clamp(1.25rem,2.2vw,1.75rem)] tracking-tight">
-                {row.body}
+              <span className="font-serif text-[clamp(1.1rem,2vw,1.6rem)] tracking-tight">
+                {row.label}
               </span>
             </li>
           ))}
