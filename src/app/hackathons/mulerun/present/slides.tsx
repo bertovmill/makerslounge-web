@@ -343,9 +343,9 @@ function SlideTeams() {
 
 function SlidePrizes() {
   const prizes = [
-    { place: "1st", detail: "Top cash prize" },
-    { place: "2nd", detail: "Runner-up cash" },
-    { place: "3rd", detail: "Third-place cash" },
+    { place: "1st", detail: "$300 cash" },
+    { place: "2nd", detail: "$200 cash" },
+    { place: "3rd", detail: "$100 cash" },
     { place: "All", detail: "$15 MuleRun credits + food" },
   ];
   return (
