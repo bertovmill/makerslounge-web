@@ -377,24 +377,52 @@ function SlidePrizes() {
 
 function SlideJudging() {
   const criteria = [
-    { tag: "Craft", body: "Does it actually work? Clean execution wins." },
-    { tag: "Idea", body: "Is the use case real? Would someone use this?" },
-    { tag: "Pitch", body: "Can you explain it in 2 minutes flat?" },
+    {
+      tag: "Workflow",
+      title: "1 to 5 automations",
+      body: "Don't ship one agent — show a set of agents that fit a real workflow.",
+    },
+    {
+      tag: "Range",
+      title: "Breadth of features",
+      body: "Use a wide range of what MuleRun can do, in a working live demo.",
+    },
+    {
+      tag: "Problem",
+      title: "Make it real",
+      body: "Who is this for? What's their job? Why does this matter to them?",
+    },
+    {
+      tag: "Vision",
+      title: "Two more weeks",
+      body: "If you had another two weeks on this, what would you build next?",
+    },
   ];
   return (
-    <div className="grid h-full grid-rows-[auto_1fr]">
+    <div className="grid h-full grid-rows-[auto_1fr] gap-[clamp(1rem,3vh,2rem)]">
       <Eyebrow n={7} label="Judging" />
       <div className="flex flex-col justify-center gap-[clamp(1.25rem,3vh,2.5rem)]">
-        <h2 className="max-w-[22ch] font-serif text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] tracking-tight">
-          What we&apos;re looking for.
-        </h2>
-        <ul className="grid gap-[clamp(1rem,3vh,2rem)] md:grid-cols-3">
+        <div className="flex flex-col gap-3">
+          <h2 className="max-w-[22ch] font-serif text-[clamp(2.25rem,6.5vw,5.5rem)] leading-[0.95] tracking-tight">
+            Pitch a workflow.
+          </h2>
+          <p className="max-w-[60ch] text-[clamp(0.95rem,1.3vw,1.2rem)] text-muted-foreground">
+            Step into the shoes of someone trying to automate parts of their job. Tell us their role, what they do, and how your set of agents fits together.
+          </p>
+        </div>
+        <ul className="grid gap-[clamp(1rem,2.5vh,1.75rem)] md:grid-cols-2">
           {criteria.map((c) => (
-            <li key={c.tag} className="flex flex-col gap-3 border-t border-border pt-4">
-              <span className="font-mono text-xs uppercase tracking-[0.18em] text-foreground">
+            <li
+              key={c.tag}
+              className="flex flex-col gap-2 border-t border-border pt-4"
+            >
+              <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
                 {c.tag}
               </span>
-              <p className="max-w-[36ch] text-base leading-relaxed text-muted-foreground sm:text-lg">
+              <h3 className="font-serif text-[clamp(1.35rem,2.5vw,2rem)] leading-tight tracking-tight">
+                {c.title}
+              </h3>
+              <p className="max-w-[40ch] text-sm leading-relaxed text-muted-foreground sm:text-base">
                 {c.body}
               </p>
             </li>
