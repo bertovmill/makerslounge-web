@@ -47,6 +47,7 @@ export const SLIDES: Slide[] = [
   { n: 14, slug: "demo-lineup", title: "Demo lineup", Component: SlideDemoLineup },
   { n: 15, slug: "vote", title: "Vote", Component: SlideVote },
   { n: 16, slug: "winners", title: "Winners", Component: SlideWinners },
+  { n: 17, slug: "next", title: "Next hackathon", Component: SlideNextHackathon },
 ];
 
 export const SLIDE_COUNT = SLIDES.length;
@@ -689,6 +690,62 @@ function SlidePartners() {
               </h3>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SlideNextHackathon() {
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=${encodeURIComponent(
+    "https://luma.com/makerslounge11"
+  )}`;
+  return (
+    <div className="grid h-full grid-rows-[auto_1fr] gap-[clamp(1rem,3vh,2rem)]">
+      <Eyebrow n={17} label="Next up" />
+      <div className="grid items-center gap-[clamp(1.5rem,4vw,4rem)] lg:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="flex flex-col gap-[clamp(1.25rem,3vh,2.5rem)]">
+          <div className="flex flex-col gap-3">
+            <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              Toronto Tech Week
+            </span>
+            <h2 className="max-w-[16ch] font-serif text-[clamp(2.5rem,8vw,7rem)] leading-[0.92] tracking-tight">
+              See you at the next one.
+            </h2>
+            <p className="max-w-[42ch] text-[clamp(1rem,1.5vw,1.4rem)] text-muted-foreground">
+              Innovation Hackathon — May 26, 2026 · 6:00–8:00 PM. Hosted with Aucctus and Disruptive Edge.
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="rounded-2xl border border-border bg-white p-[clamp(0.6rem,1.5vw,1.25rem)] shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrUrl}
+                alt="Scan to RSVP on Luma"
+                width={360}
+                height={360}
+                className="h-[clamp(9rem,18vw,15rem)] w-[clamp(9rem,18vw,15rem)] object-contain"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                RSVP on Luma
+              </span>
+              <span className="font-mono text-sm tracking-tight text-foreground">
+                luma.com/makerslounge11
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-center lg:justify-end">
+          <Image
+            src="/event-banners/0bb10951-a749-47f0-8f53-4fe288443226.avif"
+            alt="Innovation Hackathon — Toronto Tech Week"
+            width={1080}
+            height={1080}
+            priority
+            className="h-[clamp(18rem,60vh,42rem)] w-auto rounded-2xl object-contain shadow-[0_24px_60px_rgba(0,0,0,0.18)]"
+          />
         </div>
       </div>
     </div>

@@ -10,9 +10,10 @@ type Demo = {
 };
 
 type Status =
+  | { kind: "checking" }
   | { kind: "idle" }
   | { kind: "submitting" }
-  | { kind: "ok" }
+  | { kind: "locked" }
   | { kind: "error"; message: string };
 
 const VOTER_KEY = "mulerun_voter_id";
@@ -34,16 +35,31 @@ export default function VoteForm() {
   const [demos, setDemos] = useState<Demo[]>([]);
   const [picks, setPicks] = useState<string[]>([]); // ordered: [first, second, third]
   const [loaded, setLoaded] = useState(false);
-  const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [status, setStatus] = useState<Status>({ kind: "checking" });
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch("/api/mulerun/demos", { cache: "no-store" });
-      if (!res.ok) return;
-      const body = await res.json();
-      if (Array.isArray(body.demos)) setDemos(body.demos);
+      const [demosRes, meRes] = await Promise.all([
+        fetch("/api/mulerun/demos", { cache: "no-store" }),
+        fetch(
+          `/api/mulerun/votes/me?voter_id=${encodeURIComponent(getVoterId())}`,
+          { cache: "no-store" }
+        ),
+      ]);
+      if (demosRes.ok) {
+        const body = await demosRes.json();
+        if (Array.isArray(body.demos)) setDemos(body.demos);
+      }
+      if (meRes.ok) {
+        const body = await meRes.json();
+        setStatus(body?.voted ? { kind: "locked" } : { kind: "idle" });
+      } else {
+        // Be conservative: if the check fails, let them try. The server-side
+        // unique constraint is the real lock anyway.
+        setStatus({ kind: "idle" });
+      }
     } catch {
-      // silent
+      setStatus({ kind: "idle" });
     } finally {
       setLoaded(true);
     }
@@ -85,6 +101,11 @@ export default function VoteForm() {
           third_id: picks[2],
         }),
       });
+      if (res.status === 409) {
+        // Already voted from this browser — lock the UI.
+        setStatus({ kind: "locked" });
+        return;
+      }
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         setStatus({
@@ -93,7 +114,7 @@ export default function VoteForm() {
         });
         return;
       }
-      setStatus({ kind: "ok" });
+      setStatus({ kind: "locked" });
     } catch {
       setStatus({
         kind: "error",
@@ -104,7 +125,7 @@ export default function VoteForm() {
 
   const sortedDemos = useMemo(() => demos, [demos]);
 
-  if (status.kind === "ok") {
+  if (status.kind === "locked") {
     return (
       <div className="min-h-svh bg-background px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto flex max-w-md flex-col gap-6 pt-16">
@@ -117,16 +138,21 @@ export default function VoteForm() {
             Vote in.
           </h1>
           <p className="text-base text-muted-foreground">
-            Your top 3 are counted. You can come back and re-rank from this
-            phone if you change your mind — only your latest pick counts.
+            Your top 3 are counted. One vote per browser — sit back and watch
+            the reveal.
           </p>
-          <button
-            type="button"
-            onClick={() => setStatus({ kind: "idle" })}
-            className="self-start rounded-full border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Change my vote
-          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (status.kind === "checking") {
+    return (
+      <div className="min-h-svh bg-background px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
+        <div className="mx-auto flex max-w-md flex-col gap-6 pt-16">
+          <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            Checking your vote status…
+          </p>
         </div>
       </div>
     );

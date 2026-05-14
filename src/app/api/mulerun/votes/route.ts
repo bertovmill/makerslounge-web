@@ -169,19 +169,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { error } = await supabase
-    .from("mulerun_votes")
-    .upsert(
-      {
-        voter_id: voter_id.trim(),
-        first_id,
-        second_id,
-        third_id,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "voter_id" }
-    );
+  const { error } = await supabase.from("mulerun_votes").insert({
+    voter_id: voter_id.trim(),
+    first_id,
+    second_id,
+    third_id,
+  });
   if (error) {
+    // Postgres unique_violation on voter_id — one vote per browser.
+    if ((error as { code?: string }).code === "23505") {
+      return NextResponse.json(
+        { error: "You've already voted from this browser." },
+        { status: 409 }
+      );
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
