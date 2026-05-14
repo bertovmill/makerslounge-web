@@ -9,6 +9,7 @@ const POLL_MS = 5000;
 
 type Demo = {
   id: string;
+  team_name: string | null;
   name: string;
   project: string;
 };
@@ -17,6 +18,7 @@ export default function SlideDemoLineup() {
   const [demos, setDemos] = useState<Demo[]>([]);
   const [shownIds, setShownIds] = useState<string[]>([]);
   const [currentId, setCurrentId] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -26,6 +28,8 @@ export default function SlideDemoLineup() {
       if (Array.isArray(body.demos)) setDemos(body.demos);
     } catch {
       // silent — keep last good state
+    } finally {
+      setLoaded(true);
     }
   }, []);
 
@@ -65,12 +69,7 @@ export default function SlideDemoLineup() {
   return (
     <div className="grid h-full grid-rows-[auto_1fr_auto] gap-[clamp(1rem,3vh,2rem)]">
       {/* Eyebrow + lineup status */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
-          <span className="text-foreground">09</span>
-          <span className="h-px w-8 bg-border" />
-          <span>Demo lineup</span>
-        </div>
+      <div className="flex items-center justify-end gap-4">
         <div className="flex items-center gap-4 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
           <span>
             <span className="text-foreground">{shownIds.length}</span> shown
@@ -87,15 +86,20 @@ export default function SlideDemoLineup() {
       {/* Hero: current team + QR */}
       <div className="grid items-center gap-[clamp(1.5rem,4vw,4rem)] lg:grid-cols-[minmax(0,1fr)_auto]">
         <div className="flex min-w-0 flex-col gap-[clamp(0.75rem,2vh,1.5rem)]">
-          {current ? (
+          {!loaded ? null : current ? (
             <>
               <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
                 Now demoing
               </span>
               <h2 className="font-serif text-[clamp(2.75rem,10vw,9rem)] leading-[0.9] tracking-tight">
-                {current.name}
+                {current.team_name?.trim() || current.name}
               </h2>
-              <p className="max-w-[28ch] font-serif text-[clamp(1.5rem,3.5vw,3rem)] leading-tight tracking-tight text-muted-foreground">
+              {current.team_name?.trim() && (
+                <p className="font-mono text-xs uppercase tracking-[0.18em] text-foreground sm:text-sm">
+                  {current.name}
+                </p>
+              )}
+              <p className="max-w-[34ch] font-serif text-[clamp(1.25rem,2.8vw,2.5rem)] leading-tight tracking-tight text-muted-foreground">
                 {current.project}
               </p>
             </>

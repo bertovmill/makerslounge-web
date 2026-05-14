@@ -10,11 +10,13 @@ type Status =
   | { kind: "error"; message: string };
 
 export default function DemoSignupForm() {
+  const [teamName, setTeamName] = useState("");
   const [name, setName] = useState("");
   const [project, setProject] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
   const canSubmit =
+    teamName.trim().length > 0 &&
     name.trim().length > 0 &&
     project.trim().length > 0 &&
     status.kind !== "submitting";
@@ -28,6 +30,7 @@ export default function DemoSignupForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          team_name: teamName.trim(),
           name: name.trim(),
           project: project.trim(),
         }),
@@ -114,15 +117,37 @@ export default function DemoSignupForm() {
             Throw your hat in.
           </h1>
           <p className="text-sm text-muted-foreground">
-            Two fields. We&apos;ll add you to the lineup. Berto calls teams up
-            at random.
+            Three fields. We&apos;ll add you to the lineup. Berto calls teams
+            up at random.
           </p>
         </div>
 
-        {/* Name */}
+        {/* Team name */}
         <label className="flex flex-col gap-2">
           <span className="font-mono text-xs uppercase tracking-[0.18em] text-foreground">
-            Your name (or team name)
+            Team name
+          </span>
+          <input
+            type="text"
+            inputMode="text"
+            autoComplete="off"
+            autoCapitalize="words"
+            autoCorrect="off"
+            spellCheck={false}
+            enterKeyHint="next"
+            value={teamName}
+            onChange={(e) => setTeamName(e.target.value)}
+            placeholder="MoodMakers"
+            maxLength={80}
+            required
+            className="rounded-lg border border-border bg-card px-4 py-4 text-lg text-foreground placeholder:text-muted-foreground/60 focus:border-foreground focus:outline-none"
+          />
+        </label>
+
+        {/* Member names */}
+        <label className="flex flex-col gap-2">
+          <span className="font-mono text-xs uppercase tracking-[0.18em] text-foreground">
+            Member names
           </span>
           <input
             type="text"

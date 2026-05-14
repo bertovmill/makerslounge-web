@@ -24,7 +24,7 @@ export async function GET() {
   }
   const { data, error } = await supabase
     .from("mulerun_demos")
-    .select("id, name, project, created_at")
+    .select("id, team_name, name, project, created_at")
     .order("created_at", { ascending: true });
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -45,17 +45,31 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { name, project } = (body ?? {}) as {
+  const { team_name, name, project } = (body ?? {}) as {
+    team_name?: unknown;
     name?: unknown;
     project?: unknown;
   };
 
   if (
+    typeof team_name !== "string" ||
+    team_name.trim().length === 0 ||
+    team_name.trim().length > 80
+  ) {
+    return NextResponse.json(
+      { error: "Team name is required" },
+      { status: 400 }
+    );
+  }
+  if (
     typeof name !== "string" ||
     name.trim().length === 0 ||
     name.trim().length > 120
   ) {
-    return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Member names are required" },
+      { status: 400 }
+    );
   }
   if (
     typeof project !== "string" ||
@@ -83,6 +97,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { error } = await supabase.from("mulerun_demos").insert({
+    team_name: team_name.trim(),
     name: name.trim(),
     project: project.trim(),
   });
