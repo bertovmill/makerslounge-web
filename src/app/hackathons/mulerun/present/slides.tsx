@@ -28,7 +28,7 @@ export const SLIDES: Slide[] = [
   { n: 7, slug: "prizes", title: "Prizes", Component: SlidePrizes },
   { n: 8, slug: "judging", title: "Judging", Component: SlideJudging },
   { n: 9, slug: "demos", title: "Demos", Component: SlideDemos },
-  { n: 10, slug: "logistics", title: "Logistics", Component: SlideLogistics },
+  { n: 10, slug: "house-rules", title: "House rules", Component: SlideLogistics },
   { n: 11, slug: "partners", title: "Partners", Component: SlidePartners },
   { n: 12, slug: "build", title: "Build", Component: SlideBuild },
 ];
@@ -414,26 +414,56 @@ function SlideDemos() {
 }
 
 function SlideLogistics() {
+  const rules = [
+    {
+      tag: "Stay in",
+      body: "Stick to the event area. Please don't wander into workstations or private offices.",
+    },
+    {
+      tag: "Stepping out",
+      body: "Heading to the bathroom or leaving early? Let a host know.",
+    },
+    {
+      tag: "Bathrooms",
+      body: "By the elevators on the 4th floor.",
+    },
+    {
+      tag: "Food",
+      body: "Help yourselves — it's by the entry.",
+    },
+    {
+      tag: "WiFi",
+      body: "Network + password in the top-right of every slide.",
+    },
+    {
+      tag: "Need anything",
+      body: "Find Berto or anyone with a MakersLounge tee.",
+    },
+  ];
   return (
-    <div className="grid h-full grid-rows-[auto_1fr]">
-      <Eyebrow n={9} label="Logistics" />
-      <div className="flex flex-col justify-center gap-[clamp(1.25rem,3vh,2.5rem)]">
-        <h2 className="font-serif text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] tracking-tight">
-          Stuff you need to know.
-        </h2>
-        <ul className="flex flex-col">
-          {[
-            { label: "Food is provided — help yourselves" },
-            { label: "We are on the 4th floor of 510 Front St W" },
-            { label: "Bathrooms are by the elevators" },
-            { label: "WiFi info is in the top-right corner — every slide" },
-            { label: "Stuck? Grab Berto or anyone wearing a MakersLounge tee" },
-          ].map((row) => (
+    <div className="grid h-full grid-rows-[auto_1fr] gap-[clamp(1rem,3vh,2rem)]">
+      <Eyebrow n={9} label="House rules" />
+      <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
+        <div className="flex flex-col gap-3">
+          <h2 className="max-w-[18ch] font-serif text-[clamp(2.5rem,8vw,7rem)] leading-[0.92] tracking-tight">
+            No photos in the office.
+          </h2>
+          <p className="max-w-[55ch] text-[clamp(0.95rem,1.3vw,1.2rem)] text-muted-foreground">
+            This is an active office and we&apos;re guests here. Out of respect for the teams that work in this space, keep cameras down indoors.
+          </p>
+        </div>
+        <ul className="grid gap-x-[clamp(1.5rem,4vw,3rem)] gap-y-0 sm:grid-cols-2">
+          {rules.map((r) => (
             <li
-              key={row.label}
-              className="border-t border-border py-[clamp(0.65rem,1.6vh,1rem)] font-serif text-[clamp(1.1rem,2.2vw,1.75rem)] tracking-tight last:border-b"
+              key={r.tag}
+              className="grid grid-cols-[6.5rem_1fr] items-baseline gap-3 border-t border-border py-[clamp(0.5rem,1.3vh,0.9rem)] sm:grid-cols-[8rem_1fr] sm:gap-4"
             >
-              {row.label}
+              <span className="font-mono text-xs uppercase tracking-[0.18em] text-foreground">
+                {r.tag}
+              </span>
+              <span className="text-sm text-muted-foreground sm:text-base">
+                {r.body}
+              </span>
             </li>
           ))}
         </ul>
