@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { RotateCcw, Shuffle, Sparkles, Trash2 } from "lucide-react";
 
 const QR_URL = "https://makerslounge.ca/hackathons/mulerun/demo-signup";
-const MAX_DEMOS = 10;
 const POLL_MS = 5000;
 
 const TEST_TEAMS: ReadonlyArray<{ team_name: string; name: string; project: string }> = [
@@ -77,17 +76,15 @@ export default function SlideDemoLineup() {
   };
 
   const seedTestTeams = async () => {
-    if (demos.length >= MAX_DEMOS || seeding) return;
+    if (seeding) return;
     setSeeding(true);
     try {
-      // Sequential so the server-side MAX_DEMOS cap stays authoritative.
       for (const team of TEST_TEAMS) {
         const res = await fetch("/api/mulerun/demos", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(team),
         });
-        if (res.status === 409) break; // hit the cap, stop quietly
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
           window.alert(body?.error ?? "Couldn't seed test teams.");
@@ -140,7 +137,7 @@ export default function SlideDemoLineup() {
             <span className="text-foreground">{remaining.length}</span> left
           </span>
           <span>
-            <span className="text-foreground">{demos.length}</span>/{MAX_DEMOS} submitted
+            <span className="text-foreground">{demos.length}</span> submitted
           </span>
         </div>
       </div>
@@ -186,7 +183,7 @@ export default function SlideDemoLineup() {
                 Scan to submit your demo.
               </h2>
               <p className="max-w-[36ch] text-[clamp(0.95rem,1.3vw,1.2rem)] text-muted-foreground">
-                Up to 10 teams. We&apos;ll call you up at random.
+                Submissions roll in live. We&apos;ll call you up at random.
               </p>
             </>
           ) : (
@@ -246,7 +243,7 @@ export default function SlideDemoLineup() {
           </button>
           <button
             onClick={seedTestTeams}
-            disabled={demos.length >= MAX_DEMOS || seeding}
+            disabled={seeding}
             className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
           >
             <Sparkles className="size-3" strokeWidth={2} />

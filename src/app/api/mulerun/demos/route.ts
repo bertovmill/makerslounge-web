@@ -5,8 +5,6 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-export const MAX_DEMOS = 10;
-
 function readClient() {
   if (!SUPABASE_URL || !ANON_KEY) return null;
   return createClient(SUPABASE_URL, ANON_KEY);
@@ -29,7 +27,7 @@ export async function GET() {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json({ demos: data ?? [], max: MAX_DEMOS });
+  return NextResponse.json({ demos: data ?? [] });
 }
 
 export async function POST(request: NextRequest) {
@@ -79,20 +77,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "Tell us what you built" },
       { status: 400 }
-    );
-  }
-
-  // Cap at MAX_DEMOS total submissions.
-  const { count, error: countError } = await supabase
-    .from("mulerun_demos")
-    .select("*", { count: "exact", head: true });
-  if (countError) {
-    return NextResponse.json({ error: countError.message }, { status: 500 });
-  }
-  if ((count ?? 0) >= MAX_DEMOS) {
-    return NextResponse.json(
-      { error: "All demo slots are full." },
-      { status: 409 }
     );
   }
 

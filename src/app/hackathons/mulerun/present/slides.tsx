@@ -601,7 +601,7 @@ function SlideLogistics() {
     {
       Icon: Hand,
       tag: "Need anything",
-      body: "Find Berto or anyone with a MakersLounge tee.",
+      body: "Find Berto — he's running tonight.",
     },
   ];
   return (

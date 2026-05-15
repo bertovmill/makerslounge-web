@@ -6,7 +6,6 @@ type Status =
   | { kind: "idle" }
   | { kind: "submitting" }
   | { kind: "ok"; name: string }
-  | { kind: "full" }
   | { kind: "error"; message: string };
 
 export default function DemoSignupForm() {
@@ -35,10 +34,6 @@ export default function DemoSignupForm() {
           project: project.trim(),
         }),
       });
-      if (res.status === 409) {
-        setStatus({ kind: "full" });
-        return;
-      }
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         setStatus({
@@ -73,27 +68,6 @@ export default function DemoSignupForm() {
           <p className="text-base text-muted-foreground">
             We&apos;ll call you up when it&apos;s your turn. Keep your laptop
             charged and your demo ready to run.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (status.kind === "full") {
-    return (
-      <div className="min-h-svh bg-background px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
-        <div className="mx-auto flex max-w-md flex-col gap-6 pt-16">
-          <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            <span className="text-foreground">Full</span>
-            <span className="h-px w-8 bg-border" />
-            <span>Mulerun demos</span>
-          </div>
-          <h1 className="font-serif text-5xl leading-[0.95] tracking-tight">
-            All demo slots are full.
-          </h1>
-          <p className="text-base text-muted-foreground">
-            Ten teams already in the lineup. Find Berto if you really want to
-            squeeze in — otherwise come watch.
           </p>
         </div>
       </div>
