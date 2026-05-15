@@ -12,6 +12,7 @@ export default function DemoSignupForm() {
   const [teamName, setTeamName] = useState("");
   const [name, setName] = useState("");
   const [project, setProject] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
   const canSubmit =
@@ -32,6 +33,7 @@ export default function DemoSignupForm() {
           team_name: teamName.trim(),
           name: name.trim(),
           project: project.trim(),
+          video_url: videoUrl.trim() || null,
         }),
       });
       if (!res.ok) {
@@ -160,6 +162,31 @@ export default function DemoSignupForm() {
           />
           <span className="self-end font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
             {project.length}/200
+          </span>
+        </label>
+
+        {/* Video URL (optional) */}
+        <label className="flex flex-col gap-2">
+          <span className="flex items-baseline justify-between font-mono text-xs uppercase tracking-[0.18em] text-foreground">
+            Video link
+            <span className="text-muted-foreground/70">Optional</span>
+          </span>
+          <input
+            type="url"
+            inputMode="url"
+            autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            enterKeyHint="done"
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            placeholder="https://loom.com/share/…"
+            maxLength={500}
+            className="rounded-lg border border-border bg-card px-4 py-4 text-base text-foreground placeholder:text-muted-foreground/60 focus:border-foreground focus:outline-none"
+          />
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Can&apos;t demo live? Drop a Loom / YouTube / Drive link.
           </span>
         </label>
 

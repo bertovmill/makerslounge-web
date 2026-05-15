@@ -22,7 +22,7 @@ export async function GET() {
   }
   const { data, error } = await supabase
     .from("mulerun_demos")
-    .select("id, team_name, name, project, created_at")
+    .select("id, team_name, name, project, video_url, created_at")
     .order("created_at", { ascending: true });
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -43,10 +43,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { team_name, name, project } = (body ?? {}) as {
+  const { team_name, name, project, video_url } = (body ?? {}) as {
     team_name?: unknown;
     name?: unknown;
     project?: unknown;
+    video_url?: unknown;
   };
 
   if (
@@ -80,10 +81,34 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  let videoUrl: string | null = null;
+  if (video_url !== undefined && video_url !== null && video_url !== "") {
+    if (typeof video_url !== "string" || video_url.trim().length > 500) {
+      return NextResponse.json(
+        { error: "Video link is too long" },
+        { status: 400 }
+      );
+    }
+    const trimmed = video_url.trim();
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        throw new Error("bad protocol");
+      }
+    } catch {
+      return NextResponse.json(
+        { error: "Video link must be a valid URL" },
+        { status: 400 }
+      );
+    }
+    videoUrl = trimmed;
+  }
+
   const { error } = await supabase.from("mulerun_demos").insert({
     team_name: team_name.trim(),
     name: name.trim(),
     project: project.trim(),
+    video_url: videoUrl,
   });
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

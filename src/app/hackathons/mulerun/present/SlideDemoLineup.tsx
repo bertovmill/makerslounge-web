@@ -1,18 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { RotateCcw, Shuffle, Sparkles, Trash2 } from "lucide-react";
+import { PlayCircle, RotateCcw, Shuffle, Sparkles, Trash2 } from "lucide-react";
 
 const QR_URL = "https://makerslounge.ca/hackathons/mulerun/demo-signup";
 const POLL_MS = 5000;
 
-const TEST_TEAMS: ReadonlyArray<{ team_name: string; name: string; project: string }> = [
+const TEST_TEAMS: ReadonlyArray<{
+  team_name: string;
+  name: string;
+  project: string;
+  video_url?: string;
+}> = [
   { team_name: "MoodMakers", name: "Alice & Bob", project: "An agent that books restaurants by text." },
-  { team_name: "PixelPulse", name: "Charlie", project: "Realtime whiteboard with AI sketch suggestions." },
+  { team_name: "PixelPulse", name: "Charlie", project: "Realtime whiteboard with AI sketch suggestions.", video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
   { team_name: "ByteForge", name: "Dana & Eli", project: "Code review bot that learns your team's style." },
   { team_name: "LoopHaus", name: "Finn", project: "Habit tracker that hypes you up with an LLM coach." },
   { team_name: "StackSprout", name: "Greta & Hank", project: "Onboarding playbooks generated from a Slack archive." },
-  { team_name: "VoltCraft", name: "Iris", project: "Voice-to-doc transcriber tuned for engineers." },
+  { team_name: "VoltCraft", name: "Iris", project: "Voice-to-doc transcriber tuned for engineers.", video_url: "https://www.loom.com/share/example" },
   { team_name: "NimbusKit", name: "Jack & Kit", project: "Cloud infra summarizer for non-engineers." },
   { team_name: "KernelKitchen", name: "Lena", project: "Recipe generator from a photo of your fridge." },
   { team_name: "DriftLab", name: "Mia & Nico", project: "Anomaly detection on real-time analytics streams." },
@@ -24,6 +29,7 @@ type Demo = {
   team_name: string | null;
   name: string;
   project: string;
+  video_url: string | null;
 };
 
 export default function SlideDemoLineup() {
@@ -161,6 +167,17 @@ export default function SlideDemoLineup() {
               <p className="max-w-[34ch] font-serif text-[clamp(1.25rem,2.8vw,2.5rem)] leading-tight tracking-tight text-muted-foreground">
                 {current.project}
               </p>
+              {current.video_url && (
+                <a
+                  href={current.video_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-card px-4 py-2 font-mono text-xs uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-foreground hover:text-background"
+                >
+                  <PlayCircle className="size-4" strokeWidth={2} />
+                  Watch demo
+                </a>
+              )}
             </>
           ) : allDone ? (
             <>
