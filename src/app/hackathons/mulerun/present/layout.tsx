@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Wifi } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SLIDE_COUNT, pad2 } from "./slides";
 
 export default function PresentationLayout({
@@ -67,21 +67,6 @@ export default function PresentationLayout({
         <span className="text-foreground">{pad2(currentSlide)}</span>
         <span className="text-foreground/30"> / </span>
         <span>{pad2(SLIDE_COUNT)}</span>
-      </div>
-
-      {/* WiFi badge — top right, on every slide */}
-      <div className="pointer-events-none fixed right-[max(1.25rem,env(safe-area-inset-right))] top-[max(1.1rem,env(safe-area-inset-top))] z-40 flex items-start gap-2.5 rounded-lg border border-border bg-card/70 backdrop-blur-sm px-3 py-2 font-mono text-[10px] uppercase tracking-[0.18em] sm:text-xs">
-        <Wifi className="mt-0.5 size-3.5 text-foreground" />
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-baseline gap-2">
-            <span className="text-muted-foreground">Network</span>
-            <span className="text-foreground">Disruptive Edge</span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-muted-foreground">Password</span>
-            <span className="text-foreground">Innovation</span>
-          </div>
-        </div>
       </div>
 
       {/* Slide content fills the screen */}

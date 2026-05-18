@@ -14,7 +14,6 @@ import {
   Pizza,
   Search,
   Sparkles,
-  Wifi,
 } from "lucide-react";
 import Image from "next/image";
 import SlideMuleRun from "./SlideMuleRun";
@@ -594,11 +593,6 @@ function SlideLogistics() {
       body: "Pizza is on the way — not the snacks in the kitchen.",
     },
     {
-      Icon: Wifi,
-      tag: "WiFi",
-      body: "Network + password in the top-right of every slide.",
-    },
-    {
       Icon: Hand,
       tag: "Need anything",
       body: "Find Berto — he's running tonight.",
@@ -640,7 +634,7 @@ function SlideLogistics() {
 function SlidePartners() {
   const partners = [
     {
-      tag: "Venue + WiFi",
+      tag: "Venue",
       name: "Disruptive Edge",
       logo: "/logos/partner-logos/Disruptive-Edge-SQ.png",
       logoWidth: 512,

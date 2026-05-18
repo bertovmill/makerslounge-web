@@ -34,7 +34,7 @@ const HACKATHONS: HackathonEntry[] = [
       "Build, demo, and pitch an AI agent in one night. Cash prizes for the top 3.",
     date: "Thu May 14, 2026 · 6–9 PM",
     location: "510 Front St W, Suite 400, Toronto",
-    status: "upcoming",
+    status: "past",
   },
   {
     slug: "innovation",
