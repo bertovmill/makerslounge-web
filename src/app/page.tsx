@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/context/ThemeContext";
-import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, Instagram, Linkedin, Menu, X, Mic, Play, ExternalLink, BookOpen, Trophy } from "lucide-react";
+import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, Instagram, Linkedin, Menu, X, Mic, Play, ExternalLink, BookOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { AnimatedLogo } from "@/components/AnimatedLogo";
@@ -469,47 +469,6 @@ export default function Home() {
             <Linkedin className="w-3.5 h-3.5" />
             LinkedIn
           </a>
-        </div>
-
-        {/* Hackathon Section */}
-        <div className="w-full max-w-[640px] mb-8 sm:mb-12">
-          <div className="rounded-2xl border border-[#3A9FF3]/40 bg-gradient-to-br from-[#3A9FF3]/[0.06] to-[#1A7DE8]/[0.1] backdrop-blur-sm overflow-hidden shadow-[0_8px_30px_rgba(58,159,243,0.12)]">
-            <div className="flex items-center gap-4 p-4 sm:p-5">
-              {/* Hackathon icon */}
-              <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-[#6AC4F7] to-[#1A7DE8] flex items-center justify-center">
-                <Trophy className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-[#3A9FF3]">Hackathon</span>
-                  <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-green-500 font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                    Tonight
-                  </span>
-                </div>
-                <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">AI Hackathon Night with MuleRun</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground/80 line-clamp-1">Thu May 14 · 6–9 PM · 510 Front St W · Cash prizes for top 3.</p>
-              </div>
-
-              {/* Details button */}
-              <Link
-                href="/hackathons/mulerun"
-                className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-foreground text-background text-xs sm:text-sm font-medium hover:opacity-80 transition-opacity"
-              >
-                <Trophy className="w-3 h-3" />
-                Details
-              </Link>
-            </div>
-
-            {/* All hackathons preview */}
-            <Link href="/hackathons" className="border-t border-[#3A9FF3]/20 px-4 sm:px-5 py-3 flex items-center gap-3 hover:bg-[#3A9FF3]/[0.04] transition-colors">
-              <span className="text-[10px] sm:text-xs text-muted-foreground/60 uppercase tracking-wide flex-shrink-0">All</span>
-              <p className="text-xs sm:text-sm text-foreground/80 truncate">Browse upcoming hackathons</p>
-              <ChevronRight className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
-            </Link>
-          </div>
         </div>
 
         {/* Values Section */}
