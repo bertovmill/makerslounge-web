@@ -59,50 +59,30 @@ export default function SignupForm() {
 
   if (status.kind === "ok") {
     return (
-      <div className="min-h-svh bg-background px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
-        <div className="mx-auto flex max-w-md flex-col gap-6 pt-16">
-          <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            <span className="text-foreground">Submitted</span>
-            <span className="h-px w-8 bg-border" />
-            <span>Innovation Hackathon</span>
-          </div>
-          <h1 className="font-serif text-5xl leading-[0.95] tracking-tight">
-            You&apos;re in,
-            <br />
-            {status.name}.
-          </h1>
-          <p className="text-base text-muted-foreground">
-            We&apos;ll match you into a team once enough builders sign up.
-            Watch your email and the Discord for next steps.
-          </p>
+      <div className="flex flex-col gap-4 rounded-lg border border-foreground/20 bg-foreground/[0.04] p-5">
+        <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          <span className="text-foreground">Submitted</span>
+          <span className="h-px w-8 bg-border" />
+          <span>Innovation Hackathon</span>
         </div>
+        <h2 className="font-serif text-3xl leading-tight tracking-tight">
+          You&apos;re in, {status.name}.
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          We&apos;ll match you into a team once enough builders sign up.
+          Watch your email and the Discord for next steps.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-svh bg-background px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
-      <form
-        onSubmit={submit}
-        className="mx-auto flex max-w-md flex-col gap-7 pt-8"
-        noValidate
-      >
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            <span className="text-foreground">Join</span>
-            <span className="h-px w-8 bg-border" />
-            <span>Innovation Hackathon</span>
-          </div>
-          <h1 className="font-serif text-4xl leading-[0.95] tracking-tight sm:text-5xl">
-            Find your team.
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Solo builder? Tell us about yourself and we&apos;ll match you with
-            other builders before the kickoff.
-          </p>
-        </div>
-
-        <label className="flex flex-col gap-2">
+    <form
+      onSubmit={submit}
+      className="flex flex-col gap-6"
+      noValidate
+    >
+      <label className="flex flex-col gap-2">
           <span className="font-mono text-xs uppercase tracking-[0.18em] text-foreground">
             Your name
           </span>
@@ -145,15 +125,14 @@ export default function SignupForm() {
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={!canSubmit}
-          className="sticky bottom-4 mt-2 rounded-lg bg-foreground px-6 py-4 font-mono text-sm uppercase tracking-[0.18em] text-background transition-opacity disabled:opacity-40"
-        >
-          {status.kind === "submitting" ? "Saving…" : "Submit"}
-        </button>
-      </form>
-    </div>
+      <button
+        type="submit"
+        disabled={!canSubmit}
+        className="mt-2 rounded-lg bg-foreground px-6 py-4 font-mono text-sm uppercase tracking-[0.18em] text-background transition-opacity disabled:opacity-40"
+      >
+        {status.kind === "submitting" ? "Saving…" : "Submit"}
+      </button>
+    </form>
   );
 }
 
