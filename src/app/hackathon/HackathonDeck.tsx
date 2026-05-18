@@ -568,14 +568,14 @@ function SlideFindTeam() {
           Drop your name, your background, and what you want in a teammate. We&apos;ll match you with other solo builders before kickoff.
         </p>
         <Link
-          href="/hackathon/signup"
+          href="/hackathon/find-team"
           className="inline-flex w-fit items-center gap-2.5 bg-foreground px-7 py-4 font-mono text-sm uppercase tracking-[0.18em] text-background hover:opacity-90"
         >
           Get matched <ArrowUpRight className="size-4" />
         </Link>
       </div>
       <div className="border-t border-border pt-6 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
-        <span className="text-foreground">makerslounge.ca / hackathon / signup</span>
+        <span className="text-foreground">makerslounge.ca / hackathon / find-team</span>
       </div>
     </div>
   );

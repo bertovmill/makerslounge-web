@@ -23,7 +23,7 @@ export default async function HackathonSignupsAdminPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/auth?next=/hackathon/admin/signups");
+    redirect("/auth?next=/hackathon/admin/find-team");
   }
 
   if (user.email !== ADMIN_EMAIL) {
@@ -84,7 +84,7 @@ export default async function HackathonSignupsAdminPage() {
             No signups yet
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Share <span className="text-foreground">/hackathon/signup</span>{" "}
+            Share <span className="text-foreground">/hackathon/find-team</span>{" "}
             with solo builders so they can join.
           </p>
         </div>

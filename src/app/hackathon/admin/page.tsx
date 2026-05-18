@@ -67,7 +67,7 @@ export default async function HackathonAdminPage() {
           <Stat label="Finalists" value={(counts.finalist ?? 0).toString()} />
           <Stat label="Winners" value={(counts.winner ?? 0).toString()} />
           <Link
-            href="/hackathon/admin/signups"
+            href="/hackathon/admin/find-team"
             className="self-center border-b border-border pb-0.5 text-foreground hover:border-foreground"
           >
             Signups →

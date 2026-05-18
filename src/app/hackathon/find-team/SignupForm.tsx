@@ -31,7 +31,7 @@ export default function SignupForm() {
     if (!canSubmit) return;
     setStatus({ kind: "submitting" });
     try {
-      const res = await fetch("/api/hackathon/signup", {
+      const res = await fetch("/api/hackathon/find-team", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
