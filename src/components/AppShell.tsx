@@ -20,7 +20,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     pathname === "/auth" ||
     pathname.startsWith("/onboarding") ||
     pathname === "/hackathon" ||
-    pathname.startsWith("/hackathons");
+    pathname.startsWith("/hackathons") ||
+    pathname.startsWith("/podcasts");
 
   if (isFullPage || !user) {
     return <main>{children}</main>;

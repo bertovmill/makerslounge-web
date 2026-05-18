@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import MarketingShell from "@/components/MarketingShell";
 import { PodcastWithGuests, fetchPublishedPodcasts, formatDuration } from "@/lib/podcasts";
 
 export default function PodcastsPage() {
@@ -16,7 +17,8 @@ export default function PodcastsPage() {
   }, []);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 md:py-12">
+    <MarketingShell>
+      <div className="max-w-2xl mx-auto px-4 py-8 md:py-12">
       <h1 className="text-3xl font-bold mb-2">Podcasts</h1>
       <p className="text-muted-foreground mb-8">Conversations with makers and builders.</p>
 
@@ -74,6 +76,7 @@ export default function PodcastsPage() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </MarketingShell>
   );
 }

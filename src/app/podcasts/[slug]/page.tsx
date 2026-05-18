@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import MarketingShell from "@/components/MarketingShell";
 import { PodcastWithGuests, fetchPodcastBySlug, formatDuration } from "@/lib/podcasts";
 import PodcastPlayer from "@/components/PodcastPlayer";
 
@@ -22,23 +23,28 @@ export default function PodcastEpisodePage() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        <p className="text-sm text-muted-foreground">Loading...</p>
-      </div>
+      <MarketingShell>
+        <div className="max-w-2xl mx-auto px-4 py-12">
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </MarketingShell>
     );
   }
 
   if (!podcast) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        <p className="text-muted-foreground mb-4">Episode not found.</p>
-        <Link href="/podcasts" className="text-sm hover:underline">&larr; All episodes</Link>
-      </div>
+      <MarketingShell>
+        <div className="max-w-2xl mx-auto px-4 py-12">
+          <p className="text-muted-foreground mb-4">Episode not found.</p>
+          <Link href="/podcasts" className="text-sm hover:underline">&larr; All episodes</Link>
+        </div>
+      </MarketingShell>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 md:py-12">
+    <MarketingShell>
+      <div className="max-w-2xl mx-auto px-4 py-8 md:py-12">
       <Link href="/podcasts" className="text-sm text-muted-foreground hover:text-foreground mb-6 inline-block">
         &larr; All episodes
       </Link>
@@ -138,6 +144,7 @@ export default function PodcastEpisodePage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </MarketingShell>
   );
 }
