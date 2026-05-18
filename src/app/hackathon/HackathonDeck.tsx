@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { ArrowDown, ArrowUpRight } from "lucide-react";
 import Countdown from "./Countdown";
 import SubmissionForm from "./SubmissionForm";
@@ -22,7 +23,7 @@ const SCHEDULE: Array<{ start: string; end: string; label: string; startUtc: str
   { start: "8:00", end: "8:30", label: "Winners + connect", startUtc: "2026-05-27T00:00:00Z", endUtc: "2026-05-27T00:30:00Z" },
 ];
 
-const SLIDE_COUNT = 13;
+const SLIDE_COUNT = 14;
 
 export default function HackathonDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -90,10 +91,10 @@ export default function HackathonDeck() {
 
       {/* persistent submit CTA — top right, hides on the form slide */}
       <button
-        onClick={() => scrollToSlide(12)}
+        onClick={() => scrollToSlide(13)}
         className={
           "fixed right-[max(1.25rem,env(safe-area-inset-right))] top-[max(1.1rem,env(safe-area-inset-top))] z-40 inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-[0.18em] transition-opacity " +
-          (currentSlide === 12
+          (currentSlide === 13
             ? "pointer-events-none opacity-0"
             : "opacity-90 hover:opacity-100")
         }
@@ -140,10 +141,13 @@ export default function HackathonDeck() {
         <Slide n={11} title="Code of conduct">
           <SlideConduct />
         </Slide>
-        <Slide n={12} title="Submit">
+        <Slide n={12} title="Find a team">
+          <SlideFindTeam />
+        </Slide>
+        <Slide n={13} title="Submit">
           <SlideSubmit />
         </Slide>
-        <Slide n={13} title="Lock in your spot">
+        <Slide n={14} title="Lock in your spot">
           <SlideRsvp />
         </Slide>
       </div>
@@ -552,10 +556,35 @@ function SlideConduct() {
   );
 }
 
+function SlideFindTeam() {
+  return (
+    <div className="grid h-full grid-rows-[auto_1fr_auto]">
+      <Eyebrow n={11} label="Find a team" />
+      <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
+        <h2 className="max-w-[16ch] font-serif text-[clamp(3rem,10vw,9rem)] leading-[0.92] tracking-tight">
+          Solo? Find a team.
+        </h2>
+        <p className="max-w-[55ch] text-base text-muted-foreground sm:text-lg">
+          Drop your name, your background, and what you want in a teammate. We&apos;ll match you with other solo builders before kickoff.
+        </p>
+        <Link
+          href="/hackathon/signup"
+          className="inline-flex w-fit items-center gap-2.5 bg-foreground px-7 py-4 font-mono text-sm uppercase tracking-[0.18em] text-background hover:opacity-90"
+        >
+          Get matched <ArrowUpRight className="size-4" />
+        </Link>
+      </div>
+      <div className="border-t border-border pt-6 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <span className="text-foreground">makerslounge.ca / hackathon / signup</span>
+      </div>
+    </div>
+  );
+}
+
 function SlideSubmit() {
   return (
     <div className="grid h-full grid-rows-[auto_1fr] overflow-y-auto">
-      <Eyebrow n={11} label="Submit" />
+      <Eyebrow n={12} label="Submit" />
       <div className="flex flex-col gap-[clamp(1.25rem,3vh,2.25rem)] pb-[clamp(2rem,6vh,4rem)]">
         <h2 className="font-serif text-[clamp(2.5rem,8vw,7rem)] leading-[0.95] tracking-tight">
           Submit your project.
@@ -574,7 +603,7 @@ function SlideSubmit() {
 function SlideRsvp() {
   return (
     <div className="grid h-full grid-rows-[auto_1fr_auto]">
-      <Eyebrow n={12} label="Join us" />
+      <Eyebrow n={13} label="Join us" />
       <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
         <h2 className="max-w-[18ch] font-serif text-[clamp(3rem,11vw,10rem)] leading-[0.92] tracking-tight">
           Lock in your spot.
