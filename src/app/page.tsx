@@ -280,6 +280,12 @@ export default function Home() {
           >
             Hackathons
           </Link>
+          <Link
+            href="/podcasts"
+            className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Podcasts
+          </Link>
           <button
             onClick={openNewsletterPopup}
             className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
@@ -340,6 +346,13 @@ export default function Home() {
               onClick={() => setMobileMenuOpen(false)}
             >
               Hackathons
+            </Link>
+            <Link
+              href="/podcasts"
+              className="text-lg font-medium text-foreground/80 hover:text-foreground transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Podcasts
             </Link>
             <button
               onClick={() => { setMobileMenuOpen(false); openNewsletterPopup(); }}
