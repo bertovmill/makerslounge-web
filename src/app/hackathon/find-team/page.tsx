@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import SignupForm from "./SignupForm";
+import SubmissionWatcher from "./SubmissionWatcher";
 
 const AGENT_ID =
   process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID ??
@@ -32,6 +33,9 @@ export default function FindTeamPage() {
             before the kickoff.
           </p>
         </header>
+
+        {/* Live confirmation when a new signup lands */}
+        <SubmissionWatcher />
 
         {/* Form — primary */}
         <SignupForm />
