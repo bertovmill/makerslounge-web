@@ -55,7 +55,7 @@ const SCHEDULE: Array<{ start: string; end: string; label: string; startUtc: str
   { start: "8:00", end: "8:30", label: "Winners + connect", startUtc: "2026-05-27T00:00:00Z", endUtc: "2026-05-27T00:30:00Z" },
 ];
 
-const SLIDE_COUNT = 25;
+const SLIDE_COUNT = 26;
 
 export default function HackathonDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -132,10 +132,10 @@ export default function HackathonDeck() {
 
       {/* persistent submit CTA — top right, hides on the form slide */}
       <button
-        onClick={() => scrollToSlide(24)}
+        onClick={() => scrollToSlide(25)}
         className={
           "fixed right-[max(1.25rem,env(safe-area-inset-right))] top-[max(1.1rem,env(safe-area-inset-top))] z-40 inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-[0.18em] transition-opacity " +
-          (currentSlide === 24
+          (currentSlide === 25
             ? "pointer-events-none opacity-0"
             : "opacity-90 hover:opacity-100")
         }
@@ -175,57 +175,60 @@ export default function HackathonDeck() {
         <Slide n={8} title="Kickoff: Pingram">
           <SlideKickoffPingram />
         </Slide>
-        <Slide n={9} title="Kickoff: Venue">
+        <Slide n={9} title="Kickoff: Submit">
+          <SlideKickoffSubmitDeadline />
+        </Slide>
+        <Slide n={10} title="Kickoff: Venue">
           <SlideKickoffVenue />
         </Slide>
-        <Slide n={10} title="Kickoff: Itinerary">
+        <Slide n={11} title="Kickoff: Itinerary">
           <SlideKickoffItinerary />
         </Slide>
-        <Slide n={11} title="Tracks">
+        <Slide n={12} title="Tracks">
           <SlideTracks revealed={tracksRevealed} />
         </Slide>
-        <Slide n={12} title="Kickoff: Judges">
+        <Slide n={13} title="Kickoff: Judges">
           <SlideKickoffJudges />
         </Slide>
-        <Slide n={13} title="Kickoff: Sponsors">
+        <Slide n={14} title="Kickoff: Sponsors">
           <SlideKickoffSponsors />
         </Slide>
 
         {/* ── Main deck ── */}
-        <Slide n={14} title="What">
+        <Slide n={15} title="What">
           <SlideWhat />
         </Slide>
-        <Slide n={15} title="How">
+        <Slide n={16} title="How">
           <SlideHow />
         </Slide>
-        <Slide n={16} title="Countdown">
+        <Slide n={17} title="Countdown">
           <SlideCountdown />
         </Slide>
-        <Slide n={17} title="Demo night">
+        <Slide n={18} title="Demo night">
           <SlideSchedule />
         </Slide>
-        <Slide n={18} title="Judges">
+        <Slide n={19} title="Judges">
           <SlideJudges />
         </Slide>
-        <Slide n={19} title="Prizes">
+        <Slide n={20} title="Prizes">
           <SlidePrizes />
         </Slide>
-        <Slide n={20} title="Who should apply">
+        <Slide n={21} title="Who should apply">
           <SlideWho />
         </Slide>
-        <Slide n={21} title="Community">
+        <Slide n={22} title="Community">
           <SlideCommunity />
         </Slide>
-        <Slide n={22} title="Code of conduct">
+        <Slide n={23} title="Code of conduct">
           <SlideConduct />
         </Slide>
-        <Slide n={23} title="Find a team">
+        <Slide n={24} title="Find a team">
           <SlideFindTeam />
         </Slide>
-        <Slide n={24} title="Submit">
+        <Slide n={25} title="Submit">
           <SlideSubmit />
         </Slide>
-        <Slide n={25} title="Lock in your spot">
+        <Slide n={26} title="Lock in your spot">
           <SlideRsvp />
         </Slide>
       </div>
@@ -609,6 +612,52 @@ function SlideKickoffPingram() {
         <h2 className="font-sans font-semibold text-[clamp(2.5rem,8vw,6rem)] leading-[0.95] tracking-tight">
           Setting up Pingram.
         </h2>
+      </div>
+    </div>
+  );
+}
+
+function SlideKickoffSubmitDeadline() {
+  return (
+    <div className="grid h-full grid-rows-[auto_1fr]">
+      <KickoffEyebrow n={4} label="Submit your project" />
+      <div className="grid items-center gap-[clamp(2rem,5vw,5rem)] lg:grid-cols-[1fr_auto]">
+        <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
+          <h2 className="font-sans font-semibold text-[clamp(2.5rem,8vw,7rem)] leading-[0.95] tracking-tight">
+            Submitting your project.
+          </h2>
+          <p className="max-w-[50ch] text-base leading-relaxed text-muted-foreground sm:text-lg">
+            All projects must be submitted by <span className="text-foreground font-medium">Sunday, May 25 at 11:59 PM EDT.</span>
+          </p>
+          <div className="flex flex-col gap-3">
+            {[
+              { step: "01", body: "Scan the QR code or open the link below." },
+              { step: "02", body: "Submit your project link — GitHub, Loom, deployed app, or demo URL." },
+              { step: "03", body: "We'll blast the submission link on Luma and Discord tonight." },
+            ].map((s) => (
+              <div key={s.step} className="flex items-baseline gap-4 border-t border-border pt-3">
+                <span className="font-mono text-xs tabular-nums text-muted-foreground">{s.step}</span>
+                <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">{s.body}</p>
+              </div>
+            ))}
+          </div>
+          <a
+            href={SUBMIT_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex w-fit items-center gap-2 border-b border-foreground pb-1 font-mono text-xs uppercase tracking-[0.18em] text-foreground hover:opacity-70 transition-opacity"
+          >
+            makerslounge.ca / … / submit <ArrowUpRight className="size-3.5" />
+          </a>
+        </div>
+        <div className="flex flex-col items-center gap-3">
+          <div className="rounded-lg border border-border bg-white p-4">
+            <QRCodeSVG value={SUBMIT_URL} size={160} bgColor="#ffffff" fgColor="#1a1a1a" level="M" />
+          </div>
+          <span className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground">
+            Submit project
+          </span>
+        </div>
       </div>
     </div>
   );
