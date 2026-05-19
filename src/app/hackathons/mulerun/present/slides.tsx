@@ -707,7 +707,7 @@ function SlideNextHackathon() {
               See you at the next one.
             </h2>
             <p className="max-w-[42ch] text-[clamp(1rem,1.5vw,1.4rem)] text-muted-foreground">
-              Innovation Hackathon — May 26, 2026 · 6:00–8:00 PM. Hosted with Aucctus and Disruptive Edge.
+              2026 Innovation Hackathon — May 26, 2026 · 6:00–8:00 PM. Hosted with Aucctus and Disruptive Edge.
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -734,7 +734,7 @@ function SlideNextHackathon() {
         <div className="flex justify-center lg:justify-end">
           <Image
             src="/event-banners/0bb10951-a749-47f0-8f53-4fe288443226.avif"
-            alt="Innovation Hackathon — Toronto Tech Week"
+            alt="2026 Innovation Hackathon — Toronto Tech Week"
             width={1080}
             height={1080}
             priority

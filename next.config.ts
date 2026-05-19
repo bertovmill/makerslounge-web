@@ -9,6 +9,18 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  redirects: async () => [
+    {
+      source: "/hackathon",
+      destination: "/hackathons/2026-innovation-hackathon",
+      permanent: true,
+    },
+    {
+      source: "/hackathon/:path*",
+      destination: "/hackathons/2026-innovation-hackathon/:path*",
+      permanent: true,
+    },
+  ],
   headers: async () => [
     {
       source: "/sw.js",

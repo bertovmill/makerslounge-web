@@ -38,8 +38,8 @@ const HACKATHONS: HackathonEntry[] = [
   },
   {
     slug: "innovation",
-    href: "/hackathon",
-    title: "Innovation Hackathon",
+    href: "/hackathons/2026-innovation-hackathon",
+    title: "2026 Innovation Hackathon",
     tagline: "100 builders. One week. Live demos at Toronto Tech Week.",
     date: "May 19 to May 26, 2026",
     location: "510 Front St W, Suite 400, Toronto",

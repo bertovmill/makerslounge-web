@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 interface Signup {
   id: string;
   name: string;
+  email: string | null;
   background: string;
   looking_for: string;
   created_at: string;
@@ -23,13 +24,14 @@ function csvEscape(value: string): string {
 }
 
 function buildCsv(rows: Signup[]): string {
-  const header = ["id", "name", "background", "looking_for", "created_at"];
+  const header = ["id", "name", "email", "background", "looking_for", "created_at"];
   const lines = [header.join(",")];
   for (const r of rows) {
     lines.push(
       [
         csvEscape(r.id),
         csvEscape(r.name),
+        csvEscape(r.email ?? ""),
         csvEscape(r.background),
         csvEscape(r.looking_for),
         csvEscape(r.created_at),
@@ -121,7 +123,7 @@ export default function HackathonSignupsAdmin() {
       <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            Innovation Hackathon
+            2026 Innovation Hackathon
           </p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight">
             Team signups
@@ -129,7 +131,7 @@ export default function HackathonSignupsAdmin() {
           <p className="mt-2 text-sm text-muted-foreground">
             Submissions from{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">
-              /hackathon/find-team
+              /hackathons/2026-innovation-hackathon/find-team
             </code>{" "}
             — typed form or voice with Mack.
           </p>
@@ -176,7 +178,7 @@ export default function HackathonSignupsAdmin() {
               No signups yet
             </p>
             <p className="text-sm text-muted-foreground">
-              Share <span className="text-foreground">/hackathon/find-team</span>{" "}
+              Share <span className="text-foreground">/hackathons/2026-innovation-hackathon/find-team</span>{" "}
               with solo builders so they can join.
             </p>
           </div>

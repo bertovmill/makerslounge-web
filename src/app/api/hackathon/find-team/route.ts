@@ -19,8 +19,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { name, background, looking_for } = (body ?? {}) as {
+  const { name, email, background, looking_for } = (body ?? {}) as {
     name?: unknown;
+    email?: unknown;
     background?: unknown;
     looking_for?: unknown;
   };
@@ -31,6 +32,14 @@ export async function POST(request: NextRequest) {
     name.trim().length > MAX_NAME
   ) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
+  }
+
+  if (
+    typeof email !== "string" ||
+    email.trim().length === 0 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  ) {
+    return NextResponse.json({ error: "A valid email is required" }, { status: 400 });
   }
 
   if (
@@ -58,6 +67,7 @@ export async function POST(request: NextRequest) {
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
   const { error } = await supabase.from("innovation_hackathon_signups").insert({
     name: name.trim(),
+    email: email.trim(),
     background: background.trim(),
     looking_for: looking_for.trim(),
   });

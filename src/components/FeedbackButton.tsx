@@ -150,7 +150,7 @@ export default function FeedbackButton() {
     return null;
   }
 
-  if (pathname === "/hackathon") {
+  if (pathname === "/hackathons/2026-innovation-hackathon") {
     return null;
   }
 
