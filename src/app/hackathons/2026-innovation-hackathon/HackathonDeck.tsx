@@ -55,7 +55,7 @@ const SCHEDULE: Array<{ start: string; end: string; label: string; startUtc: str
   { start: "8:00", end: "8:30", label: "Winners + connect", startUtc: "2026-05-27T00:00:00Z", endUtc: "2026-05-27T00:30:00Z" },
 ];
 
-const SLIDE_COUNT = 24;
+const SLIDE_COUNT = 25;
 
 export default function HackathonDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -132,10 +132,10 @@ export default function HackathonDeck() {
 
       {/* persistent submit CTA — top right, hides on the form slide */}
       <button
-        onClick={() => scrollToSlide(23)}
+        onClick={() => scrollToSlide(24)}
         className={
           "fixed right-[max(1.25rem,env(safe-area-inset-right))] top-[max(1.1rem,env(safe-area-inset-top))] z-40 inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-[0.18em] transition-opacity " +
-          (currentSlide === 23
+          (currentSlide === 24
             ? "pointer-events-none opacity-0"
             : "opacity-90 hover:opacity-100")
         }
@@ -172,57 +172,60 @@ export default function HackathonDeck() {
         <Slide n={7} title="Kickoff: Enable APIs">
           <SlideKickoffEnableApis />
         </Slide>
-        <Slide n={8} title="Kickoff: Venue">
+        <Slide n={8} title="Kickoff: Pingram">
+          <SlideKickoffPingram />
+        </Slide>
+        <Slide n={9} title="Kickoff: Venue">
           <SlideKickoffVenue />
         </Slide>
-        <Slide n={9} title="Kickoff: Itinerary">
+        <Slide n={10} title="Kickoff: Itinerary">
           <SlideKickoffItinerary />
         </Slide>
-        <Slide n={10} title="Tracks">
+        <Slide n={11} title="Tracks">
           <SlideTracks revealed={tracksRevealed} />
         </Slide>
-        <Slide n={11} title="Kickoff: Judges">
+        <Slide n={12} title="Kickoff: Judges">
           <SlideKickoffJudges />
         </Slide>
-        <Slide n={12} title="Kickoff: Sponsors">
+        <Slide n={13} title="Kickoff: Sponsors">
           <SlideKickoffSponsors />
         </Slide>
 
         {/* ── Main deck ── */}
-        <Slide n={13} title="What">
+        <Slide n={14} title="What">
           <SlideWhat />
         </Slide>
-        <Slide n={14} title="How">
+        <Slide n={15} title="How">
           <SlideHow />
         </Slide>
-        <Slide n={15} title="Countdown">
+        <Slide n={16} title="Countdown">
           <SlideCountdown />
         </Slide>
-        <Slide n={16} title="Demo night">
+        <Slide n={17} title="Demo night">
           <SlideSchedule />
         </Slide>
-        <Slide n={17} title="Judges">
+        <Slide n={18} title="Judges">
           <SlideJudges />
         </Slide>
-        <Slide n={18} title="Prizes">
+        <Slide n={19} title="Prizes">
           <SlidePrizes />
         </Slide>
-        <Slide n={19} title="Who should apply">
+        <Slide n={20} title="Who should apply">
           <SlideWho />
         </Slide>
-        <Slide n={20} title="Community">
+        <Slide n={21} title="Community">
           <SlideCommunity />
         </Slide>
-        <Slide n={21} title="Code of conduct">
+        <Slide n={22} title="Code of conduct">
           <SlideConduct />
         </Slide>
-        <Slide n={22} title="Find a team">
+        <Slide n={23} title="Find a team">
           <SlideFindTeam />
         </Slide>
-        <Slide n={23} title="Submit">
+        <Slide n={24} title="Submit">
           <SlideSubmit />
         </Slide>
-        <Slide n={24} title="Lock in your spot">
+        <Slide n={25} title="Lock in your spot">
           <SlideRsvp />
         </Slide>
       </div>
@@ -584,6 +587,28 @@ function SlideKickoffCredits() {
             </span>
           </a>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SlideKickoffPingram() {
+  return (
+    <div className="grid h-full grid-rows-[auto_1fr]">
+      <KickoffEyebrow n={4} label="Pingram" />
+      <div className="flex flex-col items-center justify-center gap-8">
+        <div className="flex items-center justify-center rounded-2xl bg-black p-10">
+          <Image
+            src="/logos/partner-logos/pingram-logo.png"
+            alt="Pingram"
+            width={320}
+            height={100}
+            className="object-contain"
+          />
+        </div>
+        <h2 className="font-sans font-semibold text-[clamp(2.5rem,8vw,6rem)] leading-[0.95] tracking-tight">
+          Setting up Pingram.
+        </h2>
       </div>
     </div>
   );
