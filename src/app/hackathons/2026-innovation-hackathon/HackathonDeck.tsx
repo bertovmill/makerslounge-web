@@ -60,6 +60,7 @@ const SLIDE_COUNT = 24;
 export default function HackathonDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentSlide, setCurrentSlide] = useState(1);
+  const [tracksRevealed, setTracksRevealed] = useState(0);
 
   const scrollToSlide = useCallback((n: number) => {
     const target = Math.max(1, Math.min(SLIDE_COUNT, n));
@@ -76,10 +77,18 @@ export default function HackathonDeck() {
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") {
         e.preventDefault();
-        scrollToSlide(currentSlide + 1);
+        if (currentSlide === 10 && tracksRevealed < TRACKS.length) {
+          setTracksRevealed((r) => r + 1);
+        } else {
+          scrollToSlide(currentSlide + 1);
+        }
       } else if (e.key === "ArrowUp" || e.key === "PageUp") {
         e.preventDefault();
-        scrollToSlide(currentSlide - 1);
+        if (currentSlide === 10 && tracksRevealed > 0) {
+          setTracksRevealed((r) => r - 1);
+        } else {
+          scrollToSlide(currentSlide - 1);
+        }
       } else if (e.key === "Home") {
         e.preventDefault();
         scrollToSlide(1);
@@ -90,7 +99,7 @@ export default function HackathonDeck() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [currentSlide, scrollToSlide]);
+  }, [currentSlide, tracksRevealed, scrollToSlide]);
 
   // Track which slide is in view.
   useEffect(() => {
@@ -170,7 +179,7 @@ export default function HackathonDeck() {
           <SlideKickoffItinerary />
         </Slide>
         <Slide n={10} title="Tracks">
-          <SlideTracks />
+          <SlideTracks revealed={tracksRevealed} />
         </Slide>
         <Slide n={11} title="Kickoff: Judges">
           <SlideKickoffJudges />
@@ -471,7 +480,7 @@ function SlideKickoffTeams() {
         </div>
 
         {/* Right: two QR codes */}
-        <div className="flex flex-row gap-4 lg:flex-col">
+        <div className="flex flex-row gap-10 lg:flex-col lg:gap-10">
           {/* Discord */}
           <a
             href={DISCORD_URL}
@@ -1036,7 +1045,7 @@ function SlideSchedule() {
   );
 }
 
-function SlideTracks() {
+function SlideTracks({ revealed }: { revealed: number }) {
   return (
     <div className="grid h-full grid-rows-[auto_1fr]">
       <Eyebrow n={5} label="Challenge tracks" />
@@ -1046,26 +1055,34 @@ function SlideTracks() {
         </h2>
         <div className="grid gap-4 sm:grid-cols-3">
           {TRACKS.map((t, i) => (
-            <div key={t.name} className="flex flex-col gap-3 border-t-2 border-foreground pt-4">
+            <div
+              key={t.name}
+              className="flex flex-col gap-3 border-t-2 border-foreground pt-4 transition-all duration-500"
+              style={{
+                opacity: revealed > i ? 1 : 0,
+                transform: revealed > i ? "translateY(0)" : "translateY(16px)",
+                pointerEvents: revealed > i ? "auto" : "none",
+              }}
+            >
               <div className="overflow-hidden rounded-lg border border-border">
                 <Image
                   src={t.image}
                   alt={t.name}
                   width={800}
                   height={450}
-                  className="w-full h-32 object-cover"
+                  className="w-full h-44 object-cover"
                 />
               </div>
               <div className="flex items-center gap-3">
                 <span className="font-mono text-xs tabular-nums text-muted-foreground">{pad2(i + 1)}</span>
-                <h3 className="font-sans font-semibold text-base leading-tight">{t.name}</h3>
+                <h3 className="font-sans font-semibold text-lg leading-tight">{t.name}</h3>
               </div>
-              <p className="text-sm leading-relaxed text-muted-foreground">{t.description}</p>
+              <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">{t.description}</p>
               <div className="mt-auto pt-3 border-t border-border">
                 <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground mb-2">Judging criteria</p>
                 <ul className="flex flex-col gap-1">
                   {t.criteria.map((c) => (
-                    <li key={c} className="flex items-baseline gap-2 text-xs text-muted-foreground">
+                    <li key={c} className="flex items-baseline gap-2 text-xs text-muted-foreground sm:text-sm">
                       <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
                       {c}
                     </li>
@@ -1075,6 +1092,9 @@ function SlideTracks() {
             </div>
           ))}
         </div>
+        <p className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground/50">
+          {revealed < TRACKS.length ? `Press space or ↓ to reveal (${revealed}/${TRACKS.length})` : ""}
+        </p>
       </div>
     </div>
   );
@@ -1259,19 +1279,49 @@ function SlideFindTeam() {
   );
 }
 
+const SUBMIT_URL = "https://makerslounge.ca/hackathons/2026-innovation-hackathon/submit";
+
 function SlideSubmit() {
   return (
-    <div className="grid h-full grid-rows-[auto_1fr] overflow-y-auto">
+    <div className="grid h-full grid-rows-[auto_1fr]">
       <Eyebrow n={12} label="Submit" />
-      <div className="flex flex-col gap-[clamp(1.25rem,3vh,2.25rem)] pb-[clamp(2rem,6vh,4rem)]">
-        <h2 className="font-serif text-[clamp(2.5rem,8vw,7rem)] leading-[0.95] tracking-tight">
-          Submit your project.
-        </h2>
-        <p className="max-w-[60ch] text-base leading-relaxed text-muted-foreground sm:text-lg">
-          One link is all that's required. Add a title, a description, a video, files, your team, whatever helps judges understand what you built.
-        </p>
-        <div className="mt-[clamp(1rem,2vh,1.5rem)]">
-          <SubmissionForm />
+      <div className="grid items-center gap-[clamp(2rem,5vw,5rem)] lg:grid-cols-[1fr_auto]">
+        <div className="flex flex-col justify-center gap-[clamp(1.25rem,3vh,2.5rem)]">
+          <h2 className="font-serif text-[clamp(2.5rem,8vw,7rem)] leading-[0.95] tracking-tight">
+            Submit your project.
+          </h2>
+          <p className="max-w-[55ch] text-base leading-relaxed text-muted-foreground sm:text-lg">
+            One link is all that's required. Add a title, a description, a video, files, your team — whatever helps judges understand what you built.
+          </p>
+          <div className="flex flex-col gap-4">
+            {[
+              { step: "01", body: "Open the link or scan the QR code." },
+              { step: "02", body: "Paste your project link — GitHub, Loom, deployed app, demo URL." },
+              { step: "03", body: "Add your team, track, and any supporting files." },
+              { step: "04", body: "Submit before Sunday May 25, 11:59 PM EDT." },
+            ].map((s) => (
+              <div key={s.step} className="flex items-baseline gap-4 border-t border-border pt-3">
+                <span className="font-mono text-xs tabular-nums text-muted-foreground">{s.step}</span>
+                <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">{s.body}</p>
+              </div>
+            ))}
+          </div>
+          <a
+            href={SUBMIT_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex w-fit items-center gap-2 border-b border-foreground pb-1 font-mono text-xs uppercase tracking-[0.18em] text-foreground hover:opacity-70 transition-opacity"
+          >
+            makerslounge.ca / … / submit <ArrowUpRight className="size-3.5" />
+          </a>
+        </div>
+        <div className="flex flex-col items-center gap-3">
+          <div className="rounded-lg border border-border bg-white p-4">
+            <QRCodeSVG value={SUBMIT_URL} size={160} bgColor="#ffffff" fgColor="#1a1a1a" level="M" />
+          </div>
+          <span className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground">
+            Submit project
+          </span>
         </div>
       </div>
     </div>

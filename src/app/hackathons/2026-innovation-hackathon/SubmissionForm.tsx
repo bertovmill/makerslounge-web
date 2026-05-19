@@ -4,8 +4,11 @@ import { useRef, useState } from "react";
 import { Check, Loader2, Paperclip, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-// Edit this list once tracks are revealed at the May 19 kickoff.
-const CHALLENGE_TRACKS: string[] = [];
+const CHALLENGE_TRACKS = [
+  "Validating a Business Idea",
+  "Continuous Market Monitoring",
+  "Synthetic Customers",
+];
 
 const MAX_FILE_BYTES = 100 * 1024 * 1024;
 const MAX_FILES = 10;
