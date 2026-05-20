@@ -11,6 +11,7 @@ interface Signup {
   email: string | null;
   background: string;
   looking_for: string;
+  matched_team: string | null;
   created_at: string;
 }
 
@@ -24,7 +25,7 @@ function csvEscape(value: string): string {
 }
 
 function buildCsv(rows: Signup[]): string {
-  const header = ["id", "name", "email", "background", "looking_for", "created_at"];
+  const header = ["id", "name", "email", "background", "looking_for", "matched_team", "created_at"];
   const lines = [header.join(",")];
   for (const r of rows) {
     lines.push(
@@ -34,6 +35,7 @@ function buildCsv(rows: Signup[]): string {
         csvEscape(r.email ?? ""),
         csvEscape(r.background),
         csvEscape(r.looking_for),
+        csvEscape(r.matched_team ?? ""),
         csvEscape(r.created_at),
       ].join(","),
     );
@@ -85,7 +87,7 @@ export default function HackathonSignupsAdmin() {
       setLoading(true);
       const { data, error } = await supabase
         .from("innovation_hackathon_signups")
-        .select("id, name, background, looking_for, created_at")
+        .select("id, name, background, looking_for, matched_team, created_at")
         .order("created_at", { ascending: false });
 
       if (!error) {
@@ -190,6 +192,7 @@ export default function HackathonSignupsAdmin() {
                   <Th>Name</Th>
                   <Th>Background</Th>
                   <Th>Looking for</Th>
+                  <Th className="whitespace-nowrap">Matched on Team</Th>
                   <Th className="whitespace-nowrap">Submitted</Th>
                 </tr>
               </thead>
@@ -210,6 +213,21 @@ export default function HackathonSignupsAdmin() {
                     </Td>
                     <Td className="min-w-[18rem] max-w-[24rem] whitespace-pre-wrap text-muted-foreground">
                       {s.looking_for}
+                    </Td>
+                    <Td className="whitespace-nowrap">
+                      {s.matched_team ? (
+                        <span className={`inline-block rounded-full px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${
+                          s.matched_team === "Team 1"
+                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                            : s.matched_team === "Team 2"
+                            ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                            : "bg-green-500/10 text-green-600 dark:text-green-400"
+                        }`}>
+                          {s.matched_team}
+                        </span>
+                      ) : (
+                        <span className="italic text-muted-foreground/40 text-xs">—</span>
+                      )}
                     </Td>
                     <Td className="whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
                       {new Date(s.created_at).toLocaleString("en-CA", {
