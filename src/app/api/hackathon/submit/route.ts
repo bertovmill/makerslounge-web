@@ -99,9 +99,12 @@ export async function POST(request: NextRequest) {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const { data, error } = await supabase
+    const id = crypto.randomUUID();
+
+    const { error } = await supabase
       .from("hackathon_submissions")
       .insert({
+        id,
         project_link: projectLink,
         title: trimOrNull(body.title),
         description: trimOrNull(body.description),
@@ -112,16 +115,14 @@ export async function POST(request: NextRequest) {
         challenge_track: trimOrNull(body.challenge_track),
         user_agent: userAgent,
         ip_hash: ipHash,
-      })
-      .select("id")
-      .single();
+      });
 
     if (error) {
       console.error("hackathon_submissions insert error:", error);
       return NextResponse.json({ error: "Could not save submission" }, { status: 500 });
     }
 
-    return NextResponse.json({ id: data.id }, { status: 201 });
+    return NextResponse.json({ id }, { status: 201 });
   } catch (err) {
     console.error("hackathon submit failed:", err);
     return NextResponse.json({ error: "Unexpected server error" }, { status: 500 });
