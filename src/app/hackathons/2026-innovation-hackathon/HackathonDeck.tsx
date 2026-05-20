@@ -77,14 +77,14 @@ export default function HackathonDeck() {
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") {
         e.preventDefault();
-        if (currentSlide === 10 && tracksRevealed < TRACKS.length) {
+        if (currentSlide === 12 && tracksRevealed < TRACKS.length) {
           setTracksRevealed((r) => r + 1);
         } else {
           scrollToSlide(currentSlide + 1);
         }
       } else if (e.key === "ArrowUp" || e.key === "PageUp") {
         e.preventDefault();
-        if (currentSlide === 10 && tracksRevealed > 0) {
+        if (currentSlide === 12 && tracksRevealed > 0) {
           setTracksRevealed((r) => r - 1);
         } else {
           scrollToSlide(currentSlide - 1);
