@@ -57,10 +57,69 @@ const SCHEDULE: Array<{ start: string; end: string; label: string; startUtc: str
 
 const SLIDE_COUNT = 26;
 
+const DEMO_NIGHT_URL = "/hackathons/2026-innovation-hackathon/demo-night";
+
+const INDEX_SECTIONS: Array<{
+  label: string;
+  accent: string;
+  slides: Array<{ n: number; title: string; href?: string }>;
+}> = [
+  {
+    label: "Title",
+    accent: "text-foreground",
+    slides: [{ n: 1, title: "Welcome" }],
+  },
+  {
+    label: "Kickoff",
+    accent: "text-gradient-blue",
+    slides: [
+      { n: 2, title: "Agenda" },
+      { n: 3, title: "The week" },
+      { n: 4, title: "Form a team" },
+      { n: 5, title: "Google Cloud credits" },
+      { n: 6, title: "Credits walkthrough" },
+      { n: 7, title: "Enable APIs" },
+      { n: 8, title: "Pingram" },
+      { n: 9, title: "Submit deadline" },
+      { n: 10, title: "Venue" },
+      { n: 11, title: "Itinerary" },
+      { n: 12, title: "Tracks" },
+      { n: 13, title: "Judges" },
+      { n: 14, title: "Sponsors" },
+    ],
+  },
+  {
+    label: "Main Deck",
+    accent: "text-foreground",
+    slides: [
+      { n: 15, title: "What" },
+      { n: 16, title: "How it works" },
+      { n: 17, title: "Countdown" },
+      { n: 18, title: "Demo night schedule" },
+      { n: 19, title: "Judges" },
+      { n: 20, title: "Prizes" },
+      { n: 21, title: "Who should apply" },
+      { n: 22, title: "Community" },
+      { n: 23, title: "Code of conduct" },
+      { n: 24, title: "Find a team" },
+      { n: 25, title: "Submit" },
+      { n: 26, title: "Lock in your spot" },
+    ],
+  },
+  {
+    label: "Demo Night",
+    accent: "text-gradient",
+    slides: [
+      { n: 0, title: "Open Demo Night →", href: DEMO_NIGHT_URL },
+    ],
+  },
+];
+
 export default function HackathonDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentSlide, setCurrentSlide] = useState(1);
   const [tracksRevealed, setTracksRevealed] = useState(0);
+  const [showIndex, setShowIndex] = useState(false);
 
   const scrollToSlide = useCallback((n: number) => {
     const target = Math.max(1, Math.min(SLIDE_COUNT, n));
@@ -75,6 +134,9 @@ export default function HackathonDeck() {
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key === "Escape") { setShowIndex(false); return; }
+      if (e.key === "i" || e.key === "I") { setShowIndex((v) => !v); return; }
+      if (showIndex) return;
       if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") {
         e.preventDefault();
         if (currentSlide === 12 && tracksRevealed < TRACKS.length) {
@@ -99,7 +161,7 @@ export default function HackathonDeck() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [currentSlide, tracksRevealed, scrollToSlide]);
+  }, [currentSlide, tracksRevealed, scrollToSlide, showIndex]);
 
   // Track which slide is in view.
   useEffect(() => {
@@ -123,12 +185,31 @@ export default function HackathonDeck() {
 
   return (
     <div className="relative h-svh w-full overflow-hidden bg-background text-foreground">
-      {/* fixed scroll indicator — top left */}
-      <div className="pointer-events-none fixed left-[max(1.25rem,env(safe-area-inset-left))] top-[max(1.25rem,env(safe-area-inset-top))] z-40 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
-        <span className="text-foreground">{pad2(currentSlide)}</span>
-        <span className="text-foreground/30"> / </span>
-        <span>{pad2(SLIDE_COUNT)}</span>
+      {/* fixed scroll indicator + index toggle — top left */}
+      <div className="fixed left-[max(1.25rem,env(safe-area-inset-left))] top-[max(1.25rem,env(safe-area-inset-top))] z-40 flex items-center gap-4 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <span className="pointer-events-none">
+          <span className="text-foreground">{pad2(currentSlide)}</span>
+          <span className="text-foreground/30"> / </span>
+          <span>{pad2(SLIDE_COUNT)}</span>
+        </span>
+        <span className="text-foreground/20">·</span>
+        <button
+          onClick={() => setShowIndex((v) => !v)}
+          className="hover:text-foreground transition-colors"
+          aria-label="Toggle slide index"
+        >
+          Index
+        </button>
       </div>
+
+      {/* index overlay */}
+      {showIndex && (
+        <IndexOverlay
+          currentSlide={currentSlide}
+          onSelect={(n) => { scrollToSlide(n); setShowIndex(false); }}
+          onClose={() => setShowIndex(false)}
+        />
+      )}
 
       {/* persistent submit CTA — top right, hides on the form slide */}
       <button
@@ -231,6 +312,98 @@ export default function HackathonDeck() {
         <Slide n={26} title="Lock in your spot">
           <SlideRsvp />
         </Slide>
+
+      </div>
+    </div>
+  );
+}
+
+function IndexOverlay({
+  currentSlide,
+  onSelect,
+  onClose,
+}: {
+  currentSlide: number;
+  onSelect: (n: number) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-xl overflow-y-auto px-[clamp(1.25rem,5vw,5rem)] py-[clamp(4rem,7vh,6rem)]">
+      {/* Header */}
+      <div className="mb-[clamp(2rem,5vh,4rem)] flex items-center justify-between">
+        <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          Index <span className="text-foreground/30 ml-2">— {SLIDE_COUNT} slides</span>
+        </span>
+        <button
+          onClick={onClose}
+          className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Close index"
+        >
+          Close
+        </button>
+      </div>
+
+      {/* Sections grid */}
+      <div className="grid gap-x-[clamp(2rem,4vw,5rem)] gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+        {INDEX_SECTIONS.map((section) => (
+          <div key={section.label} className="flex flex-col gap-4">
+            {/* Section label */}
+            <div className="flex items-center gap-3">
+              <span className={`font-mono text-xs uppercase tracking-[0.18em] ${section.accent}`}>
+                {section.label}
+              </span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
+
+            {/* Slide list */}
+            <ol className="flex flex-col">
+              {section.slides.map((slide) => {
+                const active = slide.n === currentSlide;
+                return (
+                  <li key={slide.n}>
+                    {slide.href ? (
+                      <a
+                        href={slide.href}
+                        className="group flex w-full items-baseline gap-3 border-t border-border py-2.5 text-left text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        <span className="w-6 shrink-0 font-mono text-[0.6rem] tabular-nums">→</span>
+                        <span className="font-mono text-xs uppercase tracking-[0.12em] leading-snug">
+                          {slide.title}
+                        </span>
+                      </a>
+                    ) : (
+                      <button
+                        onClick={() => onSelect(slide.n)}
+                        className={
+                          "group flex w-full items-baseline gap-3 border-t border-border py-2.5 text-left transition-colors hover:text-foreground " +
+                          (active ? "text-foreground" : "text-muted-foreground")
+                        }
+                      >
+                        <span className="w-6 shrink-0 font-mono text-[0.6rem] tabular-nums">
+                          {pad2(slide.n)}
+                        </span>
+                        <span className={
+                          "font-mono text-xs uppercase tracking-[0.12em] leading-snug " +
+                          (active ? "text-foreground" : "")
+                        }>
+                          {slide.title}
+                        </span>
+                        {active && (
+                          <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                        )}
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer hint */}
+      <div className="mt-auto pt-[clamp(2rem,5vh,4rem)] font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground/50">
+        Press I to toggle · Esc to close
       </div>
     </div>
   );
