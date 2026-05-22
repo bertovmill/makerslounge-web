@@ -96,17 +96,18 @@ export default function ScoringPage() {
               {/* Criteria table */}
               <div className="flex flex-col">
                 {/* Table header */}
-                <div className="grid grid-cols-[1fr_4rem] gap-4 border-b border-border pb-2 font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground sm:grid-cols-[8rem_1fr_4rem]">
+                <div className="grid grid-cols-[1fr_4rem_5rem] gap-4 border-b border-border pb-2 font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground sm:grid-cols-[8rem_1fr_4rem_5rem]">
                   <span className="hidden sm:block">Criterion</span>
                   <span className="sm:hidden">Criterion / What judges look for</span>
                   <span className="hidden sm:block">What judges look for</span>
                   <span className="text-right">Weight</span>
+                  <span className="text-right">Score (1–5)</span>
                 </div>
 
                 {track.criteria.map((c) => (
                   <div
                     key={c.label}
-                    className="grid grid-cols-[1fr_4rem] items-baseline gap-4 border-b border-border py-[clamp(0.75rem,1.8vh,1.25rem)] sm:grid-cols-[8rem_1fr_4rem]"
+                    className="grid grid-cols-[1fr_4rem_5rem] items-baseline gap-4 border-b border-border py-[clamp(0.75rem,1.8vh,1.25rem)] sm:grid-cols-[8rem_1fr_4rem_5rem]"
                   >
                     <span className="font-sans text-sm font-medium leading-snug text-foreground sm:text-base">
                       {c.label}
@@ -114,20 +115,24 @@ export default function ScoringPage() {
                     <p className="hidden text-sm leading-relaxed text-muted-foreground sm:block">
                       {c.description}
                     </p>
-                    <p className="block text-[0.7rem] leading-relaxed text-muted-foreground sm:hidden col-span-2 -mt-1">
+                    <p className="block text-[0.7rem] leading-relaxed text-muted-foreground sm:hidden col-span-3 -mt-1">
                       {c.description}
                     </p>
                     <span className="text-right font-mono text-sm tabular-nums text-foreground">
                       {c.weight}%
                     </span>
+                    <span className="text-right font-mono text-sm tabular-nums text-muted-foreground/40">
+                      ___
+                    </span>
                   </div>
                 ))}
 
                 {/* Total row */}
-                <div className="grid grid-cols-[1fr_4rem] gap-4 pt-3 font-mono text-xs uppercase tracking-[0.18em] sm:grid-cols-[8rem_1fr_4rem]">
+                <div className="grid grid-cols-[1fr_4rem_5rem] gap-4 pt-3 font-mono text-xs uppercase tracking-[0.18em] sm:grid-cols-[8rem_1fr_4rem_5rem]">
                   <span className="hidden sm:block" />
                   <span className="text-muted-foreground">Total</span>
                   <span className="text-right font-medium text-foreground">100%</span>
+                  <span />
                 </div>
               </div>
 
