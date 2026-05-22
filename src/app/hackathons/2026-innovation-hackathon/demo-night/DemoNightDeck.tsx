@@ -5,18 +5,34 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 
-const TRACKS: Array<{ name: string; criteria: string[] }> = [
+type TrackCriterion = { label: string; weight: number; description: string };
+const TRACKS: Array<{ name: string; criteria: TrackCriterion[] }> = [
   {
     name: "Validating a Business Idea",
-    criteria: ["End-to-end pipeline coverage", "Quality of scoring / triage logic", "Speed & scalability over manual review", "Demo clarity"],
+    criteria: [
+      { label: "End-to-end pipeline coverage", weight: 25, description: "Handles the full journey from idea intake through evaluation, prioritization, and output — not just one step of the funnel." },
+      { label: "Quality of scoring / triage logic", weight: 35, description: "The AI's ranking methodology is defensible, consistent, and meaningfully better than gut-feel. Handles nuanced, similar ideas differently." },
+      { label: "Speed & scalability over manual review", weight: 25, description: "Demonstrates a credible reduction in time or cost vs. a human team reviewing the same volume of ideas." },
+      { label: "Demo clarity", weight: 15, description: "A non-technical stakeholder understands the value proposition and how to use the tool within 5 minutes." },
+    ],
   },
   {
     name: "Continuous Market Monitoring",
-    criteria: ["Signal relevance & accuracy", "Real-time or near-real-time capability", "Actionability of insights surfaced", "Demo clarity"],
+    criteria: [
+      { label: "Signal relevance & accuracy", weight: 35, description: "Surfaces signals genuinely useful to an innovation team — not just news summaries. Filters noise and avoids false positives." },
+      { label: "Real-time or near-real-time capability", weight: 25, description: "Data freshness matters. The platform detects and surfaces new signals quickly; latency is minimized and made transparent." },
+      { label: "Actionability of insights surfaced", weight: 25, description: "Insights are specific enough to act on. Not just 'AI is growing' — but what an innovation team should do differently because of it." },
+      { label: "Demo clarity", weight: 15, description: "A non-technical stakeholder understands the value proposition and how to use the tool within 5 minutes." },
+    ],
   },
   {
     name: "Synthetic Customers",
-    criteria: ["Fidelity of synthetic feedback", "Non-obvious insight generation", "Time & cost savings vs. real research", "Demo clarity"],
+    criteria: [
+      { label: "Fidelity of synthetic feedback", weight: 35, description: "Simulated customers behave and respond like real market segments. Feedback is nuanced, not generic — accounts for edge cases and varied personas." },
+      { label: "Non-obvious insight generation", weight: 25, description: "Surfaces things traditional surveys often miss: minority opinions, contradictions between stated and revealed preferences, unexpected objections." },
+      { label: "Time & cost savings vs. real research", weight: 25, description: "Makes a credible case for replacing or meaningfully augmenting traditional customer research — speed, cost, or breadth of coverage." },
+      { label: "Demo clarity", weight: 15, description: "A non-technical stakeholder understands the value proposition and how to use the tool within 5 minutes." },
+    ],
   },
 ];
 
@@ -572,11 +588,14 @@ function SlideJudgingCriteria() {
                 <span className="h-px flex-1 bg-border" />
               </div>
               <h3 className="font-sans font-semibold text-sm leading-snug">{t.name}</h3>
-              <ul className="flex flex-col gap-1.5">
+              <ul className="flex flex-col gap-3">
                 {t.criteria.map((c) => (
-                  <li key={c} className="flex items-baseline gap-2 text-xs text-muted-foreground">
-                    <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-primary/60" />
-                    {c}
+                  <li key={c.label} className="flex flex-col gap-0.5">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-xs font-medium text-foreground">{c.label}</span>
+                      <span className="shrink-0 font-mono text-[0.6rem] tabular-nums text-muted-foreground">{c.weight}%</span>
+                    </div>
+                    <p className="text-[0.65rem] leading-relaxed text-muted-foreground">{c.description}</p>
                   </li>
                 ))}
               </ul>

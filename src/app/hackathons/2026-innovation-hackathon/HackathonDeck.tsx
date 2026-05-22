@@ -12,23 +12,39 @@ import SubmissionForm from "./SubmissionForm";
 // Edit these as information firms up. Live updates push to everyone on next load.
 const LUMA_URL = "https://luma.com/makerslounge-hackathon";
 const DISCORD_URL = "https://discord.com/invite/PBgbuw5v";
-const TRACKS: Array<{ name: string; description: string; criteria: string[]; image: string }> = [
+type TrackCriterion = { label: string; weight: number; description: string };
+const TRACKS: Array<{ name: string; description: string; criteria: TrackCriterion[]; image: string }> = [
   {
     name: "Validating a Business Idea",
     description: "Innovation teams collect thousands of ideas every year, far more than they can evaluate. Build an AI agent or tool that streamlines the innovation pipeline from raw idea to commercialized product.",
-    criteria: ["End-to-end pipeline coverage", "Quality of scoring / triage logic", "Speed & scalability over manual review", "Demo clarity"],
+    criteria: [
+      { label: "End-to-end pipeline coverage", weight: 25, description: "Handles the full journey from idea intake through evaluation, prioritization, and output — not just one step of the funnel." },
+      { label: "Quality of scoring / triage logic", weight: 35, description: "The AI's ranking methodology is defensible, consistent, and meaningfully better than gut-feel. Handles nuanced, similar ideas differently." },
+      { label: "Speed & scalability over manual review", weight: 25, description: "Demonstrates a credible reduction in time or cost vs. a human team reviewing the same volume of ideas." },
+      { label: "Demo clarity", weight: 15, description: "A non-technical stakeholder understands the value proposition and how to use the tool within 5 minutes." },
+    ],
     image: "/hackathons/innovation-hackathon/track-idea-validation.png",
   },
   {
     name: "Continuous Market Monitoring",
     description: "The business landscape is changing fast, and separating signal from noise has become critical. Build an agentic AI tool or platform that continuously monitors the market for signals relevant to a company's innovation function.",
-    criteria: ["Signal relevance & accuracy", "Real-time or near-real-time capability", "Actionability of insights surfaced", "Demo clarity"],
+    criteria: [
+      { label: "Signal relevance & accuracy", weight: 35, description: "Surfaces signals genuinely useful to an innovation team — not just news summaries. Filters noise and avoids false positives." },
+      { label: "Real-time or near-real-time capability", weight: 25, description: "Data freshness matters. The platform detects and surfaces new signals quickly; latency is minimized and made transparent." },
+      { label: "Actionability of insights surfaced", weight: 25, description: "Insights are specific enough to act on. Not just 'AI is growing' — but what an innovation team should do differently because of it." },
+      { label: "Demo clarity", weight: 15, description: "A non-technical stakeholder understands the value proposition and how to use the tool within 5 minutes." },
+    ],
     image: "/hackathons/innovation-hackathon/track-market-monitoring.png",
   },
   {
     name: "Synthetic Customers",
     description: "Real customer studies are slow, expensive, and often fail to surface what customers actually want. Build an AI tool or platform that simulates synthetic customer feedback on new product ideas.",
-    criteria: ["Fidelity of synthetic feedback", "Non-obvious insight generation", "Time & cost savings vs. real research", "Demo clarity"],
+    criteria: [
+      { label: "Fidelity of synthetic feedback", weight: 35, description: "Simulated customers behave and respond like real market segments. Feedback is nuanced, not generic — accounts for edge cases and varied personas." },
+      { label: "Non-obvious insight generation", weight: 25, description: "Surfaces things traditional surveys often miss: minority opinions, contradictions between stated and revealed preferences, unexpected objections." },
+      { label: "Time & cost savings vs. real research", weight: 25, description: "Makes a credible case for replacing or meaningfully augmenting traditional customer research — speed, cost, or breadth of coverage." },
+      { label: "Demo clarity", weight: 15, description: "A non-technical stakeholder understands the value proposition and how to use the tool within 5 minutes." },
+    ],
     image: "/hackathons/innovation-hackathon/track-synthetic-customers.png",
   },
 ];
@@ -1326,12 +1342,15 @@ function SlideTracks({ revealed }: { revealed: number }) {
               </div>
               <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">{t.description}</p>
               <div className="mt-auto pt-3 border-t border-border">
-                <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground mb-2">Judging criteria</p>
-                <ul className="flex flex-col gap-1">
+                <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground mb-3">Judging criteria</p>
+                <ul className="flex flex-col gap-3">
                   {t.criteria.map((c) => (
-                    <li key={c} className="flex items-baseline gap-2 text-xs text-muted-foreground sm:text-sm">
-                      <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
-                      {c}
+                    <li key={c.label} className="flex flex-col gap-0.5">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-xs font-medium text-foreground sm:text-sm">{c.label}</span>
+                        <span className="shrink-0 font-mono text-[0.6rem] tabular-nums text-muted-foreground">{c.weight}%</span>
+                      </div>
+                      <p className="text-[0.7rem] leading-relaxed text-muted-foreground">{c.description}</p>
                     </li>
                   ))}
                 </ul>
