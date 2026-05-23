@@ -505,10 +505,10 @@ function SlideTitle() {
         </div>
         <div className="relative hidden sm:block flex-1">
           <Image
-            src="/hackathons/innovation-hackathon/Innovation (1).png"
+            src="/hackathons/innovation-hackathon/cover-art.png"
             alt="2026 Innovation Hackathon"
             width={600}
-            height={600}
+            height={338}
             className="w-full h-auto object-contain"
             priority
           />
