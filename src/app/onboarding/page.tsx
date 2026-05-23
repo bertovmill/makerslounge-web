@@ -8,11 +8,13 @@ import { ArrowRight, ArrowLeft, Loader2, Linkedin, Instagram, Globe } from "luci
 import { AnimatePresence, motion } from "motion/react";
 import SkillsInput from "@/components/SkillsInput";
 import { DottedGlowBackground } from "@/components/ui/dotted-glow-background";
+import { useAuth } from "@/context/AuthContext";
 
 const TOTAL_STEPS = 4;
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { refreshOnboarding } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -104,6 +106,7 @@ export default function OnboardingPage() {
       });
 
       if (error) throw error;
+      await refreshOnboarding();
       router.push("/home");
     } catch (error) {
       console.error("Error saving profile:", error);
@@ -259,7 +262,7 @@ export default function OnboardingPage() {
                   Your top skills
                 </h1>
                 <p className="text-sm text-muted-foreground mb-5">
-                  Select what you&apos;re great at.
+                  Select at least 3 things you&apos;re great at.
                 </p>
 
                 <div className="flex-1 min-h-0 overflow-y-auto -mx-1 px-1">
@@ -281,7 +284,8 @@ export default function OnboardingPage() {
                   </button>
                   <button
                     onClick={() => goTo(3)}
-                    className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                    disabled={skills.length < 3}
+                    className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     Next
                     <ArrowRight className="w-4 h-4" />

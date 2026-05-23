@@ -168,7 +168,7 @@ export default function SubmissionForm() {
           <code className="select-all text-foreground">{submissionId}</code>
         </div>
         <p className="max-w-[55ch] text-base text-muted-foreground sm:text-lg">
-          We confirmed your submission. Keep this ID for your records. Demo night runs Tuesday May 26, 5:30 to 8:30 PM, at 510 Front St W, Suite 400.
+          We confirmed your submission. Keep this ID for your records. Demo night runs Tuesday May 26, 5:30 to 8:30 PM, at 510 Front St W, Suite 200.
         </p>
       </div>
     );

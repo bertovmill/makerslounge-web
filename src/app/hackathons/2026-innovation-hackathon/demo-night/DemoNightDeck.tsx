@@ -231,7 +231,7 @@ function SlideDemoNightOpener() {
           </h2>
           <div className="flex flex-col gap-2 font-mono text-xs uppercase tracking-[0.12em]">
             <span className="text-foreground">Tuesday May 26, 2026</span>
-            <span className="text-muted-foreground">510 Front St W, Suite 400 · Toronto</span>
+            <span className="text-muted-foreground">510 Front St W, Suite 200 · Toronto</span>
             <span className="text-muted-foreground">Doors 5:30 PM · Demos 6:30 PM</span>
           </div>
         </div>

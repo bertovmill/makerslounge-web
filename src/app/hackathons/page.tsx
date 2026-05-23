@@ -33,7 +33,7 @@ const HACKATHONS: HackathonEntry[] = [
     tagline:
       "Build, demo, and pitch an AI agent in one night. Cash prizes for the top 3.",
     date: "Thu May 14, 2026 · 6–9 PM",
-    location: "510 Front St W, Suite 400, Toronto",
+    location: "510 Front St W, Suite 200, Toronto",
     status: "past",
   },
   {
@@ -42,7 +42,7 @@ const HACKATHONS: HackathonEntry[] = [
     title: "2026 Innovation Hackathon",
     tagline: "100 builders. One week. Live demos at Toronto Tech Week.",
     date: "May 19 to May 26, 2026",
-    location: "510 Front St W, Suite 400, Toronto",
+    location: "510 Front St W, Suite 200, Toronto",
     status: "upcoming",
   },
 ];

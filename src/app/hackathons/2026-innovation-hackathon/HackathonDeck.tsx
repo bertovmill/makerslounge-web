@@ -519,7 +519,7 @@ function SlideTitle() {
       <div className="relative mt-auto flex flex-col gap-3 font-mono text-sm uppercase tracking-[0.12em] text-muted-foreground sm:flex-row sm:items-end sm:justify-between sm:gap-8">
         <div className="flex flex-col gap-1">
           <span className="text-foreground">May 19 to May 26, 2026</span>
-          <span>510 Front St W, Suite 400, Toronto</span>
+          <span>510 Front St W, Suite 200, Toronto</span>
         </div>
       </div>
     </div>
@@ -991,7 +991,7 @@ function SlideKickoffVenue() {
               The Venue.
             </h2>
             <p className="font-mono text-sm uppercase tracking-[0.12em] text-foreground">
-              510 Front St W, Suite 400
+              510 Front St W, Suite 200
               <br />
               Toronto, ON · Tue May 26
             </p>
@@ -1206,7 +1206,7 @@ function SlideHow() {
       tag: "Part 3",
       title: "Demo night",
       when: "Tue May 26, 5:30 PM",
-      where: "510 Front St W, Suite 400",
+      where: "510 Front St W, Suite 200",
       body: "Come back and present what you built. Judges evaluate live. Winners announced on the night.",
     },
   ];

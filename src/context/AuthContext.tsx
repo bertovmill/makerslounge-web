@@ -10,6 +10,7 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   onboardingComplete: boolean;
+  refreshOnboarding: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,6 +67,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkOnboarding();
   }, [user]);
 
+  const refreshOnboarding = async () => {
+    if (!user) return;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("name")
+      .eq("id", user.id)
+      .single();
+    setOnboardingComplete(!!(profile?.name?.trim()));
+  };
+
   // Single redirect — only when we've finished checking
   useEffect(() => {
     if (loading || !user) return;
@@ -82,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = user?.email === "bertmill19@gmail.com";
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin, onboardingComplete }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, onboardingComplete, refreshOnboarding }}>
       {children}
     </AuthContext.Provider>
   );

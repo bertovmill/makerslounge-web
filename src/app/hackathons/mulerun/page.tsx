@@ -167,7 +167,7 @@ export default function MulerunHackathonPage() {
           <Eyebrow n={5} label="Getting in" />
           <ul className="flex flex-col">
             {[
-              { label: "510 Front St W, Suite 400, Toronto, ON M5V 1B8" },
+              { label: "510 Front St W, Suite 200, Toronto, ON M5V 1B8" },
               { label: "The event is on the 4th floor" },
               { label: "Someone will be at the ground floor to let attendees up" },
             ].map((row) => (

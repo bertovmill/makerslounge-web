@@ -10,11 +10,15 @@ import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { AnimatedLogo } from "@/components/AnimatedLogo";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
+<<<<<<< Updated upstream
 import NewsletterPopup, { OPEN_NEWSLETTER_EVENT } from "@/components/NewsletterPopup";
 
 const openNewsletterPopup = () => {
   window.dispatchEvent(new CustomEvent(OPEN_NEWSLETTER_EVENT));
 };
+=======
+import { NewsletterModal } from "@/components/NewsletterModal";
+>>>>>>> Stashed changes
 
 interface ActionIdea {
   label: string;
@@ -243,6 +247,7 @@ export default function Home() {
 
   return (
     <div className="min-h-svh flex flex-col relative overflow-hidden">
+      <NewsletterModal />
       {/* Background layers */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-b from-[#1a2a4a]/30 via-transparent to-[#1a1a2e]/20 dark:from-[#1a2a4a]/60 dark:via-transparent dark:to-[#1a1a2e]/40" />
