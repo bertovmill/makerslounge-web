@@ -23,7 +23,7 @@ const TRACKS: Array<{ name: string; description: string; criteria: TrackCriterio
       { label: "Speed & scalability over manual review", weight: 25, description: "Demonstrates a credible reduction in time or cost vs. a human team reviewing the same volume of ideas." },
       { label: "Demo clarity", weight: 15, description: "A non-technical stakeholder understands the value proposition and how to use the tool within 5 minutes." },
     ],
-    image: "/hackathons/innovation-hackathon/track-idea-validation.png",
+    image: "/hackathons/innovation-hackathon/track-idea-validation-art.png",
   },
   {
     name: "Continuous Market Monitoring",
@@ -34,7 +34,7 @@ const TRACKS: Array<{ name: string; description: string; criteria: TrackCriterio
       { label: "Actionability of insights surfaced", weight: 25, description: "Insights are specific enough to act on. Not just 'AI is growing' — but what an innovation team should do differently because of it." },
       { label: "Demo clarity", weight: 15, description: "A non-technical stakeholder understands the value proposition and how to use the tool within 5 minutes." },
     ],
-    image: "/hackathons/innovation-hackathon/track-market-monitoring.png",
+    image: "/hackathons/innovation-hackathon/track-market-monitoring-art.png",
   },
   {
     name: "Synthetic Customers",
@@ -45,7 +45,7 @@ const TRACKS: Array<{ name: string; description: string; criteria: TrackCriterio
       { label: "Time & cost savings vs. real research", weight: 25, description: "Makes a credible case for replacing or meaningfully augmenting traditional customer research — speed, cost, or breadth of coverage." },
       { label: "Demo clarity", weight: 15, description: "A non-technical stakeholder understands the value proposition and how to use the tool within 5 minutes." },
     ],
-    image: "/hackathons/innovation-hackathon/track-synthetic-customers.png",
+    image: "/hackathons/innovation-hackathon/track-synthetic-customers-art.png",
   },
 ];
 const JUDGES: Array<{ name: string; role?: string }> = [];

@@ -11,19 +11,19 @@ const OUTPUT_DIR = path.join(process.cwd(), "public/hackathons/innovation-hackat
 
 const tracks = [
   {
-    file: "track-idea-validation.png",
+    file: "track-idea-validation-art.png",
     prompt:
-      "Minimal abstract digital artwork, dark charcoal background, a luminous funnel made of thin blue gradient lines with glowing idea sparks flowing in at the top and a single refined product crystal emerging at the bottom, geometric precision, clean negative space, tech hackathon aesthetic, 16:9",
+      "Light editorial illustration, soft warm cream and terracotta background. Abstract geometric shapes — triangles, diamonds, circles — floating and gently converging into a glowing minimal funnel shape. Watercolor wash texture, painterly, warm gold and blush accents, generous negative space, no text, no people, artistic, beautiful.",
   },
   {
-    file: "track-market-monitoring.png",
+    file: "track-market-monitoring-art.png",
     prompt:
-      "Minimal abstract digital artwork, dark charcoal background, a web of interconnected signal nodes and pulsing data streams in electric blue and cyan, radar-like concentric rings overlaid on a global grid, real-time market signals visualized as glowing data pulses, geometric precision, clean negative space, tech hackathon aesthetic, 16:9",
+      "Light editorial illustration, pale blue-white background. Delicate signal waves and data arcs emanating from a single glowing point, like ripples on still water or radio waves across a minimal horizon. Soft blue, warm sand, and white tones. Watercolor wash texture, ethereal, airy, generous negative space, no text, no people, artistic, beautiful.",
   },
   {
-    file: "track-synthetic-customers.png",
+    file: "track-synthetic-customers-art.png",
     prompt:
-      "Minimal abstract digital artwork, dark charcoal background, an array of subtle translucent human silhouettes arranged in a grid, each with a small glowing thought bubble containing abstract product shapes, soft blue and violet gradients, digital simulation aesthetic, geometric precision, clean negative space, tech hackathon aesthetic, 16:9",
+      "Light editorial illustration, soft cream background. Multiple translucent human silhouettes arranged in a gentle organic cluster, each dissolving at the edges into soft light and subtle colour. Warm blush, coral, and pale lavender tones. Watercolor wash texture, painterly, generous negative space, no text, artistic, beautiful.",
   },
 ];
 
@@ -43,11 +43,12 @@ function download(url, dest) {
 
 for (const track of tracks) {
   console.log(`Generating: ${track.file}`);
-  const result = await fal.subscribe("fal-ai/flux/schnell", {
+  const result = await fal.subscribe("fal-ai/flux/dev", {
     input: {
       prompt: track.prompt,
       image_size: "landscape_16_9",
-      num_inference_steps: 8,
+      num_inference_steps: 28,
+      guidance_scale: 3.5,
       num_images: 1,
     },
   });
