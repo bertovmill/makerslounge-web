@@ -13,17 +13,17 @@ const tracks = [
   {
     file: "track-idea-validation-art.png",
     prompt:
-      "Light editorial illustration, soft warm cream and terracotta background. Abstract geometric shapes — triangles, diamonds, circles — floating and gently converging into a glowing minimal funnel shape. Watercolor wash texture, painterly, warm gold and blush accents, generous negative space, no text, no people, artistic, beautiful.",
+      "Editorial scientific poster art. Cool light grey background. A large luminous geometric prism or diamond form, deep navy blue interior with a warm amber and gold atmospheric glow radiating from its core edges, like light refracting through glass. Smooth photorealistic gradient rendering, no texture, minimal, no text, no people. Inspired by astronomical data visualization and editorial design. Cinematic, sophisticated, 16:9.",
   },
   {
     file: "track-market-monitoring-art.png",
     prompt:
-      "Light editorial illustration, pale blue-white background. Delicate signal waves and data arcs emanating from a single glowing point, like ripples on still water or radio waves across a minimal horizon. Soft blue, warm sand, and white tones. Watercolor wash texture, ethereal, airy, generous negative space, no text, no people, artistic, beautiful.",
+      "Editorial scientific poster art. Cool light grey background. A vast deep navy blue sphere — like a planet seen from orbit — with a dramatic warm amber and gold atmospheric halo glowing along one curved edge, fading into the grey void. Smooth photorealistic gradient rendering, no texture, minimal, no text, no people. Inspired by NASA imagery and editorial data visualization. Cinematic, sophisticated, 16:9.",
   },
   {
     file: "track-synthetic-customers-art.png",
     prompt:
-      "Light editorial illustration, soft cream background. Multiple translucent human silhouettes arranged in a gentle organic cluster, each dissolving at the edges into soft light and subtle colour. Warm blush, coral, and pale lavender tones. Watercolor wash texture, painterly, generous negative space, no text, artistic, beautiful.",
+      "Editorial scientific poster art. Cool light grey background. Multiple overlapping translucent spheres of varying sizes, deep navy blue with warm amber atmospheric glows, layered and partially intersecting like a Venn diagram seen from a distance. Smooth photorealistic gradient rendering, no texture, minimal, no text, no people. Inspired by scientific visualization and editorial design. Cinematic, sophisticated, 16:9.",
   },
 ];
 
@@ -47,8 +47,8 @@ for (const track of tracks) {
     input: {
       prompt: track.prompt,
       image_size: "landscape_16_9",
-      num_inference_steps: 28,
-      guidance_scale: 3.5,
+      num_inference_steps: 35,
+      guidance_scale: 4.5,
       num_images: 1,
     },
   });
