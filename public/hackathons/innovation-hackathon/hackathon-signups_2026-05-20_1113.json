@@ -1,0 +1,128 @@
+[
+  {
+    "id": "9d0afd79-2df4-4f5f-93a3-c9cd0620b799",
+    "name": "Berto",
+    "background": "dsddfsdsdsdssdsdsdsdsd",
+    "looking_for": "sdsdsdsdsdsdsdsdssdsds",
+    "created_at": "2026-05-20T14:09:59.075463+00:00"
+  },
+  {
+    "id": "fc6faab7-7b70-44a4-b858-c692514a52ba",
+    "name": "Tara Tofighi",
+    "background": "I'm a physician, working on designing AI agents to streamline admin related tasks in medicine, would love to improve my skills with coding and Claude (not an engineer but work hard and love to learn)",
+    "looking_for": "I think someone who is more technically advanced and would be willing to mentor and teach a bit, also someone who might be interested in collaborating on healthtech down the line.",
+    "created_at": "2026-05-20T13:37:07.857685+00:00"
+  },
+  {
+    "id": "72e470b8-2404-4672-a501-8e2cea2a0cc4",
+    "name": "Karan Aggarwal",
+    "background": "I am an AI developer. I mostly work with LLM's project from start to end. Worked with RAG, chromaDB, and cache to make an end product.",
+    "looking_for": "Firstly, someone front end. Secondly, I do have couple of ideas to work on but would highly appreciate to support if someone has a great project in back of their mind. Someone who can handle the presentations and all which I make the product.",
+    "created_at": "2026-05-20T12:19:51.939786+00:00"
+  },
+  {
+    "id": "f6ef040d-7735-4572-9b4b-383b8696c300",
+    "name": "Hunain",
+    "background": "Software engineer with 2+ years of experience building data systems and full-stack applications. Worked on large-scale ETL at Barclays and built projects across AI, web, and automation. Comfortable turning ideas into working products quickly.",
+    "looking_for": "Looking for teammates who communicate well, move fast, and enjoy building. Open to engineers, designers, PMs, or anyone willing to own a piece and ship.",
+    "created_at": "2026-05-20T07:53:39.062441+00:00"
+  },
+  {
+    "id": "942b295f-6ea3-4bf3-ab1d-59ec400de608",
+    "name": "Bhavya Goel",
+    "background": "Primarily an engineer , have worked on several side projects like AI video editors , Production Level Semantic Search Platforms , AI Agents from scratch. Basically the product guy.",
+    "looking_for": "Really looking to team up with someone who is creative , can help with tech a little bit and passionate about building it.",
+    "created_at": "2026-05-20T01:59:12.783123+00:00"
+  },
+  {
+    "id": "7a845ed4-4bee-4822-8f19-251ee8184720",
+    "name": "Ash",
+    "background": "Fullstack product engineer formerly at Sentry.io, owned and shipping multiple features end to end at scale. Experienced with React, TypeScript, Python, Next.js.",
+    "looking_for": "Looking for team members with real tech industry experience to build something special. Somebody to bounce ideas off of and also not afraid to get their hands dirty and build autonomously. Happy to work with anyone regardless of technicality i.e product managers / designers / engineers, but ideally somebody who has at least a year or two of real industry experience.",
+    "created_at": "2026-05-20T01:46:00.433169+00:00"
+  },
+  {
+    "id": "6c04aaf1-e062-409f-818a-0a7bdb8ec640",
+    "name": "Briar",
+    "background": "Designer with 7 years in architectural fabrication and 2 in digital product design. Obsessed with how things are made and why. I turn complexity into clear, beautiful outputs and take time to understand how people actually behave. I also run Informal Solutions, an archive of humans fixing things with what they have — and built the site myself.",
+    "looking_for": "Engineers, builders, or PMs who move fast and like weird ideas.",
+    "created_at": "2026-05-20T01:07:45.599005+00:00"
+  },
+  {
+    "id": "452abc31-800c-4a83-bc06-6b8967cbcfe9",
+    "name": "Prakash",
+    "background": "Full Stack engineer focussed on front end development. Recently developing projects and interested in LLM's, RAG, AI agents. Used open source models, ollama, Vector store, LangChain and LangGraph",
+    "looking_for": "I am pretty new to building AI agents, and this is my first time attending a Hackathon. A person who is comfortable with building agents and agentic workflow would be a great fit to drive me and possibly a great platform for me to learn and become a better AI developer.",
+    "created_at": "2026-05-20T00:54:31.526295+00:00"
+  },
+  {
+    "id": "03d1bbbc-7625-490d-9913-87509214962f",
+    "name": "Nikhil",
+    "background": "Product/UX designer and AI builder with experience turning rough ideas into working prototypes. I work across product strategy, interface design, AI workflows, and rapid PWA/web app development. I’ve built tools like Code2Motion, LTBBuddy, EasyBuddy, and internal AI assistants focused on training, workflow optimization, and interactive experiences. Strong at concept framing, user flows, prompt/system design, prototyping, storytelling, and pitching.",
+    "looking_for": "Looking for curious, execution-focused teammates who can move fast and build. Ideally engineers, frontend developers, AI/LLM builders, designers, or product-minded people interested in interactive experiences, public-facing tools, education, accessibility, or civic/enterprise innovation. Good vibes matter: clear communication, low ego, strong follow-through, and willingness to ship something polished in the time we have.",
+    "created_at": "2026-05-20T00:40:20.672785+00:00"
+  },
+  {
+    "id": "47292a4c-8a87-4183-a8a0-dacdc5d8cd0f",
+    "name": "Behzad",
+    "background": "SDE @ IBM, currently a 3rd year student at McMaster University. I work very full stack so I'm very flexible when it comes to meeting new teams. I'm collaborative, great at presenting, and excited to work with people from different technical backgrounds.",
+    "looking_for": "I'm looking for someone that's collaborative, ready to work hard, and eager to work a lot across the next week. Technical is a must.",
+    "created_at": "2026-05-20T00:10:41.102644+00:00"
+  },
+  {
+    "id": "eb36ed6b-4664-436a-acb2-1d07340ff695",
+    "name": "Harish",
+    "background": "Full-stack engineer with a backend focus. Most recently, I was a tech lead and engineering manager. These days I am an AI engineer.",
+    "looking_for": "Someone with a product-oriented mindset",
+    "created_at": "2026-05-20T00:07:21.901963+00:00"
+  },
+  {
+    "id": "cb05ad79-0c36-4eed-902f-98dfcdf6f62e",
+    "name": "B",
+    "background": "sdsdsdsdsdsdsdsdsdsdsd",
+    "looking_for": "sdsdsdsdsdsdsdsdsdsdsd",
+    "created_at": "2026-05-19T21:31:20.889144+00:00"
+  },
+  {
+    "id": "e52027b0-91d2-40b5-a0f6-6c8a33907e80",
+    "name": "Joe Smith",
+    "background": "bill jsndfjnfsdfjsndfs",
+    "looking_for": "ball hos dnfdkmrkmskmskmd",
+    "created_at": "2026-05-19T15:25:49.932648+00:00"
+  },
+  {
+    "id": "9c41b07d-1586-49f6-ad10-0c4a3a14a6d3",
+    "name": "Azam",
+    "background": "Recent Computer Science graduate and Junior Software engineer, passionate about full-stack development and product design! I've build mobile apps, AI agents, and a variety of personal projects. I'm good at ideating solutions to real world challenges and building in a fast paced environment!",
+    "looking_for": "Looking for friendly, enthusiastic teammates who want to have fun and meet new people while building something interesting and learning new skills!",
+    "created_at": "2026-05-19T02:43:33.141952+00:00"
+  },
+  {
+    "id": "2719063c-9df3-41d0-8070-c0ecd92cf1ee",
+    "name": "Efrain Deulofeu",
+    "background": "Structural Designer developing computational AI solutions to bridge the gap between a fast-evolving tech landscape and the traditional construction industry.",
+    "looking_for": "Seeking positive team players who love structure and clear goals. Let’s build something great together! Looking for basic skills in development (frontend/backend), Figma design, or project pitching.",
+    "created_at": "2026-05-18T22:28:41.243014+00:00"
+  },
+  {
+    "id": "2b8c9856-8757-4a05-9ba9-676f4178a584",
+    "name": "Berto",
+    "background": "I like to build with Next.js, and I love my teammates, and I'm a good teammate.",
+    "looking_for": "I'm looking for good people, really kind overall, really nice, happy people, fast people, just like overall really good people.",
+    "created_at": "2026-05-18T19:40:35.621476+00:00"
+  },
+  {
+    "id": "c00dfb9c-e435-4977-b2c9-758960823833",
+    "name": "Berto",
+    "background": "I'm an engineer. I built lots of AI projects.",
+    "looking_for": "I'm looking for people with really good design skills.",
+    "created_at": "2026-05-18T19:11:50.855741+00:00"
+  },
+  {
+    "id": "e7555fcd-7d6b-45e3-ab89-ef8a7c8225db",
+    "name": "Berto",
+    "background": "I am a go-to-market lead at Octus.ai.",
+    "looking_for": "I am looking for other really good AI engineers.",
+    "created_at": "2026-05-18T18:46:59.669202+00:00"
+  }
+]

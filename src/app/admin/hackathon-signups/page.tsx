@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, FileJson, FileSpreadsheet } from "lucide-react";
+import { Download, FileJson, FileSpreadsheet, Trophy } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+
+const MIN_FINALISTS = 6;
+const MAX_FINALISTS = 9;
 
 interface Signup {
   id: string;
@@ -12,6 +15,7 @@ interface Signup {
   background: string;
   looking_for: string;
   matched_team: string | null;
+  is_finalist: boolean;
   created_at: string;
 }
 
@@ -66,6 +70,7 @@ export default function HackathonSignupsAdmin() {
   const [signups, setSignups] = useState<Signup[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const init = async () => {
@@ -87,16 +92,38 @@ export default function HackathonSignupsAdmin() {
       setLoading(true);
       const { data, error } = await supabase
         .from("innovation_hackathon_signups")
-        .select("id, name, background, looking_for, matched_team, created_at")
+        .select("id, name, background, looking_for, matched_team, is_finalist, created_at")
         .order("created_at", { ascending: false });
 
       if (!error) {
-        setSignups((data ?? []) as Signup[]);
+        const rows = (data ?? []) as Signup[];
+        setSignups(rows);
+        setSelectedIds(new Set(rows.filter((r) => r.is_finalist).map((r) => r.id)));
       }
       setLoading(false);
     };
     load();
   }, [isAdmin]);
+
+  const toggleFinalist = (id: string) => {
+    setSelectedIds((prev) => {
+      const wasSelected = prev.has(id);
+      const next = new Set(prev);
+      if (wasSelected) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      supabase
+        .from("innovation_hackathon_signups")
+        .update({ is_finalist: !wasSelected })
+        .eq("id", id)
+        .then(() => {});
+      return next;
+    });
+  };
+
+  const finalists = signups.filter((s) => selectedIds.has(s.id));
 
   const exportCsv = () => {
     const ts = timestampForFilename();
@@ -113,6 +140,24 @@ export default function HackathonSignupsAdmin() {
       `hackathon-signups_${ts}.json`,
       "application/json",
       JSON.stringify(signups, null, 2),
+    );
+  };
+
+  const exportFinalistsCsv = () => {
+    const ts = timestampForFilename();
+    download(
+      `hackathon-finalists_${ts}.csv`,
+      "text/csv;charset=utf-8",
+      buildCsv(finalists),
+    );
+  };
+
+  const exportFinalistsJson = () => {
+    const ts = timestampForFilename();
+    download(
+      `hackathon-finalists_${ts}.json`,
+      "application/json",
+      JSON.stringify(finalists, null, 2),
     );
   };
 
@@ -138,14 +183,66 @@ export default function HackathonSignupsAdmin() {
             — typed form or voice with Mack.
           </p>
         </div>
-        <div className="flex flex-col items-start gap-2 sm:items-end">
-          <div className="font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground">
-            Total{" "}
-            <span className="ml-1 text-base font-medium tabular-nums text-foreground">
-              {signups.length}
+        <div className="flex flex-col items-start gap-3 sm:items-end">
+          <div className="flex items-center gap-4">
+            <span className="font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground">
+              Total{" "}
+              <span className="ml-1 text-base font-medium tabular-nums text-foreground">
+                {signups.length}
+              </span>
+            </span>
+            <span className="h-3 w-px bg-border" />
+            <span className="font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground">
+              Finalists{" "}
+              <span className={`ml-1 text-base font-medium tabular-nums ${
+                selectedIds.size === 0
+                  ? "text-muted-foreground"
+                  : selectedIds.size >= MIN_FINALISTS && selectedIds.size <= MAX_FINALISTS
+                  ? "text-green-600 dark:text-green-400"
+                  : selectedIds.size > MAX_FINALISTS
+                  ? "text-red-500"
+                  : "text-amber-500"
+              }`}>
+                {selectedIds.size}
+              </span>
+              <span className="ml-0.5 text-muted-foreground/60">/{MAX_FINALISTS}</span>
             </span>
           </div>
-          <div className="flex gap-2">
+
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-1.5">
+              <Trophy className="size-3 text-amber-500" />
+              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-amber-500">
+                {selectedIds.size < MIN_FINALISTS
+                  ? `${MIN_FINALISTS - selectedIds.size} more to go`
+                  : selectedIds.size > MAX_FINALISTS
+                  ? `${selectedIds.size - MAX_FINALISTS} over limit`
+                  : "Good range"}
+              </span>
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            {selectedIds.size > 0 && (
+              <>
+                <button
+                  type="button"
+                  onClick={exportFinalistsCsv}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-500/20 dark:text-amber-400"
+                >
+                  <FileSpreadsheet className="size-3.5" />
+                  Finalists CSV
+                </button>
+                <button
+                  type="button"
+                  onClick={exportFinalistsJson}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-500/20 dark:text-amber-400"
+                >
+                  <FileJson className="size-3.5" />
+                  Finalists JSON
+                </button>
+              </>
+            )}
             <button
               type="button"
               onClick={exportCsv}
@@ -153,7 +250,7 @@ export default function HackathonSignupsAdmin() {
               className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
             >
               <FileSpreadsheet className="size-3.5" />
-              Export CSV
+              All CSV
             </button>
             <button
               type="button"
@@ -162,7 +259,7 @@ export default function HackathonSignupsAdmin() {
               className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
             >
               <FileJson className="size-3.5" />
-              Export JSON
+              All JSON
             </button>
           </div>
         </div>
@@ -189,6 +286,7 @@ export default function HackathonSignupsAdmin() {
             <table className="w-full border-collapse text-sm">
               <thead className="border-b border-border bg-muted/30 text-left">
                 <tr>
+                  <th className="w-10 px-4 py-3" />
                   <Th>Name</Th>
                   <Th>Background</Th>
                   <Th>Looking for</Th>
@@ -197,48 +295,68 @@ export default function HackathonSignupsAdmin() {
                 </tr>
               </thead>
               <tbody>
-                {signups.map((s, i) => (
-                  <tr
-                    key={s.id}
-                    className={
-                      "border-b border-border last:border-b-0 align-top transition-colors hover:bg-muted/40 " +
-                      (i % 2 === 0 ? "bg-transparent" : "bg-muted/10")
-                    }
-                  >
-                    <Td className="whitespace-nowrap font-medium text-foreground">
-                      {s.name}
-                    </Td>
-                    <Td className="min-w-[18rem] max-w-[24rem] whitespace-pre-wrap text-muted-foreground">
-                      {s.background}
-                    </Td>
-                    <Td className="min-w-[18rem] max-w-[24rem] whitespace-pre-wrap text-muted-foreground">
-                      {s.looking_for}
-                    </Td>
-                    <Td className="whitespace-nowrap">
-                      {s.matched_team ? (
-                        <span className={`inline-block rounded-full px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${
-                          s.matched_team === "Team 1"
-                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                            : s.matched_team === "Team 2"
-                            ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                            : "bg-green-500/10 text-green-600 dark:text-green-400"
-                        }`}>
-                          {s.matched_team}
+                {signups.map((s, i) => {
+                  const isFinalist = selectedIds.has(s.id);
+                  return (
+                    <tr
+                      key={s.id}
+                      onClick={() => toggleFinalist(s.id)}
+                      className={
+                        "cursor-pointer border-b border-border last:border-b-0 align-top transition-colors " +
+                        (isFinalist
+                          ? "bg-amber-500/8 hover:bg-amber-500/12"
+                          : i % 2 === 0
+                          ? "bg-transparent hover:bg-muted/40"
+                          : "bg-muted/10 hover:bg-muted/40")
+                      }
+                    >
+                      <td className="px-4 py-4">
+                        <input
+                          type="checkbox"
+                          checked={isFinalist}
+                          onChange={() => toggleFinalist(s.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="size-4 cursor-pointer rounded accent-amber-500"
+                        />
+                      </td>
+                      <Td className="whitespace-nowrap font-medium text-foreground">
+                        <span className="flex items-center gap-1.5">
+                          {isFinalist && <Trophy className="size-3 shrink-0 text-amber-500" />}
+                          {s.name}
                         </span>
-                      ) : (
-                        <span className="italic text-muted-foreground/40 text-xs">—</span>
-                      )}
-                    </Td>
-                    <Td className="whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-                      {new Date(s.created_at).toLocaleString("en-CA", {
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}
-                    </Td>
-                  </tr>
-                ))}
+                      </Td>
+                      <Td className="min-w-[18rem] max-w-[24rem] whitespace-pre-wrap text-muted-foreground">
+                        {s.background}
+                      </Td>
+                      <Td className="min-w-[18rem] max-w-[24rem] whitespace-pre-wrap text-muted-foreground">
+                        {s.looking_for}
+                      </Td>
+                      <Td className="whitespace-nowrap">
+                        {s.matched_team ? (
+                          <span className={`inline-block rounded-full px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${
+                            s.matched_team === "Team 1"
+                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                              : s.matched_team === "Team 2"
+                              ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                              : "bg-green-500/10 text-green-600 dark:text-green-400"
+                          }`}>
+                            {s.matched_team}
+                          </span>
+                        ) : (
+                          <span className="italic text-muted-foreground/40 text-xs">—</span>
+                        )}
+                      </Td>
+                      <Td className="whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                        {new Date(s.created_at).toLocaleString("en-CA", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </Td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

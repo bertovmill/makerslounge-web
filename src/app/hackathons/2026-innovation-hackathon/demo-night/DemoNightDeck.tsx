@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 type TrackCriterion = { label: string; weight: number; description: string };
 const TRACKS: Array<{ name: string; criteria: TrackCriterion[] }> = [
@@ -39,8 +40,10 @@ const TRACKS: Array<{ name: string; criteria: TrackCriterion[] }> = [
 // Fill these in on the day.
 const DEMO_ORDER: Array<{ team: string; track: string }> = [];
 const WINNERS: Array<{ track: string; project: string; team: string }> = [];
-const JUDGES: Array<{ name: string; title: string; company: string }> = [
-  { name: "James Maeng", title: "Senior Director, Enterprise Innovation", company: "CIBC" },
+const JUDGES: Array<{ name: string; title: string; company: string; photo?: string }> = [
+  { name: "James Maeng", title: "Senior Director, Enterprise Innovation", company: "CIBC", photo: "/hackathons/innovation-hackathon/judges/james-maeng.png" },
+  { name: "Naina Dewan", title: "Manager, New Technology & Innovation", company: "TTC", photo: "/hackathons/innovation-hackathon/judges/naina-dewan.png" },
+  { name: "Rishi Midha", title: "AI Program Manager", company: "EllisDon", photo: "/hackathons/innovation-hackathon/judges/rishi-midha.png" },
 ];
 const STATS: { participants: number; projectsSubmitted: number; teams: number } | null = null;
 
@@ -49,7 +52,6 @@ const SLIDE_COUNT = 9;
 export default function DemoNightDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentSlide, setCurrentSlide] = useState(1);
-  const [currentPresenter, setCurrentPresenter] = useState(0);
 
   const scrollToSlide = useCallback((n: number) => {
     const target = Math.max(1, Math.min(SLIDE_COUNT, n));
@@ -83,18 +85,10 @@ export default function DemoNightDeck() {
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") {
         e.preventDefault();
-        if (currentSlide === 6 && DEMO_ORDER.length > 0 && currentPresenter < DEMO_ORDER.length - 1) {
-          setCurrentPresenter((p) => p + 1);
-        } else {
-          scrollToSlide(currentSlide + 1);
-        }
+        scrollToSlide(currentSlide + 1);
       } else if (e.key === "ArrowUp" || e.key === "PageUp") {
         e.preventDefault();
-        if (currentSlide === 6 && currentPresenter > 0) {
-          setCurrentPresenter((p) => p - 1);
-        } else {
-          scrollToSlide(currentSlide - 1);
-        }
+        scrollToSlide(currentSlide - 1);
       } else if (e.key === "Home") {
         e.preventDefault();
         scrollToSlide(1);
@@ -105,7 +99,7 @@ export default function DemoNightDeck() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [currentSlide, currentPresenter, scrollToSlide]);
+  }, [currentSlide, scrollToSlide]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -166,14 +160,14 @@ export default function DemoNightDeck() {
         <Slide n={4} title="Judges">
           <SlideJudges />
         </Slide>
-        <Slide n={5} title="Demo order">
+        <Slide n={5} title="Judging criteria">
+          <SlideJudgingCriteria />
+        </Slide>
+        <Slide n={6} title="Demo order">
           <SlideDemoOrder />
         </Slide>
-        <Slide n={6} title="Now presenting">
-          <SlideNowPresenting current={currentPresenter} />
-        </Slide>
-        <Slide n={7} title="Judging criteria">
-          <SlideJudgingCriteria />
+        <Slide n={7} title="Finalists">
+          <SlideFinalists />
         </Slide>
         <Slide n={8} title="Winners">
           <SlideWinners />
@@ -370,22 +364,22 @@ function SlideSponsors() {
         </p>
 
         <div className="flex flex-wrap items-center gap-5">
-          <div className="flex items-center justify-center rounded-2xl bg-white px-8 py-5 shadow-sm" style={{ height: "clamp(72px,9vh,100px)" }}>
+          <div className="flex items-center justify-center rounded-2xl bg-white p-6 shadow-sm" style={{ width: "clamp(200px,22vw,280px)", height: "clamp(100px,11vh,130px)" }}>
             <Image
               src="/logos/partner-logos/Aucctus-Full-Colour-Logo1.webp"
               alt="Aucctus"
               width={280}
               height={80}
-              className="h-full w-auto object-contain"
+              className="max-h-full max-w-full object-contain"
             />
           </div>
-          <div className="flex items-center justify-center rounded-2xl bg-white px-6 py-5 shadow-sm" style={{ height: "clamp(72px,9vh,100px)" }}>
+          <div className="flex items-center justify-center rounded-2xl bg-white p-6 shadow-sm" style={{ width: "clamp(200px,22vw,280px)", height: "clamp(100px,11vh,130px)" }}>
             <Image
               src="/logos/partner-logos/Disruptive-Edge-SQ.png"
               alt="Disruptive Edge"
               width={160}
               height={160}
-              className="h-full w-auto object-contain"
+              className="max-h-full max-w-full object-contain"
             />
           </div>
         </div>
@@ -427,11 +421,16 @@ function SlideJudges() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-3">
             {JUDGES.map((j, i) => (
-              <div key={i} className="flex flex-col gap-2 rounded-xl border border-border/60 bg-background/40 p-5 backdrop-blur-sm">
+              <div key={i} className="flex flex-col gap-3 rounded-xl border border-border/60 bg-background/40 p-5 backdrop-blur-sm">
                 <div className="flex items-center gap-3">
                   <span className="font-mono text-[0.6rem] tabular-nums text-muted-foreground">{pad2(i + 1)}</span>
                   <span className="h-px flex-1 bg-border" />
                 </div>
+                {j.photo && (
+                  <div className="overflow-hidden rounded-lg" style={{ width: "clamp(56px,6vw,80px)", height: "clamp(56px,6vw,80px)" }}>
+                    <Image src={j.photo} alt={j.name} width={80} height={80} className="w-full h-full object-cover" />
+                  </div>
+                )}
                 <h3 className="font-sans font-semibold text-lg leading-snug">{j.name}</h3>
                 <p className="font-sans text-sm text-muted-foreground">{j.title}</p>
                 <p className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-muted-foreground">{j.company}</p>
@@ -456,7 +455,7 @@ function SlideDemoOrder() {
       <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span className="text-gradient">Demo Night</span>
         <span className="h-px w-8 bg-border" />
-        <span className="text-foreground">{pad2(5)}</span>
+        <span className="text-foreground">{pad2(6)}</span>
         <span className="h-px w-4 bg-border" />
         <span>Demo order</span>
       </div>
@@ -511,9 +510,38 @@ function SlideDemoOrder() {
   );
 }
 
-function SlideNowPresenting({ current }: { current: number }) {
-  const isEmpty = DEMO_ORDER.length === 0;
-  const team = isEmpty ? null : DEMO_ORDER[current];
+interface Finalist {
+  id: string;
+  name: string;
+  background: string;
+}
+
+function SlideFinalists() {
+  const [finalists, setFinalists] = useState<Finalist[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      const { data } = await supabase
+        .from("innovation_hackathon_signups")
+        .select("id, name, background")
+        .eq("is_finalist", true)
+        .order("name");
+      if (!cancelled && data) {
+        setFinalists(data as Finalist[]);
+        setLoading(false);
+      }
+    };
+
+    load();
+    const interval = setInterval(load, 8000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <div className="flex h-full flex-col">
@@ -522,48 +550,53 @@ function SlideNowPresenting({ current }: { current: number }) {
       <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span className="text-gradient">Demo Night</span>
         <span className="h-px w-8 bg-border" />
-        <span className="text-foreground">{pad2(6)}</span>
+        <span className="text-foreground">{pad2(7)}</span>
         <span className="h-px w-4 bg-border" />
-        <span>Now presenting</span>
+        <span>Finalists</span>
       </div>
 
-      <div className="relative my-auto flex flex-col gap-[clamp(1rem,3vh,2rem)]">
-        {/* Live indicator */}
-        {!isEmpty && (
-          <div className="inline-flex w-fit items-center gap-2.5 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 font-mono text-xs uppercase tracking-[0.18em] text-primary">
-            <span className="relative inline-flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-            </span>
-            Live demo
-          </div>
-        )}
+      <div className="relative my-auto flex flex-col gap-[clamp(1.25rem,3vh,2.5rem)]">
+        <h2 className="font-sans font-semibold text-[clamp(2.75rem,8vw,6.5rem)] leading-[1.0] tracking-tight">
+          The <span className="text-gradient">finalists.</span>
+        </h2>
 
-        {isEmpty ? (
-          <>
-            <h2 className="font-sans font-semibold text-[clamp(2.75rem,9vw,8rem)] leading-[1.0] tracking-tight">
-              Now <span className="text-gradient">presenting.</span>
-            </h2>
-            <p className="font-mono text-sm uppercase tracking-[0.18em] text-muted-foreground">
-              Teams announced at the event.
-            </p>
-          </>
+        {loading ? (
+          <p className="font-mono text-sm uppercase tracking-[0.18em] text-muted-foreground">
+            Loading…
+          </p>
+        ) : finalists.length === 0 ? (
+          <p className="font-mono text-sm uppercase tracking-[0.18em] text-muted-foreground">
+            Finalists announced at the event.
+          </p>
         ) : (
-          <>
-            <h2 className="font-sans font-semibold text-[clamp(2.75rem,9vw,8rem)] leading-[1.0] tracking-tight">
-              <span className="text-gradient">{team!.team}</span>
-            </h2>
-            <p className="font-mono text-sm uppercase tracking-[0.12em] text-muted-foreground">
-              {team!.track}
-            </p>
-          </>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {finalists.map((f, i) => (
+              <div
+                key={f.id}
+                className="flex flex-col gap-3 rounded-xl border border-border/60 bg-background/40 p-5 backdrop-blur-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-[0.6rem] tabular-nums text-muted-foreground">
+                    {pad2(i + 1)}
+                  </span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+                <h3 className="font-sans font-semibold text-lg leading-snug">{f.name}</h3>
+                <p className="line-clamp-3 text-[0.7rem] leading-relaxed text-muted-foreground">
+                  {f.background}
+                </p>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
       <div className="relative mt-auto flex items-center justify-between font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span>2026 Innovation Hackathon</span>
-        {!isEmpty && (
-          <span>{pad2(current + 1)} of {pad2(DEMO_ORDER.length)} · ↓ next</span>
+        {finalists.length > 0 && (
+          <span>
+            {finalists.length} finalist{finalists.length !== 1 ? "s" : ""}
+          </span>
         )}
       </div>
     </div>
@@ -578,7 +611,7 @@ function SlideJudgingCriteria() {
       <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span className="text-gradient">Demo Night</span>
         <span className="h-px w-8 bg-border" />
-        <span className="text-foreground">{pad2(7)}</span>
+        <span className="text-foreground">{pad2(5)}</span>
         <span className="h-px w-4 bg-border" />
         <span>Judging criteria</span>
       </div>

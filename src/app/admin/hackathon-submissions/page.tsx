@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUpRight, Download, FileJson, FileSpreadsheet } from "lucide-react";
+import { ArrowUpRight, Download, FileJson, FileSpreadsheet, Paperclip, X, ExternalLink } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface Submission {
@@ -38,7 +38,7 @@ function csvEscape(value: string): string {
 function buildCsv(rows: Submission[]): string {
   const header = [
     "id", "title", "project_link", "team_name", "builder_emails",
-    "challenge_track", "description", "video_url", "status", "created_at",
+    "challenge_track", "description", "video_url", "file_count", "status", "created_at",
   ];
   const lines = [header.join(",")];
   for (const r of rows) {
@@ -51,6 +51,7 @@ function buildCsv(rows: Submission[]): string {
       csvEscape(r.challenge_track ?? ""),
       csvEscape(r.description ?? ""),
       csvEscape(r.video_url ?? ""),
+      csvEscape(String((r.file_urls ?? []).length)),
       csvEscape(r.status),
       csvEscape(r.created_at),
     ].join(","));
@@ -76,12 +77,204 @@ function timestampForFilename(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
 }
 
+function fileName(path: string): string {
+  return path.split("/").pop() ?? path;
+}
+
+function DetailPanel({
+  submission,
+  onClose,
+}: {
+  submission: Submission;
+  onClose: () => void;
+}) {
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [loadingFiles, setLoadingFiles] = useState(false);
+
+  useEffect(() => {
+    const paths = submission.file_urls ?? [];
+    if (paths.length === 0) return;
+    setLoadingFiles(true);
+    Promise.all(
+      paths.map(async (path) => {
+        const { data } = await supabase.storage
+          .from("hackathon-submissions")
+          .createSignedUrl(path, 3600);
+        return { path, url: data?.signedUrl ?? null };
+      }),
+    ).then((results) => {
+      const map: Record<string, string> = {};
+      for (const r of results) {
+        if (r.url) map[r.path] = r.url;
+      }
+      setSignedUrls(map);
+      setLoadingFiles(false);
+    });
+  }, [submission]);
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      {/* Panel */}
+      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-xl flex-col overflow-y-auto border-l border-border bg-card shadow-2xl">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-5">
+          <div className="min-w-0 flex-1">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              {submission.challenge_track ?? "No track"}
+            </p>
+            <h2 className="mt-1 truncate text-xl font-semibold">
+              {submission.title ?? <span className="italic text-muted-foreground">Untitled</span>}
+            </h2>
+            <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
+              {submission.id}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-6 px-6 py-6">
+          {/* Status */}
+          <Row label="Status">
+            <span className={`inline-block rounded-full px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${STATUS_COLORS[submission.status] ?? "bg-muted text-muted-foreground"}`}>
+              {submission.status}
+            </span>
+          </Row>
+
+          {/* Submitted */}
+          <Row label="Submitted">
+            <span className="font-mono text-xs text-muted-foreground">
+              {new Date(submission.created_at).toLocaleString("en-CA", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
+            </span>
+          </Row>
+
+          {/* Project link */}
+          <Row label="Project link">
+            <a
+              href={submission.project_link}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 font-mono text-xs text-primary hover:underline"
+            >
+              {submission.project_link.replace(/^https?:\/\//, "")}
+              <ExternalLink className="size-3 shrink-0" />
+            </a>
+          </Row>
+
+          {/* Team */}
+          {submission.team_name && (
+            <Row label="Team">
+              <span className="text-sm">{submission.team_name}</span>
+            </Row>
+          )}
+
+          {/* Builders */}
+          {(submission.builder_emails ?? []).length > 0 && (
+            <Row label="Builders">
+              <ul className="flex flex-col gap-1">
+                {submission.builder_emails.map((e) => (
+                  <li key={e} className="font-mono text-xs text-muted-foreground">
+                    {e}
+                  </li>
+                ))}
+              </ul>
+            </Row>
+          )}
+
+          {/* Description */}
+          {submission.description && (
+            <Row label="Description">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                {submission.description}
+              </p>
+            </Row>
+          )}
+
+          {/* Video */}
+          {submission.video_url && (
+            <Row label="Demo video">
+              <a
+                href={submission.video_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 font-mono text-xs text-primary hover:underline"
+              >
+                {submission.video_url.replace(/^https?:\/\//, "").slice(0, 50)}
+                <ExternalLink className="size-3 shrink-0" />
+              </a>
+            </Row>
+          )}
+
+          {/* Files */}
+          <Row label={`Files (${(submission.file_urls ?? []).length})`}>
+            {(submission.file_urls ?? []).length === 0 ? (
+              <span className="text-xs italic text-muted-foreground/50">None uploaded</span>
+            ) : loadingFiles ? (
+              <span className="font-mono text-xs text-muted-foreground">Generating links…</span>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {(submission.file_urls ?? []).map((path) => (
+                  <li key={path} className="flex items-center gap-2">
+                    <Paperclip className="size-3 shrink-0 text-muted-foreground" />
+                    {signedUrls[path] ? (
+                      <a
+                        href={signedUrls[path]}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="truncate font-mono text-xs text-primary hover:underline"
+                        title={fileName(path)}
+                      >
+                        {fileName(path)}
+                      </a>
+                    ) : (
+                      <span className="truncate font-mono text-xs text-muted-foreground" title={path}>
+                        {fileName(path)}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Row>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </span>
+      <div>{children}</div>
+    </div>
+  );
+}
+
 export default function HackathonSubmissionsAdmin() {
   const router = useRouter();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [filter, setFilter] = useState<string>("all");
+  const [selected, setSelected] = useState<Submission | null>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -137,6 +330,7 @@ export default function HackathonSubmissionsAdmin() {
             <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">
               /hackathons/2026-innovation-hackathon/submit
             </code>
+            {" "}— click any row to view details and files.
           </p>
         </div>
         <div className="flex flex-col items-start gap-2 sm:items-end">
@@ -209,6 +403,7 @@ export default function HackathonSubmissionsAdmin() {
                   <Th>Team</Th>
                   <Th>Track</Th>
                   <Th>Builders</Th>
+                  <Th>Files</Th>
                   <Th>Status</Th>
                   <Th className="whitespace-nowrap">Submitted</Th>
                 </tr>
@@ -217,8 +412,9 @@ export default function HackathonSubmissionsAdmin() {
                 {filtered.map((s, i) => (
                   <tr
                     key={s.id}
+                    onClick={() => setSelected(s)}
                     className={
-                      "border-b border-border last:border-b-0 align-top transition-colors hover:bg-muted/40 " +
+                      "cursor-pointer border-b border-border last:border-b-0 align-top transition-colors hover:bg-muted/40 " +
                       (i % 2 === 0 ? "bg-transparent" : "bg-muted/10")
                     }
                   >
@@ -231,6 +427,7 @@ export default function HackathonSubmissionsAdmin() {
                           href={s.project_link}
                           target="_blank"
                           rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
                           className="inline-flex items-center gap-1 truncate font-mono text-[10px] text-primary hover:underline"
                         >
                           {s.project_link.replace(/^https?:\/\//, "")}
@@ -246,6 +443,7 @@ export default function HackathonSubmissionsAdmin() {
                             href={s.video_url}
                             target="_blank"
                             rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
                             className="inline-flex items-center gap-1 font-mono text-[10px] text-muted-foreground hover:text-foreground"
                           >
                             Video <ArrowUpRight className="size-3" />
@@ -274,6 +472,16 @@ export default function HackathonSubmissionsAdmin() {
                         <span className="italic text-muted-foreground/50">—</span>
                       )}
                     </Td>
+                    <Td className="whitespace-nowrap">
+                      {(s.file_urls ?? []).length > 0 ? (
+                        <span className="inline-flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
+                          <Paperclip className="size-3" />
+                          {s.file_urls.length}
+                        </span>
+                      ) : (
+                        <span className="italic text-muted-foreground/30 text-xs">—</span>
+                      )}
+                    </Td>
                     <Td>
                       <span className={`inline-block rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${STATUS_COLORS[s.status] ?? "bg-muted text-muted-foreground"}`}>
                         {s.status}
@@ -294,6 +502,10 @@ export default function HackathonSubmissionsAdmin() {
           </div>
         )}
       </div>
+
+      {selected && (
+        <DetailPanel submission={selected} onClose={() => setSelected(null)} />
+      )}
     </div>
   );
 }
