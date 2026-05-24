@@ -39,7 +39,9 @@ const TRACKS: Array<{ name: string; criteria: TrackCriterion[] }> = [
 // Fill these in on the day.
 const DEMO_ORDER: Array<{ team: string; track: string }> = [];
 const WINNERS: Array<{ track: string; project: string; team: string }> = [];
-const JUDGES: Array<{ name: string; title: string; company: string }> = [];
+const JUDGES: Array<{ name: string; title: string; company: string }> = [
+  { name: "James Maeng", title: "Senior Director, Enterprise Innovation", company: "CIBC" },
+];
 const STATS: { participants: number; projectsSubmitted: number; teams: number } | null = null;
 
 const SLIDE_COUNT = 9;
@@ -56,6 +58,24 @@ export default function DemoNightDeck() {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, []);
+
+  // On mount: scroll to slide indicated by hash
+  useEffect(() => {
+    const match = window.location.hash.match(/^#slide-(\d+)$/);
+    if (match) {
+      const n = parseInt(match[1], 10);
+      if (n >= 1 && n <= SLIDE_COUNT) {
+        requestAnimationFrame(() => scrollToSlide(n));
+      }
+    }
+  }, [scrollToSlide]);
+
+  // Keep hash in sync as slide changes
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.hash = `slide-${currentSlide}`;
+    window.history.replaceState(null, "", url.toString());
+  }, [currentSlide]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -307,17 +327,15 @@ function SlideWhatIsMakersLounge() {
           </div>
         </div>
 
-        {/* Right: poster */}
-        <div className="relative hidden flex-shrink-0 sm:block" style={{ width: "clamp(220px,30vw,380px)" }}>
-          <div className="overflow-hidden rounded-xl border border-border/60 shadow-xl">
-            <Image
-              src="/hackathons/innovation-hackathon/Innovation (1).png"
-              alt="2026 Innovation Hackathon"
-              width={600}
-              height={600}
-              className="w-full h-auto object-contain"
-            />
-          </div>
+        {/* Right: logo */}
+        <div className="relative hidden flex-shrink-0 sm:block" style={{ width: "clamp(160px,22vw,300px)" }}>
+          <Image
+            src="/logos/logo-luma.png"
+            alt="MakersLounge"
+            width={300}
+            height={300}
+            className="w-full h-auto rounded-2xl"
+          />
         </div>
       </div>
 
@@ -339,47 +357,36 @@ function SlideSponsors() {
         <span className="h-px w-8 bg-border" />
         <span className="text-foreground">{pad2(3)}</span>
         <span className="h-px w-4 bg-border" />
-        <span>Sponsors &amp; volunteers</span>
+        <span>Sponsors</span>
       </div>
 
-      <div className="relative my-auto flex flex-col gap-[clamp(1.5rem,3.5vh,3rem)]">
+      <div className="relative my-auto flex flex-col gap-[clamp(1.5rem,4vh,3.5rem)]">
         <h2 className="font-sans font-semibold text-[clamp(2.75rem,8vw,6.5rem)] leading-[1.0] tracking-tight">
           A huge <span className="text-gradient">thank you.</span>
         </h2>
 
-        <p className="max-w-2xl font-sans text-[clamp(0.95rem,1.5vw,1.2rem)] leading-relaxed text-muted-foreground">
-          Tonight wouldn&rsquo;t be possible without the generous support of our sponsors for providing this incredible space, and our amazing volunteers who gave their time to make this event run smoothly.
+        <p className="max-w-lg font-sans text-[clamp(0.95rem,1.5vw,1.15rem)] leading-relaxed text-muted-foreground">
+          Tonight wouldn&rsquo;t be possible without our proud sponsors.
         </p>
 
-        <div className="grid gap-5 sm:grid-cols-2" style={{ maxWidth: "clamp(400px,60vw,700px)" }}>
-          {/* Aucctus */}
-          <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-background/40 p-6 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-[0.6rem] tabular-nums text-muted-foreground">01</span>
-              <span className="h-px flex-1 bg-border" />
-              <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">Proud sponsor</span>
-            </div>
-            <div>
-              <h3 className="font-sans font-semibold text-[clamp(1.4rem,2.5vw,2rem)] tracking-tight">Aucctus</h3>
-              <p className="mt-1.5 font-sans text-sm leading-relaxed text-muted-foreground">
-                Thank you for generously sponsoring this space and making the 2026 Innovation Hackathon a reality.
-              </p>
-            </div>
+        <div className="flex flex-wrap items-center gap-5">
+          <div className="flex items-center justify-center rounded-2xl bg-white px-8 py-5 shadow-sm" style={{ height: "clamp(72px,9vh,100px)" }}>
+            <Image
+              src="/logos/partner-logos/Aucctus-Full-Colour-Logo1.webp"
+              alt="Aucctus"
+              width={280}
+              height={80}
+              className="h-full w-auto object-contain"
+            />
           </div>
-
-          {/* Disruptive Edge */}
-          <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-background/40 p-6 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-[0.6rem] tabular-nums text-muted-foreground">02</span>
-              <span className="h-px flex-1 bg-border" />
-              <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">Proud sponsor</span>
-            </div>
-            <div>
-              <h3 className="font-sans font-semibold text-[clamp(1.4rem,2.5vw,2rem)] tracking-tight">Disruptive Edge</h3>
-              <p className="mt-1.5 font-sans text-sm leading-relaxed text-muted-foreground">
-                Thank you for your continued support and for bringing your community to build alongside ours.
-              </p>
-            </div>
+          <div className="flex items-center justify-center rounded-2xl bg-white px-6 py-5 shadow-sm" style={{ height: "clamp(72px,9vh,100px)" }}>
+            <Image
+              src="/logos/partner-logos/Disruptive-Edge-SQ.png"
+              alt="Disruptive Edge"
+              width={160}
+              height={160}
+              className="h-full w-auto object-contain"
+            />
           </div>
         </div>
       </div>
