@@ -237,75 +237,64 @@ function SlideDemoNightOpener() {
   const isLive = now >= eventStart && now < eventEnd;
   return (
     <div className="flex h-full flex-col">
-      {/* Background layers */}
+      {/* Full-bleed cover art */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a2a4a]/25 via-transparent to-[#1a1a2e]/15 dark:from-[#1a2a4a]/55 dark:via-transparent dark:to-[#1a1a2e]/35" />
-        <div className="absolute left-1/2 top-[-15%] h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-[#3A9FF3]/10 blur-[130px] dark:bg-[#3A9FF3]/18" />
-        <div className="absolute bottom-[-5%] right-[-8%] h-[450px] w-[450px] rounded-full bg-primary/[0.07] blur-[110px]" />
-        <div className="grain-overlay absolute inset-0 h-full w-full" />
+        <Image
+          src="/hackathons/innovation-hackathon/cover-art.png"
+          alt="2026 Innovation Hackathon"
+          fill
+          className="object-cover object-center"
+          priority
+        />
+        {/* gradient overlay so text stays readable */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
       </div>
 
       {/* Eyebrow */}
-      <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+      <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-white/60">
         <span className="text-gradient">Demo Night</span>
-        <span className="h-px w-8 bg-border" />
+        <span className="h-px w-8 bg-white/20" />
         <span>May 26, 2026</span>
-        <span className="h-px w-4 bg-border" />
+        <span className="h-px w-4 bg-white/20" />
         <span>Toronto Tech Week</span>
       </div>
 
       {/* Center content */}
-      <div className="relative my-auto flex flex-row items-center gap-[clamp(2rem,5vw,5rem)]">
-        {/* Left: heading + details */}
-        <div className="flex flex-1 flex-col gap-[clamp(1rem,3vh,2rem)]">
-          {isLive && (
-            <div className="inline-flex w-fit items-center gap-2.5 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 font-mono text-xs uppercase tracking-[0.18em] text-primary">
-              <span className="relative inline-flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-              </span>
-              Live now
-            </div>
+      <div className="relative my-auto flex flex-col gap-[clamp(1rem,3vh,2rem)]" style={{ maxWidth: "clamp(480px,55vw,760px)" }}>
+        {isLive && (
+          <div className="inline-flex w-fit items-center gap-2.5 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 font-mono text-xs uppercase tracking-[0.18em] text-white backdrop-blur-sm">
+            <span className="relative inline-flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+            </span>
+            Live now
+          </div>
+        )}
+        <h2 className="font-sans font-semibold text-[clamp(3rem,10vw,8rem)] leading-[1.0] tracking-tight text-white">
+          {isLive ? (
+            <>We&rsquo;re{" "}<span className="text-gradient">live.</span></>
+          ) : (
+            <>Demo{" "}<span className="text-gradient">Night.</span></>
           )}
-          <h2 className="relative font-sans font-semibold text-[clamp(2.75rem,9vw,7rem)] leading-[1.0] tracking-tight">
-            {isLive ? (
-              <>We&rsquo;re{" "}<span className="text-gradient">live.</span></>
-            ) : (
-              <>Demo{" "}<span className="text-gradient">Night.</span></>
-            )}
-          </h2>
-          <div className="flex flex-col gap-2 font-mono text-xs uppercase tracking-[0.12em]">
-            <span className="text-foreground">Tuesday May 26, 2026</span>
-            <span className="text-muted-foreground">510 Front St W, Suite 200 · Toronto</span>
-            <span className="text-muted-foreground">Doors 5:30 PM · Demos 6:30 PM</span>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {[["100+", "Builders"], ["5", "Days to build"], ["1–5", "People per team"]].map(([val, label]) => (
-              <div key={label} className="flex flex-col rounded-xl border border-border/60 bg-background/40 px-4 py-3 backdrop-blur-sm">
-                <span className="font-sans font-semibold text-[clamp(1.25rem,2vw,1.75rem)] leading-none tracking-tight text-gradient">{val}</span>
-                <span className="mt-1 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">{label}</span>
-              </div>
-            ))}
-          </div>
+        </h2>
+        <div className="flex flex-col gap-2 font-mono text-xs uppercase tracking-[0.12em]">
+          <span className="text-white/90">Tuesday May 26, 2026</span>
+          <span className="text-white/50">510 Front St W, Suite 200 · Toronto</span>
+          <span className="text-white/50">Doors 5:30 PM · Demos 6:30 PM</span>
         </div>
-
-        {/* Right: event poster */}
-        <div className="relative hidden flex-shrink-0 sm:block" style={{ width: "clamp(220px,32vw,420px)" }}>
-          <div className="overflow-hidden rounded-xl border border-border/60 shadow-xl">
-            <Image
-              src="/hackathons/innovation-hackathon/Innovation (1).png"
-              alt="2026 Innovation Hackathon — Demo Night"
-              width={600}
-              height={600}
-              className="w-full h-auto object-contain"
-              priority
-            />
-          </div>
+        <div className="flex flex-wrap gap-3">
+          {[["100+", "Builders"], ["5", "Days to build"], ["1–5", "People per team"]].map(([val, label]) => (
+            <div key={label} className="flex flex-col rounded-xl border border-white/15 bg-black/30 px-4 py-3 backdrop-blur-sm">
+              <span className="font-sans font-semibold text-[clamp(1.25rem,2vw,1.75rem)] leading-none tracking-tight text-gradient">{val}</span>
+              <span className="mt-1 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-white/50">{label}</span>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Bottom bar */}
-      <div className="relative mt-auto flex items-center justify-between font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+      <div className="relative mt-auto flex items-center justify-between font-mono text-xs uppercase tracking-[0.18em] text-white/40">
         <span>2026 Innovation Hackathon</span>
         <span>makerslounge.ca</span>
       </div>
