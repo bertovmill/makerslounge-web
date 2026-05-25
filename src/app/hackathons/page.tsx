@@ -1,18 +1,9 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
-import MarketingShell from "@/components/MarketingShell";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Hackathons — MakersLounge",
-  description:
-    "Hackathons hosted and partnered with MakersLounge. Build something real with the community.",
-  openGraph: {
-    title: "Hackathons — MakersLounge",
-    description: "Hackathons hosted and partnered with MakersLounge.",
-    type: "website",
-  },
-};
+import Link from "next/link";
+import { useState } from "react";
+import { ArrowUpRight, ChevronDown, ExternalLink, Play, Trophy } from "lucide-react";
+import MarketingShell from "@/components/MarketingShell";
 
 type HackathonEntry = {
   slug: string;
@@ -23,6 +14,7 @@ type HackathonEntry = {
   location: string;
   status: "upcoming" | "past";
   external?: boolean;
+  links?: { label: string; href: string; icon: "slides" | "scoring" | "rubric" | "external" }[];
 };
 
 const HACKATHONS: HackathonEntry[] = [
@@ -44,6 +36,11 @@ const HACKATHONS: HackathonEntry[] = [
     date: "May 19 to May 26, 2026",
     location: "510 Front St W, Suite 200, Toronto",
     status: "upcoming",
+    links: [
+      { label: "Demo Night Slides", href: "/hackathons/2026-innovation-hackathon/demo-night", icon: "slides" },
+      { label: "Judge Scoring", href: "/hackathons/2026-innovation-hackathon/scoring/judge", icon: "scoring" },
+      { label: "Scoring Rubric", href: "/hackathons/2026-innovation-hackathon/scoring", icon: "rubric" },
+    ],
   },
 ];
 
@@ -101,29 +98,68 @@ export default function HackathonsPage() {
   );
 }
 
+const LINK_ICONS = {
+  slides: <Play className="size-3.5" />,
+  scoring: <Trophy className="size-3.5" />,
+  rubric: <ExternalLink className="size-3.5" />,
+  external: <ExternalLink className="size-3.5" />,
+};
+
 function HackathonRow({ entry }: { entry: HackathonEntry }) {
+  const [open, setOpen] = useState(false);
+  const hasLinks = entry.links && entry.links.length > 0;
+
   return (
     <li className="border-t border-border last:border-b">
-      <Link
-        href={entry.href}
-        className="group grid grid-cols-1 items-baseline gap-2 py-[clamp(1.25rem,3vh,2rem)] sm:grid-cols-[1fr_auto] sm:gap-8"
-      >
-        <div className="flex flex-col gap-2">
+      {/* Main row */}
+      <div className="grid grid-cols-1 items-baseline gap-2 py-[clamp(1.25rem,3vh,2rem)] sm:grid-cols-[1fr_auto] sm:gap-8">
+        <Link href={entry.href} className="group flex flex-col gap-2">
           <h3 className="font-serif text-[clamp(1.75rem,4vw,3rem)] leading-tight tracking-tight transition-opacity group-hover:opacity-70">
             {entry.title}
           </h3>
           <p className="max-w-[50ch] text-sm leading-relaxed text-muted-foreground sm:text-base">
             {entry.tagline}
           </p>
-        </div>
+        </Link>
+
         <div className="flex flex-col gap-1 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground sm:items-end sm:text-right">
           <span className="text-foreground">{entry.date}</span>
           <span>{entry.location}</span>
-          <span className="mt-2 inline-flex items-center gap-1.5 text-foreground">
-            View <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </span>
+          <div className="mt-2 flex items-center gap-3">
+            <Link
+              href={entry.href}
+              className="inline-flex items-center gap-1.5 text-foreground hover:opacity-70 transition-opacity"
+            >
+              View <ArrowUpRight className="size-3.5" />
+            </Link>
+            {hasLinks && (
+              <button
+                onClick={() => setOpen((v) => !v)}
+                className={`inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors ${open ? "text-foreground" : ""}`}
+                aria-label="Quick links"
+              >
+                <ChevronDown className={`size-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+              </button>
+            )}
+          </div>
         </div>
-      </Link>
+      </div>
+
+      {/* Dropdown quick links */}
+      {hasLinks && open && (
+        <div className="flex flex-wrap gap-2 pb-[clamp(1rem,2.5vh,1.5rem)]">
+          {entry.links!.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-secondary/60"
+            >
+              {LINK_ICONS[link.icon]}
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      )}
     </li>
   );
 }
