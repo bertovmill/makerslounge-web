@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Linkedin } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { QRCodeSVG } from "qrcode.react";
 
 type TrackCriterion = { label: string; weight: number; description: string };
 const TRACKS: Array<{ name: string; description: string; image: string; criteria: TrackCriterion[] }> = [
@@ -379,6 +380,39 @@ function SlideWhatIsMakersLounge() {
   );
 }
 
+const SPONSORS = [
+  {
+    name: "Aucctus",
+    logo: "/logos/partner-logos/Aucctus-Full-Colour-Logo1.webp",
+    logoWidth: 400,
+    logoHeight: 120,
+    logoClassName: "max-h-16 max-w-full object-contain",
+    url: "https://aucctus.com/",
+    description: "We engineer better innovation outcomes. The AI operating system for enterprise innovators to ship winners faster and prove ROI.",
+    rep: {
+      name: "Laine McGarragle",
+      title: "Head of Customer Success",
+      photo: "/hackathons/innovation-hackathon/laine-mcgarragle.png",
+      linkedin: "https://www.linkedin.com/in/laine-mcgarragle/",
+    },
+  },
+  {
+    name: "Disruptive Edge",
+    logo: "/logos/partner-logos/Disruptive-Edge-SQ.png",
+    logoWidth: 200,
+    logoHeight: 200,
+    logoClassName: "max-h-36 max-w-[75%] object-contain",
+    url: "https://www.disruptiveedge.com/",
+    description: "Disruptive Edge is an AI-native strategy and innovation firm that helps the world's leading enterprises deploy AI, launch new products and ventures, and turn innovation into revenue.",
+    rep: {
+      name: "Matthew Gledhill",
+      title: "Engagement Manager",
+      photo: "/hackathons/innovation-hackathon/matthew-gledhill.png",
+      linkedin: null,
+    },
+  },
+];
+
 function SlideSponsors() {
   return (
     <div className="flex h-full flex-col">
@@ -392,38 +426,77 @@ function SlideSponsors() {
         <span>Sponsors</span>
       </div>
 
-      <div className="relative my-auto flex flex-col gap-[clamp(1.5rem,4vh,3.5rem)]">
-        <h2 className="font-sans font-semibold text-[clamp(2.75rem,8vw,6.5rem)] leading-[1.0] tracking-tight">
-          A huge <span className="text-gradient">thank you.</span>
-        </h2>
+      <div className="relative flex flex-1 flex-col gap-[clamp(0.75rem,1.5vh,1.25rem)] py-[clamp(0.5rem,1.5vh,1.5rem)]">
+        <div>
+          <h2 className="font-sans font-semibold text-[clamp(2.75rem,8vw,6.5rem)] leading-[1.0] tracking-tight">
+            A huge <span className="text-gradient">thank you.</span>
+          </h2>
+          <p className="mt-2 font-sans text-[clamp(0.95rem,1.5vw,1.15rem)] leading-relaxed text-muted-foreground">
+            Tonight wouldn&rsquo;t be possible without our proud sponsors.
+          </p>
+        </div>
 
-        <p className="max-w-lg font-sans text-[clamp(0.95rem,1.5vw,1.15rem)] leading-relaxed text-muted-foreground">
-          Tonight wouldn&rsquo;t be possible without our proud sponsors.
-        </p>
-
-        <div className="flex flex-wrap items-center gap-6">
-          <div className="flex items-center justify-center rounded-2xl bg-white p-8 shadow-sm" style={{ width: "clamp(280px,32vw,440px)", height: "clamp(140px,18vh,200px)" }}>
-            <Image
-              src="/logos/partner-logos/Aucctus-Full-Colour-Logo1.webp"
-              alt="Aucctus"
-              width={400}
-              height={120}
-              className="max-h-full max-w-full object-contain"
-            />
-          </div>
-          <div className="flex items-center justify-center overflow-hidden rounded-2xl bg-white shadow-sm" style={{ width: "clamp(280px,32vw,440px)", height: "clamp(140px,18vh,200px)" }}>
-            <Image
-              src="/logos/partner-logos/Disruptive-Edge-SQ.png"
-              alt="Disruptive Edge"
-              width={200}
-              height={200}
-              className="max-h-full max-w-full object-contain scale-[2]"
-            />
-          </div>
+        <div className="flex flex-1 gap-6">
+          {SPONSORS.map((s) => (
+            <div
+              key={s.name}
+              className="flex flex-1 flex-col justify-between overflow-hidden rounded-2xl border border-border/60 bg-background/40 backdrop-blur-sm"
+            >
+              <div className="flex items-center justify-center bg-white p-8" style={{ height: "clamp(140px,26vh,240px)" }}>
+                <Image
+                  src={s.logo}
+                  alt={s.name}
+                  width={s.logoWidth}
+                  height={s.logoHeight}
+                  className={s.logoClassName}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-6 px-7 py-6">
+                <div className="flex flex-1 flex-col gap-2">
+                  <p className="font-sans text-[clamp(1rem,1.4vw,1.25rem)] leading-relaxed text-muted-foreground">
+                    {s.description}
+                  </p>
+                  <a
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-[0.75rem] uppercase tracking-[0.12em] text-gradient transition-opacity hover:opacity-70"
+                  >
+                    {s.url.replace(/^https?:\/\//, "").replace(/\/$/, "")} →
+                  </a>
+                </div>
+                <div className="flex-shrink-0 overflow-hidden rounded-xl border border-border/40">
+                  <QRCodeSVG value={s.url} size={120} bgColor="#ffffff" fgColor="#111111" />
+                </div>
+              </div>
+              {s.rep && (
+                <div className="flex items-center gap-5 border-t border-border/60 px-7 py-5">
+                  <div className="h-[72px] w-[72px] flex-shrink-0 overflow-hidden rounded-full border border-border/60">
+                    <Image src={s.rep.photo} alt={s.rep.name} width={72} height={72} className="h-full w-full object-cover" />
+                  </div>
+                  <div className="flex flex-1 flex-col gap-1.5">
+                    <span className="font-sans font-semibold text-[clamp(1.05rem,1.5vw,1.3rem)] leading-snug">{s.rep.name}</span>
+                    <span className="font-mono text-[0.75rem] uppercase tracking-[0.1em] text-muted-foreground">{s.rep.title}</span>
+                  </div>
+                  {s.rep.linkedin && (
+                    <a
+                      href={s.rep.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-shrink-0 text-muted-foreground transition-colors hover:text-[#0A66C2]"
+                      aria-label="LinkedIn"
+                    >
+                      <Linkedin className="size-4" />
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
-      <div className="relative mt-auto flex items-center justify-between font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+      <div className="relative flex items-center justify-between font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span>2026 Innovation Hackathon</span>
         <span>Demo Night · May 26</span>
       </div>
