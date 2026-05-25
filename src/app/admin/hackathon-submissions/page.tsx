@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowUpRight, CheckCircle2, Download, FileJson, FileSpreadsheet, Paperclip, X, ExternalLink, Trophy } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Download, FileJson, FileSpreadsheet, Paperclip, Pencil, X, ExternalLink, Trophy } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+
+const VOTER_NAME_KEY = "hackathon-voter-name";
 
 const TRACK_CRITERIA: Record<string, { key: string; label: string; weight: number }[]> = {
   "Validating a Business Idea": [
@@ -110,31 +112,47 @@ function fileName(path: string): string {
   return path.split("/").pop() ?? path;
 }
 
-function BertoVoting({ submissionId, track }: { submissionId: string; track: string | null }) {
+function TeamVoting({ submissionId, track }: { submissionId: string; track: string | null }) {
   const criteria = track ? (TRACK_CRITERIA[track] ?? []) : [];
+  const [voterName, setVoterName] = useState<string | null>(
+    () => (typeof window !== "undefined" ? sessionStorage.getItem(VOTER_NAME_KEY) : null),
+  );
+  const [nameInput, setNameInput] = useState("");
+  const [editingName, setEditingName] = useState(false);
   const [scores, setScores] = useState<Record<string, number>>({});
   const [saving, setSaving] = useState<Set<string>>(new Set());
   const [saved, setSaved] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (criteria.length === 0) return;
+    if (!voterName || criteria.length === 0) return;
+    setScores({});
     supabase
       .from("hackathon_scores")
       .select("criterion_key, score")
-      .eq("judge_name", "Berto")
+      .eq("judge_name", voterName)
       .eq("submission_id", submissionId)
       .then(({ data }) => {
         const loaded: Record<string, number> = {};
         for (const row of data ?? []) loaded[row.criterion_key] = row.score;
         setScores(loaded);
       });
-  }, [submissionId, criteria.length]);
+  }, [submissionId, voterName, criteria.length]);
+
+  const saveName = () => {
+    const trimmed = nameInput.trim();
+    if (!trimmed) return;
+    sessionStorage.setItem(VOTER_NAME_KEY, trimmed);
+    setVoterName(trimmed);
+    setEditingName(false);
+    setNameInput("");
+  };
 
   const handleScore = async (key: string, score: number) => {
+    if (!voterName) return;
     setScores((prev) => ({ ...prev, [key]: score }));
     setSaving((p) => new Set(p).add(key));
     await supabase.from("hackathon_scores").upsert(
-      { judge_name: "Berto", submission_id: submissionId, criterion_key: key, score },
+      { judge_name: voterName, submission_id: submissionId, criterion_key: key, score },
       { onConflict: "judge_name,submission_id,criterion_key" },
     );
     setSaving((p) => { const s = new Set(p); s.delete(key); return s; });
@@ -152,6 +170,50 @@ function BertoVoting({ submissionId, track }: { submissionId: string; track: str
     );
   }
 
+  // Name prompt
+  if (!voterName || editingName) {
+    return (
+      <div className="overflow-hidden rounded-xl border border-border">
+        <div className="border-b border-border bg-muted/30 px-4 py-3">
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Your vote
+          </span>
+        </div>
+        <div className="flex flex-col gap-3 px-4 py-4">
+          <p className="text-sm text-muted-foreground">
+            {editingName ? "Change your name:" : "Enter your name to start scoring:"}
+          </p>
+          <div className="flex gap-2">
+            <input
+              autoFocus
+              type="text"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && saveName()}
+              placeholder="Your first name"
+              className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground/40 focus:border-foreground/40"
+            />
+            <button
+              onClick={saveName}
+              disabled={!nameInput.trim()}
+              className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+            >
+              {editingName ? "Save" : "Start"}
+            </button>
+            {editingName && (
+              <button
+                onClick={() => { setEditingName(false); setNameInput(""); }}
+                className="rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const total = weightedScore(scores, criteria);
   const allScored = criteria.every((c) => scores[c.key] != null);
 
@@ -159,9 +221,18 @@ function BertoVoting({ submissionId, track }: { submissionId: string; track: str
     <div className="flex flex-col gap-0 overflow-hidden rounded-xl border border-border">
       {/* Header row */}
       <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          Berto&apos;s vote
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            {voterName}&apos;s vote
+          </span>
+          <button
+            onClick={() => { setEditingName(true); setNameInput(voterName); }}
+            className="rounded p-0.5 text-muted-foreground/40 transition-colors hover:text-muted-foreground"
+            title="Change name"
+          >
+            <Pencil className="size-2.5" />
+          </button>
+        </div>
         <span className={`font-mono text-lg font-semibold tabular-nums leading-none ${allScored ? "text-foreground" : "text-muted-foreground/30"}`}>
           {total > 0 ? total : "—"}
           <span className="ml-0.5 font-mono text-[10px] font-normal text-muted-foreground">/100</span>
@@ -400,7 +471,7 @@ function DetailPanel({
 
           {/* Berto's voting */}
           <div className="border-t border-border pt-6">
-            <BertoVoting submissionId={submission.id} track={submission.challenge_track} />
+            <TeamVoting submissionId={submission.id} track={submission.challenge_track} />
           </div>
         </div>
       </div>
@@ -491,7 +562,7 @@ export default function HackathonSubmissionsAdmin() {
 
   if (!isAuthed) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-5">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background px-5">
         <div className="w-full max-w-sm flex flex-col gap-8">
           <div>
             <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground mb-2">
