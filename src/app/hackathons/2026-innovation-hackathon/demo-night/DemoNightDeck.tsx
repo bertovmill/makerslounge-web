@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Linkedin } from "lucide-react";
+import { ArrowLeft, Linkedin, Info, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -378,6 +378,7 @@ const SPONSORS = [
     logoClassName: "max-h-16 max-w-full object-contain",
     url: "https://aucctus.com/",
     description: "We engineer better innovation outcomes. The AI operating system for enterprise innovators to ship winners faster and prove ROI.",
+    message: "We're Aucctus — the AI operating system built for enterprise innovators. We help organizations take ideas from raw concept to validated, revenue-generating innovation faster than ever. Sponsoring this hackathon was a natural fit: the problems you've been building against this week are exactly the ones we work on every day. We're genuinely grateful to every judge who gave their time, and to everyone who showed up, built something real, and put it in front of the room tonight. You're the kind of people who make innovation happen.",
     rep: {
       name: "Laine McGarragle",
       title: "Head of Customer Success",
@@ -393,6 +394,7 @@ const SPONSORS = [
     logoClassName: "max-h-36 max-w-[75%] object-contain",
     url: "https://www.disruptiveedge.com/",
     description: "Disruptive Edge is an AI-native strategy and innovation firm that helps the world's leading enterprises deploy AI, launch new products and ventures, and turn innovation into revenue.",
+    message: "Disruptive Edge is an AI-native strategy and innovation firm. We partner with leading enterprises to deploy AI that actually moves the needle — new products, new ventures, and innovation that converts into real revenue. Events like tonight are where the future gets built, and we're honoured to support MakersLounge and the community behind this hackathon. A sincere thank you to the judges who brought their expertise, the attendees who showed up with curiosity, and every team who pushed their idea to the finish line.",
     rep: {
       name: "Matthew Gledhill",
       title: "Engagement Manager",
@@ -403,6 +405,8 @@ const SPONSORS = [
 ];
 
 function SlideSponsors() {
+  const [open, setOpen] = useState(false);
+
   return (
     <div className="flex h-full flex-col">
       <SlideBackground />
@@ -487,8 +491,53 @@ function SlideSponsors() {
 
       <div className="relative flex items-center justify-between font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span>2026 Innovation Hackathon</span>
-        <span>Demo Night · May 26</span>
+        <div className="flex items-center gap-4">
+          <span>Demo Night · May 26</span>
+          <button
+            onClick={() => setOpen(true)}
+            className="flex items-center gap-1.5 rounded-full border border-border/50 bg-background/30 px-2.5 py-1 text-muted-foreground backdrop-blur-sm transition-colors hover:border-border hover:text-foreground"
+          >
+            <Info className="size-3" />
+            <span>From our sponsors</span>
+          </button>
+        </div>
       </div>
+
+      {/* Sponsor messages modal */}
+      {open && (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-md"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="relative mx-10 w-full max-w-2xl overflow-hidden rounded-2xl border border-border/60 bg-background shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border/60 px-8 py-5">
+              <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">A note from our sponsors</span>
+              <button
+                onClick={() => setOpen(false)}
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-0 divide-y divide-border/60">
+              {SPONSORS.map((s) => (
+                <div key={s.name} className="flex flex-col gap-4 px-8 py-7">
+                  <div className="rounded-lg bg-white px-4 py-2 w-fit">
+                    <Image src={s.logo} alt={s.name} width={120} height={36} className="h-7 w-auto object-contain" />
+                  </div>
+                  <p className="font-sans text-[clamp(0.9rem,1.2vw,1.05rem)] leading-relaxed text-muted-foreground">
+                    {s.message}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
