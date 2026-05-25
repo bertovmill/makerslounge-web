@@ -1,9 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowUpRight, Download, FileJson, FileSpreadsheet, Paperclip, X, ExternalLink, Trophy } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Download, FileJson, FileSpreadsheet, Paperclip, X, ExternalLink, Trophy } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+
+const TRACK_CRITERIA: Record<string, { key: string; label: string; weight: number }[]> = {
+  "Validating a Business Idea": [
+    { key: "pipeline_coverage", label: "End-to-end pipeline coverage", weight: 0.25 },
+    { key: "scoring_logic", label: "Quality of scoring / triage logic", weight: 0.35 },
+    { key: "speed_scalability", label: "Speed & scalability over manual review", weight: 0.25 },
+    { key: "demo_clarity", label: "Demo clarity", weight: 0.15 },
+  ],
+  "Continuous Market Monitoring": [
+    { key: "signal_relevance", label: "Signal relevance & accuracy", weight: 0.35 },
+    { key: "realtime_capability", label: "Real-time or near-real-time capability", weight: 0.25 },
+    { key: "actionability", label: "Actionability of insights surfaced", weight: 0.25 },
+    { key: "demo_clarity", label: "Demo clarity", weight: 0.15 },
+  ],
+  "Synthetic Customers": [
+    { key: "feedback_fidelity", label: "Fidelity of synthetic feedback", weight: 0.35 },
+    { key: "nonobvious_insights", label: "Non-obvious insight generation", weight: 0.25 },
+    { key: "time_cost_savings", label: "Time & cost savings vs. real research", weight: 0.25 },
+    { key: "demo_clarity", label: "Demo clarity", weight: 0.15 },
+  ],
+};
+
+function weightedScore(scores: Record<string, number>, criteria: { key: string; weight: number }[]): number {
+  return Math.round(criteria.reduce((s, c) => s + (scores[c.key] ?? 0) * c.weight, 0) * 20);
+}
 
 interface Submission {
   id: string;
@@ -23,7 +47,8 @@ interface Submission {
 const MIN_FINALISTS = 6;
 const MAX_FINALISTS = 9;
 
-const ADMIN_EMAIL = "bertmill19@gmail.com";
+const PASSWORD = "makers2026";
+const SESSION_KEY = "hackathon-admin-auth";
 
 const STATUS_COLORS: Record<string, string> = {
   new: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
@@ -83,6 +108,106 @@ function timestampForFilename(): string {
 
 function fileName(path: string): string {
   return path.split("/").pop() ?? path;
+}
+
+function BertoVoting({ submissionId, track }: { submissionId: string; track: string | null }) {
+  const criteria = track ? (TRACK_CRITERIA[track] ?? []) : [];
+  const [scores, setScores] = useState<Record<string, number>>({});
+  const [saving, setSaving] = useState<Set<string>>(new Set());
+  const [saved, setSaved] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (criteria.length === 0) return;
+    supabase
+      .from("hackathon_scores")
+      .select("criterion_key, score")
+      .eq("judge_name", "Berto")
+      .eq("submission_id", submissionId)
+      .then(({ data }) => {
+        const loaded: Record<string, number> = {};
+        for (const row of data ?? []) loaded[row.criterion_key] = row.score;
+        setScores(loaded);
+      });
+  }, [submissionId, criteria.length]);
+
+  const handleScore = async (key: string, score: number) => {
+    setScores((prev) => ({ ...prev, [key]: score }));
+    setSaving((p) => new Set(p).add(key));
+    await supabase.from("hackathon_scores").upsert(
+      { judge_name: "Berto", submission_id: submissionId, criterion_key: key, score },
+      { onConflict: "judge_name,submission_id,criterion_key" },
+    );
+    setSaving((p) => { const s = new Set(p); s.delete(key); return s; });
+    setSaved((p) => new Set(p).add(key));
+    setTimeout(() => setSaved((p) => { const s = new Set(p); s.delete(key); return s; }), 1500);
+  };
+
+  if (criteria.length === 0) {
+    return (
+      <div className="rounded-lg border border-border bg-muted/20 px-4 py-3">
+        <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          No track selected — scoring unavailable
+        </p>
+      </div>
+    );
+  }
+
+  const total = weightedScore(scores, criteria);
+  const allScored = criteria.every((c) => scores[c.key] != null);
+
+  return (
+    <div className="flex flex-col gap-0 overflow-hidden rounded-xl border border-border">
+      {/* Header row */}
+      <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          Berto&apos;s vote
+        </span>
+        <span className={`font-mono text-lg font-semibold tabular-nums leading-none ${allScored ? "text-foreground" : "text-muted-foreground/30"}`}>
+          {total > 0 ? total : "—"}
+          <span className="ml-0.5 font-mono text-[10px] font-normal text-muted-foreground">/100</span>
+        </span>
+      </div>
+
+      {criteria.map((c) => {
+        const current = scores[c.key] ?? null;
+        return (
+          <div key={c.key} className="border-b border-border/60 last:border-b-0 px-4 py-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <span className="text-sm font-medium leading-snug">{c.label}</span>
+              <div className="flex shrink-0 items-center gap-2">
+                {saving.has(c.key) && (
+                  <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground animate-pulse">
+                    Saving
+                  </span>
+                )}
+                {saved.has(c.key) && !saving.has(c.key) && (
+                  <CheckCircle2 className="size-3 text-green-500" />
+                )}
+                <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                  {Math.round(c.weight * 100)}%
+                </span>
+              </div>
+            </div>
+            <div className="grid grid-cols-5 gap-2">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => handleScore(c.key, n)}
+                  className={`h-10 rounded-lg font-mono text-base font-semibold transition-all active:scale-95 ${
+                    current === n
+                      ? "bg-foreground text-background shadow-sm"
+                      : "border border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function DetailPanel({
@@ -272,6 +397,11 @@ function DetailPanel({
               </ul>
             )}
           </Row>
+
+          {/* Berto's voting */}
+          <div className="border-t border-border pt-6">
+            <BertoVoting submissionId={submission.id} track={submission.challenge_track} />
+          </div>
         </div>
       </div>
     </>
@@ -290,28 +420,30 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 export default function HackathonSubmissionsAdmin() {
-  const router = useRouter();
+  const [isAuthed, setIsAuthed] = useState<boolean>(
+    () => typeof window !== "undefined" && Boolean(sessionStorage.getItem(SESSION_KEY)),
+  );
+  const [password, setPassword] = useState("");
+  const [pwError, setPwError] = useState(false);
+
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [filter, setFilter] = useState<string>("all");
   const [selected, setSelected] = useState<Submission | null>(null);
   const [finalistIds, setFinalistIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || user.email !== ADMIN_EMAIL) {
-        router.push("/home");
-        return;
-      }
-      setIsAdmin(true);
-    };
-    init();
-  }, [router]);
+  const submitPassword = () => {
+    if (password === PASSWORD) {
+      sessionStorage.setItem(SESSION_KEY, "1");
+      setIsAuthed(true);
+    } else {
+      setPwError(true);
+      setPassword("");
+    }
+  };
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isAuthed) return;
     const load = async () => {
       setLoading(true);
       const { data, error } = await supabase
@@ -326,7 +458,7 @@ export default function HackathonSubmissionsAdmin() {
       setLoading(false);
     };
     load();
-  }, [isAdmin]);
+  }, [isAuthed]);
 
   const trackCounts = submissions.reduce<Record<string, number>>((acc, s) => {
     const t = s.challenge_track ?? "—";
@@ -357,7 +489,47 @@ export default function HackathonSubmissionsAdmin() {
   const exportFinalistsCsv = () => download(`hackathon-finalists_${timestampForFilename()}.csv`, "text/csv;charset=utf-8", buildCsv(finalists));
   const exportFinalistsJson = () => download(`hackathon-finalists_${timestampForFilename()}.json`, "application/json", JSON.stringify(finalists, null, 2));
 
-  if (!isAdmin) return null;
+  if (!isAuthed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-5">
+        <div className="w-full max-w-sm flex flex-col gap-8">
+          <div>
+            <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+              2026 Innovation Hackathon · Admin
+            </p>
+            <h1 className="text-2xl font-semibold tracking-tight">Submissions</h1>
+          </div>
+          <div className="flex flex-col gap-3">
+            <label className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground">
+              Password
+            </label>
+            <input
+              type="password"
+              autoFocus
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setPwError(false); }}
+              onKeyDown={(e) => e.key === "Enter" && submitPassword()}
+              placeholder="Enter password"
+              className={`w-full rounded-lg border bg-card px-4 py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/40 ${
+                pwError ? "border-red-500/60" : "border-border focus:border-foreground/40"
+              }`}
+            />
+            {pwError && (
+              <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-red-400">
+                Incorrect password
+              </p>
+            )}
+            <button
+              onClick={submitPassword}
+              className="w-full rounded-lg bg-foreground px-4 py-3 text-sm font-medium text-background hover:opacity-90 transition-opacity"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
