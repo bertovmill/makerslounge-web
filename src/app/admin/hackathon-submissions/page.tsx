@@ -50,7 +50,12 @@ const MIN_FINALISTS = 6;
 const MAX_FINALISTS = 9;
 
 const PASSWORD = "makers2026";
-const SESSION_KEY = "hackathon-admin-auth";
+const SESSION_KEY = "hackathon-admin-password";
+
+function adminHeaders(): HeadersInit {
+  const pw = typeof window !== "undefined" ? sessionStorage.getItem(SESSION_KEY) : null;
+  return { "Content-Type": "application/json", "x-admin-password": pw ?? "" };
+}
 
 const STATUS_COLORS: Record<string, string> = {
   new: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
@@ -126,14 +131,12 @@ function TeamVoting({ submissionId, track }: { submissionId: string; track: stri
   useEffect(() => {
     if (!voterName || criteria.length === 0) return;
     setScores({});
-    supabase
-      .from("hackathon_scores")
-      .select("criterion_key, score")
-      .eq("judge_name", voterName)
-      .eq("submission_id", submissionId)
-      .then(({ data }) => {
+    const params = new URLSearchParams({ submission_id: submissionId, judge_name: voterName });
+    fetch(`/api/admin/hackathon-scores?${params}`, { headers: adminHeaders() })
+      .then((r) => r.ok ? r.json() : [])
+      .then((data: { criterion_key: string; score: number }[]) => {
         const loaded: Record<string, number> = {};
-        for (const row of data ?? []) loaded[row.criterion_key] = row.score;
+        for (const row of data) loaded[row.criterion_key] = row.score;
         setScores(loaded);
       });
   }, [submissionId, voterName, criteria.length]);
@@ -151,10 +154,11 @@ function TeamVoting({ submissionId, track }: { submissionId: string; track: stri
     if (!voterName) return;
     setScores((prev) => ({ ...prev, [key]: score }));
     setSaving((p) => new Set(p).add(key));
-    await supabase.from("hackathon_scores").upsert(
-      { judge_name: voterName, submission_id: submissionId, criterion_key: key, score },
-      { onConflict: "judge_name,submission_id,criterion_key" },
-    );
+    await fetch("/api/admin/hackathon-scores", {
+      method: "POST",
+      headers: adminHeaders(),
+      body: JSON.stringify({ judge_name: voterName, submission_id: submissionId, criterion_key: key, score }),
+    });
     setSaving((p) => { const s = new Set(p); s.delete(key); return s; });
     setSaved((p) => new Set(p).add(key));
     setTimeout(() => setSaved((p) => { const s = new Set(p); s.delete(key); return s; }), 1500);
@@ -492,7 +496,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 export default function HackathonSubmissionsAdmin() {
   const [isAuthed, setIsAuthed] = useState<boolean>(
-    () => typeof window !== "undefined" && Boolean(sessionStorage.getItem(SESSION_KEY)),
+    () => typeof window !== "undefined" && sessionStorage.getItem(SESSION_KEY) === PASSWORD,
   );
   const [password, setPassword] = useState("");
   const [pwError, setPwError] = useState(false);
@@ -505,7 +509,7 @@ export default function HackathonSubmissionsAdmin() {
 
   const submitPassword = () => {
     if (password === PASSWORD) {
-      sessionStorage.setItem(SESSION_KEY, "1");
+      sessionStorage.setItem(SESSION_KEY, PASSWORD);
       setIsAuthed(true);
     } else {
       setPwError(true);
@@ -517,12 +521,9 @@ export default function HackathonSubmissionsAdmin() {
     if (!isAuthed) return;
     const load = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("hackathon_submissions")
-        .select("id, project_link, title, description, video_url, file_urls, team_name, builder_emails, challenge_track, status, is_finalist, created_at")
-        .order("created_at", { ascending: false });
-      if (!error) {
-        const rows = (data ?? []) as Submission[];
+      const res = await fetch("/api/admin/hackathon-submissions", { headers: adminHeaders() });
+      if (res.ok) {
+        const rows = (await res.json()) as Submission[];
         setSubmissions(rows);
         setFinalistIds(new Set(rows.filter((r) => r.is_finalist).map((r) => r.id)));
       }
@@ -544,11 +545,11 @@ export default function HackathonSubmissionsAdmin() {
       const wasSelected = prev.has(id);
       const next = new Set(prev);
       if (wasSelected) next.delete(id); else next.add(id);
-      supabase
-        .from("hackathon_submissions")
-        .update({ is_finalist: !wasSelected })
-        .eq("id", id)
-        .then(() => {});
+      fetch("/api/admin/hackathon-submissions", {
+        method: "PATCH",
+        headers: adminHeaders(),
+        body: JSON.stringify({ id, is_finalist: !wasSelected }),
+      });
       return next;
     });
   };
