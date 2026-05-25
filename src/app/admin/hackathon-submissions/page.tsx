@@ -43,6 +43,7 @@ interface Submission {
   challenge_track: string | null;
   status: string;
   is_finalist: boolean;
+  is_round2: boolean;
   created_at: string;
 }
 
@@ -506,6 +507,7 @@ export default function HackathonSubmissionsAdmin() {
   const [filter, setFilter] = useState<string>("all");
   const [selected, setSelected] = useState<Submission | null>(null);
   const [finalistIds, setFinalistIds] = useState<Set<string>>(new Set());
+  const [round2Ids, setRound2Ids] = useState<Set<string>>(new Set());
 
   const submitPassword = () => {
     if (password === PASSWORD) {
@@ -526,6 +528,7 @@ export default function HackathonSubmissionsAdmin() {
         const rows = (await res.json()) as Submission[];
         setSubmissions(rows);
         setFinalistIds(new Set(rows.filter((r) => r.is_finalist).map((r) => r.id)));
+        setRound2Ids(new Set(rows.filter((r) => r.is_round2).map((r) => r.id)));
       }
       setLoading(false);
     };
@@ -538,7 +541,11 @@ export default function HackathonSubmissionsAdmin() {
     return acc;
   }, {});
 
-  const filtered = filter === "all" ? submissions : submissions.filter((s) => s.challenge_track === filter);
+  const filtered = filter === "all"
+    ? submissions
+    : filter === "round2"
+    ? submissions.filter((s) => round2Ids.has(s.id))
+    : submissions.filter((s) => s.challenge_track === filter);
 
   const toggleFinalist = (id: string) => {
     setFinalistIds((prev) => {
@@ -549,6 +556,20 @@ export default function HackathonSubmissionsAdmin() {
         method: "PATCH",
         headers: adminHeaders(),
         body: JSON.stringify({ id, is_finalist: !wasSelected }),
+      });
+      return next;
+    });
+  };
+
+  const toggleRound2 = (id: string) => {
+    setRound2Ids((prev) => {
+      const was = prev.has(id);
+      const next = new Set(prev);
+      if (was) next.delete(id); else next.add(id);
+      fetch("/api/admin/hackathon-submissions", {
+        method: "PATCH",
+        headers: adminHeaders(),
+        body: JSON.stringify({ id, is_round2: !was }),
       });
       return next;
     });
@@ -680,7 +701,7 @@ export default function HackathonSubmissionsAdmin() {
         </div>
       </header>
 
-      {/* Track filter pills */}
+      {/* Filter pills */}
       {submissions.length > 0 && (
         <div className="mb-4 flex flex-wrap gap-2">
           <button
@@ -689,6 +710,13 @@ export default function HackathonSubmissionsAdmin() {
           >
             All ({submissions.length})
           </button>
+          <button
+            onClick={() => setFilter(filter === "round2" ? "all" : "round2")}
+            className={`rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.15em] transition-colors ${filter === "round2" ? "border-emerald-500 bg-emerald-500 text-white" : "border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:border-emerald-500/70"}`}
+          >
+            Round 2 ({round2Ids.size})
+          </button>
+          <span className="self-center w-px h-3 bg-border" />
           {Object.entries(trackCounts).map(([track, count]) => (
             <button
               key={track}
@@ -717,6 +745,7 @@ export default function HackathonSubmissionsAdmin() {
               <thead className="border-b border-border bg-muted/30 text-left">
                 <tr>
                   <th className="w-10 px-4 py-3" />
+                  <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400 whitespace-nowrap">R2</th>
                   <Th>Project</Th>
                   <Th>Team</Th>
                   <Th>Track</Th>
@@ -729,6 +758,7 @@ export default function HackathonSubmissionsAdmin() {
               <tbody>
                 {filtered.map((s, i) => {
                   const isFinalist = finalistIds.has(s.id);
+                  const isRound2 = round2Ids.has(s.id);
                   return (
                   <tr
                     key={s.id}
@@ -736,6 +766,7 @@ export default function HackathonSubmissionsAdmin() {
                     className={
                       "cursor-pointer border-b border-border last:border-b-0 align-top transition-colors " +
                       (isFinalist ? "bg-amber-500/8 hover:bg-amber-500/12"
+                        : isRound2 ? "bg-emerald-500/8 hover:bg-emerald-500/12"
                         : i % 2 === 0 ? "bg-transparent hover:bg-muted/40"
                         : "bg-muted/10 hover:bg-muted/40")
                     }
@@ -747,6 +778,15 @@ export default function HackathonSubmissionsAdmin() {
                         onChange={() => toggleFinalist(s.id)}
                         onClick={(e) => e.stopPropagation()}
                         className="size-4 cursor-pointer rounded accent-amber-500"
+                      />
+                    </td>
+                    <td className="px-4 py-4">
+                      <input
+                        type="checkbox"
+                        checked={isRound2}
+                        onChange={() => toggleRound2(s.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="size-4 cursor-pointer rounded accent-emerald-500"
                       />
                     </td>
                     <Td className="min-w-[16rem] max-w-[22rem]">
