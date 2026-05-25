@@ -85,6 +85,13 @@ export default function JudgeEntryPage() {
                 {name}
               </button>
             ))}
+
+            <Link
+              href="/hackathons/2026-innovation-hackathon/scoring/results"
+              className="w-full rounded-xl border border-border bg-card px-5 py-4 text-center text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
+            >
+              View master results →
+            </Link>
           </div>
         )}
 

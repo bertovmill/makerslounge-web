@@ -315,18 +315,23 @@ export default function JudgeScoringClient() {
             })}
           </nav>
 
-          {/* Sidebar footer — results link */}
-          {finalists.length > 0 && (
-            <div className="mt-auto border-t border-border/50 px-4 py-3">
-              <Link
-                href="/hackathons/2026-innovation-hackathon/scoring"
-                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Trophy className="size-3.5" />
-                View rubric
-              </Link>
-            </div>
-          )}
+          {/* Sidebar footer */}
+          <div className="mt-auto border-t border-border/50 px-4 py-3 flex flex-col gap-2">
+            <Link
+              href="/hackathons/2026-innovation-hackathon/scoring/results"
+              className="flex items-center gap-2 text-xs font-medium text-foreground hover:text-foreground/70 transition-colors"
+            >
+              <Trophy className="size-3.5 text-amber-400" />
+              Master results
+            </Link>
+            <Link
+              href="/hackathons/2026-innovation-hackathon/scoring"
+              className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="size-3.5" />
+              View rubric
+            </Link>
+          </div>
         </aside>
 
         {/* ── Main panel ── */}
