@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, CheckCircle2, Download, FileJson, FileSpreadsheet, Paperclip, Pencil, X, ExternalLink, Trophy } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -219,8 +219,100 @@ function TeamVoting({ submissionId, track }: { submissionId: string; track: stri
     );
   }
 
+  // Notes state
+  const [notes, setNotes] = useState("");
+  const [notesSaving, setNotesSaving] = useState(false);
+  const [notesSaved, setNotesSaved] = useState(false);
+  const notesSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Custom criteria state
+  const [customCriteria, setCustomCriteria] = useState<{ key: string; label: string }[]>([]);
+  const [newCriterionInput, setNewCriterionInput] = useState("");
+
+  useEffect(() => {
+    if (!voterName) return;
+    const params = new URLSearchParams({ submission_id: submissionId, judge_name: voterName });
+    fetch(`/api/admin/hackathon-notes?${params}`, { headers: adminHeaders() })
+      .then((r) => r.ok ? r.json() : { notes: "" })
+      .then((d: { notes: string }) => setNotes(d.notes));
+  }, [submissionId, voterName]);
+
+  const saveNotes = (value: string) => {
+    if (!voterName) return;
+    if (notesSaveTimer.current) clearTimeout(notesSaveTimer.current);
+    setNotesSaving(true);
+    const t = setTimeout(async () => {
+      await fetch("/api/admin/hackathon-notes", {
+        method: "POST",
+        headers: adminHeaders(),
+        body: JSON.stringify({ judge_name: voterName, submission_id: submissionId, notes: value }),
+      });
+      setNotesSaving(false);
+      setNotesSaved(true);
+      setTimeout(() => setNotesSaved(false), 1500);
+    }, 600);
+    notesSaveTimer.current = t;
+  };
+
+  const addCustomCriterion = () => {
+    const label = newCriterionInput.trim();
+    if (!label) return;
+    const key = `custom::${label}`;
+    if (!customCriteria.find((c) => c.key === key)) {
+      setCustomCriteria((prev) => [...prev, { key, label }]);
+    }
+    setNewCriterionInput("");
+  };
+
+  // Derive custom criteria from already-saved scores on load
+  useEffect(() => {
+    const customKeys = Object.keys(scores).filter((k) => k.startsWith("custom::"));
+    if (customKeys.length > 0) {
+      setCustomCriteria(customKeys.map((k) => ({ key: k, label: k.replace("custom::", "") })));
+    }
+  }, [scores]);
+
   const total = weightedScore(scores, criteria);
   const allScored = criteria.every((c) => scores[c.key] != null);
+
+  const ScoreRow = ({ criterionKey, label, badge }: { criterionKey: string; label: string; badge?: string }) => {
+    const current = scores[criterionKey] ?? null;
+    return (
+      <div className="border-b border-border/60 last:border-b-0 px-4 py-4">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <span className="text-sm font-medium leading-snug">{label}</span>
+          <div className="flex shrink-0 items-center gap-2">
+            {saving.has(criterionKey) && (
+              <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground animate-pulse">Saving</span>
+            )}
+            {saved.has(criterionKey) && !saving.has(criterionKey) && (
+              <CheckCircle2 className="size-3 text-green-500" />
+            )}
+            {badge && (
+              <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                {badge}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="grid grid-cols-5 gap-2">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button
+              key={n}
+              onClick={() => handleScore(criterionKey, n)}
+              className={`h-10 rounded-lg font-mono text-base font-semibold transition-all active:scale-95 ${
+                current === n
+                  ? "bg-foreground text-background shadow-sm"
+                  : "border border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col gap-0 overflow-hidden rounded-xl border border-border">
@@ -244,44 +336,59 @@ function TeamVoting({ submissionId, track }: { submissionId: string; track: stri
         </span>
       </div>
 
-      {criteria.map((c) => {
-        const current = scores[c.key] ?? null;
-        return (
-          <div key={c.key} className="border-b border-border/60 last:border-b-0 px-4 py-4">
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <span className="text-sm font-medium leading-snug">{c.label}</span>
-              <div className="flex shrink-0 items-center gap-2">
-                {saving.has(c.key) && (
-                  <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground animate-pulse">
-                    Saving
-                  </span>
-                )}
-                {saved.has(c.key) && !saving.has(c.key) && (
-                  <CheckCircle2 className="size-3 text-green-500" />
-                )}
-                <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-                  {Math.round(c.weight * 100)}%
-                </span>
-              </div>
-            </div>
-            <div className="grid grid-cols-5 gap-2">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => handleScore(c.key, n)}
-                  className={`h-10 rounded-lg font-mono text-base font-semibold transition-all active:scale-95 ${
-                    current === n
-                      ? "bg-foreground text-background shadow-sm"
-                      : "border border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
+      {/* Rubric criteria */}
+      {criteria.map((c) => (
+        <ScoreRow key={c.key} criterionKey={c.key} label={c.label} badge={`${Math.round(c.weight * 100)}%`} />
+      ))}
+
+      {/* Overall impression */}
+      <div className="border-t-2 border-border/80">
+        <ScoreRow criterionKey="__overall__" label="Overall impression" />
+      </div>
+
+      {/* Custom criteria */}
+      {customCriteria.map((c) => (
+        <ScoreRow key={c.key} criterionKey={c.key} label={c.label} />
+      ))}
+
+      {/* Add custom criterion */}
+      <div className="border-b border-border/60 px-4 py-3">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newCriterionInput}
+            onChange={(e) => setNewCriterionInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addCustomCriterion()}
+            placeholder="Add your own criterion…"
+            className="flex-1 rounded-lg border border-dashed border-border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors placeholder:text-muted-foreground/30 focus:border-foreground/30"
+          />
+          <button
+            onClick={addCustomCriterion}
+            disabled={!newCriterionInput.trim()}
+            className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+          >
+            Add
+          </button>
+        </div>
+      </div>
+
+      {/* Notes */}
+      <div className="px-4 py-4">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Your notes</span>
+          <div className="flex items-center gap-1.5">
+            {notesSaving && <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground animate-pulse">Saving</span>}
+            {notesSaved && !notesSaving && <CheckCircle2 className="size-3 text-green-500" />}
           </div>
-        );
-      })}
+        </div>
+        <textarea
+          value={notes}
+          onChange={(e) => { setNotes(e.target.value); saveNotes(e.target.value); }}
+          placeholder="Write your thoughts, concerns, or anything that stood out…"
+          rows={3}
+          className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/30 focus:border-foreground/30"
+        />
+      </div>
     </div>
   );
 }
@@ -290,11 +397,15 @@ function DetailPanel({
   submission,
   isFinalist,
   onToggleFinalist,
+  isRound2,
+  onToggleRound2,
   onClose,
 }: {
   submission: Submission;
   isFinalist: boolean;
   onToggleFinalist: () => void;
+  isRound2: boolean;
+  onToggleRound2: () => void;
   onClose: () => void;
 }) {
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
@@ -352,18 +463,30 @@ function DetailPanel({
         </div>
 
         <div className="flex flex-col gap-6 px-6 py-6">
-          {/* Finalist toggle */}
-          <button
-            onClick={onToggleFinalist}
-            className={`inline-flex w-full items-center justify-center gap-2 rounded-lg border py-2.5 text-sm font-medium transition-colors ${
-              isFinalist
-                ? "border-amber-500/40 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400"
-                : "border-border bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            <Trophy className="size-4" />
-            {isFinalist ? "★ Finalist — click to remove" : "Mark as finalist"}
-          </button>
+          {/* Round 2 + Finalist toggles */}
+          <div className="flex gap-2">
+            <button
+              onClick={onToggleRound2}
+              className={`inline-flex flex-1 items-center justify-center gap-2 rounded-lg border py-2.5 text-sm font-medium transition-colors ${
+                isRound2
+                  ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400"
+                  : "border-border bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              {isRound2 ? "✓ Round 2" : "Round 2?"}
+            </button>
+            <button
+              onClick={onToggleFinalist}
+              className={`inline-flex flex-1 items-center justify-center gap-2 rounded-lg border py-2.5 text-sm font-medium transition-colors ${
+                isFinalist
+                  ? "border-amber-500/40 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400"
+                  : "border-border bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              <Trophy className="size-4" />
+              {isFinalist ? "★ Finalist" : "Finalist?"}
+            </button>
+          </div>
 
           {/* Status */}
           <Row label="Status">
@@ -881,6 +1004,8 @@ export default function HackathonSubmissionsAdmin() {
           submission={selected}
           isFinalist={finalistIds.has(selected.id)}
           onToggleFinalist={() => toggleFinalist(selected.id)}
+          isRound2={round2Ids.has(selected.id)}
+          onToggleRound2={() => toggleRound2(selected.id)}
           onClose={() => setSelected(null)}
         />
       )}
