@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { Resend } from "resend";
 
 const SUBMISSION_DEADLINE = new Date("2026-05-25T03:59:59Z");
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -122,6 +123,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Could not save submission" }, { status: 500 });
     }
 
+    if (builderEmails.length > 0 && process.env.RESEND_API_KEY) {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const projectTitle = trimOrNull(body.title) ?? projectLink;
+      await Promise.allSettled(
+        builderEmails.map((email) =>
+          resend.emails.send({
+            from: "MakersLounge <hello@updates.makerslounge.ca>",
+            to: email,
+            subject: "Your hackathon submission is confirmed",
+            html: confirmationEmail({ id, projectTitle, submissionId: id }),
+          }),
+        ),
+      );
+    }
+
     return NextResponse.json({ id }, { status: 201 });
   } catch (err) {
     console.error("hackathon submit failed:", err);
@@ -133,6 +149,43 @@ function trimOrNull(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function confirmationEmail({
+  projectTitle,
+  submissionId,
+}: {
+  id: string;
+  projectTitle: string;
+  submissionId: string;
+}): string {
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #111;">
+      <p style="font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; color: #999; margin: 0 0 24px;">2026 Innovation Hackathon</p>
+      <h1 style="font-size: 32px; font-weight: 700; margin: 0 0 16px; line-height: 1.1;">Your submission is in.</h1>
+      <p style="font-size: 16px; color: #555; margin: 0 0 32px;">We received your project — see you at demo night.</p>
+
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 32px;">
+        <tr>
+          <td style="padding: 10px 0; color: #999; font-size: 13px; width: 130px; border-bottom: 1px solid #eee;">Project</td>
+          <td style="padding: 10px 0; font-size: 13px; border-bottom: 1px solid #eee;">${projectTitle}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #999; font-size: 13px; border-bottom: 1px solid #eee;">Submission ID</td>
+          <td style="padding: 10px 0; font-size: 13px; font-family: monospace; border-bottom: 1px solid #eee;">${submissionId}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #999; font-size: 13px;">Demo Night</td>
+          <td style="padding: 10px 0; font-size: 13px;">Tuesday May 26 &middot; 5:30&ndash;8:30 PM<br/>510 Front St W, Suite 200, Toronto</td>
+        </tr>
+      </table>
+
+      <p style="font-size: 14px; color: #555; margin: 0 0 8px;">Keep your submission ID for your records. If you need to reach us, reply to this email.</p>
+
+      <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0 16px;" />
+      <p style="color: #999; font-size: 12px; margin: 0;">MakersLounge &mdash; Build. Connect. Create.</p>
+    </div>
+  `;
 }
 
 async function sha256(input: string): Promise<string> {

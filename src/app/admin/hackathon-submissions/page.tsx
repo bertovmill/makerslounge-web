@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUpRight, Download, FileJson, FileSpreadsheet, Paperclip, X, ExternalLink } from "lucide-react";
+import { ArrowUpRight, Download, FileJson, FileSpreadsheet, Paperclip, X, ExternalLink, Trophy } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface Submission {
@@ -16,8 +16,12 @@ interface Submission {
   builder_emails: string[];
   challenge_track: string | null;
   status: string;
+  is_finalist: boolean;
   created_at: string;
 }
+
+const MIN_FINALISTS = 6;
+const MAX_FINALISTS = 9;
 
 const ADMIN_EMAIL = "bertmill19@gmail.com";
 
@@ -83,9 +87,13 @@ function fileName(path: string): string {
 
 function DetailPanel({
   submission,
+  isFinalist,
+  onToggleFinalist,
   onClose,
 }: {
   submission: Submission;
+  isFinalist: boolean;
+  onToggleFinalist: () => void;
   onClose: () => void;
 }) {
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
@@ -143,6 +151,19 @@ function DetailPanel({
         </div>
 
         <div className="flex flex-col gap-6 px-6 py-6">
+          {/* Finalist toggle */}
+          <button
+            onClick={onToggleFinalist}
+            className={`inline-flex w-full items-center justify-center gap-2 rounded-lg border py-2.5 text-sm font-medium transition-colors ${
+              isFinalist
+                ? "border-amber-500/40 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400"
+                : "border-border bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <Trophy className="size-4" />
+            {isFinalist ? "★ Finalist — click to remove" : "Mark as finalist"}
+          </button>
+
           {/* Status */}
           <Row label="Status">
             <span className={`inline-block rounded-full px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${STATUS_COLORS[submission.status] ?? "bg-muted text-muted-foreground"}`}>
@@ -275,6 +296,7 @@ export default function HackathonSubmissionsAdmin() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [filter, setFilter] = useState<string>("all");
   const [selected, setSelected] = useState<Submission | null>(null);
+  const [finalistIds, setFinalistIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const init = async () => {
@@ -294,9 +316,13 @@ export default function HackathonSubmissionsAdmin() {
       setLoading(true);
       const { data, error } = await supabase
         .from("hackathon_submissions")
-        .select("id, project_link, title, description, video_url, file_urls, team_name, builder_emails, challenge_track, status, created_at")
+        .select("id, project_link, title, description, video_url, file_urls, team_name, builder_emails, challenge_track, status, is_finalist, created_at")
         .order("created_at", { ascending: false });
-      if (!error) setSubmissions((data ?? []) as Submission[]);
+      if (!error) {
+        const rows = (data ?? []) as Submission[];
+        setSubmissions(rows);
+        setFinalistIds(new Set(rows.filter((r) => r.is_finalist).map((r) => r.id)));
+      }
       setLoading(false);
     };
     load();
@@ -310,8 +336,26 @@ export default function HackathonSubmissionsAdmin() {
 
   const filtered = filter === "all" ? submissions : submissions.filter((s) => s.challenge_track === filter);
 
+  const toggleFinalist = (id: string) => {
+    setFinalistIds((prev) => {
+      const wasSelected = prev.has(id);
+      const next = new Set(prev);
+      if (wasSelected) next.delete(id); else next.add(id);
+      supabase
+        .from("hackathon_submissions")
+        .update({ is_finalist: !wasSelected })
+        .eq("id", id)
+        .then(() => {});
+      return next;
+    });
+  };
+
+  const finalists = submissions.filter((s) => finalistIds.has(s.id));
+
   const exportCsv = () => download(`hackathon-submissions_${timestampForFilename()}.csv`, "text/csv;charset=utf-8", buildCsv(filtered));
   const exportJson = () => download(`hackathon-submissions_${timestampForFilename()}.json`, "application/json", JSON.stringify(filtered, null, 2));
+  const exportFinalistsCsv = () => download(`hackathon-finalists_${timestampForFilename()}.csv`, "text/csv;charset=utf-8", buildCsv(finalists));
+  const exportFinalistsJson = () => download(`hackathon-finalists_${timestampForFilename()}.json`, "application/json", JSON.stringify(finalists, null, 2));
 
   if (!isAdmin) return null;
 
@@ -333,31 +377,60 @@ export default function HackathonSubmissionsAdmin() {
             {" "}— click any row to view details and files.
           </p>
         </div>
-        <div className="flex flex-col items-start gap-2 sm:items-end">
-          <div className="font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground">
-            Total{" "}
-            <span className="ml-1 text-base font-medium tabular-nums text-foreground">
-              {submissions.length}
+        <div className="flex flex-col items-start gap-3 sm:items-end">
+          <div className="flex items-center gap-4">
+            <span className="font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground">
+              Total{" "}
+              <span className="ml-1 text-base font-medium tabular-nums text-foreground">
+                {submissions.length}
+              </span>
+            </span>
+            <span className="h-3 w-px bg-border" />
+            <span className="font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground">
+              Finalists{" "}
+              <span className={`ml-1 text-base font-medium tabular-nums ${
+                finalistIds.size === 0 ? "text-muted-foreground"
+                : finalistIds.size >= MIN_FINALISTS && finalistIds.size <= MAX_FINALISTS ? "text-green-600 dark:text-green-400"
+                : finalistIds.size > MAX_FINALISTS ? "text-red-500"
+                : "text-amber-500"
+              }`}>
+                {finalistIds.size}
+              </span>
+              <span className="ml-0.5 text-muted-foreground/60">/{MAX_FINALISTS}</span>
             </span>
           </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={exportCsv}
-              disabled={filtered.length === 0}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
-            >
-              <FileSpreadsheet className="size-3.5" />
-              Export CSV
+
+          {finalistIds.size > 0 && (
+            <div className="flex items-center gap-1.5">
+              <Trophy className="size-3 text-amber-500" />
+              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-amber-500">
+                {finalistIds.size < MIN_FINALISTS ? `${MIN_FINALISTS - finalistIds.size} more to go`
+                  : finalistIds.size > MAX_FINALISTS ? `${finalistIds.size - MAX_FINALISTS} over limit`
+                  : "Good range"}
+              </span>
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            {finalistIds.size > 0 && (
+              <>
+                <button type="button" onClick={exportFinalistsCsv}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-500/20 dark:text-amber-400">
+                  <FileSpreadsheet className="size-3.5" />Finalists CSV
+                </button>
+                <button type="button" onClick={exportFinalistsJson}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-500/20 dark:text-amber-400">
+                  <FileJson className="size-3.5" />Finalists JSON
+                </button>
+              </>
+            )}
+            <button type="button" onClick={exportCsv} disabled={filtered.length === 0}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40">
+              <FileSpreadsheet className="size-3.5" />All CSV
             </button>
-            <button
-              type="button"
-              onClick={exportJson}
-              disabled={filtered.length === 0}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
-            >
-              <FileJson className="size-3.5" />
-              Export JSON
+            <button type="button" onClick={exportJson} disabled={filtered.length === 0}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40">
+              <FileJson className="size-3.5" />All JSON
             </button>
           </div>
         </div>
@@ -399,6 +472,7 @@ export default function HackathonSubmissionsAdmin() {
             <table className="w-full border-collapse text-sm">
               <thead className="border-b border-border bg-muted/30 text-left">
                 <tr>
+                  <th className="w-10 px-4 py-3" />
                   <Th>Project</Th>
                   <Th>Team</Th>
                   <Th>Track</Th>
@@ -409,18 +483,32 @@ export default function HackathonSubmissionsAdmin() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((s, i) => (
+                {filtered.map((s, i) => {
+                  const isFinalist = finalistIds.has(s.id);
+                  return (
                   <tr
                     key={s.id}
                     onClick={() => setSelected(s)}
                     className={
-                      "cursor-pointer border-b border-border last:border-b-0 align-top transition-colors hover:bg-muted/40 " +
-                      (i % 2 === 0 ? "bg-transparent" : "bg-muted/10")
+                      "cursor-pointer border-b border-border last:border-b-0 align-top transition-colors " +
+                      (isFinalist ? "bg-amber-500/8 hover:bg-amber-500/12"
+                        : i % 2 === 0 ? "bg-transparent hover:bg-muted/40"
+                        : "bg-muted/10 hover:bg-muted/40")
                     }
                   >
+                    <td className="px-4 py-4">
+                      <input
+                        type="checkbox"
+                        checked={isFinalist}
+                        onChange={() => toggleFinalist(s.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="size-4 cursor-pointer rounded accent-amber-500"
+                      />
+                    </td>
                     <Td className="min-w-[16rem] max-w-[22rem]">
                       <div className="flex flex-col gap-1">
-                        <span className="font-medium text-foreground">
+                        <span className="flex items-center gap-1.5 font-medium text-foreground">
+                          {isFinalist && <Trophy className="size-3 shrink-0 text-amber-500" />}
                           {s.title ?? <span className="italic text-muted-foreground">Untitled</span>}
                         </span>
                         <a
@@ -496,7 +584,8 @@ export default function HackathonSubmissionsAdmin() {
                       })}
                     </Td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -504,7 +593,12 @@ export default function HackathonSubmissionsAdmin() {
       </div>
 
       {selected && (
-        <DetailPanel submission={selected} onClose={() => setSelected(null)} />
+        <DetailPanel
+          submission={selected}
+          isFinalist={finalistIds.has(selected.id)}
+          onToggleFinalist={() => toggleFinalist(selected.id)}
+          onClose={() => setSelected(null)}
+        />
       )}
     </div>
   );
