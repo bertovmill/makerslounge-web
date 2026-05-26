@@ -554,6 +554,20 @@ function ScoringView({ judgeName, mobileNavOpen, onMobileNavClose }: {
     });
   }
 
+  // Within "Synthetic Customers", put Doppel first
+  const scTrack = "Synthetic Customers";
+  if (byTrack[scTrack]) {
+    byTrack[scTrack].sort((a, b) => {
+      const aName = (a.title ?? a.team_name ?? "").toLowerCase();
+      const bName = (b.title ?? b.team_name ?? "").toLowerCase();
+      const aIsDoppel = aName.includes("doppel");
+      const bIsDoppel = bName.includes("doppel");
+      if (aIsDoppel && !bIsDoppel) return -1;
+      if (!aIsDoppel && bIsDoppel) return 1;
+      return 0;
+    });
+  }
+
   // Flat ordered finalists list (for prev/next nav)
   const orderedFinalists = orderedTracks.flatMap((t) => byTrack[t] ?? []);
 
