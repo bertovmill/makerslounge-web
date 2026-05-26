@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Linkedin, Info, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 import { QRCodeSVG } from "qrcode.react";
 
 type TrackCriterion = { label: string; weight: number; description: string };
@@ -72,14 +73,57 @@ const FINALIST_TEAMS: Record<string, TeamMember[]> = {
   ],
   "doppel": [
     { name: "Trisha Duno", photo: "/hackathons/innovation-hackathon/teams/doppel/trisha-duno.png", linkedin: "https://www.linkedin.com/in/trisha-duno/" },
+    { name: "Dhanush Chandar Sivakumar", photo: "/hackathons/innovation-hackathon/teams/doppel/dhanush-chandar-sivakumar.png", linkedin: "https://www.linkedin.com/in/dhanush-chandar-sivakumar/" },
   ],
+  "forgeos": [
+    { name: "Kylie Vincent", photo: "/hackathons/innovation-hackathon/teams/forgeos/kylie-vincent.png", linkedin: "https://www.linkedin.com/in/kylie-vincent905/" },
+  ],
+  "idea forge": [
+    { name: "Karan Aggarwal", photo: "/hackathons/innovation-hackathon/teams/idea-forge/karan-aggarwal.png", linkedin: "https://www.linkedin.com/in/karanagg262/" },
+    { name: "Behzad Janjua", photo: "/hackathons/innovation-hackathon/teams/idea-forge/behzad-janjua.png", linkedin: "https://www.linkedin.com/in/behzad-janjua/" },
+    { name: "Prakash Raaj Vasudevan", photo: "/hackathons/innovation-hackathon/teams/idea-forge/prakash-raaj-vasudevan.png", linkedin: "https://www.linkedin.com/in/prakash-raaj-vasudevan/" },
+  ],
+  "overton": [
+    { name: "Damon Deng", photo: "/hackathons/innovation-hackathon/teams/overton/damon-deng.png", linkedin: "https://www.linkedin.com/in/damondeng/" },
+  ],
+  "vito agent": [
+    { name: "Alexander Galea", photo: "/hackathons/innovation-hackathon/teams/vito-agent/alexander-galea.png", linkedin: "https://www.linkedin.com/in/alexandergalea/" },
+    { name: "Harish Kukreja", photo: "/hackathons/innovation-hackathon/teams/vito-agent/harish-kukreja.png", linkedin: "https://www.linkedin.com/in/harish-kukreja/" },
+    { name: "Arash Nouri", photo: "/hackathons/innovation-hackathon/teams/vito-agent/arash-nouri.png", linkedin: "https://www.linkedin.com/in/arashnouri95/" },
+  ],
+};
+
+const BONUS_TEAMS: Record<string, TeamMember[]> = {
+  "auctopus": [],
+  "samm": [],
 };
 
 const STATS: { participants: number; projectsSubmitted: number; teams: number } | null = null;
 
-const SLIDE_COUNT = 15;
+const SLIDE_COUNT = 17;
+
+const SLIDE_INDEX: Array<{ n: number; title: string }> = [
+  { n: 1, title: "Opening" },
+  { n: 2, title: "Event Overview" },
+  { n: 3, title: "About Us" },
+  { n: 4, title: "Sponsors" },
+  { n: 5, title: "Judges" },
+  { n: 6, title: "Tracks" },
+  { n: 7, title: "Demo 01" },
+  { n: 8, title: "Demo 02" },
+  { n: 9, title: "Demo 03" },
+  { n: 10, title: "Demo 04" },
+  { n: 11, title: "Demo 05" },
+  { n: 12, title: "Demo 06" },
+  { n: 13, title: "Demo 07" },
+  { n: 14, title: "Bonus 01" },
+  { n: 15, title: "Bonus 02" },
+  { n: 16, title: "Winners" },
+  { n: 17, title: "Thank You" },
+];
 
 const DEMO_SLOT_COUNT = 7;
+const BONUS_SLOT_COUNT = 2;
 
 export default function DemoNightDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -178,62 +222,106 @@ export default function DemoNightDeck() {
   }, []);
 
   return (
-    <div className="relative h-svh w-full overflow-hidden bg-background text-foreground">
-      {/* top-left: counter + back link */}
-      <div className="fixed left-[max(1.25rem,env(safe-area-inset-left))] top-[max(1.25rem,env(safe-area-inset-top))] z-40 flex items-center gap-4 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
-        <span className="pointer-events-none">
-          <span className="text-foreground">{pad2(currentSlide)}</span>
-          <span className="text-foreground/30"> / </span>
-          <span>{pad2(SLIDE_COUNT)}</span>
-        </span>
-        <span className="text-foreground/20">·</span>
-        <Link
-          href="/hackathons/2026-innovation-hackathon"
-          className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+    <div className="flex h-svh w-full overflow-hidden bg-background text-foreground">
+      {/* Left sidebar – slide index */}
+      <aside className="flex h-full w-48 shrink-0 flex-col overflow-hidden border-r border-border/40 bg-background/60 backdrop-blur-md">
+        <div className="border-b border-border/30 px-4 py-3">
+          <span className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground">Index</span>
+        </div>
+        <nav className="flex-1 overflow-y-auto py-2">
+          {SLIDE_INDEX.map(({ n, title }) => (
+            <button
+              key={n}
+              onClick={() => scrollToSlide(n)}
+              className={cn(
+                "flex w-full items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-foreground/5",
+                currentSlide === n && "bg-foreground/[0.06]"
+              )}
+            >
+              <span
+                className={cn(
+                  "shrink-0 font-mono text-[0.6rem] tabular-nums",
+                  currentSlide === n ? "text-foreground" : "text-muted-foreground/40"
+                )}
+              >
+                {n.toString().padStart(2, "0")}
+              </span>
+              <span
+                className={cn(
+                  "font-sans text-[0.75rem] leading-snug",
+                  currentSlide === n ? "text-gradient font-medium" : "text-muted-foreground"
+                )}
+              >
+                {title}
+              </span>
+            </button>
+          ))}
+        </nav>
+      </aside>
+
+      {/* Main area */}
+      <div className="relative flex-1 overflow-hidden">
+        {/* top-left: counter + back link */}
+        <div className="absolute left-5 top-5 z-40 flex items-center gap-4 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          <span className="pointer-events-none">
+            <span className="text-foreground">{pad2(currentSlide)}</span>
+            <span className="text-foreground/30"> / </span>
+            <span>{pad2(SLIDE_COUNT)}</span>
+          </span>
+          <span className="text-foreground/20">·</span>
+          <Link
+            href="/hackathons/2026-innovation-hackathon"
+            className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="size-3" />
+            Main deck
+          </Link>
+        </div>
+
+        {/* top-right: section label */}
+        <div className="pointer-events-none absolute right-5 top-5 z-40 font-mono text-xs uppercase tracking-[0.18em]">
+          <span className="text-gradient">Demo Night</span>
+        </div>
+
+        <div
+          ref={containerRef}
+          className="h-full w-full snap-y snap-mandatory overflow-y-auto overscroll-y-contain scroll-smooth"
         >
-          <ArrowLeft className="size-3" />
-          Main deck
-        </Link>
-      </div>
-
-      {/* top-right: section label */}
-      <div className="pointer-events-none fixed right-[max(1.25rem,env(safe-area-inset-right))] top-[max(1.1rem,env(safe-area-inset-top))] z-40 font-mono text-xs uppercase tracking-[0.18em]">
-        <span className="text-gradient">Demo Night</span>
-      </div>
-
-      <div
-        ref={containerRef}
-        className="h-full w-full snap-y snap-mandatory overflow-y-auto overscroll-y-contain scroll-smooth"
-      >
-        <Slide n={1} title="Opening">
-          <SlideDemoNightOpener />
-        </Slide>
-        <Slide n={2} title="Event Overview">
-          <SlideEventOverview />
-        </Slide>
-        <Slide n={3} title="What is MakersLounge">
-          <SlideWhatIsMakersLounge />
-        </Slide>
-        <Slide n={4} title="Sponsors">
-          <SlideSponsors />
-        </Slide>
-        <Slide n={5} title="Judges">
-          <SlideJudges />
-        </Slide>
-        <Slide n={6} title="Judging criteria">
-          <SlideJudgingCriteria />
-        </Slide>
-        {Array.from({ length: DEMO_SLOT_COUNT }, (_, i) => finalists[i] ?? null).map((finalist, i) => (
-          <Slide key={i} n={7 + i} title={`Demo ${pad2(i + 1)}`}>
-            <SlideDemoPresentation finalist={finalist} index={i} slideN={7 + i} />
+          <Slide n={1} title="Opening">
+            <SlideDemoNightOpener />
           </Slide>
-        ))}
-        <Slide n={14} title="Winners">
-          <SlideWinners />
-        </Slide>
-        <Slide n={15} title="Thank you">
-          <SlideThankYou />
-        </Slide>
+          <Slide n={2} title="Event Overview">
+            <SlideEventOverview />
+          </Slide>
+          <Slide n={3} title="What is MakersLounge">
+            <SlideWhatIsMakersLounge />
+          </Slide>
+          <Slide n={4} title="Sponsors">
+            <SlideSponsors />
+          </Slide>
+          <Slide n={5} title="Judges">
+            <SlideJudges />
+          </Slide>
+          <Slide n={6} title="Judging criteria">
+            <SlideJudgingCriteria />
+          </Slide>
+          {Array.from({ length: DEMO_SLOT_COUNT }, (_, i) => finalists[i] ?? null).map((finalist, i) => (
+            <Slide key={i} n={7 + i} title={`Demo ${pad2(i + 1)}`}>
+              <SlideDemoPresentation finalist={finalist} index={i} slideN={7 + i} />
+            </Slide>
+          ))}
+          {Array.from({ length: BONUS_SLOT_COUNT }, (_, i) => i).map((i) => (
+            <Slide key={`bonus-${i}`} n={14 + i} title={`Bonus Demo ${pad2(i + 1)}`}>
+              <SlideBonusPresentation index={i} slideN={14 + i} />
+            </Slide>
+          ))}
+          <Slide n={16} title="Winners">
+            <SlideWinners />
+          </Slide>
+          <Slide n={17} title="Thank you">
+            <SlideThankYou />
+          </Slide>
+        </div>
       </div>
     </div>
   );
@@ -480,12 +568,12 @@ function SlideSponsors() {
               </div>
               {s.rep && (
                 <div className="flex items-center gap-5 border-t border-border/60 px-7 py-5">
-                  <div className="h-[72px] w-[72px] flex-shrink-0 overflow-hidden rounded-full border border-border/60">
-                    <Image src={s.rep.photo} alt={s.rep.name} width={72} height={72} className="h-full w-full object-cover" />
+                  <div className="h-[96px] w-[96px] flex-shrink-0 overflow-hidden rounded-full border border-border/60">
+                    <Image src={s.rep.photo} alt={s.rep.name} width={96} height={96} className="h-full w-full object-cover" />
                   </div>
-                  <div className="flex flex-1 flex-col gap-1.5">
-                    <span className="font-sans font-semibold text-[clamp(1.05rem,1.5vw,1.3rem)] leading-snug">{s.rep.name}</span>
-                    <span className="font-mono text-[0.75rem] uppercase tracking-[0.1em] text-muted-foreground">{s.rep.title}</span>
+                  <div className="flex flex-1 flex-col gap-2">
+                    <span className="font-sans font-semibold text-[clamp(1.2rem,1.8vw,1.55rem)] leading-snug">{s.rep.name}</span>
+                    <span className="font-mono text-[0.875rem] uppercase tracking-[0.1em] text-muted-foreground">{s.rep.title}</span>
                   </div>
                   {s.rep.linkedin && (
                     <a
@@ -686,7 +774,7 @@ function SlideWinners() {
       <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span className="text-gradient">Demo Night</span>
         <span className="h-px w-8 bg-border" />
-        <span className="text-foreground">{pad2(13)}</span>
+        <span className="text-foreground">{pad2(16)}</span>
         <span className="h-px w-4 bg-border" />
         <span>Winners</span>
       </div>
@@ -749,7 +837,7 @@ function SlideThankYou() {
       <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span className="text-gradient">Demo Night</span>
         <span className="h-px w-8 bg-border" />
-        <span className="text-foreground">{pad2(14)}</span>
+        <span className="text-foreground">{pad2(17)}</span>
         <span className="h-px w-4 bg-border" />
         <span>Thank you</span>
       </div>
@@ -883,10 +971,64 @@ function SlideDemoPresentation({ finalist, index, slideN }: { finalist: Finalist
   );
 }
 
-function TeamMembersRow({ title }: { title: string | null }) {
+const BONUS_DEMO_NAMES: string[] = ["Auctopus", "SAMM"];
+
+function SlideBonusPresentation({ index, slideN }: { index: number; slideN: number }) {
+  const name = BONUS_DEMO_NAMES[index] ?? null;
+  const members = name ? (BONUS_TEAMS[name.toLowerCase()] ?? null) : null;
+
+  return (
+    <div className="flex h-full flex-col">
+      <SlideBackground />
+
+      <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <span className="text-gradient">Demo Night</span>
+        <span className="h-px w-8 bg-border" />
+        <span className="text-foreground">{pad2(slideN)}</span>
+        <span className="h-px w-4 bg-border" />
+        <span>Bonus Demo {pad2(index + 1)}</span>
+      </div>
+
+      <div className="relative mt-[clamp(1rem,2vh,2rem)] flex flex-col gap-[clamp(0.5rem,1vh,1rem)]">
+        {/* SOON Hackathon badge */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 rounded-full border border-border/60 bg-background/40 px-3 py-1.5 backdrop-blur-sm">
+            <Image src="/hackathons/soon-hackathon/logo.png" alt="SOON Hackathon" width={24} height={24} className="h-6 w-6 object-contain" />
+            <span className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground">SOON Hackathon · Bonus Demo</span>
+          </div>
+        </div>
+
+        <div className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          <span className="text-gradient font-semibold">Bonus {pad2(index + 1)}</span>
+          <span className="mx-3 text-foreground/20">/</span>
+          <span>{pad2(BONUS_SLOT_COUNT)}</span>
+        </div>
+
+        {!name ? (
+          <h2 className="font-sans font-semibold text-[clamp(2.75rem,7vw,6rem)] leading-[1.0] tracking-tight text-foreground/15">
+            TBA
+          </h2>
+        ) : (
+          <h2 className="font-sans font-semibold text-[clamp(2.75rem,7vw,6rem)] leading-[1.0] tracking-tight">
+            <span className="text-gradient">{name}</span>
+          </h2>
+        )}
+      </div>
+
+      {name && members && <TeamMembersRow title={name} teams={BONUS_TEAMS} />}
+
+      <div className="relative mt-auto flex items-center justify-between font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <span>2026 Innovation Hackathon</span>
+        <span>Bonus {pad2(index + 1)} of {pad2(BONUS_SLOT_COUNT)}</span>
+      </div>
+    </div>
+  );
+}
+
+function TeamMembersRow({ title, teams = FINALIST_TEAMS }: { title: string | null; teams?: Record<string, TeamMember[]> }) {
   if (!title) return null;
-  const key = Object.keys(FINALIST_TEAMS).find((k) => title.toLowerCase().includes(k.toLowerCase()));
-  const members = key ? FINALIST_TEAMS[key] : null;
+  const key = Object.keys(teams).find((k) => title.toLowerCase().includes(k.toLowerCase()));
+  const members = key ? teams[key] : null;
   if (!members || members.length === 0) return null;
 
   return (
