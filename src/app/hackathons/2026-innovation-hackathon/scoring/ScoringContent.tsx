@@ -157,7 +157,7 @@ function avgWeightedScore(
 
 // ─── Main component ─────────────────────────────────────────────────────────
 
-export default function ScoringContent({ defaultMode = "rubric" }: { defaultMode?: Mode }) {
+export default function ScoringContent({ defaultMode = "scoring" }: { defaultMode?: Mode }) {
   const [mode, setMode] = useState<Mode>(defaultMode);
   const [overlay, setOverlay] = useState<Overlay>(null);
   // Read initial auth state from sessionStorage on first client render
@@ -167,6 +167,18 @@ export default function ScoringContent({ defaultMode = "rubric" }: { defaultMode
   const [judgeName, setJudgeName] = useState<string | null>(
     () => (typeof window !== "undefined" ? sessionStorage.getItem(`${SESSION_KEY}-judge`) : null),
   );
+
+  // On mount, auto-trigger auth flow if landing directly in scoring mode
+  useEffect(() => {
+    if (mode === "scoring") {
+      if (!isAuthed) {
+        setOverlay("password");
+      } else if (!judgeName) {
+        setOverlay("judge-select");
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleJudgeScoreClick = () => {
     if (!isAuthed) {
@@ -256,9 +268,9 @@ export default function ScoringContent({ defaultMode = "rubric" }: { defaultMode
       {/* ── Views ───────────────────────────────────────────────────────── */}
       {mode === "rubric" ? (
         <RubricView />
-      ) : (
-        <ScoringView judgeName={judgeName!} />
-      )}
+      ) : judgeName ? (
+        <ScoringView judgeName={judgeName} />
+      ) : null}
 
       {/* ── Overlays ────────────────────────────────────────────────────── */}
       {overlay === "password" && (
