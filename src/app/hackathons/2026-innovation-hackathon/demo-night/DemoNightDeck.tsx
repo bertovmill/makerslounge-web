@@ -881,17 +881,17 @@ function SlideThankYou() {
         {/* QR codes — sponsors + MakersLounge */}
         <div className="grid w-full grid-cols-3 gap-5">
           {[
-            { name: "Aucctus", logo: "/logos/partner-logos/Aucctus-Full-Colour-Logo1.webp", logoW: 140, logoH: 40, url: "https://www.linkedin.com/company/aucctus/", label: "Follow on LinkedIn", icon: "linkedin" as const },
-            { name: "Disruptive Edge", logo: "/logos/partner-logos/Disruptive-Edge-SQ.png", logoW: 56, logoH: 56, url: "https://www.linkedin.com/company/disruptiveedge/posts/?feedView=all", label: "Follow on LinkedIn", icon: "linkedin" as const },
-            { name: "MakersLounge", logo: "/logos/logo-luma.png", logoW: 56, logoH: 56, url: "https://www.linkedin.com/company/makeandlearn", label: "Follow on LinkedIn", icon: "linkedin" as const },
+            { name: "Aucctus", logo: "/logos/partner-logos/Aucctus-Full-Colour-Logo1.webp", logoW: 420, logoH: 120, url: "https://www.linkedin.com/company/aucctus/", label: "Follow on LinkedIn", icon: "linkedin" as const },
+            { name: "Disruptive Edge", logo: "/logos/partner-logos/Disruptive-Edge-SQ.png", logoW: 168, logoH: 168, url: "https://www.linkedin.com/company/disruptiveedge/posts/?feedView=all", label: "Follow on LinkedIn", icon: "linkedin" as const },
+            { name: "MakersLounge", logo: "/logos/logo-luma.png", logoW: 168, logoH: 168, url: "https://www.linkedin.com/company/makeandlearn", label: "Follow on LinkedIn", icon: "linkedin" as const },
           ].map((s) => (
             <div key={s.name} className="flex flex-col items-center gap-5 rounded-2xl border border-border/60 bg-background/40 p-6 backdrop-blur-sm">
               <div className="rounded-xl bg-white p-3 shadow-sm">
                 <QRCodeSVG value={s.url} size={160} bgColor="#ffffff" fgColor="#111111" />
               </div>
               <div className="flex flex-col items-center gap-2">
-                <div className="flex items-center justify-center overflow-hidden rounded-lg bg-white px-4 py-2.5" style={{ minWidth: 64, minHeight: 44 }}>
-                  <Image src={s.logo} alt={s.name} width={s.logoW} height={s.logoH} className="object-contain" style={{ maxHeight: 40, width: "auto" }} />
+                <div className="flex items-center justify-center overflow-hidden rounded-lg bg-white px-4 py-2.5" style={{ minWidth: 64, minHeight: 132 }}>
+                  <Image src={s.logo} alt={s.name} width={s.logoW} height={s.logoH} className="object-contain" style={{ maxHeight: 120, width: "auto" }} />
                 </div>
                 <span className="flex items-center gap-1.5 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted-foreground">
                   {s.icon === "linkedin" ? <Linkedin className="size-3" /> : <span className="size-3 inline-flex items-center justify-center text-[0.55rem]">↗</span>}
