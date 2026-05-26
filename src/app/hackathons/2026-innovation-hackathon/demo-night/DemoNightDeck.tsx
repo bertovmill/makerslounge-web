@@ -965,13 +965,34 @@ function SlideJudgingResults() {
                     Reveal winner ✦
                   </button>
                 ) : t?.winner ? (
-                  <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-background/60 px-5 py-5 text-center backdrop-blur-sm">
+                  <div className="relative flex flex-col gap-2 overflow-hidden rounded-xl border border-border/60 bg-background/60 px-5 py-5 text-center backdrop-blur-sm">
+                    {/* Celebration particles */}
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                      {["🎉","✨","🏆","⭐","🎊","💫","🌟","🎉"].map((e, i) => (
+                        <span
+                          key={i}
+                          className="absolute text-xl"
+                          style={{
+                            animation: `celebrationBurst 1.2s ease-out ${i * 0.08}s both`,
+                            transform: `rotate(${i * 45}deg)`,
+                          }}
+                        >
+                          {e}
+                        </span>
+                      ))}
+                    </div>
+                    <style>{`
+                      @keyframes celebrationBurst {
+                        0% { opacity: 1; transform: rotate(var(--tw-rotate, 0deg)) translateY(0) scale(0.5); }
+                        60% { opacity: 1; transform: rotate(var(--tw-rotate, 0deg)) translateY(-60px) scale(1.2); }
+                        100% { opacity: 0; transform: rotate(var(--tw-rotate, 0deg)) translateY(-90px) scale(0.8); }
+                      }
+                    `}</style>
                     <span className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-gradient">Winner</span>
-                    <span className="font-sans font-semibold text-[clamp(1.1rem,2vw,1.75rem)] leading-snug">{t.winner.title}</span>
+                    <span className="font-sans font-semibold text-[clamp(1.25rem,2.2vw,2rem)] leading-snug">{t.winner.title}</span>
                     {t.winner.team_name && t.winner.title !== t.winner.team_name && (
                       <span className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-muted-foreground">{t.winner.team_name}</span>
                     )}
-                    <span className="font-mono text-xs text-muted-foreground/60">{t.winner.avg_score}/100 avg</span>
                   </div>
                 ) : (
                   <div className="rounded-xl border border-border/40 px-4 py-4 text-center">
