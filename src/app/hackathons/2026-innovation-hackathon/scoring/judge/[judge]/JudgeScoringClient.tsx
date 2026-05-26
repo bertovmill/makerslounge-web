@@ -16,7 +16,7 @@ export const JUDGE_SLUGS: Record<string, string> = {
   "naina-dewan": "Naina Dewan",
   "rishi-midha": "Rishi Midha",
   "dave-jani": "Dave Jani",
-  "ashish-dsa": "Ashish D'Sa",
+  "ashish-dsa": "Ashish DSa",
 };
 
 const TRACK_CRITERIA: Record<string, { key: string; label: string; weight: number }[]> = {

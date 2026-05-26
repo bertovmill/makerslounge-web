@@ -17,7 +17,7 @@ const JUDGES = [
   "Naina Dewan",
   "Rishi Midha",
   "Dave Jani",
-  "Ashish D'Sa",
+  "Ashish DSa",
 ];
 
 const JUDGE_TO_SLUG: Record<string, string> = {
@@ -25,7 +25,7 @@ const JUDGE_TO_SLUG: Record<string, string> = {
   "Naina Dewan": "naina",
   "Rishi Midha": "rishi",
   "Dave Jani": "dave",
-  "Ashish D'Sa": "ashish",
+  "Ashish DSa": "ashish",
 };
 const SLUG_TO_JUDGE: Record<string, string> = Object.fromEntries(
   Object.entries(JUDGE_TO_SLUG).map(([name, slug]) => [slug, name]),
