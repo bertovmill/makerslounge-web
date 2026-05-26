@@ -522,6 +522,27 @@ function ScoringView({ judgeName, mobileNavOpen, onMobileNavClose }: {
     byTrack[t].push(f);
   }
 
+  // Custom track order and within-track ordering
+  const TRACK_ORDER = ["Continuous Market Monitoring", "Validating a Business Idea", "Synthetic Customers"];
+  const orderedTracks = TRACK_ORDER.filter((t) => t in byTrack);
+
+  // Within "Validating a Business Idea", put IdeaForge last
+  const vbiTrack = "Validating a Business Idea";
+  if (byTrack[vbiTrack]) {
+    byTrack[vbiTrack].sort((a, b) => {
+      const aName = (a.title ?? a.team_name ?? "").toLowerCase();
+      const bName = (b.title ?? b.team_name ?? "").toLowerCase();
+      const aIsIdea = aName.includes("ideaforge");
+      const bIsIdea = bName.includes("ideaforge");
+      if (aIsIdea && !bIsIdea) return 1;
+      if (!aIsIdea && bIsIdea) return -1;
+      return 0;
+    });
+  }
+
+  // Flat ordered finalists list (for prev/next nav)
+  const orderedFinalists = orderedTracks.flatMap((t) => byTrack[t] ?? []);
+
   // Completion status per finalist
   const completionStatus = (finalistId: string, track: string): "none" | "partial" | "complete" => {
     const crit = TRACK_CRITERIA[track] ?? [];
@@ -532,14 +553,14 @@ function ScoringView({ judgeName, mobileNavOpen, onMobileNavClose }: {
     return scored === crit.length ? "complete" : "partial";
   };
 
-  const selectedFinalist = finalists.find((f) => f.id === selectedId) ?? finalists[0];
+  const selectedFinalist = orderedFinalists.find((f) => f.id === selectedId) ?? orderedFinalists[0];
   const selectedTrack = selectedFinalist?.challenge_track ?? "";
   const criteria = TRACK_CRITERIA[selectedTrack] ?? [];
   const style = TRACK_STYLE[selectedTrack] ?? FALLBACK_STYLE;
 
-  const selectedIndex = finalists.findIndex((f) => f.id === selectedFinalist?.id);
-  const prevFinalist = selectedIndex > 0 ? finalists[selectedIndex - 1] : null;
-  const nextFinalist = selectedIndex < finalists.length - 1 ? finalists[selectedIndex + 1] : null;
+  const selectedIndex = orderedFinalists.findIndex((f) => f.id === selectedFinalist?.id);
+  const prevFinalist = selectedIndex > 0 ? orderedFinalists[selectedIndex - 1] : null;
+  const nextFinalist = selectedIndex < orderedFinalists.length - 1 ? orderedFinalists[selectedIndex + 1] : null;
 
   // Overall progress
   const completedCount = finalists.filter(
@@ -548,7 +569,8 @@ function ScoringView({ judgeName, mobileNavOpen, onMobileNavClose }: {
 
   // Compute results: per track, avg scores across all judges
   const resultsReady = allScores.length > 0;
-  const trackResults: Array<{ track: string; finalists: Array<{ f: Finalist; avg: number }> }> = Object.entries(byTrack).map(([track, fs]) => {
+  const trackResults: Array<{ track: string; finalists: Array<{ f: Finalist; avg: number }> }> = orderedTracks.map((track) => {
+    const fs = byTrack[track];
     const crit = TRACK_CRITERIA[track] ?? [];
     const ranked = fs.map((f) => {
       const rows = allScores.filter((r) => r.submission_id === f.id);
@@ -562,7 +584,8 @@ function ScoringView({ judgeName, mobileNavOpen, onMobileNavClose }: {
 
       {/* ── Desktop sidebar ──────────────────────────────────────────────── */}
       <aside className="hidden lg:flex flex-col w-60 shrink-0 sticky top-14 self-start h-[calc(100vh-3.5rem)] overflow-y-auto border-r border-border/40 py-5 px-3 gap-5">
-        {Object.entries(byTrack).map(([track, fs]) => {
+        {orderedTracks.map((track) => {
+          const fs = byTrack[track];
           const s = TRACK_STYLE[track] ?? FALLBACK_STYLE;
           return (
             <div key={track}>
@@ -654,7 +677,8 @@ function ScoringView({ judgeName, mobileNavOpen, onMobileNavClose }: {
                 </button>
               </div>
 
-              {Object.entries(byTrack).map(([track, fs]) => {
+              {orderedTracks.map((track) => {
+                const fs = byTrack[track];
                 const s = TRACK_STYLE[track] ?? FALLBACK_STYLE;
                 return (
                   <div key={track}>
