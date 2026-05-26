@@ -56,7 +56,7 @@ const WINNERS: Array<{ track: string; project: string; team: string }> = [];
 const JUDGES: Array<{ name: string; title: string; company: string; photo?: string; companyLogo?: string }> = [
   { name: "James Maeng", title: "Senior Director, Enterprise Innovation", company: "CIBC", photo: "/hackathons/innovation-hackathon/judges/james-maeng.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-cibc.png" },
   { name: "Naina Dewan", title: "Manager, New Technology & Innovation", company: "TTC", photo: "/hackathons/innovation-hackathon/judges/naina-dewan.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-ttc.png" },
-  { name: "Rishi Midha", title: "AI Program Manager", company: "EllisDon", photo: "/hackathons/innovation-hackathon/judges/rishi-midha.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-ellisdon.png" },
+  { name: "Rishi Midha", title: "Director/Head of AI Research", company: "EllisDon", photo: "/hackathons/innovation-hackathon/judges/rishi-midha.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-ellisdon.png" },
   { name: "Dave Jani", title: "Director, Innovation & Technology Enablement", company: "Chartwell Retirement Residences", photo: "/hackathons/innovation-hackathon/judges/dave-jani.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-chartwell.png" },
   { name: "Ashish DSa", title: "Chief Technology Officer", company: "Arbor", photo: "/hackathons/innovation-hackathon/judges/ashish-dsa.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-arbor.png" },
 ];
