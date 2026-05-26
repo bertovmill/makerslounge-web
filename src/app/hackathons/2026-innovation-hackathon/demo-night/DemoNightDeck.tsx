@@ -223,12 +223,12 @@ export default function DemoNightDeck() {
 
   return (
     <div className="flex h-svh w-full overflow-hidden bg-background text-foreground">
-      {/* Left sidebar – slide index */}
-      <aside className="flex h-full w-48 shrink-0 flex-col overflow-hidden border-r border-border/40 bg-background/60 backdrop-blur-md">
-        <div className="border-b border-border/30 px-4 py-3">
+      {/* Left sidebar – slide index (hidden until hover) */}
+      <aside className="group/sidebar flex h-full w-[3px] shrink-0 flex-col overflow-hidden border-r border-border/40 bg-background/60 backdrop-blur-md transition-[width] duration-300 ease-in-out hover:w-48">
+        <div className="min-w-48 border-b border-border/30 px-4 py-3">
           <span className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground">Index</span>
         </div>
-        <nav className="flex-1 overflow-y-auto py-2">
+        <nav className="min-w-48 flex-1 overflow-y-auto py-2">
           {SLIDE_INDEX.map(({ n, title }) => (
             <button
               key={n}
