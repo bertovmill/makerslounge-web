@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, Info, RotateCcw, Trophy, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Info, Menu, RotateCcw, Trophy, UserRound, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -137,6 +137,7 @@ export default function ScoringContent({ judgeSlug }: { judgeSlug?: string }) {
     return judge ? null : "judge-select";
   });
   const [resetKey, setResetKey] = useState(0);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const handlePasswordSuccess = () => {
     setIsAuthed(true);
@@ -179,15 +180,9 @@ export default function ScoringContent({ judgeSlug }: { judgeSlug?: string }) {
           <span className="font-sans text-sm font-medium text-foreground hidden sm:inline">makerslounge</span>
         </Link>
 
-        <nav className="flex items-center gap-1 font-mono text-[0.65rem] uppercase tracking-[0.14em]">
-          <Link href="/hackathons/2026-innovation-hackathon" className="px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors">
-            Hackathon
-          </Link>
-          <Link href="/hackathons/2026-innovation-hackathon/demo-night" className="px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors">
-            Demo Night
-          </Link>
-          <span className="px-3 py-1.5 rounded-md text-foreground bg-secondary/60">Scoring</span>
-        </nav>
+        <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] px-3 py-1.5 rounded-md text-foreground bg-secondary/60">
+          Scoring
+        </span>
 
         <div className="flex items-center gap-2">
           {judgeName && (
@@ -206,11 +201,23 @@ export default function ScoringContent({ judgeSlug }: { judgeSlug?: string }) {
             <UserRound className="size-3" />
             <span className="hidden sm:inline">Switch</span>
           </button>
+          <button
+            onClick={() => setMobileNavOpen(true)}
+            className="lg:hidden flex items-center justify-center size-8 rounded-md text-foreground hover:bg-secondary/60 transition-colors"
+            aria-label="Open finalist list"
+          >
+            <Menu className="size-4" />
+          </button>
         </div>
       </header>
 
       {/* ── Views ───────────────────────────────────────────────────────── */}
-      <ScoringView key={resetKey} judgeName={judgeName ?? ""} />
+      <ScoringView
+        key={resetKey}
+        judgeName={judgeName ?? ""}
+        mobileNavOpen={mobileNavOpen}
+        onMobileNavClose={() => setMobileNavOpen(false)}
+      />
 
       {/* ── Overlays ────────────────────────────────────────────────────── */}
       {overlay === "password" && (
@@ -398,7 +405,11 @@ function ResetConfirmOverlay({
 
 const FALLBACK_STYLE = { badge: "bg-secondary/60 text-muted-foreground border border-border", score: "text-foreground", btn: "bg-foreground text-background", dot: "bg-foreground" };
 
-function ScoringView({ judgeName }: { judgeName: string }) {
+function ScoringView({ judgeName, mobileNavOpen, onMobileNavClose }: {
+  judgeName: string;
+  mobileNavOpen: boolean;
+  onMobileNavClose: () => void;
+}) {
   const [finalists, setFinalists] = useState<Finalist[]>([]);
   const [myScores, setMyScores] = useState<Record<string, Record<string, number>>>({});
   const [allScores, setAllScores] = useState<ScoreRow[]>([]);
@@ -625,36 +636,82 @@ function ScoringView({ judgeName }: { judgeName: string }) {
       {/* ── Main content ─────────────────────────────────────────────────── */}
       <div className="flex-1 min-w-0 flex overflow-hidden">
 
-        {/* Scoring column */}
-        <div className="flex-1 min-w-0 flex flex-col overflow-y-auto">
+        {/* Mobile nav drawer */}
+        {mobileNavOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 flex">
+            <div
+              className="absolute inset-0 bg-background/70 backdrop-blur-sm"
+              onClick={onMobileNavClose}
+            />
+            <aside className="relative w-72 max-w-[85vw] h-full bg-background border-r border-border flex flex-col overflow-y-auto py-5 px-3 gap-5 shadow-xl">
+              <div className="flex items-center justify-between px-3 mb-1">
+                <span className="font-mono text-[0.55rem] uppercase tracking-[0.18em] text-muted-foreground">Finalists</span>
+                <button
+                  onClick={onMobileNavClose}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
 
-          {/* Mobile pill nav */}
-          <div className="lg:hidden sticky top-14 z-40 bg-background/95 backdrop-blur-md border-b border-border/40">
-            <div className="flex gap-2 overflow-x-auto px-4 py-3" style={{ scrollbarWidth: "none" }}>
-              {finalists.map((f) => {
-                const track = f.challenge_track ?? "";
+              {Object.entries(byTrack).map(([track, fs]) => {
                 const s = TRACK_STYLE[track] ?? FALLBACK_STYLE;
-                const status = completionStatus(f.id, track);
-                const isSelected = f.id === selectedFinalist?.id;
                 return (
-                  <button
-                    key={f.id}
-                    onClick={() => setSelectedId(f.id)}
-                    className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
-                      isSelected
-                        ? "bg-foreground text-background"
-                        : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                    }`}
-                  >
-                    {status === "complete" && (
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSelected ? "bg-background/60" : s.dot}`} />
-                    )}
-                    {f.title ?? f.team_name ?? "Untitled"}
-                  </button>
+                  <div key={track}>
+                    <div className={`inline-flex items-start gap-1.5 px-2 py-0.5 rounded-full font-mono text-[0.55rem] uppercase tracking-widest mb-2 ${s.badge}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-0.5 ${s.dot}`} />
+                      <span className="leading-tight">{track}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5 mt-1">
+                      {fs.map((f) => {
+                        const status = completionStatus(f.id, track);
+                        const isSelected = f.id === selectedFinalist?.id;
+                        return (
+                          <button
+                            key={f.id}
+                            onClick={() => { setSelectedId(f.id); onMobileNavClose(); }}
+                            className={`flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                              isSelected ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
+                            }`}
+                          >
+                            {status === "complete" ? (
+                              <Check className="size-3.5 shrink-0 text-green-400" />
+                            ) : (
+                              <span className={`w-2 h-2 rounded-full shrink-0 border transition-colors ${
+                                status === "partial" ? "bg-transparent border-current opacity-50" : "bg-transparent border-muted-foreground/25"
+                              }`} />
+                            )}
+                            <span className="flex-1 text-[0.8125rem] leading-snug truncate">
+                              {f.title ?? f.team_name ?? "Untitled"}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 );
               })}
-            </div>
+
+              <div className="mt-auto flex flex-col gap-3 pt-4 border-t border-border/40 px-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[0.55rem] uppercase tracking-[0.18em] text-muted-foreground">Scored</span>
+                  <span className="font-mono text-[0.7rem] tabular-nums text-foreground">
+                    {completedCount}<span className="text-muted-foreground">/{finalists.length}</span>
+                  </span>
+                </div>
+                <div className="h-1 rounded-full bg-secondary/60 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-green-400 transition-all duration-500"
+                    style={{ width: finalists.length > 0 ? `${(completedCount / finalists.length) * 100}%` : "0%" }}
+                  />
+                </div>
+              </div>
+            </aside>
           </div>
+        )}
+
+        {/* Scoring column */}
+        <div className="flex-1 min-w-0 flex flex-col overflow-y-auto">
 
           {/* Scoring card */}
           {selectedFinalist && (
