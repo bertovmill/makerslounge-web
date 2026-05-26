@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase";
 const PASSWORD = "makers2026";
 const SESSION_KEY = "hackathon-judge-2026";
 
-const JUDGES = ["James Maeng", "Naina Dewan", "Rishi Midha", "Dave Jani", "Ashish DSa"];
+const JUDGES = ["James Maeng", "Naina Dewan", "Rishi Midha", "Dave Jani", "Ashish Dsa"];
 
 const TRACK_CRITERIA: Record<string, { key: string; weight: number }[]> = {
   "Validating a Business Idea": [
