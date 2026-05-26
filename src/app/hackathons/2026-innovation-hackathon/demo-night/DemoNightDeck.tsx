@@ -59,9 +59,25 @@ const JUDGES: Array<{ name: string; title: string; company: string; photo?: stri
   { name: "Dave Jani", title: "Director, Innovation & Technology Enablement", company: "Chartwell Retirement Residences", photo: "/hackathons/innovation-hackathon/judges/dave-jani.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-chartwell.png" },
   { name: "Ashish D'Sa", title: "CTO & Co-founder", company: "Arbor", photo: "/hackathons/innovation-hackathon/judges/ashish-dsa.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-arbor.png" },
 ];
+type TeamMember = { name: string; photo?: string; linkedin?: string };
+const FINALIST_TEAMS: Record<string, TeamMember[]> = {
+  "snoop.ai": [
+    { name: "Vraj Patel", photo: "/hackathons/innovation-hackathon/teams/snoop-ai/vraj-patel.png", linkedin: "https://www.linkedin.com/in/vrajpatel13/" },
+    { name: "Malko-Bani Somo", photo: "/hackathons/innovation-hackathon/teams/snoop-ai/malko-bani-somo.png", linkedin: "https://www.linkedin.com/in/malko-bani-somo-a78763221/" },
+    { name: "Ha Nguyen", photo: "/hackathons/innovation-hackathon/teams/snoop-ai/ha-nguyen.png", linkedin: "https://www.linkedin.com/in/nguyen-thanh-ha-cs/" },
+  ],
+  "cascade": [
+    { name: "Mansi K.", photo: "/hackathons/innovation-hackathon/teams/cascade-ai/mansi-k.png", linkedin: "https://www.linkedin.com/in/mansi-k-7aa4621b5/" },
+    { name: "Alexandra R.", photo: "/hackathons/innovation-hackathon/teams/cascade-ai/alexandra-r.png", linkedin: "https://www.linkedin.com/in/alexandra-roszczenko/" },
+  ],
+  "doppel": [
+    { name: "Trisha Duno", photo: "/hackathons/innovation-hackathon/teams/doppel/trisha-duno.png", linkedin: "https://www.linkedin.com/in/trisha-duno/" },
+  ],
+};
+
 const STATS: { participants: number; projectsSubmitted: number; teams: number } | null = null;
 
-const SLIDE_COUNT = 14;
+const SLIDE_COUNT = 15;
 
 const DEMO_SLOT_COUNT = 7;
 
@@ -192,27 +208,30 @@ export default function DemoNightDeck() {
         <Slide n={1} title="Opening">
           <SlideDemoNightOpener />
         </Slide>
-        <Slide n={2} title="What is MakersLounge">
+        <Slide n={2} title="Event Overview">
+          <SlideEventOverview />
+        </Slide>
+        <Slide n={3} title="What is MakersLounge">
           <SlideWhatIsMakersLounge />
         </Slide>
-        <Slide n={3} title="Sponsors">
+        <Slide n={4} title="Sponsors">
           <SlideSponsors />
         </Slide>
-        <Slide n={4} title="Judges">
+        <Slide n={5} title="Judges">
           <SlideJudges />
         </Slide>
-        <Slide n={5} title="Judging criteria">
+        <Slide n={6} title="Judging criteria">
           <SlideJudgingCriteria />
         </Slide>
         {Array.from({ length: DEMO_SLOT_COUNT }, (_, i) => finalists[i] ?? null).map((finalist, i) => (
-          <Slide key={i} n={6 + i} title={`Demo ${pad2(i + 1)}`}>
-            <SlideDemoPresentation finalist={finalist} index={i} slideN={6 + i} />
+          <Slide key={i} n={7 + i} title={`Demo ${pad2(i + 1)}`}>
+            <SlideDemoPresentation finalist={finalist} index={i} slideN={7 + i} />
           </Slide>
         ))}
-        <Slide n={13} title="Winners">
+        <Slide n={14} title="Winners">
           <SlideWinners />
         </Slide>
-        <Slide n={14} title="Thank you">
+        <Slide n={15} title="Thank you">
           <SlideThankYou />
         </Slide>
       </div>
@@ -260,6 +279,53 @@ function SlideBackground() {
   );
 }
 
+function SlideEventOverview() {
+  const stats = [
+    { value: "150+", label: "Sign-ups" },
+    { value: "120", label: "Participants" },
+    { value: "30", label: "Team submissions" },
+  ];
+  return (
+    <div className="flex h-full flex-col">
+      <SlideBackground />
+      <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <span className="text-gradient">Demo Night</span>
+        <span className="h-px w-8 bg-border" />
+        <span className="text-foreground">{pad2(2)}</span>
+        <span className="h-px w-4 bg-border" />
+        <span>Event overview</span>
+      </div>
+
+      <div className="relative my-auto flex flex-col gap-[clamp(2rem,5vh,4rem)]">
+        <div className="flex flex-col gap-[clamp(0.75rem,2vh,1.5rem)]">
+          <h2 className="font-sans font-semibold text-[clamp(2.75rem,8vw,6.5rem)] leading-[1.0] tracking-tight">
+            The <span className="text-gradient">hackathon</span><br />by the numbers.
+          </h2>
+          <p className="font-sans text-[clamp(1.1rem,1.8vw,1.45rem)] leading-relaxed text-foreground/70 max-w-2xl">
+            Starting last Tuesday, builders from across Toronto came together to tackle three enterprise innovation challenges — and the results speak for themselves.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-[clamp(1rem,3vw,2.5rem)] max-w-3xl">
+          {stats.map(({ value, label }) => (
+            <div
+              key={label}
+              className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-background/40 px-[clamp(1.25rem,2.5vw,2rem)] py-[clamp(1.25rem,2.5vh,2rem)] backdrop-blur-sm"
+            >
+              <span className="font-sans font-semibold text-[clamp(2.5rem,6vw,5rem)] leading-none tracking-tight text-gradient">
+                {value}
+              </span>
+              <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SlideWhatIsMakersLounge() {
   return (
     <div className="flex h-full flex-col">
@@ -268,7 +334,7 @@ function SlideWhatIsMakersLounge() {
       <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span className="text-gradient">Demo Night</span>
         <span className="h-px w-8 bg-border" />
-        <span className="text-foreground">{pad2(2)}</span>
+        <span className="text-foreground">{pad2(3)}</span>
         <span className="h-px w-4 bg-border" />
         <span>About us</span>
       </div>
@@ -364,7 +430,7 @@ function SlideSponsors() {
       <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span className="text-gradient">Demo Night</span>
         <span className="h-px w-8 bg-border" />
-        <span className="text-foreground">{pad2(3)}</span>
+        <span className="text-foreground">{pad2(4)}</span>
         <span className="h-px w-4 bg-border" />
         <span>Sponsors</span>
       </div>
@@ -500,7 +566,7 @@ function SlideJudges() {
       <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span className="text-gradient">Demo Night</span>
         <span className="h-px w-8 bg-border" />
-        <span className="text-foreground">{pad2(4)}</span>
+        <span className="text-foreground">{pad2(5)}</span>
         <span className="h-px w-4 bg-border" />
         <span>Judges</span>
       </div>
@@ -576,7 +642,7 @@ function SlideJudgingCriteria() {
       <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span className="text-gradient">Demo Night</span>
         <span className="h-px w-8 bg-border" />
-        <span className="text-foreground">{pad2(5)}</span>
+        <span className="text-foreground">{pad2(6)}</span>
         <span className="h-px w-4 bg-border" />
         <span>Judging criteria</span>
       </div>
@@ -770,7 +836,8 @@ function SlideDemoPresentation({ finalist, index, slideN }: { finalist: Finalist
         <span>Demo {pad2(index + 1)}</span>
       </div>
 
-      <div className="relative my-auto flex flex-col gap-[clamp(1rem,3vh,2rem)]">
+      {/* Title area — compact, no my-auto so team grid can fill the rest */}
+      <div className="relative mt-[clamp(1rem,2vh,2rem)] flex flex-col gap-[clamp(0.5rem,1vh,1rem)]">
         <div className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
           <span className="text-gradient font-semibold">Demo {pad2(index + 1)}</span>
           <span className="mx-3 text-foreground/20">/</span>
@@ -788,7 +855,7 @@ function SlideDemoPresentation({ finalist, index, slideN }: { finalist: Finalist
           </>
         ) : (
           <>
-            <h2 className="font-sans font-semibold text-[clamp(2.75rem,9vw,8rem)] leading-[1.0] tracking-tight">
+            <h2 className="font-sans font-semibold text-[clamp(2.75rem,7vw,6rem)] leading-[1.0] tracking-tight">
               <span className="text-gradient">{finalist.title ?? finalist.team_name ?? "Untitled"}</span>
             </h2>
             {finalist.team_name && finalist.title && (
@@ -805,10 +872,46 @@ function SlideDemoPresentation({ finalist, index, slideN }: { finalist: Finalist
         )}
       </div>
 
+      {/* Team members — fills remaining vertical space */}
+      {finalist && <TeamMembersRow title={finalist.title} />}
+
       <div className="relative mt-auto flex items-center justify-between font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span>2026 Innovation Hackathon</span>
         <span>{pad2(index + 1)} of {pad2(DEMO_SLOT_COUNT)}</span>
       </div>
+    </div>
+  );
+}
+
+function TeamMembersRow({ title }: { title: string | null }) {
+  if (!title) return null;
+  const key = Object.keys(FINALIST_TEAMS).find((k) => title.toLowerCase().includes(k.toLowerCase()));
+  const members = key ? FINALIST_TEAMS[key] : null;
+  if (!members || members.length === 0) return null;
+
+  return (
+    <div className={`relative mt-[clamp(0.75rem,1.5vh,1.5rem)] grid flex-1 min-h-0 gap-5 pb-[clamp(2rem,5vh,4rem)]`} style={{ gridTemplateColumns: `repeat(${members.length}, 1fr)` }}>
+      {members.map((m) => (
+        <div key={m.name} className="flex flex-col items-center justify-center gap-[clamp(1rem,2.5vh,2rem)] rounded-2xl border border-border/60 bg-background/40 p-[clamp(1.25rem,3vw,2.5rem)] backdrop-blur-sm">
+          {m.photo && (
+            <div className="overflow-hidden rounded-2xl border border-border/40 shadow-lg" style={{ width: "clamp(120px,16vw,220px)", height: "clamp(120px,16vw,220px)" }}>
+              <Image src={m.photo} alt={m.name} width={220} height={220} className="h-full w-full object-cover object-top" />
+            </div>
+          )}
+          <span className="font-sans font-semibold text-[clamp(1.25rem,2.5vw,2.25rem)] leading-snug text-center">{m.name}</span>
+          {m.linkedin && (
+            <div className="flex flex-col items-center gap-3">
+              <div className="rounded-xl bg-white p-2.5 shadow-sm">
+                <QRCodeSVG value={m.linkedin} size={130} bgColor="#ffffff" fgColor="#111111" />
+              </div>
+              <span className="flex items-center gap-1.5 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted-foreground">
+                <Linkedin className="size-3" />
+                Connect on LinkedIn
+              </span>
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
