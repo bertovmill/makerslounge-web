@@ -61,9 +61,9 @@ const JUDGES: Array<{ name: string; title: string; company: string; photo?: stri
 ];
 const STATS: { participants: number; projectsSubmitted: number; teams: number } | null = null;
 
-const SLIDE_COUNT = 13;
+const SLIDE_COUNT = 14;
 
-const DEMO_SLOT_COUNT = 6;
+const DEMO_SLOT_COUNT = 7;
 
 export default function DemoNightDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -78,7 +78,16 @@ export default function DemoNightDeck() {
         .select("id, title, team_name, challenge_track, description")
         .eq("is_finalist", true)
         .order("title");
-      if (!cancelled && data) setFinalists(data as Finalist[]);
+      if (!cancelled && data) {
+        const sorted = [...(data as Finalist[])].sort((a, b) => {
+          const aIsSnoop = (a.title ?? "").toLowerCase().includes("snoop");
+          const bIsSnoop = (b.title ?? "").toLowerCase().includes("snoop");
+          if (aIsSnoop && !bIsSnoop) return -1;
+          if (bIsSnoop && !aIsSnoop) return 1;
+          return 0;
+        });
+        setFinalists(sorted);
+      }
     };
     load();
     const interval = setInterval(load, 8000);
@@ -200,10 +209,10 @@ export default function DemoNightDeck() {
             <SlideDemoPresentation finalist={finalist} index={i} slideN={6 + i} />
           </Slide>
         ))}
-        <Slide n={12} title="Winners">
+        <Slide n={13} title="Winners">
           <SlideWinners />
         </Slide>
-        <Slide n={13} title="Thank you">
+        <Slide n={14} title="Thank you">
           <SlideThankYou />
         </Slide>
       </div>
@@ -271,11 +280,14 @@ function SlideWhatIsMakersLounge() {
             What is <span className="text-gradient">MakersLounge?</span>
           </h2>
           <div className="flex flex-col gap-[clamp(0.75rem,1.5vh,1.25rem)] max-w-xl">
-            <p className="font-sans text-[clamp(0.95rem,1.5vw,1.2rem)] leading-relaxed text-foreground/80">
+            <p className="font-sans text-[clamp(1.2rem,2vw,1.6rem)] leading-relaxed text-foreground/80">
               MakersLounge is a community of <span className="font-semibold text-foreground">1000+ builders</span>, mostly based in Toronto — people who turn ideas into real things.
             </p>
-            <p className="font-sans text-[clamp(0.95rem,1.5vw,1.2rem)] leading-relaxed text-muted-foreground">
+            <p className="font-sans text-[clamp(1.2rem,2vw,1.6rem)] leading-relaxed text-muted-foreground">
               We host multiple events every month — hackathons, builder meetups, special presentations, and more — all with one rule: no talks, no pitches, just makers building and shipping together.
+            </p>
+            <p className="font-sans text-[clamp(1.2rem,2vw,1.6rem)] leading-relaxed text-foreground/80">
+              Our mission is to help <span className="font-semibold text-foreground">AI builders</span> connect and scale their services to the world.
             </p>
           </div>
           <div className="mt-[clamp(0.5rem,1.5vh,1rem)] inline-flex w-fit items-center gap-3 rounded-full border border-border/60 bg-background/40 px-5 py-2 backdrop-blur-sm">
@@ -539,12 +551,12 @@ function JudgeCard({ judge: j, index: i }: { judge: typeof JUDGES[number]; index
         <span className="h-px flex-1 bg-border" />
       </div>
       {j.photo && (
-        <div className="overflow-hidden rounded-xl" style={{ width: "clamp(80px,9vw,120px)", height: "clamp(80px,9vw,120px)" }}>
-          <Image src={j.photo} alt={j.name} width={120} height={120} className="w-full h-full object-cover" />
+        <div className="overflow-hidden rounded-xl" style={{ width: "clamp(100px,12vw,160px)", height: "clamp(100px,12vw,160px)" }}>
+          <Image src={j.photo} alt={j.name} width={160} height={160} className="w-full h-full object-cover" />
         </div>
       )}
-      <h3 className="font-sans font-semibold text-[clamp(1rem,1.5vw,1.35rem)] leading-snug">{j.name}</h3>
-      <p className="font-sans text-[clamp(0.8rem,1.1vw,1rem)] leading-snug text-muted-foreground">{j.title}</p>
+      <h3 className="font-sans font-semibold text-[clamp(1.2rem,2vw,1.75rem)] leading-snug">{j.name}</h3>
+      <p className="font-sans text-[clamp(0.9rem,1.3vw,1.15rem)] leading-snug text-muted-foreground">{j.title}</p>
       {j.companyLogo ? (
         <div className="mt-auto rounded-md bg-white px-3 py-1.5" style={{ width: "fit-content" }}>
           <Image src={j.companyLogo} alt={j.company} width={110} height={32} className="h-7 w-auto object-contain" />
@@ -584,8 +596,8 @@ function SlideJudgingCriteria() {
                   <span className="font-mono text-[0.6rem] tabular-nums text-muted-foreground">{pad2(i + 1)}</span>
                   <span className="h-px flex-1 bg-border" />
                 </div>
-                <h3 className="font-sans font-semibold text-[clamp(1.1rem,1.6vw,1.5rem)] leading-snug">{t.name}</h3>
-                <p className="text-[clamp(0.85rem,1.15vw,1.05rem)] leading-relaxed text-muted-foreground">{t.description}</p>
+                <h3 className="font-sans font-semibold text-[clamp(1.35rem,2.2vw,2rem)] leading-snug">{t.name}</h3>
+                <p className="text-[clamp(0.95rem,1.35vw,1.2rem)] leading-relaxed text-muted-foreground">{t.description}</p>
               </div>
             </div>
           ))}
@@ -608,7 +620,7 @@ function SlideWinners() {
       <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span className="text-gradient">Demo Night</span>
         <span className="h-px w-8 bg-border" />
-        <span className="text-foreground">{pad2(12)}</span>
+        <span className="text-foreground">{pad2(13)}</span>
         <span className="h-px w-4 bg-border" />
         <span>Winners</span>
       </div>
@@ -671,7 +683,7 @@ function SlideThankYou() {
       <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span className="text-gradient">Demo Night</span>
         <span className="h-px w-8 bg-border" />
-        <span className="text-foreground">{pad2(13)}</span>
+        <span className="text-foreground">{pad2(14)}</span>
         <span className="h-px w-4 bg-border" />
         <span>Thank you</span>
       </div>
@@ -712,23 +724,24 @@ function SlideThankYou() {
           </p>
         )}
 
-        {/* Sponsor LinkedIn QR codes */}
-        <div className="flex flex-wrap gap-5">
+        {/* QR codes — sponsors + MakersLounge */}
+        <div className="grid w-full grid-cols-3 gap-5">
           {[
-            { name: "Aucctus", logo: "/logos/partner-logos/Aucctus-Full-Colour-Logo1.webp", url: "https://www.linkedin.com/company/aucctus/", wide: true },
-            { name: "Disruptive Edge", logo: "/logos/partner-logos/Disruptive-Edge-SQ.png", url: "https://www.linkedin.com/company/disruptiveedge/posts/?feedView=all", wide: false },
+            { name: "Aucctus", logo: "/logos/partner-logos/Aucctus-Full-Colour-Logo1.webp", logoW: 140, logoH: 40, url: "https://www.linkedin.com/company/aucctus/", label: "Follow on LinkedIn", icon: "linkedin" as const },
+            { name: "Disruptive Edge", logo: "/logos/partner-logos/Disruptive-Edge-SQ.png", logoW: 56, logoH: 56, url: "https://www.linkedin.com/company/disruptiveedge/posts/?feedView=all", label: "Follow on LinkedIn", icon: "linkedin" as const },
+            { name: "MakersLounge", logo: "/logos/logo-luma.png", logoW: 56, logoH: 56, url: "https://www.linkedin.com/company/makeandlearn", label: "Follow on LinkedIn", icon: "linkedin" as const },
           ].map((s) => (
-            <div key={s.name} className="flex items-center gap-4 rounded-xl border border-border/60 bg-background/40 p-4 backdrop-blur-sm">
-              <div className="rounded-lg bg-white p-1.5 shadow-sm">
-                <QRCodeSVG value={s.url} size={88} />
+            <div key={s.name} className="flex flex-col items-center gap-5 rounded-2xl border border-border/60 bg-background/40 p-6 backdrop-blur-sm">
+              <div className="rounded-xl bg-white p-3 shadow-sm">
+                <QRCodeSVG value={s.url} size={160} bgColor="#ffffff" fgColor="#111111" />
               </div>
-              <div className="flex flex-col gap-2.5">
-                <div className="flex items-center justify-center overflow-hidden rounded-md bg-white px-3 py-2" style={{ height: 36, width: s.wide ? 120 : 36 }}>
-                  <Image src={s.logo} alt={s.name} width={s.wide ? 120 : 48} height={s.wide ? 28 : 48} className={`object-contain ${s.wide ? "" : "scale-[2]"}`} style={{ maxHeight: "100%", width: "auto" }} />
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center justify-center overflow-hidden rounded-lg bg-white px-4 py-2.5" style={{ minWidth: 64, minHeight: 44 }}>
+                  <Image src={s.logo} alt={s.name} width={s.logoW} height={s.logoH} className="object-contain" style={{ maxHeight: 40, width: "auto" }} />
                 </div>
-                <span className="flex items-center gap-1.5 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">
-                  <Linkedin className="size-3" />
-                  Follow on LinkedIn
+                <span className="flex items-center gap-1.5 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted-foreground">
+                  {s.icon === "linkedin" ? <Linkedin className="size-3" /> : <span className="size-3 inline-flex items-center justify-center text-[0.55rem]">↗</span>}
+                  {s.label}
                 </span>
               </div>
             </div>
