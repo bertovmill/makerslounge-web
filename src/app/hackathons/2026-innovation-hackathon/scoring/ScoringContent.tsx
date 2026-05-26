@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ArrowUpRight, Trophy, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Trophy, UserRound } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -157,7 +157,7 @@ function avgWeightedScore(
 
 // ─── Main component ─────────────────────────────────────────────────────────
 
-export default function ScoringContent({ defaultMode = "scoring" }: { defaultMode?: Mode }) {
+export default function ScoringContent({ defaultMode = "rubric" }: { defaultMode?: Mode }) {
   const [mode, setMode] = useState<Mode>(defaultMode);
   const [overlay, setOverlay] = useState<Overlay>(null);
   // Read initial auth state from sessionStorage on first client render
@@ -167,18 +167,6 @@ export default function ScoringContent({ defaultMode = "scoring" }: { defaultMod
   const [judgeName, setJudgeName] = useState<string | null>(
     () => (typeof window !== "undefined" ? sessionStorage.getItem(`${SESSION_KEY}-judge`) : null),
   );
-
-  // On mount, auto-trigger auth flow if landing directly in scoring mode
-  useEffect(() => {
-    if (mode === "scoring") {
-      if (!isAuthed) {
-        setOverlay("password");
-      } else if (!judgeName) {
-        setOverlay("judge-select");
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleJudgeScoreClick = () => {
     if (!isAuthed) {
@@ -268,9 +256,9 @@ export default function ScoringContent({ defaultMode = "scoring" }: { defaultMod
       {/* ── Views ───────────────────────────────────────────────────────── */}
       {mode === "rubric" ? (
         <RubricView />
-      ) : judgeName ? (
-        <ScoringView judgeName={judgeName} />
-      ) : null}
+      ) : (
+        <ScoringView judgeName={judgeName!} />
+      )}
 
       {/* ── Overlays ────────────────────────────────────────────────────── */}
       {overlay === "password" && (
@@ -395,6 +383,8 @@ function JudgeSelectOverlay({ onSelect, onClose }: { onSelect: (name: string) =>
 
 // ─── Scoring view ───────────────────────────────────────────────────────────
 
+const FALLBACK_STYLE = { badge: "bg-secondary/60 text-muted-foreground border border-border", score: "text-foreground", btn: "bg-foreground text-background", dot: "bg-foreground" };
+
 function ScoringView({ judgeName }: { judgeName: string }) {
   const [finalists, setFinalists] = useState<Finalist[]>([]);
   const [myScores, setMyScores] = useState<Record<string, Record<string, number>>>({});
@@ -402,6 +392,7 @@ function ScoringView({ judgeName }: { judgeName: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<Set<string>>(new Set());
   const [saved, setSaved] = useState<Set<string>>(new Set());
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -415,6 +406,7 @@ function ScoringView({ judgeName }: { judgeName: string }) {
 
       const fs = (finalistData ?? []) as Finalist[];
       setFinalists(fs);
+      if (fs.length > 0) setSelectedId(fs[0].id);
 
       if (fs.length > 0) {
         const ids = fs.map((f) => f.id);
@@ -506,115 +498,230 @@ function ScoringView({ judgeName }: { judgeName: string }) {
     byTrack[t].push(f);
   }
 
+  // Completion status per finalist
+  const completionStatus = (finalistId: string, track: string): "none" | "partial" | "complete" => {
+    const crit = TRACK_CRITERIA[track] ?? [];
+    if (crit.length === 0) return "none";
+    const scores = myScores[finalistId] ?? {};
+    const scored = crit.filter((c) => scores[c.key] != null).length;
+    if (scored === 0) return "none";
+    return scored === crit.length ? "complete" : "partial";
+  };
+
+  const selectedFinalist = finalists.find((f) => f.id === selectedId) ?? finalists[0];
+  const selectedTrack = selectedFinalist?.challenge_track ?? "";
+  const criteria = TRACK_CRITERIA[selectedTrack] ?? [];
+  const style = TRACK_STYLE[selectedTrack] ?? FALLBACK_STYLE;
+
+  const selectedIndex = finalists.findIndex((f) => f.id === selectedFinalist?.id);
+  const prevFinalist = selectedIndex > 0 ? finalists[selectedIndex - 1] : null;
+  const nextFinalist = selectedIndex < finalists.length - 1 ? finalists[selectedIndex + 1] : null;
+
   // Compute results: per track, avg scores across all judges
   const resultsReady = allScores.length > 0;
   const trackResults: Array<{ track: string; finalists: Array<{ f: Finalist; avg: number }> }> = Object.entries(byTrack).map(([track, fs]) => {
-    const criteria = TRACK_CRITERIA[track] ?? [];
+    const crit = TRACK_CRITERIA[track] ?? [];
     const ranked = fs.map((f) => {
       const rows = allScores.filter((r) => r.submission_id === f.id);
-      return { f, avg: avgWeightedScore(rows, criteria) };
+      return { f, avg: avgWeightedScore(rows, crit) };
     }).sort((a, b) => b.avg - a.avg);
     return { track, finalists: ranked };
   });
 
   return (
-    <div className="pb-20">
-      {/* Scoring cards */}
-      <div className="flex flex-col divide-y divide-border/50">
+    <div className="flex min-h-[calc(100vh-3.5rem)]">
+
+      {/* ── Desktop sidebar ──────────────────────────────────────────────── */}
+      <aside className="hidden lg:flex flex-col w-60 shrink-0 sticky top-14 self-start h-[calc(100vh-3.5rem)] overflow-y-auto border-r border-border/40 py-5 px-3 gap-5">
         {Object.entries(byTrack).map(([track, fs]) => {
-          const criteria = TRACK_CRITERIA[track] ?? [];
-          const style = TRACK_STYLE[track] ?? { badge: "bg-secondary/60 text-muted-foreground border border-border", score: "text-foreground", btn: "bg-foreground text-background", dot: "bg-foreground" };
-
+          const s = TRACK_STYLE[track] ?? FALLBACK_STYLE;
           return (
-            <div key={track} className="py-8 px-5">
-              {/* Track header */}
-              <div className="mb-6">
-                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-mono text-[0.6rem] uppercase tracking-widest ${style.badge}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
-                  {track}
-                </span>
+            <div key={track}>
+              <div className={`inline-flex items-start gap-1.5 px-2 py-0.5 rounded-full font-mono text-[0.55rem] uppercase tracking-widest mb-2 ${s.badge}`}>
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-0.5 ${s.dot}`} />
+                <span className="leading-tight">{track}</span>
               </div>
-
-              {/* Finalist cards */}
-              <div className="flex flex-col gap-5">
-                {fs.map((finalist) => (
-                  <FinalistScoringCard
-                    key={finalist.id}
-                    finalist={finalist}
-                    criteria={criteria}
-                    myScores={myScores[finalist.id] ?? {}}
-                    saving={saving}
-                    saved={saved}
-                    style={style}
-                    onScore={handleScore}
-                  />
-                ))}
+              <div className="flex flex-col gap-0.5 mt-1">
+                {fs.map((f) => {
+                  const status = completionStatus(f.id, track);
+                  const isSelected = f.id === selectedFinalist?.id;
+                  return (
+                    <button
+                      key={f.id}
+                      onClick={() => setSelectedId(f.id)}
+                      className={`flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                        isSelected
+                          ? "bg-secondary text-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full shrink-0 border transition-colors ${
+                        status === "complete"
+                          ? `${s.dot} border-transparent`
+                          : status === "partial"
+                          ? "bg-transparent border-current opacity-50"
+                          : "bg-transparent border-muted-foreground/25"
+                      }`} />
+                      <span className="flex-1 text-[0.8125rem] leading-snug truncate">
+                        {f.title ?? f.team_name ?? "Untitled"}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           );
         })}
-      </div>
 
-      {/* Results section */}
-      {resultsReady && (
-        <div className="border-t border-border/60 pt-10 pb-8 px-5 mt-6">
-          <div className="flex items-center gap-3 mb-7">
-            <Trophy className="size-4 text-amber-400" />
-            <h2 className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-foreground">
+        {resultsReady && (
+          <div className="mt-auto pt-4 border-t border-border/40">
+            <a
+              href="#results"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-[0.8125rem] text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors"
+            >
+              <Trophy className="size-3.5 shrink-0 text-amber-400" />
               Live results
-            </h2>
-            <span className="font-mono text-[0.55rem] uppercase tracking-[0.15em] text-muted-foreground">
-              avg across all judges
-            </span>
+            </a>
           </div>
+        )}
+      </aside>
 
-          <div className="flex flex-col gap-8">
-            {trackResults.map(({ track, finalists: ranked }) => {
-              const style = TRACK_STYLE[track] ?? { badge: "bg-secondary/60 text-muted-foreground border border-border", score: "text-foreground", btn: "bg-foreground text-background", dot: "bg-foreground" };
+      {/* ── Main content ─────────────────────────────────────────────────── */}
+      <div className="flex-1 min-w-0 flex flex-col">
+
+        {/* Mobile pill nav */}
+        <div className="lg:hidden sticky top-14 z-40 bg-background/95 backdrop-blur-md border-b border-border/40">
+          <div className="flex gap-2 overflow-x-auto px-4 py-3" style={{ scrollbarWidth: "none" }}>
+            {finalists.map((f) => {
+              const track = f.challenge_track ?? "";
+              const s = TRACK_STYLE[track] ?? FALLBACK_STYLE;
+              const status = completionStatus(f.id, track);
+              const isSelected = f.id === selectedFinalist?.id;
               return (
-                <div key={track}>
-                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-mono text-[0.6rem] uppercase tracking-widest mb-3 ${style.badge}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
-                    {track}
-                  </span>
-                  <div className="flex flex-col gap-2 mt-3">
-                    {ranked.map(({ f, avg }, i) => (
-                      <div
-                        key={f.id}
-                        className={`flex items-center gap-3 py-3 px-4 rounded-xl border ${
-                          i === 0
-                            ? "border-amber-400/30 bg-amber-400/5"
-                            : "border-border/50 bg-card/40"
-                        }`}
-                      >
-                        {i === 0 && <Trophy className="size-3.5 shrink-0 text-amber-400" />}
-                        {i !== 0 && (
-                          <span className="font-mono text-xs text-muted-foreground/50 w-3.5 text-center shrink-0">
-                            {i + 1}
-                          </span>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium truncate ${i === 0 ? "text-foreground" : "text-muted-foreground"}`}>
-                            {f.title ?? "Untitled"}
-                          </p>
-                          {f.team_name && (
-                            <p className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground/60 truncate">
-                              {f.team_name}
-                            </p>
-                          )}
-                        </div>
-                        <span className={`font-mono text-sm font-medium tabular-nums shrink-0 ${i === 0 ? style.score : "text-muted-foreground"}`}>
-                          {avg > 0 ? `${avg}` : "—"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <button
+                  key={f.id}
+                  onClick={() => setSelectedId(f.id)}
+                  className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                    isSelected
+                      ? "bg-foreground text-background"
+                      : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  }`}
+                >
+                  {status === "complete" && (
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSelected ? "bg-background/60" : s.dot}`} />
+                  )}
+                  {f.title ?? f.team_name ?? "Untitled"}
+                </button>
               );
             })}
           </div>
         </div>
-      )}
+
+        {/* Scoring card */}
+        {selectedFinalist && (
+          <div className="px-4 sm:px-6 py-6 w-full max-w-2xl">
+            <div className="mb-5">
+              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-mono text-[0.6rem] uppercase tracking-widest ${style.badge}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                {selectedTrack}
+              </span>
+            </div>
+
+            <FinalistScoringCard
+              finalist={selectedFinalist}
+              criteria={criteria}
+              myScores={myScores[selectedFinalist.id] ?? {}}
+              saving={saving}
+              saved={saved}
+              style={style}
+              onScore={handleScore}
+            />
+
+            {/* Prev / Next */}
+            <div className="flex items-stretch gap-3 mt-4">
+              {prevFinalist ? (
+                <button
+                  onClick={() => setSelectedId(prevFinalist.id)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border/50 bg-card text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex-1 min-w-0"
+                >
+                  <ArrowLeft className="size-3.5 shrink-0" />
+                  <span className="truncate text-left">{prevFinalist.title ?? prevFinalist.team_name}</span>
+                </button>
+              ) : <div className="flex-1" />}
+              {nextFinalist ? (
+                <button
+                  onClick={() => setSelectedId(nextFinalist.id)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border/50 bg-card text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex-1 min-w-0 justify-end"
+                >
+                  <span className="truncate text-right">{nextFinalist.title ?? nextFinalist.team_name}</span>
+                  <ArrowRight className="size-3.5 shrink-0" />
+                </button>
+              ) : <div className="flex-1" />}
+            </div>
+          </div>
+        )}
+
+        {/* Results section */}
+        {resultsReady && (
+          <div id="results" className="border-t border-border/60 pt-10 pb-12 px-4 sm:px-6 mt-2 max-w-2xl w-full">
+            <div className="flex items-center gap-3 mb-7">
+              <Trophy className="size-4 text-amber-400" />
+              <h2 className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-foreground">
+                Live results
+              </h2>
+              <span className="font-mono text-[0.55rem] uppercase tracking-[0.15em] text-muted-foreground">
+                avg across all judges
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-8">
+              {trackResults.map(({ track, finalists: ranked }) => {
+                const s = TRACK_STYLE[track] ?? FALLBACK_STYLE;
+                return (
+                  <div key={track}>
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-mono text-[0.6rem] uppercase tracking-widest mb-3 ${s.badge}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                      {track}
+                    </span>
+                    <div className="flex flex-col gap-2 mt-3">
+                      {ranked.map(({ f, avg }, i) => (
+                        <div
+                          key={f.id}
+                          className={`flex items-center gap-3 py-3 px-4 rounded-xl border ${
+                            i === 0
+                              ? "border-amber-400/30 bg-amber-400/5"
+                              : "border-border/50 bg-card/40"
+                          }`}
+                        >
+                          {i === 0 && <Trophy className="size-3.5 shrink-0 text-amber-400" />}
+                          {i !== 0 && (
+                            <span className="font-mono text-xs text-muted-foreground/50 w-3.5 text-center shrink-0">
+                              {i + 1}
+                            </span>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-medium truncate ${i === 0 ? "text-foreground" : "text-muted-foreground"}`}>
+                              {f.title ?? "Untitled"}
+                            </p>
+                            {f.team_name && (
+                              <p className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground/60 truncate">
+                                {f.team_name}
+                              </p>
+                            )}
+                          </div>
+                          <span className={`font-mono text-sm font-medium tabular-nums shrink-0 ${i === 0 ? s.score : "text-muted-foreground"}`}>
+                            {avg > 0 ? `${avg}` : "—"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
