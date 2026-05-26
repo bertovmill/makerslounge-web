@@ -500,10 +500,10 @@ const SPONSORS = [
     description: "Disruptive Edge is an AI-native strategy and innovation firm that helps the world's leading enterprises deploy AI, launch new products and ventures, and turn innovation into revenue.",
     message: "Disruptive Edge is an AI-native strategy and innovation firm. We partner with leading enterprises to deploy AI that actually moves the needle — new products, new ventures, and innovation that converts into real revenue. Events like tonight are where the future gets built, and we're honoured to support MakersLounge and the community behind this hackathon. A sincere thank you to the judges who brought their expertise, the attendees who showed up with curiosity, and every team who pushed their idea to the finish line.",
     rep: {
-      name: "Matthew Gledhill",
-      title: "Engagement Manager",
-      photo: "/hackathons/innovation-hackathon/matthew-gledhill.png",
-      linkedin: null,
+      name: "Krishan Puvitharan",
+      title: "Director of Engineering and Testing",
+      photo: "/hackathons/innovation-hackathon/krishan-puvitharan.png",
+      linkedin: "https://www.linkedin.com/in/krishanpuvitharan/",
     },
   },
 ];
