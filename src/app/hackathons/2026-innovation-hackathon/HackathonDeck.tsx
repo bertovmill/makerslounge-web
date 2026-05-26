@@ -242,6 +242,21 @@ export default function HackathonDeck() {
         <ArrowDown className="size-3.5" />
       </button>
 
+      {/* deck switcher — right edge, vertically centered */}
+      <nav className="fixed right-[max(1.25rem,env(safe-area-inset-right))] top-1/2 -translate-y-1/2 z-40 hidden sm:flex flex-col items-end gap-3">
+        <span className="flex items-center gap-2 font-mono text-[0.6rem] uppercase tracking-[0.18em] text-foreground">
+          Kickoff Deck
+          <span className="h-px w-5 bg-foreground inline-block" />
+        </span>
+        <Link
+          href="/hackathons/2026-innovation-hackathon/demo-night#slide-1"
+          className="group flex items-center gap-2 font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Demo Night
+          <span className="h-px w-3 bg-current inline-block transition-all group-hover:w-5" />
+        </Link>
+      </nav>
+
       <div
         ref={containerRef}
         className="h-full w-full snap-y snap-mandatory overflow-y-auto overscroll-y-contain scroll-smooth"
