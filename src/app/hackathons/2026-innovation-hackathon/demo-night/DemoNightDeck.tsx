@@ -95,12 +95,15 @@ const FINALIST_TEAMS: Record<string, TeamMember[]> = {
 
 const BONUS_TEAMS: Record<string, TeamMember[]> = {
   "auctopus": [],
-  "samm": [],
+  "samm": [
+    { name: "Akira Takaki", photo: "/hackathons/innovation-hackathon/teams/samm/akira-takaki.png", linkedin: "https://www.linkedin.com/in/a1t/" },
+    { name: "Subodh Thallada", photo: "/hackathons/innovation-hackathon/teams/samm/subodh-thallada.png", linkedin: "https://www.linkedin.com/in/subodh-thallada/" },
+  ],
 };
 
 const STATS: { participants: number; projectsSubmitted: number; teams: number } | null = null;
 
-const SLIDE_COUNT = 22;
+const SLIDE_COUNT = 21;
 
 const SLIDE_INDEX: Array<{ n: number; title: string }> = [
   { n: 1, title: "Opening" },
@@ -119,10 +122,9 @@ const SLIDE_INDEX: Array<{ n: number; title: string }> = [
   { n: 14, title: "Synth. Customers" },
   { n: 15, title: "Demo 06" },
   { n: 16, title: "Demo 07" },
-  { n: 17, title: "Bonus Demos" },
-  { n: 18, title: "Bonus 01" },
-  { n: 19, title: "Judging" },
-  { n: 20, title: "Thank You" },
+  { n: 17, title: "Bonus Demo" },
+  { n: 18, title: "Judging" },
+  { n: 19, title: "Thank You" },
 ];
 
 // Explicit demo order: Continuous Market Monitoring → Validating a Business Idea → Synthetic Customers
@@ -346,18 +348,15 @@ export default function DemoNightDeck() {
             <SlideDemoPresentation finalist={finalists[6] ?? null} index={6} slideN={16} />
           </Slide>
 
-          {/* Bonus demos */}
-          <Slide n={17} title="Bonus Demos">
-            <SlideBonusDemosIntro />
-          </Slide>
-          <Slide n={18} title="Bonus Demo 01">
-            <SlideBonusPresentation index={0} slideN={18} />
+          {/* Bonus demo */}
+          <Slide n={17} title="Bonus Demo">
+            <SlideBonusPresentation index={0} slideN={17} />
           </Slide>
 
-          <Slide n={19} title="Judging Results">
+          <Slide n={18} title="Judging Results">
             <SlideJudgingResults />
           </Slide>
-          <Slide n={20} title="Thank you">
+          <Slide n={19} title="Thank you">
             <SlideThankYou />
           </Slide>
         </div>
@@ -432,26 +431,26 @@ function SlideEventOverview() {
         <span>Event overview</span>
       </div>
 
-      <div className="relative my-auto flex flex-col gap-[clamp(1.5rem,3.5vh,3rem)]">
-        <div className="flex flex-col gap-[clamp(0.75rem,2vh,1.5rem)]">
-          <h2 className="font-sans font-semibold text-[clamp(2.75rem,8vw,6.5rem)] leading-[1.0] tracking-tight">
+      <div className="relative my-auto flex flex-col gap-[clamp(2rem,4vh,4rem)]">
+        <div className="flex flex-col gap-[clamp(1rem,2.5vh,2rem)]">
+          <h2 className="font-sans font-semibold text-[clamp(3.5rem,10vw,9rem)] leading-[1.0] tracking-tight">
             The <span className="text-gradient">hackathon</span><br />by the numbers.
           </h2>
-          <p className="font-sans text-[clamp(1.1rem,1.8vw,1.45rem)] leading-relaxed text-foreground/70 max-w-2xl">
+          <p className="font-sans text-[clamp(1.25rem,2.2vw,2rem)] leading-relaxed text-foreground/70 max-w-4xl">
             Starting last Tuesday, builders from across Toronto came together to tackle three enterprise innovation challenges — and the results speak for themselves.
           </p>
         </div>
 
-        <div className="grid grid-cols-4 gap-[clamp(0.75rem,2vw,2rem)] max-w-4xl">
+        <div className="grid grid-cols-4 gap-[clamp(1rem,2.5vw,2.5rem)]">
           {stats.map(({ value, label }) => (
             <div
               key={label}
-              className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-background/40 px-[clamp(1rem,2vw,1.75rem)] py-[clamp(1.25rem,2.5vh,2rem)] backdrop-blur-sm"
+              className="flex flex-col gap-3 rounded-2xl border border-border/50 bg-background/40 px-[clamp(1.5rem,3vw,2.5rem)] py-[clamp(1.75rem,3.5vh,3rem)] backdrop-blur-sm"
             >
-              <span className="font-sans font-semibold text-[clamp(2rem,5vw,4.5rem)] leading-none tracking-tight text-gradient">
+              <span className="font-sans font-semibold text-[clamp(2.75rem,7vw,6.5rem)] leading-none tracking-tight text-gradient">
                 {value}
               </span>
-              <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="font-mono text-sm uppercase tracking-[0.18em] text-muted-foreground">
                 {label}
               </span>
             </div>
@@ -459,25 +458,25 @@ function SlideEventOverview() {
         </div>
 
         {/* Sponsor logos */}
-        <div className="flex items-center gap-[clamp(1rem,2.5vw,2rem)]">
-          <span className="shrink-0 font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground">
+        <div className="flex items-center gap-[clamp(1.5rem,3vw,3rem)]">
+          <span className="shrink-0 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
             With support from
           </span>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {ALL_SPONSORS.map((s) => (
               <div
                 key={s.name}
                 className={cn(
-                  "flex h-10 items-center justify-center rounded-lg px-3",
+                  "flex h-28 items-center justify-center rounded-xl px-8",
                   s.dark ? "bg-[#111]" : "bg-white border border-border/30"
                 )}
               >
                 <Image
                   src={s.logo}
                   alt={s.name}
-                  width={100}
-                  height={32}
-                  className="h-6 w-auto object-contain"
+                  width={420}
+                  height={132}
+                  className="h-20 w-auto object-contain"
                 />
               </div>
             ))}
@@ -503,37 +502,53 @@ function SlideWhatIsMakersLounge() {
 
       <div className="relative my-auto flex flex-row items-center gap-[clamp(2rem,5vw,5rem)]">
         {/* Left */}
-        <div className="flex flex-1 flex-col gap-[clamp(1.25rem,3vh,2.5rem)]">
-          <h2 className="font-sans font-semibold text-[clamp(2.75rem,8vw,6.5rem)] leading-[1.0] tracking-tight">
+        <div className="flex flex-1 flex-col gap-[clamp(1.5rem,3.5vh,3rem)]">
+          <h2 className="font-sans font-semibold text-[clamp(3.5rem,10vw,9rem)] leading-[1.0] tracking-tight">
             What is <span className="text-gradient">MakersLounge?</span>
           </h2>
-          <div className="flex flex-col gap-[clamp(0.75rem,1.5vh,1.25rem)] max-w-xl">
-            <p className="font-sans text-[clamp(1.2rem,2vw,1.6rem)] leading-relaxed text-foreground/80">
+          <div className="flex flex-col gap-[clamp(1rem,2vh,1.75rem)] max-w-3xl">
+            <p className="font-sans text-[clamp(1.4rem,2.4vw,2rem)] leading-relaxed text-foreground/80">
               MakersLounge is a community of <span className="font-semibold text-foreground">1000+ builders</span>, mostly based in Toronto — people who turn ideas into real things.
             </p>
-            <p className="font-sans text-[clamp(1.2rem,2vw,1.6rem)] leading-relaxed text-muted-foreground">
-              We host multiple events every month — hackathons, builder meetups, special presentations, and more — all with one rule: no talks, no pitches, just makers building and shipping together.
-            </p>
-            <p className="font-sans text-[clamp(1.2rem,2vw,1.6rem)] leading-relaxed text-foreground/80">
+            <div className="flex flex-col gap-[clamp(0.5rem,1vh,0.875rem)]">
+              <p className="font-sans text-[clamp(1.1rem,1.8vw,1.5rem)] text-muted-foreground">We host multiple events every month:</p>
+              <ul className="flex flex-col gap-[clamp(0.4rem,0.8vh,0.75rem)] pl-1">
+                {[
+                  "Hackathons",
+                  "Builder meetups",
+                  "Special presentations",
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-3 font-sans text-[clamp(1.25rem,2vw,1.75rem)] leading-snug text-muted-foreground">
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                    {item}
+                  </li>
+                ))}
+                <li className="flex items-center gap-3 font-sans text-[clamp(1.25rem,2vw,1.75rem)] leading-snug text-muted-foreground">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                  One rule: <span className="ml-1 text-foreground/80">no talks, no pitches — just makers building and shipping</span>
+                </li>
+              </ul>
+            </div>
+            <p className="font-sans text-[clamp(1.4rem,2.4vw,2rem)] leading-relaxed text-foreground/80">
               Our mission is to help <span className="font-semibold text-foreground">AI builders</span> connect and scale their services to the world.
             </p>
           </div>
-          <div className="mt-[clamp(0.5rem,1.5vh,1rem)] inline-flex w-fit items-center gap-3 rounded-full border border-border/60 bg-background/40 px-5 py-2 backdrop-blur-sm">
-            <span className="font-mono text-xs uppercase tracking-[0.2em] text-gradient">Build.</span>
+          <div className="mt-[clamp(0.5rem,1.5vh,1rem)] inline-flex w-fit items-center gap-4 rounded-full border border-border/60 bg-background/40 px-6 py-3 backdrop-blur-sm">
+            <span className="font-mono text-sm uppercase tracking-[0.2em] text-gradient">Build.</span>
             <span className="h-3 w-px bg-border" />
-            <span className="font-mono text-xs uppercase tracking-[0.2em] text-gradient">Connect.</span>
+            <span className="font-mono text-sm uppercase tracking-[0.2em] text-gradient">Connect.</span>
             <span className="h-3 w-px bg-border" />
-            <span className="font-mono text-xs uppercase tracking-[0.2em] text-gradient">Create.</span>
+            <span className="font-mono text-sm uppercase tracking-[0.2em] text-gradient">Create.</span>
           </div>
         </div>
 
         {/* Right: logo */}
-        <div className="relative hidden flex-shrink-0 sm:block" style={{ width: "clamp(160px,22vw,300px)" }}>
+        <div className="relative hidden flex-shrink-0 sm:block" style={{ width: "clamp(200px,26vw,380px)" }}>
           <Image
             src="/logos/logo-luma.png"
             alt="MakersLounge"
-            width={300}
-            height={300}
+            width={380}
+            height={380}
             className="w-full h-auto rounded-2xl"
           />
         </div>
@@ -602,7 +617,7 @@ function SlideSponsors() {
           <h2 className="font-sans font-semibold text-[clamp(2.75rem,8vw,6.5rem)] leading-[1.0] tracking-tight">
             A huge <span className="text-gradient">thank you.</span>
           </h2>
-          <p className="mt-2 font-sans text-[clamp(0.95rem,1.5vw,1.15rem)] leading-relaxed text-muted-foreground">
+          <p className="mt-2 font-sans text-[clamp(1.2rem,2vw,1.6rem)] leading-relaxed text-muted-foreground">
             Tonight wouldn&rsquo;t be possible without our proud sponsors.
           </p>
         </div>
@@ -624,14 +639,14 @@ function SlideSponsors() {
               </div>
               <div className="flex items-center justify-between gap-6 px-7 py-6">
                 <div className="flex flex-1 flex-col gap-2">
-                  <p className="font-sans text-[clamp(1rem,1.4vw,1.25rem)] leading-relaxed text-muted-foreground">
+                  <p className="font-sans text-[clamp(1.1rem,1.7vw,1.5rem)] leading-relaxed text-muted-foreground">
                     {s.description}
                   </p>
                   <a
                     href={s.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-mono text-[0.75rem] uppercase tracking-[0.12em] text-gradient transition-opacity hover:opacity-70"
+                    className="font-mono text-[0.85rem] uppercase tracking-[0.12em] text-gradient transition-opacity hover:opacity-70"
                   >
                     {s.url.replace(/^https?:\/\//, "").replace(/\/$/, "")} →
                   </a>
@@ -641,13 +656,13 @@ function SlideSponsors() {
                 </div>
               </div>
               {s.rep && (
-                <div className="flex items-center gap-5 border-t border-border/60 px-7 py-5">
-                  <div className="h-[96px] w-[96px] flex-shrink-0 overflow-hidden rounded-full border border-border/60">
-                    <Image src={s.rep.photo} alt={s.rep.name} width={96} height={96} className="h-full w-full object-cover" />
+                <div className="flex items-center gap-6 border-t border-border/60 px-7 py-5">
+                  <div className="h-[140px] w-[140px] flex-shrink-0 overflow-hidden rounded-full border border-border/60">
+                    <Image src={s.rep.photo} alt={s.rep.name} width={140} height={140} className="h-full w-full object-cover" />
                   </div>
                   <div className="flex flex-1 flex-col gap-2">
-                    <span className="font-sans font-semibold text-[clamp(1.2rem,1.8vw,1.55rem)] leading-snug">{s.rep.name}</span>
-                    <span className="font-mono text-[0.875rem] uppercase tracking-[0.1em] text-muted-foreground">{s.rep.title}</span>
+                    <span className="font-sans font-semibold text-[clamp(1.4rem,2.2vw,2rem)] leading-snug">{s.rep.name}</span>
+                    <span className="font-mono text-[1rem] uppercase tracking-[0.1em] text-muted-foreground">{s.rep.title}</span>
                   </div>
                   {s.rep.linkedin && (
                     <a
@@ -1271,7 +1286,7 @@ function SlideBonusPresentation({ index, slideN }: { index: number; slideN: numb
         <span className="h-px w-8 bg-border" />
         <span className="text-foreground">{pad2(slideN)}</span>
         <span className="h-px w-4 bg-border" />
-        <span>Bonus Demo {pad2(index + 1)}</span>
+        <span>Bonus Demo</span>
       </div>
 
       <div className="relative mt-[clamp(1rem,2vh,2rem)] flex flex-col gap-[clamp(0.5rem,1vh,1rem)]">
@@ -1284,9 +1299,7 @@ function SlideBonusPresentation({ index, slideN }: { index: number; slideN: numb
         </div>
 
         <div className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
-          <span className="text-gradient font-semibold">Bonus {pad2(index + 1)}</span>
-          <span className="mx-3 text-foreground/20">/</span>
-          <span>{pad2(BONUS_SLOT_COUNT)}</span>
+          <span className="text-gradient font-semibold">Bonus Demo</span>
         </div>
 
         {!name ? (
@@ -1304,7 +1317,7 @@ function SlideBonusPresentation({ index, slideN }: { index: number; slideN: numb
 
       <div className="relative mt-auto flex items-center justify-between font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span>2026 Innovation Hackathon</span>
-        <span>Bonus {pad2(index + 1)} of {pad2(BONUS_SLOT_COUNT)}</span>
+        <span>Bonus Demo</span>
       </div>
     </div>
   );
