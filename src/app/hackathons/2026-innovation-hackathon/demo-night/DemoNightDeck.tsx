@@ -100,7 +100,7 @@ const BONUS_TEAMS: Record<string, TeamMember[]> = {
 
 const STATS: { participants: number; projectsSubmitted: number; teams: number } | null = null;
 
-const SLIDE_COUNT = 18;
+const SLIDE_COUNT = 22;
 
 const SLIDE_INDEX: Array<{ n: number; title: string }> = [
   { n: 1, title: "Opening" },
@@ -109,18 +109,26 @@ const SLIDE_INDEX: Array<{ n: number; title: string }> = [
   { n: 4, title: "Sponsors" },
   { n: 5, title: "Judges" },
   { n: 6, title: "Tracks" },
-  { n: 7, title: "Demo 01" },
-  { n: 8, title: "Demo 02" },
-  { n: 9, title: "Demo 03" },
-  { n: 10, title: "Demo 04" },
-  { n: 11, title: "Demo 05" },
-  { n: 12, title: "Demo 06" },
-  { n: 13, title: "Demo 07" },
-  { n: 14, title: "Bonus 01" },
-  { n: 15, title: "Bonus 02" },
-  { n: 16, title: "Winners" },
-  { n: 17, title: "Thank You" },
+  { n: 7, title: "Market Monitoring" },
+  { n: 8, title: "Demo 01" },
+  { n: 9, title: "Demo 02" },
+  { n: 10, title: "Idea Validation" },
+  { n: 11, title: "Demo 03" },
+  { n: 12, title: "Demo 04" },
+  { n: 13, title: "Demo 05" },
+  { n: 14, title: "Synth. Customers" },
+  { n: 15, title: "Demo 06" },
+  { n: 16, title: "Demo 07" },
+  { n: 17, title: "Bonus Demos" },
+  { n: 18, title: "Bonus 01" },
+  { n: 19, title: "Bonus 02" },
+  { n: 20, title: "Judging" },
+  { n: 21, title: "Winners" },
+  { n: 22, title: "Thank You" },
 ];
+
+// Explicit demo order: Continuous Market Monitoring → Validating a Business Idea → Synthetic Customers
+const DEMO_ORDER = ["snoop", "overton", "cascade", "forgeos", "ideaforge", "doppel", "vito"];
 
 const DEMO_SLOT_COUNT = 7;
 const BONUS_SLOT_COUNT = 2;
@@ -139,12 +147,11 @@ export default function DemoNightDeck() {
         .eq("is_finalist", true)
         .order("title");
       if (!cancelled && data) {
+        const text = (f: Finalist) => `${f.title ?? ""} ${f.team_name ?? ""}`.toLowerCase();
         const sorted = [...(data as Finalist[])].sort((a, b) => {
-          const aIsSnoop = (a.title ?? "").toLowerCase().includes("snoop");
-          const bIsSnoop = (b.title ?? "").toLowerCase().includes("snoop");
-          if (aIsSnoop && !bIsSnoop) return -1;
-          if (bIsSnoop && !aIsSnoop) return 1;
-          return 0;
+          const ai = DEMO_ORDER.findIndex((k) => text(a).includes(k));
+          const bi = DEMO_ORDER.findIndex((k) => text(b).includes(k));
+          return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
         });
         setFinalists(sorted);
       }
@@ -305,23 +312,60 @@ export default function DemoNightDeck() {
           <Slide n={6} title="Judging criteria">
             <SlideJudgingCriteria />
           </Slide>
-          {Array.from({ length: DEMO_SLOT_COUNT }, (_, i) => finalists[i] ?? null).map((finalist, i) => (
-            <Slide key={i} n={7 + i} title={`Demo ${pad2(i + 1)}`}>
-              <SlideDemoPresentation finalist={finalist} index={i} slideN={7 + i} />
-            </Slide>
-          ))}
-          {Array.from({ length: BONUS_SLOT_COUNT }, (_, i) => i).map((i) => (
-            <Slide key={`bonus-${i}`} n={14 + i} title={`Bonus Demo ${pad2(i + 1)}`}>
-              <SlideBonusPresentation index={i} slideN={14 + i} />
-            </Slide>
-          ))}
-          <Slide n={16} title="Judging Results">
+          {/* Track 1: Continuous Market Monitoring */}
+          <Slide n={7} title="Market Monitoring">
+            <SlideTrackIntro track={TRACKS[1]} trackN={1} />
+          </Slide>
+          <Slide n={8} title="Demo 01">
+            <SlideDemoPresentation finalist={finalists[0] ?? null} index={0} slideN={8} />
+          </Slide>
+          <Slide n={9} title="Demo 02">
+            <SlideDemoPresentation finalist={finalists[1] ?? null} index={1} slideN={9} />
+          </Slide>
+
+          {/* Track 2: Validating a Business Idea */}
+          <Slide n={10} title="Idea Validation">
+            <SlideTrackIntro track={TRACKS[0]} trackN={2} />
+          </Slide>
+          <Slide n={11} title="Demo 03">
+            <SlideDemoPresentation finalist={finalists[2] ?? null} index={2} slideN={11} />
+          </Slide>
+          <Slide n={12} title="Demo 04">
+            <SlideDemoPresentation finalist={finalists[3] ?? null} index={3} slideN={12} />
+          </Slide>
+          <Slide n={13} title="Demo 05">
+            <SlideDemoPresentation finalist={finalists[4] ?? null} index={4} slideN={13} />
+          </Slide>
+
+          {/* Track 3: Synthetic Customers */}
+          <Slide n={14} title="Synthetic Customers">
+            <SlideTrackIntro track={TRACKS[2]} trackN={3} />
+          </Slide>
+          <Slide n={15} title="Demo 06">
+            <SlideDemoPresentation finalist={finalists[5] ?? null} index={5} slideN={15} />
+          </Slide>
+          <Slide n={16} title="Demo 07">
+            <SlideDemoPresentation finalist={finalists[6] ?? null} index={6} slideN={16} />
+          </Slide>
+
+          {/* Bonus demos */}
+          <Slide n={17} title="Bonus Demos">
+            <SlideBonusDemosIntro />
+          </Slide>
+          <Slide n={18} title="Bonus Demo 01">
+            <SlideBonusPresentation index={0} slideN={18} />
+          </Slide>
+          <Slide n={19} title="Bonus Demo 02">
+            <SlideBonusPresentation index={1} slideN={19} />
+          </Slide>
+
+          <Slide n={20} title="Judging Results">
             <SlideJudgingResults />
           </Slide>
-          <Slide n={17} title="Winners">
+          <Slide n={21} title="Winners">
             <SlideWinners />
           </Slide>
-          <Slide n={18} title="Thank you">
+          <Slide n={22} title="Thank you">
             <SlideThankYou />
           </Slide>
         </div>
@@ -370,11 +414,20 @@ function SlideBackground() {
   );
 }
 
+const ALL_SPONSORS = [
+  { name: "Aucctus", logo: "/logos/partner-logos/Aucctus-Full-Colour-Logo1.webp", dark: false },
+  { name: "Disruptive Edge", logo: "/logos/partner-logos/Disruptive-Edge-SQ.png", dark: false },
+  { name: "Pingram", logo: "/logos/partner-logos/pingram-logo.png", dark: true },
+  { name: "Google Cloud", logo: "/logos/partner-logos/google-cloud-wordmark.svg", dark: false },
+  { name: "Scelta", logo: "/logos/partner-logos/WHITE_SCELTA LOGO_TM.avif", dark: true },
+];
+
 function SlideEventOverview() {
   const stats = [
     { value: "150+", label: "Sign-ups" },
     { value: "120", label: "Participants" },
-    { value: "30", label: "Team submissions" },
+    { value: "30", label: "Submissions" },
+    { value: "5", label: "Sponsors" },
   ];
   return (
     <div className="flex h-full flex-col">
@@ -387,7 +440,7 @@ function SlideEventOverview() {
         <span>Event overview</span>
       </div>
 
-      <div className="relative my-auto flex flex-col gap-[clamp(2rem,5vh,4rem)]">
+      <div className="relative my-auto flex flex-col gap-[clamp(1.5rem,3.5vh,3rem)]">
         <div className="flex flex-col gap-[clamp(0.75rem,2vh,1.5rem)]">
           <h2 className="font-sans font-semibold text-[clamp(2.75rem,8vw,6.5rem)] leading-[1.0] tracking-tight">
             The <span className="text-gradient">hackathon</span><br />by the numbers.
@@ -397,13 +450,13 @@ function SlideEventOverview() {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-[clamp(1rem,3vw,2.5rem)] max-w-3xl">
+        <div className="grid grid-cols-4 gap-[clamp(0.75rem,2vw,2rem)] max-w-4xl">
           {stats.map(({ value, label }) => (
             <div
               key={label}
-              className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-background/40 px-[clamp(1.25rem,2.5vw,2rem)] py-[clamp(1.25rem,2.5vh,2rem)] backdrop-blur-sm"
+              className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-background/40 px-[clamp(1rem,2vw,1.75rem)] py-[clamp(1.25rem,2.5vh,2rem)] backdrop-blur-sm"
             >
-              <span className="font-sans font-semibold text-[clamp(2.5rem,6vw,5rem)] leading-none tracking-tight text-gradient">
+              <span className="font-sans font-semibold text-[clamp(2rem,5vw,4.5rem)] leading-none tracking-tight text-gradient">
                 {value}
               </span>
               <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -411,6 +464,32 @@ function SlideEventOverview() {
               </span>
             </div>
           ))}
+        </div>
+
+        {/* Sponsor logos */}
+        <div className="flex items-center gap-[clamp(1rem,2.5vw,2rem)]">
+          <span className="shrink-0 font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground">
+            With support from
+          </span>
+          <div className="flex items-center gap-3">
+            {ALL_SPONSORS.map((s) => (
+              <div
+                key={s.name}
+                className={cn(
+                  "flex h-10 items-center justify-center rounded-lg px-3",
+                  s.dark ? "bg-[#111]" : "bg-white border border-border/30"
+                )}
+              >
+                <Image
+                  src={s.logo}
+                  alt={s.name}
+                  width={100}
+                  height={32}
+                  className="h-6 w-auto object-contain"
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -800,7 +879,7 @@ function SlideJudgingResults() {
       <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span className="text-gradient">Demo Night</span>
         <span className="h-px w-8 bg-border" />
-        <span className="text-foreground">{pad2(16)}</span>
+        <span className="text-foreground">{pad2(20)}</span>
         <span className="h-px w-4 bg-border" />
         <span>Judging Results</span>
       </div>
@@ -898,7 +977,7 @@ function SlideWinners() {
       <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span className="text-gradient">Demo Night</span>
         <span className="h-px w-8 bg-border" />
-        <span className="text-foreground">{pad2(17)}</span>
+        <span className="text-foreground">{pad2(21)}</span>
         <span className="h-px w-4 bg-border" />
         <span>Winners</span>
       </div>
@@ -961,7 +1040,7 @@ function SlideThankYou() {
       <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span className="text-gradient">Demo Night</span>
         <span className="h-px w-8 bg-border" />
-        <span className="text-foreground">{pad2(18)}</span>
+        <span className="text-foreground">{pad2(22)}</span>
         <span className="h-px w-4 bg-border" />
         <span>Thank you</span>
       </div>
@@ -1035,6 +1114,63 @@ function SlideThankYou() {
   );
 }
 
+function SlideTrackIntro({ track, trackN }: { track: typeof TRACKS[number]; trackN: number }) {
+  return (
+    <div className="flex h-full flex-col">
+      <SlideBackground />
+
+      <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <span className="text-gradient">Demo Night</span>
+        <span className="h-px w-8 bg-border" />
+        <span className="text-foreground">{pad2(trackN)}</span>
+        <span className="h-px w-4 bg-border" />
+        <span>Track {trackN} of 3</span>
+      </div>
+
+      <div className="relative my-auto flex flex-row items-center gap-[clamp(2rem,5vw,5rem)]">
+        {/* Left */}
+        <div className="flex flex-1 flex-col gap-[clamp(1rem,2.5vh,2rem)]">
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground">Up next</span>
+            <span className="h-px w-8 bg-border/60" />
+            <span className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground">
+              Track {trackN} / 3
+            </span>
+          </div>
+          <h2 className="font-sans font-semibold text-[clamp(2.5rem,6vw,5.5rem)] leading-[1.0] tracking-tight">
+            <span className="text-gradient">{track.name}</span>
+          </h2>
+          <p className="max-w-xl font-sans text-[clamp(1rem,1.4vw,1.2rem)] leading-relaxed text-muted-foreground">
+            {track.description}
+          </p>
+          <div className="flex flex-col gap-2.5 border-t border-border/40 pt-4">
+            <span className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground">Judging criteria</span>
+            {track.criteria.map((c) => (
+              <div key={c.label} className="flex items-center gap-3">
+                <span className="font-mono text-[0.6rem] tabular-nums text-muted-foreground/50 w-7 shrink-0">{c.weight}%</span>
+                <span className="font-sans text-[clamp(0.85rem,1.2vw,1rem)] text-foreground/70">{c.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: track image */}
+        <div
+          className="relative hidden flex-shrink-0 overflow-hidden rounded-2xl border border-border/40 sm:block"
+          style={{ width: "clamp(260px,32vw,440px)", aspectRatio: "16/9" }}
+        >
+          <Image src={track.image} alt={track.name} fill className="object-cover" />
+        </div>
+      </div>
+
+      <div className="relative mt-auto flex items-center justify-between font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <span>2026 Innovation Hackathon</span>
+        <span>Demo Night · May 26</span>
+      </div>
+    </div>
+  );
+}
+
 function SlideDemoPresentation({ finalist, index, slideN }: { finalist: Finalist | null; index: number; slideN: number }) {
   return (
     <div className="flex h-full flex-col">
@@ -1096,6 +1232,23 @@ function SlideDemoPresentation({ finalist, index, slideN }: { finalist: Finalist
 }
 
 const BONUS_DEMO_NAMES: string[] = ["Auctopus", "SAMM"];
+
+function SlideBonusDemosIntro() {
+  return (
+    <div className="flex h-full flex-col items-center justify-center">
+      <SlideBackground />
+      <div className="relative flex flex-col items-center gap-[clamp(1rem,2.5vh,2rem)] text-center">
+        <span className="font-mono text-xs uppercase tracking-[0.25em] text-muted-foreground">Demo Night</span>
+        <h2 className="font-sans font-semibold text-[clamp(3.5rem,12vw,10rem)] leading-[0.95] tracking-tight">
+          Bonus <span className="text-gradient">Demos.</span>
+        </h2>
+        <p className="max-w-lg font-sans text-[clamp(1rem,1.6vw,1.3rem)] leading-relaxed text-muted-foreground">
+          A few more teams that built something worth seeing.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 function SlideBonusPresentation({ index, slideN }: { index: number; slideN: number }) {
   const name = BONUS_DEMO_NAMES[index] ?? null;
