@@ -854,13 +854,13 @@ function SlideJudgingCriteria() {
 
       <div className="relative mt-auto flex items-center justify-between font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span>2026 Innovation Hackathon</span>
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5">
+        <div className="flex items-center gap-4 text-base">
+          <span className="flex items-center gap-2">
             <span>WiFi</span>
             <span className="text-foreground font-semibold normal-case tracking-normal">meshAirsonics_9H3V</span>
           </span>
           <span className="h-px w-4 bg-border" />
-          <span className="flex items-center gap-1.5">
+          <span className="flex items-center gap-2">
             <span>pw</span>
             <span className="text-foreground font-semibold normal-case tracking-normal">kkpknf4787</span>
           </span>
