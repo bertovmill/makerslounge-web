@@ -58,7 +58,7 @@ const JUDGES: Array<{ name: string; title: string; company: string; photo?: stri
   { name: "Naina Dewan", title: "Manager, New Technology & Innovation", company: "TTC", photo: "/hackathons/innovation-hackathon/judges/naina-dewan.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-ttc.png" },
   { name: "Rishi Midha", title: "Director/Head of AI Research", company: "EllisDon", photo: "/hackathons/innovation-hackathon/judges/rishi-midha.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-ellisdon.png" },
   { name: "Dave Jani", title: "Director, Innovation & Technology Enablement", company: "Chartwell Retirement Residences", photo: "/hackathons/innovation-hackathon/judges/dave-jani.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-chartwell.png" },
-  { name: "Ashish DSa", title: "Chief Technology Officer", company: "Arbor", photo: "/hackathons/innovation-hackathon/judges/ashish-dsa.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-arbor.png" },
+  { name: "Ashish Dsa", title: "Chief Technology Officer", company: "Arbor", photo: "/hackathons/innovation-hackathon/judges/ashish-dsa.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-arbor.png" },
 ];
 type TeamMember = { name: string; photo?: string; linkedin?: string };
 const FINALIST_TEAMS: Record<string, TeamMember[]> = {
@@ -1160,18 +1160,18 @@ function SlideTrackIntro({ track, trackN }: { track: typeof TRACKS[number]; trac
               Track {trackN} / 3
             </span>
           </div>
-          <h2 className="font-sans font-semibold text-[clamp(2.5rem,6vw,5.5rem)] leading-[1.0] tracking-tight">
+          <h2 className="font-sans font-semibold text-[clamp(3rem,8vw,7.5rem)] leading-[1.0] tracking-tight">
             <span className="text-gradient">{track.name}</span>
           </h2>
-          <p className="max-w-xl font-sans text-[clamp(1rem,1.4vw,1.2rem)] leading-relaxed text-muted-foreground">
+          <p className="max-w-3xl font-sans text-[clamp(1.2rem,2vw,1.75rem)] leading-relaxed text-muted-foreground">
             {track.description}
           </p>
-          <div className="flex flex-col gap-2.5 border-t border-border/40 pt-4">
-            <span className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground">Judging criteria</span>
+          <div className="flex flex-col gap-3 border-t border-border/40 pt-5">
+            <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">Judging criteria</span>
             {track.criteria.map((c) => (
               <div key={c.label} className="flex items-center gap-3">
-                <span className="font-mono text-[0.6rem] tabular-nums text-muted-foreground/50 w-7 shrink-0">{c.weight}%</span>
-                <span className="font-sans text-[clamp(0.85rem,1.2vw,1rem)] text-foreground/70">{c.label}</span>
+                <span className="font-mono text-xs tabular-nums text-muted-foreground/50 w-8 shrink-0">{c.weight}%</span>
+                <span className="font-sans text-[clamp(1rem,1.6vw,1.4rem)] text-foreground/70">{c.label}</span>
               </div>
             ))}
           </div>
