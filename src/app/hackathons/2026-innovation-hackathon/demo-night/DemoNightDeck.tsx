@@ -123,8 +123,7 @@ const SLIDE_INDEX: Array<{ n: number; title: string }> = [
   { n: 18, title: "Bonus 01" },
   { n: 19, title: "Bonus 02" },
   { n: 20, title: "Judging" },
-  { n: 21, title: "Winners" },
-  { n: 22, title: "Thank You" },
+  { n: 21, title: "Thank You" },
 ];
 
 // Explicit demo order: Continuous Market Monitoring → Validating a Business Idea → Synthetic Customers
@@ -362,10 +361,7 @@ export default function DemoNightDeck() {
           <Slide n={20} title="Judging Results">
             <SlideJudgingResults />
           </Slide>
-          <Slide n={21} title="Winners">
-            <SlideWinners />
-          </Slide>
-          <Slide n={22} title="Thank you">
+          <Slide n={21} title="Thank you">
             <SlideThankYou />
           </Slide>
         </div>
@@ -821,6 +817,11 @@ function SlideJudgingCriteria() {
         <h2 className="font-sans font-semibold text-[clamp(2rem,5vw,4.5rem)] leading-[1.0] tracking-tight">
           The <span className="text-gradient">three tracks.</span>
         </h2>
+        <div className="flex items-center gap-6 font-mono text-[clamp(0.7rem,1.1vw,0.9rem)] uppercase tracking-[0.14em] text-muted-foreground">
+          <span className="flex items-center gap-2"><span className="text-foreground font-semibold">4 min</span> demo</span>
+          <span className="h-px w-6 bg-border" />
+          <span className="flex items-center gap-2"><span className="text-foreground font-semibold">up to 3 min</span> Q&amp;A</span>
+        </div>
         <div className="grid gap-5 sm:grid-cols-3">
           {TRACKS.map((t, i) => (
             <div key={t.name} className="flex flex-col gap-4 rounded-xl border border-border/60 bg-background/40 overflow-hidden backdrop-blur-sm">
@@ -842,6 +843,17 @@ function SlideJudgingCriteria() {
 
       <div className="relative mt-auto flex items-center justify-between font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span>2026 Innovation Hackathon</span>
+        <div className="flex items-center gap-4">
+          <span className="flex items-center gap-1.5">
+            <span>WiFi</span>
+            <span className="text-foreground font-semibold normal-case tracking-normal">meshAirsonics_9H3V</span>
+          </span>
+          <span className="h-px w-4 bg-border" />
+          <span className="flex items-center gap-1.5">
+            <span>pw</span>
+            <span className="text-foreground font-semibold normal-case tracking-normal">kkpknf4787</span>
+          </span>
+        </div>
         <span>3 tracks</span>
       </div>
     </div>
