@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Trophy, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Info, RotateCcw, Trophy, UserRound } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -19,24 +20,35 @@ const JUDGES = [
   "Ashish D'Sa",
 ];
 
-const TRACK_CRITERIA: Record<string, { key: string; label: string; weight: number }[]> = {
+const JUDGE_TO_SLUG: Record<string, string> = {
+  "James Maeng": "james-maeng",
+  "Naina Dewan": "naina-dewan",
+  "Rishi Midha": "rishi-midha",
+  "Dave Jani": "dave-jani",
+  "Ashish D'Sa": "ashish-dsa",
+};
+const SLUG_TO_JUDGE: Record<string, string> = Object.fromEntries(
+  Object.entries(JUDGE_TO_SLUG).map(([name, slug]) => [slug, name]),
+);
+
+const TRACK_CRITERIA: Record<string, { key: string; label: string; weight: number; description: string }[]> = {
   "Validating a Business Idea": [
-    { key: "pipeline_coverage", label: "End-to-end pipeline coverage", weight: 0.25 },
-    { key: "scoring_logic", label: "Quality of scoring / triage logic", weight: 0.35 },
-    { key: "speed_scalability", label: "Speed & scalability over manual review", weight: 0.25 },
-    { key: "demo_clarity", label: "Demo clarity", weight: 0.15 },
+    { key: "pipeline_coverage", label: "End-to-end pipeline coverage", weight: 0.25, description: "Handles the full journey from idea intake through evaluation, prioritization, and output — not just one step of the funnel." },
+    { key: "scoring_logic", label: "Quality of scoring / triage logic", weight: 0.35, description: "The AI's ranking methodology is defensible, consistent, and meaningfully better than gut-feel. Handles nuanced, similar ideas differently." },
+    { key: "speed_scalability", label: "Speed & scalability over manual review", weight: 0.25, description: "Demonstrates a credible reduction in time or cost vs. a human team reviewing the same volume of ideas." },
+    { key: "demo_clarity", label: "Demo clarity", weight: 0.15, description: "A non-technical stakeholder understands the value proposition and how to use the tool within 5 minutes." },
   ],
   "Continuous Market Monitoring": [
-    { key: "signal_relevance", label: "Signal relevance & accuracy", weight: 0.35 },
-    { key: "realtime_capability", label: "Real-time or near-real-time capability", weight: 0.25 },
-    { key: "actionability", label: "Actionability of insights surfaced", weight: 0.25 },
-    { key: "demo_clarity", label: "Demo clarity", weight: 0.15 },
+    { key: "signal_relevance", label: "Signal relevance & accuracy", weight: 0.35, description: "Surfaces signals genuinely useful to an innovation team — not just news summaries. Filters noise and avoids false positives." },
+    { key: "realtime_capability", label: "Real-time or near-real-time capability", weight: 0.25, description: "Data freshness matters. The platform detects and surfaces new signals quickly; latency is minimized and made transparent." },
+    { key: "actionability", label: "Actionability of insights surfaced", weight: 0.25, description: "Insights are specific enough to act on. Not just 'AI is growing' — but what an innovation team should do differently because of it." },
+    { key: "demo_clarity", label: "Demo clarity", weight: 0.15, description: "A non-technical stakeholder understands the value proposition and how to use the tool within 5 minutes." },
   ],
   "Synthetic Customers": [
-    { key: "feedback_fidelity", label: "Fidelity of synthetic feedback", weight: 0.35 },
-    { key: "nonobvious_insights", label: "Non-obvious insight generation", weight: 0.25 },
-    { key: "time_cost_savings", label: "Time & cost savings vs. real research", weight: 0.25 },
-    { key: "demo_clarity", label: "Demo clarity", weight: 0.15 },
+    { key: "feedback_fidelity", label: "Fidelity of synthetic feedback", weight: 0.35, description: "Simulated customers behave and respond like real market segments. Feedback is nuanced, not generic — accounts for edge cases and varied personas." },
+    { key: "nonobvious_insights", label: "Non-obvious insight generation", weight: 0.25, description: "Surfaces things traditional surveys often miss: minority opinions, contradictions between stated and revealed preferences, unexpected objections." },
+    { key: "time_cost_savings", label: "Time & cost savings vs. real research", weight: 0.25, description: "Makes a credible case for replacing or meaningfully augmenting traditional customer research — speed, cost, or breadth of coverage." },
+    { key: "demo_clarity", label: "Demo clarity", weight: 0.15, description: "A non-technical stakeholder understands the value proposition and how to use the tool within 5 minutes." },
   ],
 };
 
@@ -61,12 +73,6 @@ const TRACK_STYLE: Record<string, { badge: string; score: string; btn: string; d
   },
 };
 
-const TRACK_ACCENT_COLORS = [
-  { ring: "ring-amber-400/60", badge: "bg-amber-400/20 text-amber-300 border border-amber-400/30", dot: "bg-amber-400" },
-  { ring: "ring-sky-400/60", badge: "bg-sky-400/20 text-sky-300 border border-sky-400/30", dot: "bg-sky-400" },
-  { ring: "ring-violet-400/60", badge: "bg-violet-400/20 text-violet-300 border border-violet-400/30", dot: "bg-violet-400" },
-];
-
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface Finalist {
@@ -83,52 +89,7 @@ interface ScoreRow {
   score: number;
 }
 
-type Mode = "rubric" | "scoring";
-type Overlay = null | "password" | "judge-select";
-
-// ─── Rubric static data ─────────────────────────────────────────────────────
-
-const RUBRIC_TRACKS = [
-  {
-    n: 1,
-    name: "Validating a Business Idea",
-    description:
-      "Innovation teams collect thousands of ideas every year, far more than they can evaluate. Build an AI agent or tool that streamlines the innovation pipeline from raw idea to commercialized product.",
-    image: "/hackathons/innovation-hackathon/track-idea-validation-art.png",
-    criteria: [
-      { label: "End-to-end pipeline coverage", weight: 25, description: "Handles the full journey from idea intake through evaluation, prioritization, and output — not just one step of the funnel." },
-      { label: "Quality of scoring / triage logic", weight: 35, description: "The AI's ranking methodology is defensible, consistent, and meaningfully better than gut-feel. Handles nuanced, similar ideas differently." },
-      { label: "Speed & scalability over manual review", weight: 25, description: "Demonstrates a credible reduction in time or cost vs. a human team reviewing the same volume of ideas." },
-      { label: "Demo clarity", weight: 15, description: "A non-technical stakeholder understands the value proposition and how to use the tool within 5 minutes." },
-    ],
-  },
-  {
-    n: 2,
-    name: "Continuous Market Monitoring",
-    description:
-      "The business landscape is changing fast, and separating signal from noise has become critical. Build an agentic AI tool or platform that continuously monitors the market for signals relevant to a company's innovation function.",
-    image: "/hackathons/innovation-hackathon/track-market-monitoring-art.png",
-    criteria: [
-      { label: "Signal relevance & accuracy", weight: 35, description: "Surfaces signals genuinely useful to an innovation team — not just news summaries. Filters noise and avoids false positives." },
-      { label: "Real-time or near-real-time capability", weight: 25, description: "Data freshness matters. The platform detects and surfaces new signals quickly; latency is minimized and made transparent." },
-      { label: "Actionability of insights surfaced", weight: 25, description: "Insights are specific enough to act on. Not just 'AI is growing' — but what an innovation team should do differently because of it." },
-      { label: "Demo clarity", weight: 15, description: "A non-technical stakeholder understands the value proposition and how to use the tool within 5 minutes." },
-    ],
-  },
-  {
-    n: 3,
-    name: "Synthetic Customers",
-    description:
-      "Real customer studies are slow, expensive, and often fail to surface what customers actually want. Build an AI tool or platform that simulates synthetic customer feedback on new product ideas.",
-    image: "/hackathons/innovation-hackathon/track-synthetic-customers-art.png",
-    criteria: [
-      { label: "Fidelity of synthetic feedback", weight: 35, description: "Simulated customers behave and respond like real market segments. Feedback is nuanced, not generic — accounts for edge cases and varied personas." },
-      { label: "Non-obvious insight generation", weight: 25, description: "Surfaces things traditional surveys often miss: minority opinions, contradictions between stated and revealed preferences, unexpected objections." },
-      { label: "Time & cost savings vs. real research", weight: 25, description: "Makes a credible case for replacing or meaningfully augmenting traditional customer research — speed, cost, or breadth of coverage." },
-      { label: "Demo clarity", weight: 15, description: "A non-technical stakeholder understands the value proposition and how to use the tool within 5 minutes." },
-    ],
-  },
-];
+type Overlay = null | "password" | "judge-select" | "reset-confirm";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -157,38 +118,55 @@ function avgWeightedScore(
 
 // ─── Main component ─────────────────────────────────────────────────────────
 
-export default function ScoringContent({ defaultMode = "rubric" }: { defaultMode?: Mode }) {
-  const [mode, setMode] = useState<Mode>(defaultMode);
-  const [overlay, setOverlay] = useState<Overlay>(null);
-  // Read initial auth state from sessionStorage on first client render
+export default function ScoringContent() {
+  const router = useRouter();
   const [isAuthed, setIsAuthed] = useState<boolean>(
     () => typeof window !== "undefined" && Boolean(sessionStorage.getItem(SESSION_KEY)),
   );
-  const [judgeName, setJudgeName] = useState<string | null>(
-    () => (typeof window !== "undefined" ? sessionStorage.getItem(`${SESSION_KEY}-judge`) : null),
-  );
-
-  const handleJudgeScoreClick = () => {
-    if (!isAuthed) {
-      setOverlay("password");
-    } else if (!judgeName) {
-      setOverlay("judge-select");
-    } else {
-      setMode("scoring");
-    }
-  };
+  const [judgeName, setJudgeName] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const slug = new URLSearchParams(window.location.search).get("judge");
+    if (slug && SLUG_TO_JUDGE[slug]) return SLUG_TO_JUDGE[slug];
+    return sessionStorage.getItem(`${SESSION_KEY}-judge`);
+  });
+  const [overlay, setOverlay] = useState<Overlay>(() => {
+    if (typeof window === "undefined") return "password";
+    const authed = Boolean(sessionStorage.getItem(SESSION_KEY));
+    if (!authed) return "password";
+    const slug = new URLSearchParams(window.location.search).get("judge");
+    if (slug && SLUG_TO_JUDGE[slug]) return null;
+    const judge = sessionStorage.getItem(`${SESSION_KEY}-judge`);
+    return judge ? null : "judge-select";
+  });
+  const [resetKey, setResetKey] = useState(0);
 
   const handlePasswordSuccess = () => {
     setIsAuthed(true);
     sessionStorage.setItem(SESSION_KEY, "1");
-    setOverlay("judge-select");
+    const slug = new URLSearchParams(window.location.search).get("judge");
+    if (slug && SLUG_TO_JUDGE[slug]) {
+      const name = SLUG_TO_JUDGE[slug];
+      setJudgeName(name);
+      sessionStorage.setItem(`${SESSION_KEY}-judge`, name);
+      setOverlay(null);
+    } else {
+      setOverlay("judge-select");
+    }
   };
 
   const handleJudgeSelect = (name: string) => {
     setJudgeName(name);
     sessionStorage.setItem(`${SESSION_KEY}-judge`, name);
     setOverlay(null);
-    setMode("scoring");
+    const slug = JUDGE_TO_SLUG[name];
+    if (slug) router.replace(`/hackathons/2026-innovation-hackathon/scoring?judge=${slug}`);
+  };
+
+  const handleResetConfirm = async () => {
+    if (!judgeName) return;
+    await supabase.from("hackathon_scores").delete().eq("judge_name", judgeName);
+    setResetKey((k) => k + 1);
+    setOverlay(null);
   };
 
   return (
@@ -196,80 +174,65 @@ export default function ScoringContent({ defaultMode = "rubric" }: { defaultMode
 
       {/* ── Nav ─────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 flex items-center justify-between h-14 px-5 border-b border-border/60 bg-background/80 backdrop-blur-lg">
-        {mode === "scoring" ? (
-          <button
-            onClick={() => setMode("rubric")}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="size-4" />
-            <span className="hidden sm:inline">Rubric</span>
-          </button>
-        ) : (
-          <Link
-            href="/hackathons/2026-innovation-hackathon"
-            className="flex items-center gap-2.5 hover:opacity-75 transition-opacity"
-          >
-            <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
-            <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
-            <span className="font-sans text-sm font-medium text-foreground hidden sm:inline">makerslounge</span>
-          </Link>
-        )}
+        <Link
+          href="/hackathons/2026-innovation-hackathon"
+          className="flex items-center gap-2.5 hover:opacity-75 transition-opacity"
+        >
+          <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
+          <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
+          <span className="font-sans text-sm font-medium text-foreground hidden sm:inline">makerslounge</span>
+        </Link>
 
         <nav className="flex items-center gap-1 font-mono text-[0.65rem] uppercase tracking-[0.14em]">
-          {mode === "rubric" && (
-            <>
-              <Link href="/hackathons/2026-innovation-hackathon" className="px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors">
-                Hackathon
-              </Link>
-              <Link href="/hackathons/2026-innovation-hackathon/demo-night" className="px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors">
-                Demo Night
-              </Link>
-              <span className="px-3 py-1.5 rounded-md text-foreground bg-secondary/60">Scoring</span>
-            </>
-          )}
-          {mode === "scoring" && judgeName && (
-            <span className="px-3 py-1.5 rounded-md text-foreground bg-secondary/60 truncate max-w-[160px]">
-              {judgeName}
-            </span>
-          )}
+          <Link href="/hackathons/2026-innovation-hackathon" className="px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors">
+            Hackathon
+          </Link>
+          <Link href="/hackathons/2026-innovation-hackathon/demo-night" className="px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors">
+            Demo Night
+          </Link>
+          <span className="px-3 py-1.5 rounded-md text-foreground bg-secondary/60">Scoring</span>
         </nav>
 
-        <button
-          onClick={
-            mode === "scoring"
-              ? () => setOverlay("judge-select")
-              : handleJudgeScoreClick
-          }
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md font-mono text-[0.65rem] uppercase tracking-[0.14em] text-foreground bg-secondary/40 hover:bg-secondary/80 transition-colors"
-        >
-          {mode === "scoring" ? (
-            <>
-              <UserRound className="size-3" />
-              <span className="hidden sm:inline">Switch</span>
-            </>
-          ) : (
-            <>Score</>
+        <div className="flex items-center gap-2">
+          {judgeName && (
+            <button
+              onClick={() => setOverlay("reset-confirm")}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md font-mono text-[0.65rem] uppercase tracking-[0.14em] text-red-400 hover:text-red-300 hover:bg-red-400/10 transition-colors"
+            >
+              <RotateCcw className="size-3" />
+              <span className="hidden sm:inline">Reset</span>
+            </button>
           )}
-        </button>
+          <button
+            onClick={() => setOverlay("judge-select")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md font-mono text-[0.65rem] uppercase tracking-[0.14em] text-foreground bg-secondary/40 hover:bg-secondary/80 transition-colors"
+          >
+            <UserRound className="size-3" />
+            <span className="hidden sm:inline">Switch</span>
+          </button>
+        </div>
       </header>
 
       {/* ── Views ───────────────────────────────────────────────────────── */}
-      {mode === "rubric" ? (
-        <RubricView />
-      ) : (
-        <ScoringView judgeName={judgeName!} />
-      )}
+      <ScoringView key={resetKey} judgeName={judgeName ?? ""} />
 
       {/* ── Overlays ────────────────────────────────────────────────────── */}
       {overlay === "password" && (
         <PasswordOverlay
           onSuccess={handlePasswordSuccess}
-          onClose={() => setOverlay(null)}
+          onClose={() => router.push("/hackathons/2026-innovation-hackathon")}
         />
       )}
       {overlay === "judge-select" && (
         <JudgeSelectOverlay
           onSelect={handleJudgeSelect}
+          onClose={() => setOverlay(null)}
+        />
+      )}
+      {overlay === "reset-confirm" && (
+        <ResetConfirmOverlay
+          judgeName={judgeName ?? ""}
+          onConfirm={handleResetConfirm}
           onClose={() => setOverlay(null)}
         />
       )}
@@ -376,6 +339,60 @@ function JudgeSelectOverlay({ onSelect, onClose }: { onSelect: (name: string) =>
         >
           Cancel
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Reset confirm overlay ──────────────────────────────────────────────────
+
+function ResetConfirmOverlay({
+  judgeName,
+  onConfirm,
+  onClose,
+}: {
+  judgeName: string;
+  onConfirm: () => Promise<void>;
+  onClose: () => void;
+}) {
+  const [confirming, setConfirming] = useState(false);
+
+  const handleConfirm = async () => {
+    setConfirming(true);
+    await onConfirm();
+    setConfirming(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-sm px-5">
+      <div className="w-full max-w-sm bg-card border border-border rounded-2xl p-8 flex flex-col gap-6">
+        <div>
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+            2026 Innovation Hackathon
+          </p>
+          <h2 className="text-xl font-semibold tracking-tight">Reset your scores?</h2>
+        </div>
+
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          This will permanently delete all scores submitted by <span className="text-foreground font-medium">{judgeName}</span> across every finalist. This cannot be undone.
+        </p>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            disabled={confirming}
+            className="flex-1 rounded-lg border border-border bg-transparent px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary/60 disabled:opacity-40"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={confirming}
+            className="flex-1 rounded-lg bg-red-500 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-60"
+          >
+            {confirming ? "Resetting…" : "Yes, reset"}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -517,6 +534,11 @@ function ScoringView({ judgeName }: { judgeName: string }) {
   const prevFinalist = selectedIndex > 0 ? finalists[selectedIndex - 1] : null;
   const nextFinalist = selectedIndex < finalists.length - 1 ? finalists[selectedIndex + 1] : null;
 
+  // Overall progress
+  const completedCount = finalists.filter(
+    (f) => completionStatus(f.id, f.challenge_track ?? "") === "complete",
+  ).length;
+
   // Compute results: per track, avg scores across all judges
   const resultsReady = allScores.length > 0;
   const trackResults: Array<{ track: string; finalists: Array<{ f: Finalist; avg: number }> }> = Object.entries(byTrack).map(([track, fs]) => {
@@ -555,13 +577,15 @@ function ScoringView({ judgeName }: { judgeName: string }) {
                           : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
                       }`}
                     >
-                      <span className={`w-2 h-2 rounded-full shrink-0 border transition-colors ${
-                        status === "complete"
-                          ? `${s.dot} border-transparent`
-                          : status === "partial"
-                          ? "bg-transparent border-current opacity-50"
-                          : "bg-transparent border-muted-foreground/25"
-                      }`} />
+                      {status === "complete" ? (
+                        <Check className="size-3.5 shrink-0 text-green-400" />
+                      ) : (
+                        <span className={`w-2 h-2 rounded-full shrink-0 border transition-colors ${
+                          status === "partial"
+                            ? "bg-transparent border-current opacity-50"
+                            : "bg-transparent border-muted-foreground/25"
+                        }`} />
+                      )}
                       <span className="flex-1 text-[0.8125rem] leading-snug truncate">
                         {f.title ?? f.team_name ?? "Untitled"}
                       </span>
@@ -573,153 +597,126 @@ function ScoringView({ judgeName }: { judgeName: string }) {
           );
         })}
 
-        {resultsReady && (
-          <div className="mt-auto pt-4 border-t border-border/40">
+        <div className="mt-auto flex flex-col gap-3 pt-4 border-t border-border/40">
+          {resultsReady && (
             <a
               href="#results"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-[0.8125rem] text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors"
+              className="xl:hidden flex items-center gap-2 px-3 py-2 rounded-lg text-[0.8125rem] text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors"
             >
               <Trophy className="size-3.5 shrink-0 text-amber-400" />
               Live results
             </a>
+          )}
+
+          {/* Progress */}
+          <div className="px-3 flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[0.55rem] uppercase tracking-[0.18em] text-muted-foreground">Scored</span>
+              <span className="font-mono text-[0.7rem] tabular-nums text-foreground">
+                {completedCount}<span className="text-muted-foreground">/{finalists.length}</span>
+              </span>
+            </div>
+            <div className="h-1 rounded-full bg-secondary/60 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-green-400 transition-all duration-500"
+                style={{ width: finalists.length > 0 ? `${(completedCount / finalists.length) * 100}%` : "0%" }}
+              />
+            </div>
           </div>
-        )}
+        </div>
       </aside>
 
       {/* ── Main content ─────────────────────────────────────────────────── */}
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 flex overflow-hidden">
 
-        {/* Mobile pill nav */}
-        <div className="lg:hidden sticky top-14 z-40 bg-background/95 backdrop-blur-md border-b border-border/40">
-          <div className="flex gap-2 overflow-x-auto px-4 py-3" style={{ scrollbarWidth: "none" }}>
-            {finalists.map((f) => {
-              const track = f.challenge_track ?? "";
-              const s = TRACK_STYLE[track] ?? FALLBACK_STYLE;
-              const status = completionStatus(f.id, track);
-              const isSelected = f.id === selectedFinalist?.id;
-              return (
-                <button
-                  key={f.id}
-                  onClick={() => setSelectedId(f.id)}
-                  className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
-                    isSelected
-                      ? "bg-foreground text-background"
-                      : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  }`}
-                >
-                  {status === "complete" && (
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSelected ? "bg-background/60" : s.dot}`} />
-                  )}
-                  {f.title ?? f.team_name ?? "Untitled"}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        {/* Scoring column */}
+        <div className="flex-1 min-w-0 flex flex-col overflow-y-auto">
 
-        {/* Scoring card */}
-        {selectedFinalist && (
-          <div className="px-4 sm:px-6 py-6 w-full max-w-2xl">
-            <div className="mb-5">
-              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-mono text-[0.6rem] uppercase tracking-widest ${style.badge}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
-                {selectedTrack}
-              </span>
-            </div>
-
-            <FinalistScoringCard
-              finalist={selectedFinalist}
-              criteria={criteria}
-              myScores={myScores[selectedFinalist.id] ?? {}}
-              saving={saving}
-              saved={saved}
-              style={style}
-              onScore={handleScore}
-            />
-
-            {/* Prev / Next */}
-            <div className="flex items-stretch gap-3 mt-4">
-              {prevFinalist ? (
-                <button
-                  onClick={() => setSelectedId(prevFinalist.id)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border/50 bg-card text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex-1 min-w-0"
-                >
-                  <ArrowLeft className="size-3.5 shrink-0" />
-                  <span className="truncate text-left">{prevFinalist.title ?? prevFinalist.team_name}</span>
-                </button>
-              ) : <div className="flex-1" />}
-              {nextFinalist ? (
-                <button
-                  onClick={() => setSelectedId(nextFinalist.id)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border/50 bg-card text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex-1 min-w-0 justify-end"
-                >
-                  <span className="truncate text-right">{nextFinalist.title ?? nextFinalist.team_name}</span>
-                  <ArrowRight className="size-3.5 shrink-0" />
-                </button>
-              ) : <div className="flex-1" />}
-            </div>
-          </div>
-        )}
-
-        {/* Results section */}
-        {resultsReady && (
-          <div id="results" className="border-t border-border/60 pt-10 pb-12 px-4 sm:px-6 mt-2 max-w-2xl w-full">
-            <div className="flex items-center gap-3 mb-7">
-              <Trophy className="size-4 text-amber-400" />
-              <h2 className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-foreground">
-                Live results
-              </h2>
-              <span className="font-mono text-[0.55rem] uppercase tracking-[0.15em] text-muted-foreground">
-                avg across all judges
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-8">
-              {trackResults.map(({ track, finalists: ranked }) => {
+          {/* Mobile pill nav */}
+          <div className="lg:hidden sticky top-14 z-40 bg-background/95 backdrop-blur-md border-b border-border/40">
+            <div className="flex gap-2 overflow-x-auto px-4 py-3" style={{ scrollbarWidth: "none" }}>
+              {finalists.map((f) => {
+                const track = f.challenge_track ?? "";
                 const s = TRACK_STYLE[track] ?? FALLBACK_STYLE;
+                const status = completionStatus(f.id, track);
+                const isSelected = f.id === selectedFinalist?.id;
                 return (
-                  <div key={track}>
-                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-mono text-[0.6rem] uppercase tracking-widest mb-3 ${s.badge}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-                      {track}
-                    </span>
-                    <div className="flex flex-col gap-2 mt-3">
-                      {ranked.map(({ f, avg }, i) => (
-                        <div
-                          key={f.id}
-                          className={`flex items-center gap-3 py-3 px-4 rounded-xl border ${
-                            i === 0
-                              ? "border-amber-400/30 bg-amber-400/5"
-                              : "border-border/50 bg-card/40"
-                          }`}
-                        >
-                          {i === 0 && <Trophy className="size-3.5 shrink-0 text-amber-400" />}
-                          {i !== 0 && (
-                            <span className="font-mono text-xs text-muted-foreground/50 w-3.5 text-center shrink-0">
-                              {i + 1}
-                            </span>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-medium truncate ${i === 0 ? "text-foreground" : "text-muted-foreground"}`}>
-                              {f.title ?? "Untitled"}
-                            </p>
-                            {f.team_name && (
-                              <p className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground/60 truncate">
-                                {f.team_name}
-                              </p>
-                            )}
-                          </div>
-                          <span className={`font-mono text-sm font-medium tabular-nums shrink-0 ${i === 0 ? s.score : "text-muted-foreground"}`}>
-                            {avg > 0 ? `${avg}` : "—"}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <button
+                    key={f.id}
+                    onClick={() => setSelectedId(f.id)}
+                    className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                      isSelected
+                        ? "bg-foreground text-background"
+                        : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    }`}
+                  >
+                    {status === "complete" && (
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSelected ? "bg-background/60" : s.dot}`} />
+                    )}
+                    {f.title ?? f.team_name ?? "Untitled"}
+                  </button>
                 );
               })}
             </div>
           </div>
+
+          {/* Scoring card */}
+          {selectedFinalist && (
+            <div className="px-4 sm:px-6 lg:px-8 py-6 w-full max-w-2xl mx-auto">
+              <div className="mb-5">
+                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-mono text-[0.6rem] uppercase tracking-widest ${style.badge}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                  {selectedTrack}
+                </span>
+              </div>
+
+              <FinalistScoringCard
+                finalist={selectedFinalist}
+                criteria={criteria}
+                myScores={myScores[selectedFinalist.id] ?? {}}
+                saving={saving}
+                saved={saved}
+                style={style}
+                onScore={handleScore}
+              />
+
+              {/* Prev / Next */}
+              <div className="flex items-stretch gap-3 mt-4">
+                {prevFinalist ? (
+                  <button
+                    onClick={() => setSelectedId(prevFinalist.id)}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border/50 bg-card text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex-1 min-w-0"
+                  >
+                    <ArrowLeft className="size-3.5 shrink-0" />
+                    <span className="truncate text-left">{prevFinalist.title ?? prevFinalist.team_name}</span>
+                  </button>
+                ) : <div className="flex-1" />}
+                {nextFinalist ? (
+                  <button
+                    onClick={() => setSelectedId(nextFinalist.id)}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border/50 bg-card text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex-1 min-w-0 justify-end"
+                  >
+                    <span className="truncate text-right">{nextFinalist.title ?? nextFinalist.team_name}</span>
+                    <ArrowRight className="size-3.5 shrink-0" />
+                  </button>
+                ) : <div className="flex-1" />}
+              </div>
+            </div>
+          )}
+
+          {/* Results below scoring on narrow screens */}
+          {resultsReady && (
+            <div id="results" className="xl:hidden border-t border-border/60 pt-8 pb-12 px-4 sm:px-6 lg:px-8 mt-2 w-full max-w-2xl mx-auto">
+              <LiveResultsPanel trackResults={trackResults} />
+            </div>
+          )}
+        </div>
+
+        {/* Right panel: live results on xl+ */}
+        {resultsReady && (
+          <aside className="hidden xl:flex flex-col w-72 2xl:w-80 shrink-0 sticky top-0 self-start h-[calc(100vh-3.5rem)] overflow-y-auto border-l border-border/40 py-6 px-5 gap-6">
+            <LiveResultsPanel trackResults={trackResults} />
+          </aside>
         )}
       </div>
     </div>
@@ -738,13 +735,14 @@ function FinalistScoringCard({
   onScore,
 }: {
   finalist: Finalist;
-  criteria: { key: string; label: string; weight: number }[];
+  criteria: { key: string; label: string; weight: number; description: string }[];
   myScores: Record<string, number>;
   saving: Set<string>;
   saved: Set<string>;
   style: { badge: string; score: string; btn: string; dot: string };
   onScore: (submissionId: string, criterionKey: string, score: number) => void;
 }) {
+  const [openInfo, setOpenInfo] = useState<string | null>(null);
   const scored = weightedScore(myScores, criteria);
   const allScored = criteria.every((c) => myScores[c.key] != null);
 
@@ -781,13 +779,23 @@ function FinalistScoringCard({
           const current = myScores[c.key] ?? null;
           const isSaving = saving.has(k);
           const isSaved = saved.has(k);
+          const isInfoOpen = openInfo === c.key;
 
           return (
             <div key={c.key} className="px-5 py-4">
               <div className="flex items-center justify-between gap-2 mb-3">
-                <p className="text-sm text-foreground leading-snug flex-1">
-                  {c.label}
-                </p>
+                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                  <p className="text-sm text-foreground leading-snug">
+                    {c.label}
+                  </p>
+                  <button
+                    onClick={() => setOpenInfo(isInfoOpen ? null : c.key)}
+                    className={`shrink-0 transition-colors rounded-full p-0.5 ${isInfoOpen ? "text-foreground" : "text-muted-foreground/40 hover:text-muted-foreground"}`}
+                    aria-label={`Info about ${c.label}`}
+                  >
+                    <Info className="size-3.5" />
+                  </button>
+                </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   {isSaving && (
                     <span className="font-mono text-[0.5rem] uppercase tracking-widest text-muted-foreground animate-pulse">
@@ -804,6 +812,12 @@ function FinalistScoringCard({
                   </span>
                 </div>
               </div>
+
+              {isInfoOpen && (
+                <p className="text-[0.8125rem] leading-relaxed text-muted-foreground mb-3 pl-0.5 pr-4">
+                  {c.description}
+                </p>
+              )}
 
               {/* Score buttons */}
               <div className="grid grid-cols-5 gap-2">
@@ -832,128 +846,62 @@ function FinalistScoringCard({
   );
 }
 
-// ─── Rubric view (static) ───────────────────────────────────────────────────
+// ─── Live results panel ─────────────────────────────────────────────────────
 
-function RubricView() {
+function LiveResultsPanel({
+  trackResults,
+}: {
+  trackResults: Array<{ track: string; finalists: Array<{ f: Finalist; avg: number }> }>;
+}) {
   return (
     <>
-      {/* Hero */}
-      <section className="relative h-[56vh] min-h-[340px] max-h-[540px] overflow-hidden">
-        <Image
-          src="/hackathons/innovation-hackathon/cover-art.png"
-          alt="2026 Innovation Hackathon"
-          fill
-          className="object-cover object-center"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-background" />
-        <div className="relative z-10 flex flex-col justify-end h-full px-[clamp(1.25rem,5vw,3rem)] pb-[clamp(2rem,5vh,4rem)]">
-          <div className="flex items-center gap-3 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-white/60 mb-3">
-            <span className="text-white/90">Judging Rubric</span>
-            <span className="h-px w-6 bg-white/30" />
-            <span>Demo Night · May 26, 2026</span>
-          </div>
-          <h1 className="font-serif text-[clamp(3rem,9vw,6.5rem)] leading-[0.9] tracking-tight text-white">
-            Scoring criteria.
-          </h1>
-          <p className="mt-4 max-w-[50ch] text-[clamp(0.875rem,2vw,1.125rem)] leading-relaxed text-white/70">
-            Three tracks. Four criteria each. Score 1–5 per criterion, then apply weights for a total out of 100.
-          </p>
-        </div>
-      </section>
+      <div className="flex items-center gap-2.5">
+        <Trophy className="size-3.5 text-amber-400 shrink-0" />
+        <span className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-foreground">Live results</span>
+        <span className="font-mono text-[0.5rem] uppercase tracking-[0.14em] text-muted-foreground">avg</span>
+      </div>
 
-      {/* Tracks */}
-      <div className="flex flex-col gap-0">
-        {RUBRIC_TRACKS.map((track, i) => {
-          const accent = TRACK_ACCENT_COLORS[i];
+      <div className="flex flex-col gap-6 mt-4">
+        {trackResults.map(({ track, finalists: ranked }) => {
+          const s = TRACK_STYLE[track] ?? FALLBACK_STYLE;
           return (
-            <section key={track.n} className="border-t border-border/50 py-[clamp(3rem,7vh,5rem)]">
-              <div className="px-[clamp(1.25rem,5vw,3rem)] mb-6">
-                <div className="flex items-center gap-3 font-mono text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground mb-3">
-                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[0.6rem] font-mono uppercase tracking-widest ${accent.badge}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${accent.dot}`} />
-                    Track {String(track.n).padStart(2, "0")}
-                  </span>
-                  <span className="h-px flex-1 bg-border/50 max-w-[8rem]" />
-                </div>
-                <h2 className="font-serif text-[clamp(1.75rem,4.5vw,3.25rem)] leading-tight tracking-tight mb-3">
-                  {track.name}
-                </h2>
-                <p className="max-w-[62ch] text-sm leading-relaxed text-muted-foreground sm:text-base">
-                  {track.description}
-                </p>
-              </div>
-
-              <div className="px-[clamp(1.25rem,5vw,3rem)] mb-8">
-                <div className={`relative w-full rounded-2xl overflow-hidden ring-1 ${accent.ring} h-40 sm:h-52`}>
-                  <Image src={track.image} alt={track.name} fill className="object-cover object-center" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-transparent to-transparent" />
-                </div>
-              </div>
-
-              <div className="relative">
-                <div className="pointer-events-none absolute top-0 right-0 h-full w-16 bg-gradient-to-l from-background to-transparent z-10 hidden sm:block" />
-                <div className="flex gap-4 overflow-x-auto pb-4 px-[clamp(1.25rem,5vw,3rem)] snap-x snap-mandatory scroll-smooth" style={{ scrollbarWidth: "none" }}>
-                  {track.criteria.map((c, ci) => (
-                    <div key={c.label} className="snap-start shrink-0 flex flex-col gap-3 rounded-xl border border-border bg-card p-5 w-[min(82vw,320px)] sm:w-72">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-[0.55rem] uppercase tracking-[0.18em] text-muted-foreground">
-                          Criterion {String(ci + 1).padStart(2, "0")}
-                        </span>
-                        <span className={`font-mono text-xs font-medium px-2 py-0.5 rounded-full ${accent.badge}`}>
-                          {c.weight}%
-                        </span>
-                      </div>
-                      <h3 className="text-base font-medium leading-snug text-foreground">{c.label}</h3>
-                      <p className="text-[0.8rem] leading-relaxed text-muted-foreground flex-1">{c.description}</p>
-                      <div className="flex items-center justify-between pt-2 border-t border-border">
-                        <span className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground">Score (1–5)</span>
-                        <span className="font-mono text-sm text-muted-foreground/40 tracking-widest">_ / 5</span>
-                      </div>
+            <div key={track}>
+              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-mono text-[0.55rem] uppercase tracking-widest mb-2 ${s.badge}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                {track}
+              </span>
+              <div className="flex flex-col gap-1.5 mt-2">
+                {ranked.map(({ f, avg }, i) => (
+                  <div
+                    key={f.id}
+                    className={`flex items-center gap-2.5 py-2.5 px-3 rounded-xl border ${
+                      i === 0 ? "border-amber-400/30 bg-amber-400/5" : "border-border/50 bg-card/40"
+                    }`}
+                  >
+                    {i === 0
+                      ? <Trophy className="size-3 shrink-0 text-amber-400" />
+                      : <span className="font-mono text-[0.65rem] text-muted-foreground/50 w-3 text-center shrink-0">{i + 1}</span>
+                    }
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[0.8125rem] font-medium truncate ${i === 0 ? "text-foreground" : "text-muted-foreground"}`}>
+                        {f.title ?? "Untitled"}
+                      </p>
+                      {f.team_name && (
+                        <p className="font-mono text-[0.55rem] uppercase tracking-[0.12em] text-muted-foreground/50 truncate">
+                          {f.team_name}
+                        </p>
+                      )}
                     </div>
-                  ))}
-                  <div className="snap-start shrink-0 flex flex-col justify-center items-center gap-2 rounded-xl border border-dashed border-border/50 p-5 w-44 text-center">
-                    <span className="font-mono text-[0.55rem] uppercase tracking-[0.18em] text-muted-foreground">Total</span>
-                    <span className="font-mono text-2xl font-medium text-foreground">100%</span>
-                    <div className="mt-2 h-px w-8 bg-border" />
-                    <span className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground">Weighted<br />score</span>
+                    <span className={`font-mono text-sm font-medium tabular-nums shrink-0 ${i === 0 ? s.score : "text-muted-foreground"}`}>
+                      {avg > 0 ? avg : "—"}
+                    </span>
                   </div>
-                </div>
+                ))}
               </div>
-            </section>
+            </div>
           );
         })}
       </div>
-
-      {/* Scoring scale */}
-      <section className="border-t border-border/50 py-[clamp(2.5rem,6vh,4rem)] px-[clamp(1.25rem,5vw,3rem)]">
-        <div className="max-w-2xl">
-          <h2 className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-muted-foreground mb-5">Scoring scale</h2>
-          <div className="flex flex-col">
-            {[
-              { score: 5, label: "Exceptional", desc: "Clearly exceeds the criterion" },
-              { score: 4, label: "Strong", desc: "Meets the criterion with notable quality" },
-              { score: 3, label: "Meets the bar", desc: "Solid but unremarkable" },
-              { score: 2, label: "Weak attempt", desc: "Partially addressed" },
-              { score: 1, label: "Does not address", desc: "The criterion is not addressed" },
-            ].map((row) => (
-              <div key={row.score} className="flex items-baseline gap-5 py-3 border-b border-border/50 last:border-0">
-                <span className="font-mono text-xl font-medium text-foreground w-4 shrink-0">{row.score}</span>
-                <span className="text-sm font-medium text-foreground w-36 shrink-0">{row.label}</span>
-                <span className="text-sm text-muted-foreground">{row.desc}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-border/50 py-6 px-[clamp(1.25rem,5vw,3rem)] flex flex-col gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-        <span>2026 Innovation Hackathon · MakersLounge</span>
-        <Link href="/hackathons/2026-innovation-hackathon" className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground">
-          Back to hackathon <ArrowUpRight className="size-3" />
-        </Link>
-      </footer>
     </>
   );
 }
