@@ -57,7 +57,7 @@ const JUDGES: Array<{ name: string; title: string; company: string; photo?: stri
   { name: "Naina Dewan", title: "Manager, New Technology & Innovation", company: "TTC", photo: "/hackathons/innovation-hackathon/judges/naina-dewan.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-ttc.png" },
   { name: "Rishi Midha", title: "AI Program Manager", company: "EllisDon", photo: "/hackathons/innovation-hackathon/judges/rishi-midha.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-ellisdon.png" },
   { name: "Dave Jani", title: "Director, Innovation & Technology Enablement", company: "Chartwell Retirement Residences", photo: "/hackathons/innovation-hackathon/judges/dave-jani.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-chartwell.png" },
-  { name: "Ashish D'Sa", title: "CTO & Co-founder", company: "Arbor", photo: "/hackathons/innovation-hackathon/judges/ashish-dsa.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-arbor.png" },
+  { name: "Ashish DSa", title: "Chief Technology Officer", company: "Arbor", photo: "/hackathons/innovation-hackathon/judges/ashish-dsa.png", companyLogo: "/hackathons/innovation-hackathon/judges/logo-arbor.png" },
 ];
 type TeamMember = { name: string; photo?: string; linkedin?: string };
 const FINALIST_TEAMS: Record<string, TeamMember[]> = {
