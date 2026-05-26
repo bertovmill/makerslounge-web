@@ -180,9 +180,16 @@ export default function ScoringContent({ judgeSlug }: { judgeSlug?: string }) {
           <span className="font-sans text-sm font-medium text-foreground hidden sm:inline">makerslounge</span>
         </Link>
 
-        <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] px-3 py-1.5 rounded-md text-foreground bg-secondary/60">
-          Scoring
-        </span>
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] px-3 py-1 rounded-md text-foreground bg-secondary/60">
+            Scoring
+          </span>
+          {judgeName && (
+            <span className="lg:hidden font-mono text-[0.55rem] uppercase tracking-[0.1em] text-muted-foreground leading-none">
+              {judgeName.split(" ")[0]}
+            </span>
+          )}
+        </div>
 
         <div className="flex items-center gap-2">
           {judgeName && (
