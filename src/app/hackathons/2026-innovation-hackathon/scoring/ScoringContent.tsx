@@ -437,7 +437,6 @@ function ScoringView({ judgeName, mobileNavOpen, onMobileNavClose }: {
 
       const fs = (finalistData ?? []) as Finalist[];
       setFinalists(fs);
-      if (fs.length > 0) setSelectedId(fs[0].id);
 
       if (fs.length > 0) {
         const ids = fs.map((f) => f.id);
@@ -615,7 +614,7 @@ function ScoringView({ judgeName, mobileNavOpen, onMobileNavClose }: {
   });
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)]">
+    <div className="flex h-[calc(100vh-3.5rem)]">
 
       {/* ── Desktop sidebar ──────────────────────────────────────────────── */}
       <aside className="hidden lg:flex flex-col w-60 shrink-0 sticky top-14 self-start h-[calc(100vh-3.5rem)] overflow-y-auto border-r border-border/40 py-5 px-3 gap-5">
