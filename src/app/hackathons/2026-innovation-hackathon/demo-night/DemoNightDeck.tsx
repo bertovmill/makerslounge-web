@@ -951,7 +951,7 @@ function SlideJudgingResults() {
 
               {/* Reveal section */}
               <div className="mt-auto">
-                {!isComplete ? (
+                {judgesIn === 0 ? (
                   <div className="rounded-xl border border-dashed border-border/40 px-4 py-6 text-center">
                     <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted-foreground/40">
                       Winner announced after scoring
