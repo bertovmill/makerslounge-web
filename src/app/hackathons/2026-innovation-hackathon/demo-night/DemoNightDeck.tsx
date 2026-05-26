@@ -78,7 +78,7 @@ const FINALIST_TEAMS: Record<string, TeamMember[]> = {
   "forgeos": [
     { name: "Kylie Vincent", photo: "/hackathons/innovation-hackathon/teams/forgeos/kylie-vincent.png", linkedin: "https://www.linkedin.com/in/kylie-vincent905/" },
   ],
-  "idea forge": [
+  "ideaforge": [
     { name: "Karan Aggarwal", photo: "/hackathons/innovation-hackathon/teams/idea-forge/karan-aggarwal.png", linkedin: "https://www.linkedin.com/in/karanagg262/" },
     { name: "Behzad Janjua", photo: "/hackathons/innovation-hackathon/teams/idea-forge/behzad-janjua.png", linkedin: "https://www.linkedin.com/in/behzad-janjua/" },
     { name: "Prakash Raaj Vasudevan", photo: "/hackathons/innovation-hackathon/teams/idea-forge/prakash-raaj-vasudevan.png", linkedin: "https://www.linkedin.com/in/prakash-raaj-vasudevan/" },
@@ -100,7 +100,7 @@ const BONUS_TEAMS: Record<string, TeamMember[]> = {
 
 const STATS: { participants: number; projectsSubmitted: number; teams: number } | null = null;
 
-const SLIDE_COUNT = 17;
+const SLIDE_COUNT = 18;
 
 const SLIDE_INDEX: Array<{ n: number; title: string }> = [
   { n: 1, title: "Opening" },
@@ -315,10 +315,13 @@ export default function DemoNightDeck() {
               <SlideBonusPresentation index={i} slideN={14 + i} />
             </Slide>
           ))}
-          <Slide n={16} title="Winners">
+          <Slide n={16} title="Judging Results">
+            <SlideJudgingResults />
+          </Slide>
+          <Slide n={17} title="Winners">
             <SlideWinners />
           </Slide>
-          <Slide n={17} title="Thank you">
+          <Slide n={18} title="Thank you">
             <SlideThankYou />
           </Slide>
         </div>
@@ -766,7 +769,30 @@ function SlideJudgingCriteria() {
   );
 }
 
-function SlideWinners() {
+type TrackSummary = { pct: number; judgesIn: number; judgesTotal: number; winner: { title: string; team_name: string | null; avg_score: number } | null };
+
+function SlideJudgingResults() {
+  const [tracks, setTracks] = useState<Record<string, TrackSummary>>({});
+  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const load = async () => {
+      const pw = typeof window !== "undefined" ? sessionStorage.getItem("hackathon-admin-password") : null;
+      const res = await fetch("/api/admin/hackathon-scores/summary", {
+        headers: { "x-admin-password": pw ?? "makers2026" },
+      });
+      if (res.ok) {
+        const { tracks: data } = await res.json() as { tracks: Record<string, TrackSummary> };
+        setTracks(data);
+      }
+    };
+    load();
+    const interval = setInterval(load, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const trackNames = ["Validating a Business Idea", "Continuous Market Monitoring", "Synthetic Customers"];
+
   return (
     <div className="flex h-full flex-col">
       <SlideBackground />
@@ -775,6 +801,104 @@ function SlideWinners() {
         <span className="text-gradient">Demo Night</span>
         <span className="h-px w-8 bg-border" />
         <span className="text-foreground">{pad2(16)}</span>
+        <span className="h-px w-4 bg-border" />
+        <span>Judging Results</span>
+      </div>
+
+      <div className="relative mt-[clamp(1.5rem,3vh,3rem)] flex flex-col gap-[clamp(1rem,2vh,1.5rem)]">
+        <h2 className="font-sans font-semibold text-[clamp(2.5rem,7vw,6rem)] leading-[1.0] tracking-tight">
+          The <span className="text-gradient">results.</span>
+        </h2>
+      </div>
+
+      <div className="relative mt-[clamp(1rem,2vh,2rem)] grid flex-1 min-h-0 grid-cols-3 gap-5 pb-[clamp(2rem,5vh,4rem)]">
+        {trackNames.map((name) => {
+          const t = tracks[name];
+          const pct = t?.pct ?? 0;
+          const judgesIn = t?.judgesIn ?? 0;
+          const judgesTotal = t?.judgesTotal ?? 5;
+          const isComplete = pct >= 100;
+          const isRevealed = revealed[name] ?? false;
+
+          return (
+            <div key={name} className="flex flex-col gap-5 rounded-2xl border border-border/60 bg-background/40 p-6 backdrop-blur-sm">
+              {/* Track name */}
+              <div className="flex flex-col gap-1.5">
+                <span className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground">Track</span>
+                <h3 className="font-sans font-semibold text-[clamp(1rem,1.8vw,1.6rem)] leading-snug">{name}</h3>
+              </div>
+
+              {/* Progress */}
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted-foreground">Judges scored</span>
+                  <span className={`font-mono text-sm font-semibold tabular-nums ${isComplete ? "text-green-500" : "text-foreground"}`}>
+                    {judgesIn} / {judgesTotal}
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-border/40">
+                  <div
+                    className={`h-full rounded-full transition-all duration-700 ${isComplete ? "bg-green-500" : "bg-gradient-to-r from-[#6AC4F7] to-[#1A7DE8]"}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className={`font-mono text-xs tabular-nums ${isComplete ? "text-green-500" : "text-muted-foreground"}`}>
+                  {isComplete ? "✓ Scoring complete" : `${pct}% complete`}
+                </span>
+              </div>
+
+              {/* Reveal section */}
+              <div className="mt-auto">
+                {!isComplete ? (
+                  <div className="rounded-xl border border-dashed border-border/40 px-4 py-6 text-center">
+                    <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted-foreground/40">
+                      Winner announced after scoring
+                    </span>
+                  </div>
+                ) : !isRevealed ? (
+                  <button
+                    onClick={() => setRevealed((p) => ({ ...p, [name]: true }))}
+                    className="w-full rounded-xl bg-foreground px-4 py-4 font-sans font-semibold text-background transition-opacity hover:opacity-90 text-[clamp(0.9rem,1.4vw,1.2rem)]"
+                  >
+                    Reveal winner ✦
+                  </button>
+                ) : t?.winner ? (
+                  <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-background/60 px-5 py-5 text-center backdrop-blur-sm">
+                    <span className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-gradient">Winner</span>
+                    <span className="font-sans font-semibold text-[clamp(1.1rem,2vw,1.75rem)] leading-snug">{t.winner.title}</span>
+                    {t.winner.team_name && t.winner.title !== t.winner.team_name && (
+                      <span className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-muted-foreground">{t.winner.team_name}</span>
+                    )}
+                    <span className="font-mono text-xs text-muted-foreground/60">{t.winner.avg_score}/100 avg</span>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-border/40 px-4 py-4 text-center">
+                    <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted-foreground">No scores yet</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="relative mt-auto flex items-center justify-between font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <span>2026 Innovation Hackathon</span>
+        <span>Demo Night · May 26</span>
+      </div>
+    </div>
+  );
+}
+
+function SlideWinners() {
+  return (
+    <div className="flex h-full flex-col">
+      <SlideBackground />
+
+      <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <span className="text-gradient">Demo Night</span>
+        <span className="h-px w-8 bg-border" />
+        <span className="text-foreground">{pad2(17)}</span>
         <span className="h-px w-4 bg-border" />
         <span>Winners</span>
       </div>
@@ -837,7 +961,7 @@ function SlideThankYou() {
       <div className="relative flex items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span className="text-gradient">Demo Night</span>
         <span className="h-px w-8 bg-border" />
-        <span className="text-foreground">{pad2(17)}</span>
+        <span className="text-foreground">{pad2(18)}</span>
         <span className="h-px w-4 bg-border" />
         <span>Thank you</span>
       </div>
