@@ -21,11 +21,11 @@ const JUDGES = [
 ];
 
 const JUDGE_TO_SLUG: Record<string, string> = {
-  "James Maeng": "james-maeng",
-  "Naina Dewan": "naina-dewan",
-  "Rishi Midha": "rishi-midha",
-  "Dave Jani": "dave-jani",
-  "Ashish D'Sa": "ashish-dsa",
+  "James Maeng": "james",
+  "Naina Dewan": "naina",
+  "Rishi Midha": "rishi",
+  "Dave Jani": "dave",
+  "Ashish D'Sa": "ashish",
 };
 const SLUG_TO_JUDGE: Record<string, string> = Object.fromEntries(
   Object.entries(JUDGE_TO_SLUG).map(([name, slug]) => [slug, name]),
@@ -118,23 +118,21 @@ function avgWeightedScore(
 
 // ─── Main component ─────────────────────────────────────────────────────────
 
-export default function ScoringContent() {
+export default function ScoringContent({ judgeSlug }: { judgeSlug?: string }) {
   const router = useRouter();
+  const presetName = judgeSlug ? SLUG_TO_JUDGE[judgeSlug] ?? null : null;
+
   const [isAuthed, setIsAuthed] = useState<boolean>(
     () => typeof window !== "undefined" && Boolean(sessionStorage.getItem(SESSION_KEY)),
   );
-  const [judgeName, setJudgeName] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    const slug = new URLSearchParams(window.location.search).get("judge");
-    if (slug && SLUG_TO_JUDGE[slug]) return SLUG_TO_JUDGE[slug];
-    return sessionStorage.getItem(`${SESSION_KEY}-judge`);
-  });
+  const [judgeName, setJudgeName] = useState<string | null>(
+    () => presetName ?? (typeof window !== "undefined" ? sessionStorage.getItem(`${SESSION_KEY}-judge`) : null),
+  );
   const [overlay, setOverlay] = useState<Overlay>(() => {
     if (typeof window === "undefined") return "password";
     const authed = Boolean(sessionStorage.getItem(SESSION_KEY));
     if (!authed) return "password";
-    const slug = new URLSearchParams(window.location.search).get("judge");
-    if (slug && SLUG_TO_JUDGE[slug]) return null;
+    if (presetName) return null;
     const judge = sessionStorage.getItem(`${SESSION_KEY}-judge`);
     return judge ? null : "judge-select";
   });
@@ -143,11 +141,9 @@ export default function ScoringContent() {
   const handlePasswordSuccess = () => {
     setIsAuthed(true);
     sessionStorage.setItem(SESSION_KEY, "1");
-    const slug = new URLSearchParams(window.location.search).get("judge");
-    if (slug && SLUG_TO_JUDGE[slug]) {
-      const name = SLUG_TO_JUDGE[slug];
-      setJudgeName(name);
-      sessionStorage.setItem(`${SESSION_KEY}-judge`, name);
+    if (presetName) {
+      setJudgeName(presetName);
+      sessionStorage.setItem(`${SESSION_KEY}-judge`, presetName);
       setOverlay(null);
     } else {
       setOverlay("judge-select");
@@ -159,7 +155,7 @@ export default function ScoringContent() {
     sessionStorage.setItem(`${SESSION_KEY}-judge`, name);
     setOverlay(null);
     const slug = JUDGE_TO_SLUG[name];
-    if (slug) router.replace(`/hackathons/2026-innovation-hackathon/scoring?judge=${slug}`);
+    if (slug) router.push(`/hackathons/2026-innovation-hackathon/scoring/${slug}`);
   };
 
   const handleResetConfirm = async () => {
