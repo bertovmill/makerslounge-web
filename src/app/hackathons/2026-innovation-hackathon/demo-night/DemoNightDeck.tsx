@@ -272,7 +272,7 @@ function SlideWhatIsMakersLounge() {
           </h2>
           <div className="flex flex-col gap-[clamp(0.75rem,1.5vh,1.25rem)] max-w-xl">
             <p className="font-sans text-[clamp(0.95rem,1.5vw,1.2rem)] leading-relaxed text-foreground/80">
-              MakersLounge is a community of <span className="font-semibold text-foreground">900 builders</span>, mostly based in Toronto — people who turn ideas into real things.
+              MakersLounge is a community of <span className="font-semibold text-foreground">1000+ builders</span>, mostly based in Toronto — people who turn ideas into real things.
             </p>
             <p className="font-sans text-[clamp(0.95rem,1.5vw,1.2rem)] leading-relaxed text-muted-foreground">
               We host multiple events every month — hackathons, builder meetups, special presentations, and more — all with one rule: no talks, no pitches, just makers building and shipping together.
