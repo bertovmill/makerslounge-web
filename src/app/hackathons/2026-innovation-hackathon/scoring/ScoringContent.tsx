@@ -540,6 +540,20 @@ function ScoringView({ judgeName, mobileNavOpen, onMobileNavClose }: {
     });
   }
 
+  // Within "Continuous Market Monitoring", put Snoop.ai first
+  const cmmTrack = "Continuous Market Monitoring";
+  if (byTrack[cmmTrack]) {
+    byTrack[cmmTrack].sort((a, b) => {
+      const aName = (a.title ?? a.team_name ?? "").toLowerCase();
+      const bName = (b.title ?? b.team_name ?? "").toLowerCase();
+      const aIsSnoop = aName.includes("snoop");
+      const bIsSnoop = bName.includes("snoop");
+      if (aIsSnoop && !bIsSnoop) return -1;
+      if (!aIsSnoop && bIsSnoop) return 1;
+      return 0;
+    });
+  }
+
   // Flat ordered finalists list (for prev/next nav)
   const orderedFinalists = orderedTracks.flatMap((t) => byTrack[t] ?? []);
 
@@ -589,8 +603,8 @@ function ScoringView({ judgeName, mobileNavOpen, onMobileNavClose }: {
           const s = TRACK_STYLE[track] ?? FALLBACK_STYLE;
           return (
             <div key={track}>
-              <div className={`inline-flex items-start gap-1.5 px-2 py-0.5 rounded-full font-mono text-[0.55rem] uppercase tracking-widest mb-2 ${s.badge}`}>
-                <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-0.5 ${s.dot}`} />
+              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[0.65rem] uppercase tracking-[0.12em] mb-2 ${s.badge}`}>
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
                 <span className="leading-tight">{track}</span>
               </div>
               <div className="flex flex-col gap-0.5 mt-1">
@@ -682,8 +696,8 @@ function ScoringView({ judgeName, mobileNavOpen, onMobileNavClose }: {
                 const s = TRACK_STYLE[track] ?? FALLBACK_STYLE;
                 return (
                   <div key={track}>
-                    <div className={`inline-flex items-start gap-1.5 px-2 py-0.5 rounded-full font-mono text-[0.55rem] uppercase tracking-widest mb-2 ${s.badge}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-0.5 ${s.dot}`} />
+                    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[0.65rem] uppercase tracking-[0.12em] mb-2 ${s.badge}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
                       <span className="leading-tight">{track}</span>
                     </div>
                     <div className="flex flex-col gap-0.5 mt-1">
