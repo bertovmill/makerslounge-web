@@ -121,16 +121,15 @@ const SLIDE_INDEX: Array<{ n: number; title: string }> = [
   { n: 16, title: "Demo 07" },
   { n: 17, title: "Bonus Demos" },
   { n: 18, title: "Bonus 01" },
-  { n: 19, title: "Bonus 02" },
-  { n: 20, title: "Judging" },
-  { n: 21, title: "Thank You" },
+  { n: 19, title: "Judging" },
+  { n: 20, title: "Thank You" },
 ];
 
 // Explicit demo order: Continuous Market Monitoring → Validating a Business Idea → Synthetic Customers
 const DEMO_ORDER = ["snoop", "overton", "cascade", "forgeos", "ideaforge", "doppel", "vito"];
 
 const DEMO_SLOT_COUNT = 7;
-const BONUS_SLOT_COUNT = 2;
+const BONUS_SLOT_COUNT = 1;
 
 export default function DemoNightDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -354,14 +353,11 @@ export default function DemoNightDeck() {
           <Slide n={18} title="Bonus Demo 01">
             <SlideBonusPresentation index={0} slideN={18} />
           </Slide>
-          <Slide n={19} title="Bonus Demo 02">
-            <SlideBonusPresentation index={1} slideN={19} />
-          </Slide>
 
-          <Slide n={20} title="Judging Results">
+          <Slide n={19} title="Judging Results">
             <SlideJudgingResults />
           </Slide>
-          <Slide n={21} title="Thank you">
+          <Slide n={20} title="Thank you">
             <SlideThankYou />
           </Slide>
         </div>
@@ -1243,7 +1239,7 @@ function SlideDemoPresentation({ finalist, index, slideN }: { finalist: Finalist
   );
 }
 
-const BONUS_DEMO_NAMES: string[] = ["Auctopus", "SAMM"];
+const BONUS_DEMO_NAMES: string[] = ["SAMM"];
 
 function SlideBonusDemosIntro() {
   return (
