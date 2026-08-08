@@ -259,27 +259,82 @@ export default function Home() {
           </h3>
           <p className="max-w-[640px] text-ink-muted">
             Cursor is the editor we&apos;ll use tonight — it&apos;s a code editor with AI built
-            in, and it&apos;s where you&apos;ll run every command below. Download it and open it
-            before moving on.
+            in, and it&apos;s where you&apos;ll run every command below. Download it, open it,
+            then click <strong className="text-ink">Open project</strong>:
           </p>
-          <div className="mt-4">
-            <Button
-              asChild
-              className="bg-gradient-to-br from-brand to-brand-dark px-6 text-white hover:opacity-90"
-            >
-              <a href="https://cursor.com/download" target="_blank" rel="noreferrer">
-                Download Cursor →
-              </a>
-            </Button>
+          <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+            <div className="relative w-full max-w-sm shrink-0 overflow-hidden rounded-xl ring-1 ring-[#e3ecf5] sm:max-w-[280px]">
+              <Image
+                src="/images/cursor-open-project.png"
+                alt="Cursor's start screen with the Open project box highlighted"
+                width={2000}
+                height={1307}
+                className="w-full"
+              />
+            </div>
+            <div className="flex flex-col items-start gap-4">
+              <Button
+                asChild
+                className="bg-gradient-to-br from-brand to-brand-dark px-6 text-white hover:opacity-90"
+              >
+                <a href="https://cursor.com/download" target="_blank" rel="noreferrer">
+                  Download Cursor →
+                </a>
+              </Button>
+              <Checkpoint>
+                ✅ <strong className="text-brand-dark">Checkpoint:</strong> Cursor is installed,
+                open, and its built-in terminal is ready (<Inline>Ctrl+`</Inline>).
+              </Checkpoint>
+            </div>
           </div>
-          <Checkpoint>
-            ✅ <strong className="text-brand-dark">Checkpoint:</strong> Cursor is installed and
-            open, with its built-in terminal ready (<Inline>Ctrl+`</Inline>).
-          </Checkpoint>
         </div>
       </section>
 
-      {/* Slide 5 — Step 1 */}
+      {/* Slide 5 — Or just ask Cursor */}
+      <section
+        data-slide
+        className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
+      >
+        <div className="mx-auto w-full max-w-3xl">
+          <Badge
+            variant="outline"
+            className="mb-3 w-fit border-brand/30 text-xs font-bold tracking-[0.12em] text-brand-dark uppercase"
+          >
+            Prefer chat?
+          </Badge>
+          <h3 className="mb-2.5 text-2xl font-extrabold tracking-tight md:text-3xl">
+            Just ask Cursor
+          </h3>
+          <p className="max-w-[640px] text-ink-muted">
+            Cursor has its own AI agent built in — if you&apos;d rather not touch the terminal,
+            open the chat panel (<Inline>Cmd+L</Inline>) and just type what you want. It can run
+            the same setup steps for you.
+          </p>
+          <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+            <div className="relative w-full max-w-sm shrink-0 overflow-hidden rounded-xl ring-1 ring-[#e3ecf5] sm:max-w-[280px]">
+              <Image
+                src="/images/cursor-ask-eve.png"
+                alt="Cursor's chat panel with the prompt 'I want to install the vercel eve agent framework to this project'"
+                width={2000}
+                height={1307}
+                className="w-full"
+              />
+            </div>
+            <div className="flex flex-col items-start gap-4">
+              <div className="rounded-xl border border-[#e3ecf5] bg-white px-4 py-3 text-sm text-ink-muted italic">
+                &ldquo;I want to install the Vercel Eve agent framework to this project&rdquo;
+              </div>
+              <Checkpoint>
+                ✅ <strong className="text-brand-dark">Checkpoint:</strong> Cursor scaffolds the
+                project and offers to connect Vercel — click{" "}
+                <strong className="text-ink">Add Vercel</strong> when it shows up.
+              </Checkpoint>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Slide 6 — Step 1 */}
       <section
         data-slide
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
@@ -311,7 +366,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 6 — Step 2 */}
+      {/* Slide 7 — Step 2 */}
       <section
         data-slide
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
@@ -349,7 +404,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 7 — Step 3 */}
+      {/* Slide 8 — Step 3 */}
       <section
         data-slide
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
