@@ -75,10 +75,6 @@ const prereqs = [
     ),
   },
   {
-    title: "A code editor (optional)",
-    detail: "VS Code or Cursor are nice — a plain terminal is all you actually need.",
-  },
-  {
     title: "A free Vercel account",
     detail: (
       <>
@@ -251,7 +247,39 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 4 — Step 1 */}
+      {/* Slide 4 — Step 0 */}
+      <section
+        data-slide
+        className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
+      >
+        <div className="mx-auto w-full max-w-3xl">
+          <StepBadge>Step 0</StepBadge>
+          <h3 className="mb-2.5 text-2xl font-extrabold tracking-tight md:text-3xl">
+            Install Cursor
+          </h3>
+          <p className="max-w-[640px] text-ink-muted">
+            Cursor is the editor we&apos;ll use tonight — it&apos;s a code editor with AI built
+            in, and it&apos;s where you&apos;ll run every command below. Download it and open it
+            before moving on.
+          </p>
+          <div className="mt-4">
+            <Button
+              asChild
+              className="bg-gradient-to-br from-brand to-brand-dark px-6 text-white hover:opacity-90"
+            >
+              <a href="https://cursor.com/download" target="_blank" rel="noreferrer">
+                Download Cursor →
+              </a>
+            </Button>
+          </div>
+          <Checkpoint>
+            ✅ <strong className="text-brand-dark">Checkpoint:</strong> Cursor is installed and
+            open, with its built-in terminal ready (<Inline>Ctrl+`</Inline>).
+          </Checkpoint>
+        </div>
+      </section>
+
+      {/* Slide 5 — Step 1 */}
       <section
         data-slide
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
@@ -263,8 +291,8 @@ export default function Home() {
           </h3>
           <p className="max-w-[640px] text-ink-muted">
             One command creates the project, installs dependencies, and starts Eve&apos;s
-            development server. Open your terminal (or the one built into VS Code / Cursor —{" "}
-            <Inline>Ctrl+`</Inline>) and run:
+            development server. Open Cursor&apos;s built-in terminal (<Inline>Ctrl+`</Inline>)
+            and run:
           </p>
           <CodeBlock
             lines={[
@@ -283,7 +311,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 5 — Step 2 */}
+      {/* Slide 6 — Step 2 */}
       <section
         data-slide
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
@@ -321,7 +349,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 6 — Step 3 */}
+      {/* Slide 7 — Step 3 */}
       <section
         data-slide
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
