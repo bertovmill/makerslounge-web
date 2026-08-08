@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 
-export function CodeBlock({ lines }: { lines: string[] }) {
+export function CodeBlock({ lines, copyText }: { lines: string[]; copyText?: string }) {
   const [copied, setCopied] = useState(false);
 
   const copy = () => {
-    const text = lines.filter((l) => !l.trim().startsWith("#")).join("\n").trim();
+    const text = copyText ?? lines.filter((l) => !l.trim().startsWith("#")).join("\n").trim();
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);

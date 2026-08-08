@@ -315,6 +315,7 @@ export default function Home() {
                 "# tonight's shared workshop key — capped at $20, be kind!",
                 "AI_GATEWAY_API_KEY=vck_2gBjXeEqEs7j0yDNVS5OXEaAtuNAxrK9zJPKbwaPzQotsmFAkj1y8x3p",
               ]}
+              copyText="vck_2gBjXeEqEs7j0yDNVS5OXEaAtuNAxrK9zJPKbwaPzQotsmFAkj1y8x3p"
             />
           </div>
         </div>
