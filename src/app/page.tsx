@@ -1,8 +1,9 @@
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { CodeBlock } from "@/components/code-block";
+import { SlideNav } from "@/components/slide-nav";
 
 function Inline({ children }: { children: React.ReactNode }) {
   return (
@@ -14,28 +15,68 @@ function Inline({ children }: { children: React.ReactNode }) {
 
 function Checkpoint({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mt-4 rounded-r-xl border-l-4 border-brand-dark bg-[#eaf4fe] px-4 py-3.5 text-[15px]">
+    <div className="mt-3 rounded-r-xl border-l-4 border-brand-dark bg-[#eaf4fe] px-4 py-3 text-sm">
       {children}
     </div>
   );
 }
+
+function StepBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <Badge className="mb-3 w-fit bg-gradient-to-br from-brand to-brand-dark text-xs font-bold tracking-[0.12em] text-white uppercase">
+      {children}
+    </Badge>
+  );
+}
+
+const schedule = [
+  {
+    time: "6:00 – 6:30 PM",
+    title: "Intros",
+    items: ["Food, non-alcoholic beverages, mingling 🍕"],
+  },
+  {
+    time: "6:30 – 7:15 PM",
+    title: "The State of AI Agents",
+    items: [
+      "Vercel Eve framework — Matias Gonzalez",
+      "AI Agent MCP — Nazar Ponochevnyi",
+      "Key principles — Danial Hasan",
+    ],
+  },
+  {
+    time: "7:15 – 8:15 PM",
+    title: "Agent-Building Session",
+    items: ["Groups of 4–6", "Instructors walking the room", "Everyone builds an agent"],
+  },
+  {
+    time: "8:15 – 8:45 PM",
+    title: "Demos",
+    items: ["Zoom link for everyone", "3-minute demos × 10", "Use case, friction, next steps"],
+  },
+  {
+    time: "8:45 – 9:00 PM",
+    title: "Wrap Up",
+    items: ["Connect with fellow builders"],
+  },
+];
 
 const prereqs = [
   {
     title: "Node.js 24 or newer",
     detail: (
       <>
-        Check with <Inline>node -v</Inline>. Need it? Install from{" "}
+        Check with <Inline>node -v</Inline>. Install from{" "}
         <a href="https://nodejs.org" className="text-brand-dark underline">
           nodejs.org
         </a>{" "}
-        or run <Inline>brew install node</Inline>.
+        or <Inline>brew install node</Inline>.
       </>
     ),
   },
   {
-    title: "A code editor (optional but nice)",
-    detail: "VS Code or Cursor both work great — but a plain terminal is all you actually need.",
+    title: "A code editor (optional)",
+    detail: "VS Code or Cursor are nice — a plain terminal is all you actually need.",
   },
   {
     title: "A free Vercel account",
@@ -44,9 +85,8 @@ const prereqs = [
         Sign up at{" "}
         <a href="https://vercel.com/signup" className="text-brand-dark underline">
           vercel.com/signup
-        </a>
-        . This gives you AI model access through the Vercel AI Gateway — no separate API keys
-        needed.
+        </a>{" "}
+        for AI model access via the Vercel AI Gateway — no separate API keys.
       </>
     ),
   },
@@ -59,50 +99,16 @@ const structure = [
   ["agent/channels/", "HTTP & messaging entry points (Slack, webhooks, …)"],
 ];
 
-const schedule = [
-  {
-    time: "6:00 – 6:30 PM",
-    title: "Intros",
-    items: ["Food, non-alcoholic beverages, mingling 🍕"],
-  },
-  {
-    time: "6:30 – 7:15 PM",
-    title: "The State of AI Agents",
-    items: [
-      "Introduction to the Vercel Eve agent framework — Matias Gonzalez (15 min)",
-      "AI Agent MCP — Nazar Ponochevnyi (15 min)",
-      "Building AI agents: key principles — Danial Hasan (15 min)",
-    ],
-  },
-  {
-    time: "7:15 – 8:15 PM",
-    title: "Agent-Building Session",
-    items: [
-      "Break out into groups of 4–6",
-      "Instructors walking the room to help",
-      "Everyone builds an agent",
-    ],
-  },
-  {
-    time: "8:15 – 8:45 PM",
-    title: "Demos",
-    items: [
-      "Zoom link for everyone to join",
-      "3-minute demos × 10",
-      "Your use case, the friction in getting set up, your next steps",
-    ],
-  },
-  {
-    time: "8:45 – 9:00 PM",
-    title: "Wrap Up",
-    items: ["Connect with fellow builders"],
-  },
-];
-
 export default function Home() {
   return (
-    <main>
-      <section className="relative flex min-h-screen items-end overflow-hidden">
+    <main className="h-dvh snap-y snap-mandatory overflow-y-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <SlideNav />
+
+      {/* Slide 1 — Hero */}
+      <section
+        data-slide
+        className="relative flex h-dvh snap-start items-end overflow-hidden"
+      >
         <Image
           src="/images/makers-lounge-group.jpg"
           alt="Makers Lounge community gathered at the space"
@@ -113,7 +119,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-brand-dark/40" />
         <div className="absolute inset-0 bg-gradient-to-br from-brand/20 via-transparent to-transparent" />
 
-        <div className="relative z-10 mx-auto w-full max-w-3xl px-6 pb-20 pt-32 text-center text-white">
+        <div className="relative z-10 mx-auto w-full max-w-3xl px-6 pb-16 pt-32 text-center text-white">
           <Badge className="mb-5 border-white/20 bg-white/10 text-xs font-bold tracking-[0.18em] text-white uppercase backdrop-blur-sm">
             Welcome to
           </Badge>
@@ -145,59 +151,49 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Itinerary */}
-      <section className="bg-gradient-to-b from-ink to-[#141f30] px-6 py-24 text-white">
-        <div className="mx-auto max-w-3xl">
-          <div className="mb-14 text-center">
-            <Badge className="mb-5 border-brand/30 bg-brand/10 text-xs font-bold tracking-[0.18em] text-brand-light uppercase">
+      {/* Slide 2 — Itinerary */}
+      <section
+        data-slide
+        className="flex h-dvh snap-start items-center overflow-hidden bg-gradient-to-b from-ink to-[#141f30] px-6 py-10 text-white"
+      >
+        <div className="mx-auto w-full max-w-3xl">
+          <div className="mb-6 text-center">
+            <Badge className="mb-4 border-brand/30 bg-brand/10 text-xs font-bold tracking-[0.18em] text-brand-light uppercase">
               Monday, August 10 · 6–9 PM
             </Badge>
-            <h2 className="mb-4 text-3xl font-extrabold tracking-tight md:text-5xl">
+            <h2 className="mb-2 text-2xl font-extrabold tracking-tight md:text-4xl">
               Tonight&apos;s Itinerary
             </h2>
-            <p className="mx-auto max-w-[560px] text-white/70">
-              An AI agent-building session — work with expert coaches to get your very own agent
-              up and running, with tangible value for your work.
+            <p className="mx-auto max-w-[560px] text-sm text-white/70 md:text-base">
+              Work with expert coaches to get your very own agent up and running.
             </p>
           </div>
 
-          <ol className="relative space-y-6 border-l border-white/10 pl-8">
+          <div className="space-y-2">
             {schedule.map((block) => (
-              <li key={block.title} className="relative">
-                <span className="absolute top-2 -left-[calc(2rem+5px)] size-2.5 rounded-full bg-brand" />
-                <Card className="border-white/10 bg-white/[0.04] ring-white/10">
-                  <CardHeader>
-                    <Badge
-                      variant="outline"
-                      className="mb-1 w-fit border-white/15 font-mono text-[11px] font-medium text-white/70"
-                    >
-                      {block.time}
-                    </Badge>
-                    <CardTitle className="text-lg text-white">{block.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-1.5 text-sm text-white/70">
-                      {block.items.map((item) => (
-                        <li key={item} className="flex gap-2">
-                          <span className="text-brand-light">·</span>
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              </li>
+              <div
+                key={block.title}
+                className="flex flex-col gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2.5 sm:flex-row sm:items-baseline sm:gap-4"
+              >
+                <Badge
+                  variant="outline"
+                  className="w-fit shrink-0 border-white/15 font-mono text-[10px] font-medium text-white/70"
+                >
+                  {block.time}
+                </Badge>
+                <div className="min-w-0">
+                  <span className="mr-2 text-sm font-bold">{block.title}</span>
+                  <span className="text-xs leading-snug text-white/60">
+                    {block.items.join(" · ")}
+                  </span>
+                </div>
+              </div>
             ))}
-          </ol>
+          </div>
 
-          <div className="mt-14 text-center">
-            <p className="mb-6 text-white/70">
-              Several expert AI agent-builders will be joining to facilitate. Food and drinks will
-              be provided. See you there 🎉
-            </p>
+          <div className="mt-6 text-center">
             <Button
               asChild
-              size="lg"
               className="bg-gradient-to-br from-brand to-brand-dark px-6 text-white hover:opacity-90"
             >
               <a href="https://luma.com/makers-vbwi" target="_blank" rel="noreferrer">
@@ -208,24 +204,26 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Getting started */}
-      <section className="bg-[#f7fafd] px-6 py-24 text-ink">
-        <div className="mx-auto max-w-3xl">
-          <div className="mb-14 text-center">
-            <Badge className="mb-5 border-brand/20 bg-brand/10 text-xs font-bold tracking-[0.18em] text-brand-dark uppercase">
+      {/* Slide 3 — Getting started intro + prerequisites */}
+      <section
+        data-slide
+        className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
+      >
+        <div className="mx-auto w-full max-w-3xl">
+          <div className="mb-8 text-center">
+            <Badge className="mb-4 border-brand/20 bg-brand/10 text-xs font-bold tracking-[0.18em] text-brand-dark uppercase">
               Let&apos;s build
             </Badge>
-            <h2 className="mb-4 text-3xl font-extrabold tracking-tight md:text-5xl">
+            <h2 className="mb-3 text-2xl font-extrabold tracking-tight md:text-4xl">
               Getting Started with Eve
             </h2>
-            <p className="mx-auto max-w-[600px] text-ink-muted">
+            <p className="mx-auto max-w-[600px] text-sm text-ink-muted md:text-base">
               Eve agents are TypeScript projects — you describe an agent with files under{" "}
-              <Inline>agent/</Inline>, and Eve runs it as a durable service. Everything below works
-              from a plain terminal — VS Code or Cursor just make it nicer to look at.
+              <Inline>agent/</Inline>, and Eve runs it as a durable service. Everything below
+              works from a plain terminal.
             </p>
           </div>
 
-          {/* Prerequisites */}
           <Badge
             variant="outline"
             className="mb-3 w-fit border-brand/30 text-xs font-bold tracking-[0.12em] text-brand-dark uppercase"
@@ -250,105 +248,114 @@ export default function Home() {
               </ul>
             </CardContent>
           </Card>
+        </div>
+      </section>
 
-          {/* Step 1 */}
-          <div className="mt-12">
-            <Badge className="mb-3 w-fit bg-gradient-to-br from-brand to-brand-dark text-xs font-bold tracking-[0.12em] text-white uppercase">
-              Step 1
-            </Badge>
-            <h3 className="mb-2.5 text-2xl font-extrabold tracking-tight">
-              Scaffold &amp; run your agent
-            </h3>
-            <p className="max-w-[640px] text-ink-muted">
-              One command creates the project, installs dependencies, and starts Eve&apos;s
-              development server. Open your terminal (or the one built into VS Code /
-              Cursor — <Inline>Ctrl+`</Inline>) and run:
-            </p>
-            <CodeBlock
-              lines={[
-                "# create your agent (name it anything you like)",
-                "npx eve@latest init my-agent",
-                "",
-                "# jump in and start the dev server",
-                "cd my-agent",
-                "npm run dev",
-              ]}
-            />
-            <Checkpoint>
-              ✅ <strong className="text-brand-dark">Checkpoint:</strong> a terminal UI opens and
-              your agent is running locally. Say hi to it!
-            </Checkpoint>
-          </div>
+      {/* Slide 4 — Step 1 */}
+      <section
+        data-slide
+        className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
+      >
+        <div className="mx-auto w-full max-w-3xl">
+          <StepBadge>Step 1</StepBadge>
+          <h3 className="mb-2.5 text-2xl font-extrabold tracking-tight md:text-3xl">
+            Scaffold &amp; run your agent
+          </h3>
+          <p className="max-w-[640px] text-ink-muted">
+            One command creates the project, installs dependencies, and starts Eve&apos;s
+            development server. Open your terminal (or the one built into VS Code / Cursor —{" "}
+            <Inline>Ctrl+`</Inline>) and run:
+          </p>
+          <CodeBlock
+            lines={[
+              "# create your agent (name it anything you like)",
+              "npx eve@latest init my-agent",
+              "",
+              "# jump in and start the dev server",
+              "cd my-agent",
+              "npm run dev",
+            ]}
+          />
+          <Checkpoint>
+            ✅ <strong className="text-brand-dark">Checkpoint:</strong> a terminal UI opens and
+            your agent is running locally. Say hi to it!
+          </Checkpoint>
+        </div>
+      </section>
 
-          {/* Step 2 */}
-          <div className="mt-12">
-            <Badge className="mb-3 w-fit bg-gradient-to-br from-brand to-brand-dark text-xs font-bold tracking-[0.12em] text-white uppercase">
-              Step 2
-            </Badge>
-            <h3 className="mb-2.5 text-2xl font-extrabold tracking-tight">Connect a model</h3>
-            <p className="max-w-[640px] text-ink-muted">
-              Eve talks to AI models through the <strong>Vercel AI Gateway</strong> by default.
-              The easiest path: link the project to your Vercel account and Eve authenticates
-              automatically.
-            </p>
-            <CodeBlock
-              lines={["# from inside your agent folder", "vercel link", "", "npm run dev"]}
-            />
-            <Checkpoint>
-              ✅ <strong className="text-brand-dark">Checkpoint:</strong> send your agent a
-              message and get a real response back.
-            </Checkpoint>
-          </div>
+      {/* Slide 5 — Step 2 */}
+      <section
+        data-slide
+        className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
+      >
+        <div className="mx-auto w-full max-w-3xl">
+          <StepBadge>Step 2</StepBadge>
+          <h3 className="mb-2.5 text-2xl font-extrabold tracking-tight md:text-3xl">
+            Connect a model
+          </h3>
+          <p className="max-w-[640px] text-ink-muted">
+            Eve talks to AI models through the <strong>Vercel AI Gateway</strong> by default. The
+            easiest path: link the project to your Vercel account and Eve authenticates
+            automatically.
+          </p>
+          <CodeBlock lines={["# from inside your agent folder", "vercel link", "", "npm run dev"]} />
+          <Checkpoint>
+            ✅ <strong className="text-brand-dark">Checkpoint:</strong> send your agent a message
+            and get a real response back.
+          </Checkpoint>
+        </div>
+      </section>
 
-          {/* Step 3 */}
-          <div className="mt-12">
-            <Badge className="mb-3 w-fit bg-gradient-to-br from-brand to-brand-dark text-xs font-bold tracking-[0.12em] text-white uppercase">
-              Step 3
-            </Badge>
-            <h3 className="mb-2.5 text-2xl font-extrabold tracking-tight">Know your way around</h3>
-            <p className="max-w-[640px] text-ink-muted">
-              Eve is <strong className="text-ink">filesystem-first</strong>: you teach your agent
-              by adding files under <Inline>agent/</Inline>. Names come straight from file paths —
-              a file at <Inline>agent/tools/get_weather.ts</Inline> automatically becomes the{" "}
-              <Inline>get_weather</Inline> tool.
-            </p>
-            <Card className="overflow-x-auto ring-[#e3ecf5]">
-              <CardContent>
-                <table className="w-full border-collapse text-[15px]">
-                  <thead>
-                    <tr>
-                      <th className="border-b border-[#e3ecf5] px-3 py-2.5 text-left text-xs tracking-[0.08em] text-ink-muted uppercase">
-                        Path
-                      </th>
-                      <th className="border-b border-[#e3ecf5] px-3 py-2.5 text-left text-xs tracking-[0.08em] text-ink-muted uppercase">
-                        What it does
-                      </th>
+      {/* Slide 6 — Step 3 */}
+      <section
+        data-slide
+        className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
+      >
+        <div className="mx-auto w-full max-w-3xl">
+          <StepBadge>Step 3</StepBadge>
+          <h3 className="mb-2.5 text-2xl font-extrabold tracking-tight md:text-3xl">
+            Know your way around
+          </h3>
+          <p className="max-w-[640px] text-ink-muted">
+            Eve is <strong className="text-ink">filesystem-first</strong>: you teach your agent by
+            adding files under <Inline>agent/</Inline>. A file at{" "}
+            <Inline>agent/tools/get_weather.ts</Inline> automatically becomes the{" "}
+            <Inline>get_weather</Inline> tool.
+          </p>
+          <Card className="overflow-x-auto ring-[#e3ecf5]">
+            <CardContent>
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr>
+                    <th className="border-b border-[#e3ecf5] px-3 py-2 text-left text-xs tracking-[0.08em] text-ink-muted uppercase">
+                      Path
+                    </th>
+                    <th className="border-b border-[#e3ecf5] px-3 py-2 text-left text-xs tracking-[0.08em] text-ink-muted uppercase">
+                      What it does
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {structure.map(([path, desc]) => (
+                    <tr key={path}>
+                      <td className="border-b border-[#e3ecf5] px-3 py-2">
+                        <code className="font-mono text-[13px] text-brand-dark">{path}</code>
+                      </td>
+                      <td className="border-b border-[#e3ecf5] px-3 py-2">{desc}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {structure.map(([path, desc]) => (
-                      <tr key={path}>
-                        <td className="border-b border-[#e3ecf5] px-3 py-2.5">
-                          <code className="font-mono text-[13.5px] text-brand-dark">{path}</code>
-                        </td>
-                        <td className="border-b border-[#e3ecf5] px-3 py-2.5">{desc}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </CardContent>
-            </Card>
-            <Checkpoint>
-              ✅ <strong className="text-brand-dark">Checkpoint:</strong> open{" "}
-              <Inline>agent/instructions.md</Inline>, change the personality, and watch your agent
-              become someone new.
-            </Checkpoint>
-          </div>
-
-          <div className="mt-14 text-center">
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+          <Checkpoint>
+            ✅ <strong className="text-brand-dark">Checkpoint:</strong> open{" "}
+            <Inline>agent/instructions.md</Inline>, change the personality, and watch your agent
+            become someone new.
+          </Checkpoint>
+          <div className="mt-6 text-center">
             <Button
               asChild
-              size="lg"
               className="bg-gradient-to-br from-brand to-brand-dark px-6 text-white hover:opacity-90"
             >
               <a href="https://eve.dev/docs/getting-started" target="_blank" rel="noreferrer">
