@@ -326,7 +326,49 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 6 — Step 1 */}
+      {/* Slide 6 — Build a UI for it */}
+      <section
+        data-slide
+        className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
+      >
+        <div className="mx-auto flex h-full w-full max-w-4xl flex-col items-center">
+          <div className="w-full shrink-0 text-center">
+            <Badge
+              variant="outline"
+              className="mb-2 w-fit border-brand/30 text-xs font-bold tracking-[0.12em] text-brand-dark uppercase"
+            >
+              Level up
+            </Badge>
+            <h3 className="mb-1.5 text-2xl font-extrabold tracking-tight md:text-3xl">
+              Build a UI for your agent
+            </h3>
+            <p className="mx-auto max-w-[600px] text-sm text-ink-muted md:text-base">
+              Once Eve is installed, keep chatting with Cursor — ask it to build a showcase app
+              with a chat interface using shadcn and Vercel&apos;s AI Elements kit.
+            </p>
+          </div>
+          <Image
+            src="/images/cursor-ask-ui.png"
+            alt="Cursor's chat panel with a prompt asking it to build a Next.js and shadcn app with a chat interface using Vercel AI Elements"
+            width={2000}
+            height={1307}
+            className="my-3 h-auto max-h-[52vh] w-auto max-w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
+          />
+          <div className="flex w-full shrink-0 flex-wrap items-center justify-center gap-4">
+            <div className="max-w-xl rounded-xl border border-[#e3ecf5] bg-white px-4 py-2.5 text-sm text-ink-muted italic">
+              &ldquo;Build me a simple Next.js and shadcn application that showcases all the
+              features of my Eve agent, and a chat interface for me to chat to it. Use the Vercel
+              AI Elements kit to build it.&rdquo;
+            </div>
+            <Checkpoint>
+              ✅ <strong className="text-brand-dark">Checkpoint:</strong> a chat UI opens where you
+              can talk to your agent — no terminal required.
+            </Checkpoint>
+          </div>
+        </div>
+      </section>
+
+      {/* Slide 7 — Step 1 */}
       <section
         data-slide
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
@@ -358,7 +400,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 7 — Step 2 */}
+      {/* Slide 8 — Step 2 */}
       <section
         data-slide
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
@@ -396,7 +438,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 8 — Step 3 */}
+      {/* Slide 9 — Step 3 */}
       <section
         data-slide
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
