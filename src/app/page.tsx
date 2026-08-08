@@ -303,6 +303,20 @@ export default function Home() {
             ✅ <strong className="text-brand-dark">Checkpoint:</strong> send your agent a message
             and get a real response back.
           </Checkpoint>
+
+          <div className="mt-3 rounded-xl border border-dashed border-brand/30 bg-brand/5 px-4 py-3">
+            <p className="text-sm text-ink-muted">
+              <strong className="text-ink">No Vercel account tonight?</strong> Paste this into
+              your agent&apos;s <Inline>.env.local</Inline> instead — a shared key for the room,
+              capped at $20 for the night, so be kind to it.
+            </p>
+            <CodeBlock
+              lines={[
+                "# tonight's shared workshop key — capped at $20, be kind!",
+                "AI_GATEWAY_API_KEY=vck_30Yfehnje4nTxeLB4G4sv481xlFEEreXhBH76IBbubO8XIcucT4EFi3i",
+              ]}
+            />
+          </div>
         </div>
       </section>
 
