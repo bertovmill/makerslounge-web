@@ -313,7 +313,7 @@ export default function Home() {
             <CodeBlock
               lines={[
                 "# tonight's shared workshop key — capped at $20, be kind!",
-                "AI_GATEWAY_API_KEY=vck_30Yfehnje4nTxeLB4G4sv481xlFEEreXhBH76IBbubO8XIcucT4EFi3i",
+                "AI_GATEWAY_API_KEY=vck_2gBjXeEqEs7j0yDNVS5OXEaAtuNAxrK9zJPKbwaPzQotsmFAkj1y8x3p",
               ]}
             />
           </div>
