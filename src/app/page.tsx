@@ -103,6 +103,7 @@ export default function Home() {
       {/* Slide 1 — Hero */}
       <section
         data-slide
+        id="hero"
         className="relative flex h-dvh snap-start items-end overflow-hidden"
       >
         <Image
@@ -112,36 +113,37 @@ export default function Home() {
           priority
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-brand-dark/40" />
-        <div className="absolute inset-0 bg-gradient-to-br from-brand/20 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-ink/35" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink from-5% via-ink/85 via-50% to-ink/25" />
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-dark/20 via-transparent to-transparent" />
 
-        <div className="relative z-10 mx-auto w-full max-w-3xl px-6 pb-16 pt-32 text-center text-white">
-          <Badge className="mb-5 border-white/20 bg-white/10 text-xs font-bold tracking-[0.18em] text-white uppercase backdrop-blur-sm">
+        <div className="relative z-10 mx-auto w-full max-w-4xl px-6 pb-20 pt-32 text-center text-white">
+          <p className="mb-6 text-[13px] font-semibold tracking-[0.28em] text-brand-light uppercase">
             Welcome to
-          </Badge>
-          <h1 className="mb-4 text-4xl font-extrabold tracking-tight md:text-6xl">
+          </p>
+          <h1 className="mb-6 text-7xl leading-[0.95] font-semibold tracking-tight text-balance md:text-9xl">
             Makers Lounge
           </h1>
-          <p className="mx-auto mb-8 max-w-[560px] text-lg text-white/90 md:text-xl">
+          <p className="mx-auto mb-10 max-w-[600px] text-xl leading-relaxed text-white/80 md:text-2xl">
             A community of builders, founders, and makers — coming together to learn, ship, and
             grow together.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <Button
               size="lg"
-              className="bg-gradient-to-br from-brand to-brand-dark px-6 text-white hover:opacity-90"
+              className="rounded-full bg-brand px-7 text-base font-medium text-white shadow-lg shadow-brand/20 hover:bg-brand-dark"
             >
               Explore the workshop
             </Button>
             <Button
               size="lg"
-              variant="outline"
-              className="border-white/30 bg-white/5 px-6 text-white hover:bg-white/15"
+              variant="ghost"
+              className="rounded-full px-7 text-base font-medium text-white hover:bg-white/10"
             >
-              Visit makerslounge.ca
+              Visit makerslounge.ca ›
             </Button>
           </div>
-          <p className="mt-10 text-sm font-bold tracking-[0.1em] text-white/80">
+          <p className="mt-14 text-xs font-medium tracking-[0.2em] text-white/50">
             BUILD&nbsp;·&nbsp;CONNECT&nbsp;·&nbsp;CREATE
           </p>
         </div>
@@ -150,6 +152,7 @@ export default function Home() {
       {/* Slide 2 — Itinerary */}
       <section
         data-slide
+        id="itinerary"
         className="flex h-dvh snap-start items-center overflow-hidden bg-gradient-to-b from-ink to-[#141f30] px-6 py-10 text-white"
       >
         <div className="mx-auto w-full max-w-3xl">
@@ -203,6 +206,7 @@ export default function Home() {
       {/* Slide 3 — Getting started intro + prerequisites */}
       <section
         data-slide
+        id="getting-started"
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
       >
         <div className="mx-auto w-full max-w-3xl">
@@ -250,6 +254,7 @@ export default function Home() {
       {/* Slide 4 — Step 0 */}
       <section
         data-slide
+        id="install-cursor"
         className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
       >
         <div className="mx-auto flex h-full w-full max-w-4xl flex-col items-center">
@@ -289,6 +294,7 @@ export default function Home() {
       {/* Slide 5 — Or just ask Cursor */}
       <section
         data-slide
+        id="ask-cursor"
         className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
       >
         <div className="mx-auto flex h-full w-full max-w-4xl flex-col items-center">
@@ -329,6 +335,7 @@ export default function Home() {
       {/* Slide 6 — Build a UI for it */}
       <section
         data-slide
+        id="build-ui"
         className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
       >
         <div className="mx-auto flex h-full w-full max-w-4xl flex-col items-center">
@@ -371,6 +378,7 @@ export default function Home() {
       {/* Slide 7 — Step 1 */}
       <section
         data-slide
+        id="step-1"
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
       >
         <div className="mx-auto w-full max-w-3xl">
@@ -403,6 +411,7 @@ export default function Home() {
       {/* Slide 8 — Step 2 */}
       <section
         data-slide
+        id="step-2"
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
       >
         <div className="mx-auto w-full max-w-3xl">
@@ -441,6 +450,7 @@ export default function Home() {
       {/* Slide 9 — Step 3 */}
       <section
         data-slide
+        id="step-3"
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
       >
         <div className="mx-auto w-full max-w-3xl">

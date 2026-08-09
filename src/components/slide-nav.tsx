@@ -18,6 +18,14 @@ export function SlideNav() {
       slidesRef.current[clamped]?.scrollIntoView({ behavior: "smooth", block: "start" });
     };
 
+    // Deep-link: jump straight to the slide named in the URL hash on load.
+    if (window.location.hash) {
+      const target = document.getElementById(window.location.hash.slice(1));
+      if (target && target.hasAttribute("data-slide")) {
+        target.scrollIntoView({ behavior: "instant" as ScrollBehavior, block: "start" });
+      }
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -26,6 +34,10 @@ export function SlideNav() {
             if (i !== -1) {
               indexRef.current = i;
               setIndex(i);
+              const id = entry.target.id;
+              if (id && window.location.hash.slice(1) !== id) {
+                history.replaceState(null, "", `#${id}`);
+              }
             }
           }
         }
