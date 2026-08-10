@@ -14,6 +14,12 @@ const resources: Resource[] = [
       "Unified API to access multiple AI providers with observability, model fallbacks, and zero data retention.",
     href: "https://vercel.com/docs/ai-gateway/getting-started",
   },
+  {
+    title: "Harmix Manager",
+    description:
+      "Harmix's manager dashboard — a live example of an AI-powered product to explore after the session.",
+    href: "https://manager.harmix.ai/",
+  },
 ];
 
 export default function ResourcesPage() {
