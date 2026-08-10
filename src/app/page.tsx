@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CodeBlock } from "@/components/code-block";
 import { SlideNav } from "@/components/slide-nav";
+import { LeftSidebar } from "@/components/left-sidebar";
 
 function Inline({ children }: { children: React.ReactNode }) {
   return (
@@ -99,6 +100,7 @@ export default function Home() {
   return (
     <main className="h-dvh snap-y snap-mandatory overflow-y-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <SlideNav />
+      <LeftSidebar />
 
       {/* Slide 1 — Hero */}
       <section
