@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AUTH_COOKIE, authToken, normalize } from "@/lib/auth";
@@ -30,6 +31,13 @@ export default async function PasswordPage({
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-brand-light via-brand to-brand-dark px-6 text-center">
       <div className="w-full max-w-[420px] rounded-2xl bg-white px-8 py-10 shadow-[0_20px_60px_rgba(15,28,46,0.25)]">
+        <Image
+          src="/icon.png"
+          alt="Makers Lounge"
+          width={56}
+          height={56}
+          className="mx-auto mb-4 rounded-xl"
+        />
         <div className="mb-2 text-xs font-bold tracking-[0.18em] text-ink-muted uppercase">
           Makerslounge presents
         </div>
