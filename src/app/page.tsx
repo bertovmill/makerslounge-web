@@ -908,8 +908,11 @@ export default function Home() {
       <section
         data-slide
         id="build-ui"
-        className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
+        className="relative flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
       >
+        <p className="absolute right-6 bottom-5 text-xs font-medium tracking-[0.2em] text-ink-muted/60">
+          7:25&nbsp;PM
+        </p>
         <div className="mx-auto flex h-full w-full max-w-4xl flex-col items-center">
           <div className="w-full shrink-0 text-center">
             <Badge

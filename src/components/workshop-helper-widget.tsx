@@ -21,6 +21,7 @@ import {
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
+  PromptInputTools,
   type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
@@ -86,6 +87,7 @@ export type WorkshopHelperWidgetProps = {
 
 export function WorkshopHelperWidget({ contextId, stacked }: WorkshopHelperWidgetProps = {}) {
   const [open, setOpen] = useState(false);
+  const [input, setInput] = useState("");
   const [slideId, setSlideId] = useState(contextId ?? "hero");
   const slideIdRef = useRef(contextId ?? "hero");
 
@@ -153,6 +155,8 @@ export function WorkshopHelperWidget({ contextId, stacked }: WorkshopHelperWidge
   function handleSubmit(message: PromptInputMessage) {
     const text = message.text.trim();
     if (!text || isBusy) return;
+    // The textarea is controlled, so PromptInput's own form.reset() can't clear it.
+    setInput("");
     void agent.send(text);
   }
 
@@ -279,16 +283,38 @@ export function WorkshopHelperWidget({ contextId, stacked }: WorkshopHelperWidge
             </div>
           )}
 
-          <PromptInput className="shrink-0 rounded-none border-x-0 border-b-0" onSubmit={handleSubmit}>
+          {/*
+            PromptInputFooter must be a *direct* child of PromptInput: InputGroup
+            switches from a 32px-tall row to an auto-height column via
+            `has-[>[data-align=block-end]]`, and PromptInputBody's `display:contents`
+            does not hide it from that `:has(>` selector. Nesting the footer inside
+            the body left the textarea collapsed to a single squashed line.
+          */}
+          <PromptInput
+            className="shrink-0 rounded-none border-x-0 border-b-0"
+            /* Text-only helper: keep pasted/dropped files from silently piling up. */
+            maxFiles={0}
+            onSubmit={handleSubmit}
+          >
             <PromptInputBody>
-              <PromptInputTextarea placeholder="Ask about this step…" />
-              <PromptInputFooter>
-                <span className="text-[11px] text-ink-muted">
+              <PromptInputTextarea
+                onChange={(event) => setInput(event.currentTarget.value)}
+                placeholder="Ask about this step…"
+                value={input}
+              />
+            </PromptInputBody>
+            <PromptInputFooter>
+              <PromptInputTools>
+                <span className="px-1 text-[11px] text-ink-muted">
                   Answers come from the workshop steps
                 </span>
-                <PromptInputSubmit onStop={() => agent.stop()} status={agent.status} />
-              </PromptInputFooter>
-            </PromptInputBody>
+              </PromptInputTools>
+              <PromptInputSubmit
+                disabled={!isBusy && input.trim().length === 0}
+                onStop={() => agent.stop()}
+                status={agent.status}
+              />
+            </PromptInputFooter>
           </PromptInput>
         </div>
       )}
