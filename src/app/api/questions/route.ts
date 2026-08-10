@@ -15,7 +15,7 @@ const SLIDE_CONTEXT: Record<string, string> = {
   "run-dev-server": "Shows how to start the scaffolded Next.js app locally by running `npm run dev` in the project's terminal and opening http://localhost:3000 to see the agent's chat UI.",
   "open-localhost": "Explains the `npm run dev` output: cmd-click the printed Local: http://localhost:PORT URL to open the app. Beginner explanation of what a dev server is (a web server on your own laptop, localhost = this machine, hot reload on save) and why the port may be 3002 instead of 3000 (3000 already in use).",
   "setup-pam": "While the agent scaffolds the UI, attendees set up PAM Memory (pam.harmix.ai) — an MCP server that self-onboards into company tools and gives agents persistent organizational context. They grab a pam_mkey_ API key and add the pam_memory MCP server to Claude Code or Cursor.",
-  "step-1": "Step 1: connecting an AI model via the Vercel AI Gateway, either by running `vercel link` or using a shared workshop API key.",
+  "step-1": "Step 1: adding a Vercel AI Gateway API key. Attendees paste tonight's shared AI_GATEWAY_API_KEY into their agent's .env.local; the key is capped at $100 for the room.",
   "poke-around-the-repo": "Step 2: Eve's filesystem-first project structure — agent/instructions.md, agent/tools/, agent/skills/, agent/channels/.",
 };
 

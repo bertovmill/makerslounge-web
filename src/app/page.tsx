@@ -1312,34 +1312,26 @@ export default function Home() {
       >
         <div className="mx-auto w-full max-w-3xl">
           <StepBadge>Step 1</StepBadge>
-          <h3 className="mb-2.5 text-2xl font-extrabold tracking-tight md:text-3xl">
-            Connect a model
+          <h3 className="mb-2.5 text-3xl font-extrabold tracking-tight md:text-5xl">
+            Add a Vercel API key
           </h3>
-          <p className="max-w-[640px] text-ink-muted">
-            Eve talks to AI models through the <strong>Vercel AI Gateway</strong> by default. The
-            easiest path: link the project to your Vercel account and Eve authenticates
-            automatically.
+          <p className="max-w-[640px] text-lg text-ink-muted">
+            Eve talks to AI models through the <strong>Vercel AI Gateway</strong>. Paste tonight&apos;s
+            shared key into your agent&apos;s <Inline>.env.local</Inline> — it&apos;s capped at $100
+            for the room.
           </p>
-          <CodeBlock lines={["# from inside your agent folder", "vercel link", "", "npm run dev"]} />
+          {/* Read from the back of the room — the key is the whole point of this slide */}
+          <CodeBlock
+            lines={[
+              "AI_GATEWAY_API_KEY=vck_2gBjXeEqEs7j0yDNVS5OXEaAtuNAxrK9zJPKbwaPzQotsmFAkj1y8x3p",
+            ]}
+            copyText="vck_2gBjXeEqEs7j0yDNVS5OXEaAtuNAxrK9zJPKbwaPzQotsmFAkj1y8x3p"
+            className="p-6 pt-12 text-lg leading-relaxed break-all whitespace-pre-wrap md:text-2xl"
+          />
           <Checkpoint>
             ✅ <strong className="text-brand-dark">Checkpoint:</strong> send your agent a message
             and get a real response back.
           </Checkpoint>
-
-          <div className="mt-3 rounded-xl border border-dashed border-brand/30 bg-brand/5 px-4 py-3">
-            <p className="text-sm text-ink-muted">
-              <strong className="text-ink">No Vercel account tonight?</strong> Paste this into
-              your agent&apos;s <Inline>.env.local</Inline> instead — a shared key for the room,
-              capped at $20 for the night, so be kind to it.
-            </p>
-            <CodeBlock
-              lines={[
-                "# tonight's shared workshop key — capped at $20, be kind!",
-                "AI_GATEWAY_API_KEY=vck_2gBjXeEqEs7j0yDNVS5OXEaAtuNAxrK9zJPKbwaPzQotsmFAkj1y8x3p",
-              ]}
-              copyText="vck_2gBjXeEqEs7j0yDNVS5OXEaAtuNAxrK9zJPKbwaPzQotsmFAkj1y8x3p"
-            />
-          </div>
         </div>
       </section>
 
