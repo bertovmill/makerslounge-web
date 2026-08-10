@@ -99,6 +99,21 @@ const schedule = [
   },
 ];
 
+const overarchingGoals = [
+  {
+    title: "What are AI agents?",
+    detail: "Get a clear mental model of what an agent actually is — and isn't.",
+  },
+  {
+    title: "How do you deploy one?",
+    detail: "See an agent go from local code to something running in the real world.",
+  },
+  {
+    title: "What are the best use cases?",
+    detail: "Learn where agents genuinely shine, and where they don't earn their keep.",
+  },
+];
+
 const objectives = [
   {
     title: "Get set up with Cursor",
@@ -450,18 +465,39 @@ export default function Home() {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.10),transparent_55%)]" />
 
         <div className="relative mx-auto w-full max-w-4xl">
-          <div className="mb-10 text-center">
-            <p className="mb-5 text-[13px] font-semibold tracking-[0.28em] text-brand-dark uppercase">
+          <div className="mb-8 text-center">
+            <p className="mb-4 text-[13px] font-semibold tracking-[0.28em] text-brand-dark uppercase">
               What you&apos;ll leave with
             </p>
-            <h2 className="mb-4 text-5xl leading-[0.98] font-semibold tracking-tight text-balance md:text-7xl">
+            <h2 className="mb-3 text-4xl leading-[0.98] font-semibold tracking-tight text-balance md:text-6xl">
               Objectives for This Session
             </h2>
-            <p className="mx-auto max-w-[560px] text-lg leading-relaxed text-ink-muted md:text-xl">
+            <p className="mx-auto max-w-[560px] text-base leading-relaxed text-ink-muted md:text-lg">
               Get everyone to a working AI agent use case they can take home and keep building on.
             </p>
           </div>
 
+          <div className="mb-8">
+            <p className="mb-3 text-center text-[12px] font-semibold tracking-[0.24em] text-brand-dark uppercase">
+              Three big questions
+            </p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {overarchingGoals.map((goal) => (
+                <Card key={goal.title} className="border-brand/25 bg-white/70">
+                  <CardContent className="px-5 py-4">
+                    <p className="text-base font-semibold text-brand-dark md:text-lg">
+                      {goal.title}
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-ink-muted">{goal.detail}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          <p className="mb-3 text-center text-[12px] font-semibold tracking-[0.24em] text-ink-muted uppercase">
+            And hands-on, you&apos;ll
+          </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {objectives.map((objective, i) => (
               <Card key={objective.title} className="border-[#e3ecf5]">
