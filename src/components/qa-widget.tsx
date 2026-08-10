@@ -17,6 +17,8 @@ type Question = {
 const SLIDE_LABELS: Record<string, string> = {
   hero: "Welcome",
   itinerary: "Tonight's Itinerary",
+  "thank-you-host": "Thank You, TMU Byte",
+  presenters: "Thank You, Presenters",
   "getting-started": "Getting Started",
   "install-cursor": "Install Cursor",
   "ask-cursor": "Just Ask Cursor",
