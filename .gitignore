@@ -43,3 +43,4 @@ next-env.d.ts
 # local reference files (may contain PII — CSVs, spreadsheets, exports)
 /docs/reference/*
 !/docs/reference/.gitkeep
+!/docs/reference/AI Agent-Building Workshop @ TMU - Guests - 2026-08-10-16-42-04.csv
