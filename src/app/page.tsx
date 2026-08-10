@@ -388,7 +388,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 6 — Or just ask Cursor */}
+      {/* Slide 6 — Pick your AI agent */}
       <section
         data-slide
         id="ask-cursor"
@@ -403,20 +403,42 @@ export default function Home() {
               Prefer chat?
             </Badge>
             <h3 className="mb-1.5 text-2xl font-extrabold tracking-tight md:text-3xl">
-              Just ask Cursor
+              Pick your AI agent
             </h3>
             <p className="mx-auto max-w-[600px] text-sm text-ink-muted md:text-base">
-              Open the chat panel (<Inline>Cmd+L</Inline>) and just type what you want — it can
-              run the same setup steps for you.
+              Open Cursor&apos;s built-in terminal (<Inline>Ctrl+`</Inline>) and run whichever
+              agent matches your subscription — it can run the same setup steps for you.
             </p>
           </div>
-          <Image
-            src="/images/cursor-ask-eve.png"
-            alt="Cursor's chat panel with the prompt 'I want to install the vercel eve agent framework to this project'"
-            width={2000}
-            height={1307}
-            className="my-3 h-auto max-h-[52vh] w-auto max-w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
-          />
+          <div className="my-4 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
+            <Card className="border-[#e3ecf5]">
+              <CardContent className="flex flex-col items-center gap-2 px-4 py-5 text-center">
+                <span className="text-xs font-bold tracking-[0.1em] text-brand-dark uppercase">
+                  Have a Claude subscription
+                </span>
+                <p className="text-lg font-extrabold">Claude Code</p>
+                <Inline>claude</Inline>
+              </CardContent>
+            </Card>
+            <Card className="border-[#e3ecf5]">
+              <CardContent className="flex flex-col items-center gap-2 px-4 py-5 text-center">
+                <span className="text-xs font-bold tracking-[0.1em] text-brand-dark uppercase">
+                  Have a Codex subscription
+                </span>
+                <p className="text-lg font-extrabold">Codex</p>
+                <Inline>codex</Inline>
+              </CardContent>
+            </Card>
+            <Card className="border-[#e3ecf5]">
+              <CardContent className="flex flex-col items-center gap-2 px-4 py-5 text-center">
+                <span className="text-xs font-bold tracking-[0.1em] text-brand-dark uppercase">
+                  Have neither
+                </span>
+                <p className="text-lg font-extrabold">OpenCode</p>
+                <Inline>opencode</Inline>
+              </CardContent>
+            </Card>
+          </div>
           <div className="flex w-full shrink-0 flex-wrap items-center justify-center gap-4">
             <div className="rounded-xl border border-[#e3ecf5] bg-white px-4 py-2.5 text-sm text-ink-muted italic">
               &ldquo;I want to install the Vercel Eve agent framework to this project&rdquo;
