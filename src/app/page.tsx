@@ -26,21 +26,21 @@ function LinkedInIcon({ className }: { className?: string }) {
 
 function SlackIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+    <svg viewBox="0 0 122.8 122.8" fill="none" className={className} aria-hidden="true">
       <path
-        d="M9.34 15.16a2.06 2.06 0 1 1-2.06-2.06h2.06v2.06zM10.4 15.16a2.06 2.06 0 1 1 4.12 0v5.15a2.06 2.06 0 1 1-4.12 0v-5.15z"
+        d="M25.8 77.6c0 7.1-5.8 12.9-12.9 12.9S0 84.7 0 77.6s5.8-12.9 12.9-12.9h12.9v12.9zM32.3 77.6c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9v32.3c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V77.6z"
         fill="#E01E5A"
       />
       <path
-        d="M8.84 8.84A2.06 2.06 0 1 1 6.78 6.78v2.06h2.06zM8.84 9.9a2.06 2.06 0 1 1 0 4.12H3.69a2.06 2.06 0 1 1 0-4.12h5.15z"
+        d="M45.2 25.8c-7.1 0-12.9-5.8-12.9-12.9S38.1 0 45.2 0s12.9 5.8 12.9 12.9v12.9H45.2zM45.2 32.3c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H12.9C5.8 58.1 0 52.3 0 45.2s5.8-12.9 12.9-12.9h32.3z"
         fill="#36C5F0"
       />
       <path
-        d="M15.16 8.84a2.06 2.06 0 1 1 2.06 2.06h-2.06V8.84zM14.1 8.84a2.06 2.06 0 1 1-4.12 0V3.69a2.06 2.06 0 1 1 4.12 0v5.15z"
+        d="M97 45.2c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9-5.8 12.9-12.9 12.9H97V45.2zM90.5 45.2c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V12.9C64.7 5.8 70.5 0 77.6 0s12.9 5.8 12.9 12.9v32.3z"
         fill="#2EB67D"
       />
       <path
-        d="M15.16 15.16a2.06 2.06 0 1 1-2.06-2.06h2.06v2.06zM15.16 14.1a2.06 2.06 0 1 1 0-4.12h5.15a2.06 2.06 0 1 1 0 4.12h-5.15z"
+        d="M77.6 97c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9-12.9-5.8-12.9-12.9V97h12.9zM77.6 90.5c-7.1 0-12.9-5.8-12.9-12.9s5.8-12.9 12.9-12.9h32.3c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H77.6z"
         fill="#ECB22E"
       />
     </svg>
@@ -271,9 +271,27 @@ export default function Home() {
           <h2 className="mb-4 text-5xl leading-[0.98] font-semibold tracking-tight text-balance md:text-7xl">
             Join Us on Slack
           </h2>
-          <p className="mx-auto mb-10 max-w-[520px] text-lg leading-relaxed text-white/60 md:text-xl">
+          <p className="mx-auto mb-8 max-w-[520px] text-lg leading-relaxed text-white/60 md:text-xl">
             Get help, share what you&apos;re building, and keep the conversation going after
             tonight.
+          </p>
+          <a
+            href="https://join.slack.com/t/makerslounge/shared_invite/zt-43ly03o4m-Uz5arHN0w98OBU50_cPhsA"
+            target="_blank"
+            rel="noreferrer"
+            className="mx-auto mb-4 block w-fit rounded-3xl bg-white p-5 shadow-2xl shadow-black/30 ring-1 ring-white/20 transition hover:scale-[1.02]"
+          >
+            <Image
+              src="/images/slack-invite-qr.svg"
+              alt="QR code linking to the Makers Lounge Slack invite"
+              width={320}
+              height={320}
+              unoptimized
+              className="h-[240px] w-[240px] md:h-[300px] md:w-[300px]"
+            />
+          </a>
+          <p className="mb-6 text-sm font-medium tracking-wide text-white/50">
+            Scan with your phone camera to join
           </p>
           <Button
             asChild
