@@ -437,14 +437,15 @@ export default function Home() {
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.10),transparent_55%)]" />
 
-        {/* Oversized Makers Lounge mark sitting behind the content, at 30% */}
+        {/* Huge Makers Lounge mark bleeding off the bottom-left corner. Kept at
+            a whisper of opacity so it reads as texture, never as content. */}
         <Image
           src="/images/logo-blue.svg"
           alt=""
           aria-hidden
           width={246}
           height={258}
-          className="pointer-events-none absolute top-1/2 left-1/2 w-[560px] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-30 md:w-[760px]"
+          className="pointer-events-none absolute -bottom-40 -left-40 w-[1120px] max-w-none opacity-[0.04] md:w-[1520px]"
         />
 
         <div className="relative mx-auto w-full max-w-4xl">

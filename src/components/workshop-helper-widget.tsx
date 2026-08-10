@@ -24,6 +24,7 @@ import {
   type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
+import { AgentCapabilities } from "@/components/agent-capabilities";
 import {
   Tool,
   ToolContent,
@@ -128,6 +129,27 @@ export function WorkshopHelperWidget({ contextId, stacked }: WorkshopHelperWidge
     return () => observer.disconnect();
   }, [contextId]);
 
+  // `navigate_slide` runs server-side and has no DOM, so it returns a target and
+  // the scrolling happens here when its result lands. Track the last handled
+  // call id so a re-render never re-scrolls the attendee.
+  const handledNavRef = useRef<string | null>(null);
+  useEffect(() => {
+    for (let i = agent.data.messages.length - 1; i >= 0; i--) {
+      for (const part of agent.data.messages[i].parts) {
+        if (part.type !== "dynamic-tool") continue;
+        if (part.toolName !== "navigate_slide") continue;
+        if (part.state !== "output-available") continue;
+
+        const target = (part.output as { slideId?: string } | undefined)?.slideId;
+        if (!target || handledNavRef.current === part.toolCallId) return;
+
+        handledNavRef.current = part.toolCallId;
+        document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+    }
+  }, [agent.data.messages]);
+
   function handleSubmit(message: PromptInputMessage) {
     const text = message.text.trim();
     if (!text || isBusy) return;
@@ -149,7 +171,7 @@ export function WorkshopHelperWidget({ contextId, stacked }: WorkshopHelperWidge
 
       {open && (
         <div
-          className={`fixed right-6 z-50 flex max-h-[76vh] w-[min(440px,calc(100vw-3rem))] flex-col overflow-hidden rounded-2xl border border-[#e3ecf5] bg-white shadow-2xl ${
+          className={`fixed right-6 z-50 flex h-[min(640px,calc(100vh-11rem))] max-h-[84vh] w-[min(440px,calc(100vw-3rem))] flex-col overflow-hidden rounded-2xl border border-[#e3ecf5] bg-white shadow-2xl ${
             stacked ? "bottom-44" : "bottom-26"
           }`}
         >
@@ -172,6 +194,8 @@ export function WorkshopHelperWidget({ contextId, stacked }: WorkshopHelperWidge
               </button>
             )}
           </div>
+
+          <AgentCapabilities />
 
           <Conversation className="min-h-0">
             <ConversationContent className="gap-5 p-4">

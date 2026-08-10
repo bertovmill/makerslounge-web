@@ -18,6 +18,18 @@ export const demoSlots = pgTable("demo_slots", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Long-term memory for the workshop helper agent. Written by its `remember`
+// tool and read back by `recall_memories`, scoped per attendee so one person's
+// notes never surface in someone else's chat. Outlives the eve session, which
+// is why this lives here rather than in eve's per-session `defineState`.
+export const agentMemories = pgTable("agent_memories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id").notNull(),
+  content: text("content").notNull(),
+  tag: text("tag"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const questions = pgTable("questions", {
   id: uuid("id").primaryKey().defaultRandom(),
   slideId: text("slide_id").notNull(),
