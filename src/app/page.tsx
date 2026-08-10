@@ -78,7 +78,7 @@ const presenters = [
   {
     name: "Danial Hasan",
     role: "Key principles",
-    image: null,
+    image: "/images/presenters/danial-hasan.png",
   },
 ];
 
