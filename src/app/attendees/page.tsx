@@ -41,6 +41,7 @@ const guests: Guest[] = [
     tools: `Gemini, Claude etc`,
     wish: `I want AI to handle these tedious copy-and-paste tasks for me.`,
     topic: `I’d like to learn how I can use AI to automate repetitive and tedious tasks, especially copy-and-paste work that I currently have to do manually.`,
+    linkedin: "https://www.linkedin.com/in/ayame-ishii-a4a96231a/",
   },
   {
     name: `Aaron L Greenspan`,
