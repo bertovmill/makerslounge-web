@@ -1051,9 +1051,9 @@ export default function Home() {
       <section
         data-slide
         id="demo-time"
-        className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
+        className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-8 text-ink"
       >
-        <div className="mx-auto w-full max-w-3xl">
+        <div className="mx-auto w-full max-w-4xl">
           <div className="flex flex-wrap items-center gap-2">
             <StepBadge>Demo time! 🎤</StepBadge>
             <Badge className="mb-3 w-fit gap-1.5 bg-white text-xs font-bold tracking-[0.06em] text-brand-dark uppercase ring-1 ring-brand/25">
@@ -1061,15 +1061,15 @@ export default function Home() {
               2 min each
             </Badge>
           </div>
-          <h3 className="mb-2 text-2xl font-extrabold tracking-tight md:text-3xl">
+          <h3 className="mb-2.5 text-3xl font-extrabold tracking-tight md:text-4xl">
             Show us what you built
           </h3>
-          <p className="max-w-[660px] text-sm text-ink-muted md:text-base">
+          <p className="max-w-[720px] text-base text-ink-muted md:text-lg">
             Eight slots, first come first serve — put your name down and take two minutes at the
             front. Half-working counts. Broken-but-interesting <em>really</em> counts.
           </p>
 
-          <div className="mt-4">
+          <div className="mt-5">
             <DemoSlots />
           </div>
         </div>

@@ -119,7 +119,7 @@ export function DemoSlots() {
     return (
       <li
         key={n}
-        className={`flex min-h-[58px] items-center gap-3 rounded-xl border px-3.5 py-2.5 transition ${
+        className={`flex min-h-[68px] items-center gap-3.5 rounded-xl border px-4 py-3 transition ${
           taken?.mine
             ? "border-brand/40 bg-brand/5"
             : taken
@@ -130,7 +130,7 @@ export function DemoSlots() {
         }`}
       >
         <span
-          className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+          className={`flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
             taken ? "bg-brand text-white" : standby ? "bg-[#eef2f6] text-ink-muted" : "bg-[#e8f1fb] text-brand-dark"
           }`}
         >
@@ -154,12 +154,12 @@ export function DemoSlots() {
               }}
               placeholder="Your name"
               maxLength={40}
-              className="min-w-0 flex-1 rounded-lg border border-[#cddcec] bg-white px-2.5 py-1.5 text-sm text-ink outline-none focus:border-brand"
+              className="min-w-0 flex-1 rounded-lg border border-[#cddcec] bg-white px-3 py-2 text-base text-ink outline-none focus:border-brand"
             />
             <button
               type="submit"
               disabled={busy || !draft.trim()}
-              className="shrink-0 cursor-pointer rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-dark disabled:opacity-50"
+              className="shrink-0 cursor-pointer rounded-lg bg-brand px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-brand-dark disabled:opacity-50"
             >
               {busy ? "…" : taken ? "Save" : "I'm in"}
             </button>
@@ -167,17 +167,17 @@ export function DemoSlots() {
               type="button"
               onClick={() => setClaiming(null)}
               aria-label="Cancel"
-              className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition hover:bg-[#f1f6fb] hover:text-ink"
+              className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition hover:bg-[#f1f6fb] hover:text-ink"
             >
               <X className="size-4" />
             </button>
           </form>
         ) : taken ? (
           <>
-            <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
+            <span className="min-w-0 flex-1 truncate text-base font-semibold text-ink md:text-lg">
               {taken.name}
               {taken.mine && (
-                <span className="ml-1.5 text-xs font-normal text-ink-muted">(you)</span>
+                <span className="ml-1.5 text-sm font-normal text-ink-muted">(you)</span>
               )}
             </span>
             {taken.mine && (
@@ -188,9 +188,9 @@ export function DemoSlots() {
                   disabled={busy}
                   aria-label="Edit the name in your demo slot"
                   title="Edit"
-                  className="flex size-7 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition hover:bg-[#f1f6fb] hover:text-brand-dark disabled:opacity-50"
+                  className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition hover:bg-[#f1f6fb] hover:text-brand-dark disabled:opacity-50"
                 >
-                  <Pencil className="size-3.5" />
+                  <Pencil className="size-4" />
                 </button>
                 <button
                   type="button"
@@ -198,9 +198,9 @@ export function DemoSlots() {
                   disabled={busy}
                   aria-label="Delete your demo slot"
                   title="Delete"
-                  className="flex size-7 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                  className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                 >
-                  <Trash2 className="size-3.5" />
+                  <Trash2 className="size-4" />
                 </button>
               </span>
             )}
@@ -210,9 +210,9 @@ export function DemoSlots() {
             type="button"
             onClick={() => openClaim(n)}
             disabled={!!takenByMe}
-            className="flex flex-1 cursor-pointer items-center gap-1.5 text-left text-sm text-ink-muted transition hover:text-brand-dark disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex flex-1 cursor-pointer items-center gap-2 text-left text-base text-ink-muted transition hover:text-brand-dark disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Plus className="size-3.5" />
+            <Plus className="size-4" />
             {takenByMe ? "Open" : standby ? "Add your name (standby)" : "Add your name"}
           </button>
         )}
@@ -227,8 +227,8 @@ export function DemoSlots() {
       </ul>
 
       <div className="mt-3 rounded-xl border border-[#e3ecf5] bg-white/50 px-3 py-3">
-        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-[0.08em] text-ink-muted uppercase">
-          <Hourglass className="size-3.5" />
+        <p className="mb-2.5 flex items-center gap-2 text-sm font-semibold tracking-[0.08em] text-ink-muted uppercase">
+          <Hourglass className="size-4" />
           Stand by — if we have time
         </p>
         <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -236,8 +236,8 @@ export function DemoSlots() {
         </ul>
       </div>
 
-      <p className="mt-3 flex items-center justify-center gap-2 text-center text-sm text-ink-muted">
-        <Mic className="size-4 text-brand" />
+      <p className="mt-4 flex items-center justify-center gap-2 text-center text-base text-ink-muted md:text-lg">
+        <Mic className="size-5 shrink-0 text-brand" />
         {error ? (
           <span className="text-red-600">{error}</span>
         ) : isLoaded && !isSignedIn ? (
