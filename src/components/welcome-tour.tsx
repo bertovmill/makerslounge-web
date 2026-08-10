@@ -19,8 +19,8 @@ export const TOUR_STEPS = [
     description: "The live slides everyone's following along with tonight.",
   },
   {
-    href: "/room",
-    label: "Meet other people in the room",
+    href: "/attendees",
+    label: "Attendees",
     description: "See who else is here tonight and say hello.",
   },
   {

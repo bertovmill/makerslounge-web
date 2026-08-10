@@ -9,7 +9,7 @@ import { useTourActiveHref } from "@/components/welcome-tour";
 
 const items = [
   { href: "/", label: "Presentation", icon: Presentation },
-  { href: "/room", label: "Meet other people in the room", icon: Users },
+  { href: "/attendees", label: "Attendees", icon: Users },
   { href: "/resources", label: "Resources", icon: BookOpen },
 ];
 
