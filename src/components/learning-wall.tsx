@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { MessagesSquare, X, Send, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,13 +36,20 @@ export function LearningWall() {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [signedOut, setSignedOut] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     try {
       const res = await fetch("/api/learning-goals");
+      // The deck itself is public, so a signed-out viewer can reach this panel.
+      if (res.status === 401) {
+        setSignedOut(true);
+        return;
+      }
       if (!res.ok) return;
       const data = await res.json();
+      setSignedOut(false);
       setGoals(data.goals ?? []);
     } catch {
       // Offline or mid-deploy — keep whatever is already on screen.
@@ -184,7 +192,17 @@ export function LearningWall() {
         )}
 
         <div ref={listRef} className="flex-1 overflow-y-auto px-5 py-4">
-          {goals.length === 0 ? (
+          {signedOut ? (
+            <div className="py-10 text-center">
+              <p className="text-sm text-ink-muted">Sign in to see and post to the wall.</p>
+              <Link
+                href="/sign-in"
+                className="mt-3 inline-flex items-center rounded-full bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
+              >
+                Sign in
+              </Link>
+            </div>
+          ) : goals.length === 0 ? (
             <p className="py-10 text-center text-sm text-ink-muted">
               Nothing yet — be the first to say what you&apos;re here to learn.
             </p>
@@ -207,7 +225,7 @@ export function LearningWall() {
           )}
         </div>
 
-        <div className="border-t border-[#e3ecf5] px-5 py-4">
+        <div className={`border-t border-[#e3ecf5] px-5 py-4 ${signedOut ? "hidden" : ""}`}>
           <Textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value.slice(0, MAX_LENGTH))}
