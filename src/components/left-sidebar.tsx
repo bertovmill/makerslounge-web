@@ -68,20 +68,28 @@ export function LeftSidebar() {
       })}
 
       <div className="mt-auto">
-        {/* `/` is a public route, so Clerk's default post-sign-out landing spot
-            looks identical to being signed in — send people somewhere that
-            visibly confirms they're out. */}
-        <SignOutButton redirectUrl="/sign-in">
-          <button
-            type="button"
-            className="mx-2.5 flex w-[calc(100%-20px)] items-center gap-4 rounded-lg px-3.5 py-2.5 text-ink-muted transition-colors hover:bg-[#f0f5fa] hover:text-ink"
-          >
-            <LogOut className="h-5 w-5 shrink-0" />
-            <span className="translate-x-[-8px] text-sm font-medium whitespace-nowrap opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100">
-              Log out
-            </span>
-          </button>
-        </SignOutButton>
+        {/* Sign-out runs as a server action rather than Clerk's client-side
+            `signOut()`, then hard-navigates: `/` is a public route, so Clerk's
+            default landing spot looks identical to being signed in, and the
+            full page load is what rebuilds Clerk's client state from the
+            now-cleared cookies. */}
+        <button
+          type="button"
+          disabled={signingOut}
+          onClick={async () => {
+            setSigningOut(true);
+            try {
+              await signOutAction();
+            } finally {
+              // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+              window.location.href = "/sign-in";
+            }
+          }}
+          className="mx-2.5 flex w-[calc(100%-20px)] items-center gap-4 rounded-lg px-3.5 py-2.5 text-ink-muted transition-colors hover:bg-[#f0f5fa] hover:text-ink disabled:opacity-60"
+        >
+          <LogOut className="h-5 w-5 shrink-0" />
+          <span className={labelClasses}>{signingOut ? "Logging out…" : "Log out"}</span>
+        </button>
       </div>
     </nav>
   );
