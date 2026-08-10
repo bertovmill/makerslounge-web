@@ -685,14 +685,13 @@ export default function Home() {
             alt="opencode's terminal with a prompt asking it to build a Next.js and shadcn app with a chat interface using Vercel AI Elements"
             width={2000}
             height={1310}
-            className="my-3 h-auto max-h-[62vh] w-auto max-w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
+            className="my-3 h-auto max-h-[72vh] w-auto max-w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
           />
           <div className="flex w-full shrink-0 flex-wrap items-center justify-center gap-4">
-            <div className="max-w-xl rounded-xl border border-[#e3ecf5] bg-white px-4 py-2.5 text-sm text-ink-muted italic">
-              &ldquo;Build me a simple Next.js and shadcn application that showcases all the
-              features of my Eve agent, and a chat interface for me to chat to it. Use the Vercel
-              AI Elements kit to build it.&rdquo;
-            </div>
+            <CopyLine
+              text="I want to explore Vercel's eve agent framework. I want to build out a Next JS application where I can visualize everything the Eve framework can do, and be able to customize it to my specific use case. First, build a next js app using Shadcn components, and Vercel AI elements components to build out this simple app for this workshop. Next, install the eve agent framwork into this application. Then, tell me what is needed from me to get the app up and running"
+              className="max-w-xl"
+            />
             <Checkpoint>
               ✅ <strong className="text-brand-dark">Checkpoint:</strong> a chat UI opens where you
               can talk to your agent — no terminal required.
@@ -709,39 +708,6 @@ export default function Home() {
       >
         <div className="mx-auto w-full max-w-3xl">
           <StepBadge>Step 1</StepBadge>
-          <h3 className="mb-2.5 text-2xl font-extrabold tracking-tight md:text-3xl">
-            Scaffold &amp; run your agent
-          </h3>
-          <p className="max-w-[640px] text-ink-muted">
-            One command creates the project, installs dependencies, and starts Eve&apos;s
-            development server. Open Cursor&apos;s built-in terminal (<Inline>Ctrl+`</Inline>)
-            and run:
-          </p>
-          <CodeBlock
-            lines={[
-              "# create your agent (name it anything you like)",
-              "npx eve@latest init my-agent",
-              "",
-              "# jump in and start the dev server",
-              "cd my-agent",
-              "npm run dev",
-            ]}
-          />
-          <Checkpoint>
-            ✅ <strong className="text-brand-dark">Checkpoint:</strong> a terminal UI opens and
-            your agent is running locally. Say hi to it!
-          </Checkpoint>
-        </div>
-      </section>
-
-      {/* Slide 10 — Step 2 */}
-      <section
-        data-slide
-        id="step-2"
-        className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
-      >
-        <div className="mx-auto w-full max-w-3xl">
-          <StepBadge>Step 2</StepBadge>
           <h3 className="mb-2.5 text-2xl font-extrabold tracking-tight md:text-3xl">
             Connect a model
           </h3>
@@ -773,14 +739,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 11 — Step 3 */}
+      {/* Slide 10 — Step 2 */}
       <section
         data-slide
-        id="step-3"
+        id="step-2"
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
       >
         <div className="mx-auto w-full max-w-3xl">
-          <StepBadge>Step 3</StepBadge>
+          <StepBadge>Step 2</StepBadge>
           <h3 className="mb-2.5 text-2xl font-extrabold tracking-tight md:text-3xl">
             Know your way around
           </h3>

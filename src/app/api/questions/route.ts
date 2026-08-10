@@ -11,10 +11,9 @@ const SLIDE_CONTEXT: Record<string, string> = {
   "getting-started": "An intro to Eve, Vercel's filesystem-first framework for durable AI agents, and the prerequisites needed (Node.js 24+, a free Vercel account).",
   "install-cursor": "Instructions to download and open Cursor, the AI code editor used for tonight's workshop, and click 'Open project'.",
   "ask-cursor": "Shows how to ask Cursor's built-in AI chat to install the Eve agent framework directly, as an alternative to using the terminal.",
-  "build-ui": "Shows how to ask Cursor to build a Next.js + shadcn showcase UI with a chat interface for your Eve agent, using Vercel's AI Elements kit.",
-  "step-1": "Step 1: scaffolding and running an Eve agent with `npx eve@latest init my-agent`, then `npm run dev`.",
-  "step-2": "Step 2: connecting an AI model via the Vercel AI Gateway, either by running `vercel link` or using a shared workshop API key.",
-  "step-3": "Step 3: Eve's filesystem-first project structure — agent/instructions.md, agent/tools/, agent/skills/, agent/channels/.",
+  "build-ui": "Shows how to ask opencode to build a Next.js + shadcn showcase UI with a chat interface for your Eve agent, using Vercel's AI Elements kit — the agent scaffolds and runs the project itself as part of this.",
+  "step-1": "Step 1: connecting an AI model via the Vercel AI Gateway, either by running `vercel link` or using a shared workshop API key.",
+  "step-2": "Step 2: Eve's filesystem-first project structure — agent/instructions.md, agent/tools/, agent/skills/, agent/channels/.",
 };
 
 export async function GET(req: NextRequest) {

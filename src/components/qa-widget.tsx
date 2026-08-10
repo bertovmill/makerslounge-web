@@ -21,9 +21,8 @@ const SLIDE_LABELS: Record<string, string> = {
   "install-cursor": "Install Cursor",
   "ask-cursor": "Just Ask Cursor",
   "build-ui": "Build a UI",
-  "step-1": "Step 1 — Scaffold & Run",
-  "step-2": "Step 2 — Connect a Model",
-  "step-3": "Step 3 — Project Structure",
+  "step-1": "Step 1 — Connect a Model",
+  "step-2": "Step 2 — Project Structure",
 };
 
 export function QAWidget() {
