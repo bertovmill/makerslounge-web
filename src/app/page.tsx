@@ -925,6 +925,45 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Slide 8a — Run the dev server */}
+      <section
+        data-slide
+        id="run-dev-server"
+        className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
+      >
+        <div className="mx-auto flex h-full w-full max-w-4xl flex-col items-center">
+          <div className="w-full shrink-0 text-center">
+            <Badge
+              variant="outline"
+              className="mb-2 w-fit border-brand/30 text-xs font-bold tracking-[0.12em] text-brand-dark uppercase"
+            >
+              See it live
+            </Badge>
+            <h3 className="mb-1.5 text-2xl font-extrabold tracking-tight md:text-3xl">
+              Run the dev server
+            </h3>
+            <p className="mx-auto max-w-[600px] text-sm text-ink-muted md:text-base">
+              Once the app is scaffolded, open a terminal in your project folder and start it up.
+              Then visit <Inline>http://localhost:3000</Inline> to see your agent&apos;s UI.
+            </p>
+          </div>
+          <Image
+            src="/images/run-dev-server.png"
+            alt="An editor terminal in the eve-agent-workshop project running npm run dev"
+            width={2000}
+            height={1310}
+            className="my-3 h-auto max-h-[72vh] w-auto max-w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
+          />
+          <div className="flex w-full shrink-0 flex-wrap items-center justify-center gap-4">
+            <CopyLine text="npm run dev" className="max-w-xs" />
+            <Checkpoint>
+              ✅ <strong className="text-brand-dark">Checkpoint:</strong> your app loads at{" "}
+              <Inline>localhost:3000</Inline>.
+            </Checkpoint>
+          </div>
+        </div>
+      </section>
+
       {/* Slide 8b — While that's running: set up PAM */}
       <section
         data-slide

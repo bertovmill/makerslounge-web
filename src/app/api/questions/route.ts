@@ -12,6 +12,7 @@ const SLIDE_CONTEXT: Record<string, string> = {
   "install-cursor": "Instructions to download and open Cursor, the AI code editor used for tonight's workshop, and click 'Open project'.",
   "ask-cursor": "Shows how to ask Cursor's built-in AI chat to install the Eve agent framework directly, as an alternative to using the terminal.",
   "build-ui": "Shows how to ask opencode to build a Next.js + shadcn showcase UI with a chat interface for your Eve agent, using Vercel's AI Elements kit — the agent scaffolds and runs the project itself as part of this.",
+  "run-dev-server": "Shows how to start the scaffolded Next.js app locally by running `npm run dev` in the project's terminal and opening http://localhost:3000 to see the agent's chat UI.",
   "setup-pam": "While the agent scaffolds the UI, attendees set up PAM Memory (pam.harmix.ai) — an MCP server that self-onboards into company tools and gives agents persistent organizational context. They grab a pam_mkey_ API key and add the pam_memory MCP server to Claude Code or Cursor.",
   "step-1": "Step 1: connecting an AI model via the Vercel AI Gateway, either by running `vercel link` or using a shared workshop API key.",
   "step-2": "Step 2: Eve's filesystem-first project structure — agent/instructions.md, agent/tools/, agent/skills/, agent/channels/.",
