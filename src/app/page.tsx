@@ -62,6 +62,24 @@ const schedule = [
   },
 ];
 
+const presenters = [
+  {
+    name: "Matias Gonzalez",
+    role: "Design Engineer, Vercel",
+    image: "/images/presenters/matias-gonzalez.png",
+  },
+  {
+    name: "Nazar Ponochevnyi",
+    role: "AI Agent MCP",
+    image: null,
+  },
+  {
+    name: "Danial Hasan",
+    role: "Key principles",
+    image: null,
+  },
+];
+
 const prereqs = [
   {
     title: "Node.js 24 or newer",
@@ -229,7 +247,58 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 3 — Getting started intro + prerequisites */}
+      {/* Slide 3 — Thank you, presenters */}
+      <section
+        data-slide
+        id="presenters"
+        className="relative flex h-dvh snap-start items-center overflow-hidden bg-gradient-to-b from-ink to-[#141f30] px-6 py-10 text-white"
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.16),transparent_55%)]" />
+
+        <div className="relative mx-auto w-full max-w-4xl">
+          <div className="mb-12 text-center">
+            <p className="mb-5 text-[13px] font-semibold tracking-[0.28em] text-brand-light uppercase">
+              With gratitude
+            </p>
+            <h2 className="mb-4 text-5xl leading-[0.98] font-semibold tracking-tight text-balance md:text-7xl">
+              Thank You, Presenters
+            </h2>
+            <p className="mx-auto max-w-[520px] text-lg leading-relaxed text-white/60 md:text-xl">
+              Tonight&apos;s session wouldn&apos;t happen without them.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            {presenters.map((presenter) => (
+              <div
+                key={presenter.name}
+                className="flex flex-col items-center rounded-2xl border border-white/8 bg-white/[0.04] px-6 py-8 text-center backdrop-blur-sm"
+              >
+                {presenter.image ? (
+                  <Image
+                    src={presenter.image}
+                    alt={presenter.name}
+                    width={128}
+                    height={128}
+                    className="mb-5 h-28 w-28 rounded-full object-cover shadow-lg shadow-black/20"
+                  />
+                ) : (
+                  <div className="mb-5 flex h-28 w-28 items-center justify-center rounded-full bg-white/10 text-2xl font-semibold text-white/70">
+                    {presenter.name
+                      .split(" ")
+                      .map((part) => part[0])
+                      .join("")}
+                  </div>
+                )}
+                <span className="text-lg font-semibold">{presenter.name}</span>
+                <span className="mt-1 text-sm text-white/50">{presenter.role}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Slide 4 — Getting started intro + prerequisites */}
       <section
         data-slide
         id="getting-started"
@@ -277,7 +346,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 4 — Step 0 */}
+      {/* Slide 5 — Step 0 */}
       <section
         data-slide
         id="install-cursor"
@@ -317,7 +386,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 5 — Or just ask Cursor */}
+      {/* Slide 6 — Or just ask Cursor */}
       <section
         data-slide
         id="ask-cursor"
@@ -358,7 +427,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 6 — Build a UI for it */}
+      {/* Slide 7 — Build a UI for it */}
       <section
         data-slide
         id="build-ui"
@@ -401,7 +470,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 7 — Step 1 */}
+      {/* Slide 8 — Step 1 */}
       <section
         data-slide
         id="step-1"
@@ -434,7 +503,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 8 — Step 2 */}
+      {/* Slide 9 — Step 2 */}
       <section
         data-slide
         id="step-2"
@@ -473,7 +542,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 9 — Step 3 */}
+      {/* Slide 10 — Step 3 */}
       <section
         data-slide
         id="step-3"
