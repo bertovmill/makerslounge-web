@@ -450,6 +450,12 @@ export default function Home() {
                   Have a Claude subscription
                 </span>
                 <p className="text-xl font-extrabold">Claude Code</p>
+                <Badge
+                  variant="outline"
+                  className="w-fit border-amber-300 bg-amber-50 text-[10px] font-bold tracking-[0.08em] text-amber-700 uppercase"
+                >
+                  Subscription Required
+                </Badge>
                 <Inline>claude</Inline>
                 <a
                   href="https://code.claude.com/docs/en/quickstart"
@@ -474,6 +480,12 @@ export default function Home() {
                   Have a Codex subscription
                 </span>
                 <p className="text-xl font-extrabold">Codex</p>
+                <Badge
+                  variant="outline"
+                  className="w-fit border-amber-300 bg-amber-50 text-[10px] font-bold tracking-[0.08em] text-amber-700 uppercase"
+                >
+                  Subscription Required
+                </Badge>
                 <Inline>codex</Inline>
                 <a
                   href="https://learn.chatgpt.com/docs/codex/cli"
@@ -498,6 +510,12 @@ export default function Home() {
                   Have neither
                 </span>
                 <p className="text-xl font-extrabold">OpenCode</p>
+                <Badge
+                  variant="outline"
+                  className="w-fit border-emerald-300 bg-emerald-50 text-[10px] font-bold tracking-[0.08em] text-emerald-700 uppercase"
+                >
+                  Open Source - Free
+                </Badge>
                 <Inline>opencode</Inline>
                 <a
                   href="https://opencode.ai/docs/"
