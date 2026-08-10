@@ -65,7 +65,10 @@ export function LeftSidebar() {
       })}
 
       <div className="mt-auto">
-        <SignOutButton>
+        {/* `/` is a public route, so Clerk's default post-sign-out landing spot
+            looks identical to being signed in — send people somewhere that
+            visibly confirms they're out. */}
+        <SignOutButton redirectUrl="/sign-in">
           <button
             type="button"
             className="mx-2.5 flex w-[calc(100%-20px)] items-center gap-4 rounded-lg px-3.5 py-2.5 text-ink-muted transition-colors hover:bg-[#f0f5fa] hover:text-ink"
