@@ -437,14 +437,14 @@ export default function Home() {
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.10),transparent_55%)]" />
 
-        {/* Oversized, heavily faded Makers Lounge mark sitting behind the content */}
+        {/* Oversized Makers Lounge mark sitting behind the content, at 30% */}
         <Image
-          src="/icon.png"
+          src="/images/logo-blue.svg"
           alt=""
           aria-hidden
-          width={900}
-          height={900}
-          className="pointer-events-none absolute top-1/2 left-1/2 w-[560px] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-[0.06] md:w-[760px]"
+          width={246}
+          height={258}
+          className="pointer-events-none absolute top-1/2 left-1/2 w-[560px] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-30 md:w-[760px]"
         />
 
         <div className="relative mx-auto w-full max-w-4xl">
