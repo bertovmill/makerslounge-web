@@ -117,7 +117,31 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-t from-ink from-5% via-ink/85 via-50% to-ink/25" />
         <div className="absolute inset-0 bg-gradient-to-br from-brand-dark/20 via-transparent to-transparent" />
 
+        <div className="absolute top-8 right-8 z-10 flex items-center gap-5 md:top-10 md:right-10">
+          <Image
+            src="/vercel.svg"
+            alt="Vercel logo"
+            width={100}
+            height={21}
+            className="h-auto w-20 opacity-90 md:w-24"
+          />
+          <Image
+            src="/byte_white-logo_s26.png"
+            alt="Byte logo"
+            width={140}
+            height={140}
+            className="h-auto w-16 opacity-90 md:w-20"
+          />
+        </div>
+
         <div className="relative z-10 mx-auto w-full max-w-4xl px-6 pb-20 pt-32 text-center text-white">
+          <Image
+            src="/icon.png"
+            alt="Makers Lounge logo"
+            width={88}
+            height={88}
+            className="mx-auto mb-6 h-[88px] w-[88px] rounded-2xl shadow-lg shadow-black/20"
+          />
           <p className="mb-6 text-[13px] font-semibold tracking-[0.28em] text-brand-light uppercase">
             Welcome to
           </p>
