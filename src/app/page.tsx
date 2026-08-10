@@ -10,7 +10,7 @@ import { LearningWall } from "@/components/learning-wall";
 import { LearningWallTrigger } from "@/components/learning-wall-trigger";
 import { WorkshopHelperWidget } from "@/components/workshop-helper-widget";
 import { DemoSlots } from "@/components/demo-slots";
-import { CalendarCheck, CalendarDays, Clock, Mail, ShieldCheck } from "lucide-react";
+import { CalendarDays, Clock, ShieldCheck } from "lucide-react";
 
 function Inline({ children }: { children: React.ReactNode }) {
   return (
@@ -230,17 +230,8 @@ const stayInTouch: {
   cta: string;
   href: string;
   qr: string;
-  Icon: typeof CalendarCheck;
+  Icon: typeof CalendarDays;
 }[] = [
-  {
-    id: "book-berto",
-    title: "Book 30 min with Berto",
-    blurb: "A follow-up on your agent — what you built, what's stuck, what's next.",
-    cta: "Grab a slot",
-    href: "https://calendar.app.google/Uckkazz4uUzBcyft6",
-    qr: "/images/qr-book-berto.svg",
-    Icon: CalendarCheck,
-  },
   {
     id: "tmu-cyber-summit",
     title: "TMU Cyber Summit",
@@ -249,15 +240,6 @@ const stayInTouch: {
     href: "https://docs.google.com/forms/d/e/1FAIpQLSdTXJmwg4CDZouFuuRKnW73MgkD35Jf0kDWm0RCjySXCTE1IA/viewform",
     qr: "/images/qr-tmu-cyber-summit.svg",
     Icon: ShieldCheck,
-  },
-  {
-    id: "harmix-newsletter",
-    title: "Harmix newsletter",
-    blurb: "What we're building and what we're learning, straight to your inbox.",
-    cta: "Subscribe",
-    href: "https://manager.harmix.ai/newsletter",
-    qr: "/images/qr-harmix-newsletter.svg",
-    Icon: Mail,
   },
   {
     id: "makerslounge-calendar",
@@ -1472,24 +1454,32 @@ export default function Home() {
             Point your phone camera at any of these — no typing required.
           </p>
 
-          <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Wide gaps between cards: phone cameras happily grab whichever QR is
+              nearest, so the codes need real space between them. */}
+          <ul className="mt-6 grid grid-cols-1 gap-10 sm:grid-cols-2 sm:gap-16 lg:gap-24">
             {stayInTouch.map(({ id, title, blurb, cta, href, qr, Icon }) => (
               <li
                 key={id}
-                className="flex flex-col rounded-2xl border border-[#e3ecf5] bg-white p-4 shadow-sm"
+                className="flex flex-col rounded-2xl border border-[#e3ecf5] bg-white p-5 shadow-sm"
               >
-                <div className="flex items-center gap-2">
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#e8f1fb] text-brand-dark">
-                    <Icon className="size-4" />
-                  </span>
-                  <h4 className="text-sm leading-tight font-bold text-ink md:text-base">{title}</h4>
+                {/* Fixed-height header keeps the QR codes — and the buttons
+                    below them — on the same line across cards. */}
+                <div className="min-h-[6.25rem]">
+                  <div className="flex items-center gap-2">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#e8f1fb] text-brand-dark">
+                      <Icon className="size-4" />
+                    </span>
+                    <h4 className="text-base leading-tight font-bold text-ink md:text-lg">
+                      {title}
+                    </h4>
+                  </div>
+                  <p className="mt-2 text-[13px] leading-snug text-ink-muted md:text-sm">{blurb}</p>
                 </div>
-                <p className="mt-2 text-xs leading-snug text-ink-muted md:text-[13px]">{blurb}</p>
                 <a
                   href={href}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-3 block rounded-xl border border-[#e3ecf5] bg-white p-2 transition hover:border-brand/40"
+                  className="mx-auto block w-full max-w-[260px] rounded-xl border border-[#e3ecf5] bg-white p-2 transition hover:border-brand/40"
                 >
                   <Image
                     src={qr}
@@ -1502,7 +1492,7 @@ export default function Home() {
                 </a>
                 <Button
                   asChild
-                  className="mt-3 w-full bg-gradient-to-br from-brand to-brand-dark text-white hover:opacity-90"
+                  className="mt-4 h-11 w-full bg-gradient-to-br from-brand to-brand-dark text-base text-white hover:opacity-90"
                 >
                   <a href={href} target="_blank" rel="noreferrer">
                     {cta} →

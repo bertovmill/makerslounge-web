@@ -5,16 +5,8 @@ import QRCode from "qrcode";
 
 const targets = [
   {
-    out: "public/images/qr-book-berto.svg",
-    url: "https://calendar.app.google/Uckkazz4uUzBcyft6",
-  },
-  {
     out: "public/images/qr-tmu-cyber-summit.svg",
     url: "https://docs.google.com/forms/d/e/1FAIpQLSdTXJmwg4CDZouFuuRKnW73MgkD35Jf0kDWm0RCjySXCTE1IA/viewform",
-  },
-  {
-    out: "public/images/qr-harmix-newsletter.svg",
-    url: "https://manager.harmix.ai/newsletter",
   },
   {
     out: "public/images/qr-makerslounge-calendar.svg",
