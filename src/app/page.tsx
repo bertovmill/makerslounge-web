@@ -24,6 +24,29 @@ function LinkedInIcon({ className }: { className?: string }) {
   );
 }
 
+function SlackIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M9.34 15.16a2.06 2.06 0 1 1-2.06-2.06h2.06v2.06zM10.4 15.16a2.06 2.06 0 1 1 4.12 0v5.15a2.06 2.06 0 1 1-4.12 0v-5.15z"
+        fill="#E01E5A"
+      />
+      <path
+        d="M8.84 8.84A2.06 2.06 0 1 1 6.78 6.78v2.06h2.06zM8.84 9.9a2.06 2.06 0 1 1 0 4.12H3.69a2.06 2.06 0 1 1 0-4.12h5.15z"
+        fill="#36C5F0"
+      />
+      <path
+        d="M15.16 8.84a2.06 2.06 0 1 1 2.06 2.06h-2.06V8.84zM14.1 8.84a2.06 2.06 0 1 1-4.12 0V3.69a2.06 2.06 0 1 1 4.12 0v5.15z"
+        fill="#2EB67D"
+      />
+      <path
+        d="M15.16 15.16a2.06 2.06 0 1 1-2.06-2.06h2.06v2.06zM15.16 14.1a2.06 2.06 0 1 1 0-4.12h5.15a2.06 2.06 0 1 1 0 4.12h-5.15z"
+        fill="#ECB22E"
+      />
+    </svg>
+  );
+}
+
 function Checkpoint({ children }: { children: React.ReactNode }) {
   return (
     <div className="mt-3 rounded-r-xl border-l-4 border-brand-dark bg-[#eaf4fe] px-4 py-3 text-sm">
@@ -213,7 +236,43 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 2 — Itinerary */}
+      {/* Slide 2 — Join Slack */}
+      <section
+        data-slide
+        id="join-slack"
+        className="relative flex h-dvh snap-start items-center overflow-hidden bg-gradient-to-b from-ink to-[#141f30] px-6 py-10 text-white"
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.16),transparent_55%)]" />
+
+        <div className="relative mx-auto w-full max-w-2xl text-center">
+          <SlackIcon className="mx-auto mb-6 h-16 w-16" />
+          <p className="mb-5 text-[13px] font-semibold tracking-[0.28em] text-brand-light uppercase">
+            Stay connected
+          </p>
+          <h2 className="mb-4 text-5xl leading-[0.98] font-semibold tracking-tight text-balance md:text-7xl">
+            Join Us on Slack
+          </h2>
+          <p className="mx-auto mb-10 max-w-[520px] text-lg leading-relaxed text-white/60 md:text-xl">
+            Get help, share what you&apos;re building, and keep the conversation going after
+            tonight.
+          </p>
+          <Button
+            asChild
+            size="lg"
+            className="rounded-full bg-brand px-7 text-base font-medium text-white shadow-lg shadow-brand/20 hover:bg-brand-dark"
+          >
+            <a
+              href="https://join.slack.com/t/makerslounge/shared_invite/zt-43ly03o4m-Uz5arHN0w98OBU50_cPhsA"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Join the Slack
+            </a>
+          </Button>
+        </div>
+      </section>
+
+      {/* Slide 3 — Itinerary */}
       <section
         data-slide
         id="itinerary"
@@ -264,7 +323,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 3 — Thank you, presenters */}
+      {/* Slide 4 — Thank you, presenters */}
       <section
         data-slide
         id="presenters"
@@ -326,55 +385,53 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 4 — Getting started intro + prerequisites */}
+      {/* Slide 5 — Getting started intro + prerequisites */}
       <section
         data-slide
         id="getting-started"
-        className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
+        className="relative flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
       >
-        <div className="mx-auto w-full max-w-3xl">
-          <div className="mb-8 text-center">
-            <Badge className="mb-4 border-brand/20 bg-brand/10 text-xs font-bold tracking-[0.18em] text-brand-dark uppercase">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.10),transparent_55%)]" />
+
+        <div className="relative mx-auto w-full max-w-3xl">
+          <div className="mb-10 text-center">
+            <p className="mb-5 text-[13px] font-semibold tracking-[0.28em] text-brand-dark uppercase">
               Let&apos;s build
-            </Badge>
-            <h2 className="mb-3 text-2xl font-extrabold tracking-tight md:text-4xl">
+            </p>
+            <h2 className="mb-4 text-4xl leading-[0.98] font-semibold tracking-tight text-balance md:text-6xl">
               Getting Started with Eve
             </h2>
-            <p className="mx-auto max-w-[600px] text-sm text-ink-muted md:text-base">
+            <p className="mx-auto max-w-[600px] text-lg leading-relaxed text-ink-muted md:text-xl">
               Eve agents are TypeScript projects — you describe an agent with files under{" "}
               <Inline>agent/</Inline>, and Eve runs it as a durable service. Everything below
               works from a plain terminal.
             </p>
           </div>
 
-          <Badge
-            variant="outline"
-            className="mb-3 w-fit border-brand/30 text-xs font-bold tracking-[0.12em] text-brand-dark uppercase"
-          >
+          <p className="mb-3 text-[13px] font-semibold tracking-[0.2em] text-brand-dark uppercase">
             Before you start
-          </Badge>
-          <Card className="ring-[#e3ecf5]">
-            <CardContent>
-              <ul>
-                {prereqs.map((item, i) => (
-                  <li
-                    key={item.title}
-                    className={`flex gap-3 py-2.5 ${i < prereqs.length - 1 ? "border-b border-[#e3ecf5]" : ""}`}
-                  >
-                    <span className="font-extrabold text-brand-dark">✓</span>
-                    <span>
-                      <strong>{item.title}</strong> —{" "}
-                      <span className="text-[15px] text-ink-muted">{item.detail}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+          </p>
+          <div className="overflow-hidden rounded-2xl border border-[#e3ecf5] bg-white shadow-sm">
+            {prereqs.map((item, i) => (
+              <div
+                key={item.title}
+                className={`flex items-start gap-4 px-6 py-5 ${i < prereqs.length - 1 ? "border-b border-[#e3ecf5]" : ""}`}
+              >
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-sm font-bold text-brand-dark">
+                  ✓
+                </span>
+                <span className="text-base leading-relaxed">
+                  <strong className="font-semibold">{item.title}</strong>
+                  <br className="sm:hidden" />
+                  <span className="text-ink-muted"> — {item.detail}</span>
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Slide 5 — Step 0 */}
+      {/* Slide 6 — Step 0 */}
       <section
         data-slide
         id="install-cursor"
@@ -414,7 +471,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 6 — Pick your AI agent */}
+      {/* Slide 7 — Pick your AI agent */}
       <section
         data-slide
         id="ask-cursor"
@@ -523,7 +580,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 7 — Build a UI for it */}
+      {/* Slide 8 — Build a UI for it */}
       <section
         data-slide
         id="build-ui"
@@ -566,7 +623,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 8 — Step 1 */}
+      {/* Slide 9 — Step 1 */}
       <section
         data-slide
         id="step-1"
@@ -599,7 +656,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 9 — Step 2 */}
+      {/* Slide 10 — Step 2 */}
       <section
         data-slide
         id="step-2"
@@ -638,7 +695,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 10 — Step 3 */}
+      {/* Slide 11 — Step 3 */}
       <section
         data-slide
         id="step-3"

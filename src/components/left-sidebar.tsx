@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Presentation, Users } from "lucide-react";
+import { SignOutButton } from "@clerk/nextjs";
+import { BookOpen, LogOut, Presentation, Users } from "lucide-react";
 
 const items = [
   { href: "/", label: "Presentation", icon: Presentation },
@@ -48,6 +49,20 @@ export function LeftSidebar() {
           </Link>
         );
       })}
+
+      <div className="mt-auto">
+        <SignOutButton>
+          <button
+            type="button"
+            className="mx-2.5 flex w-[calc(100%-20px)] items-center gap-4 rounded-lg px-3.5 py-2.5 text-ink-muted transition-colors hover:bg-[#f0f5fa] hover:text-ink"
+          >
+            <LogOut className="h-5 w-5 shrink-0" />
+            <span className="translate-x-[-8px] text-sm font-medium whitespace-nowrap opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100">
+              Log out
+            </span>
+          </button>
+        </SignOutButton>
+      </div>
     </nav>
   );
 }

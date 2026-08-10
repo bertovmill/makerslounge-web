@@ -23,6 +23,8 @@ export default function SignInPage() {
             rootBox: "mx-auto",
             card: "rounded-2xl shadow-[0_20px_60px_rgba(15,28,46,0.25)]",
             footer: "hidden",
+            logoBox: "!hidden",
+            headerTitle: "hidden",
           },
         }}
       />
