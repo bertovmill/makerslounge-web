@@ -391,7 +391,7 @@ export default function Home() {
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.16),transparent_55%)]" />
 
-        <div className="relative mx-auto w-full max-w-4xl">
+        <div className="relative mx-auto w-full max-w-6xl">
           <div className="mb-12 text-center">
             <p className="mb-5 text-[13px] font-semibold tracking-[0.28em] text-brand-light uppercase">
               With gratitude
@@ -404,38 +404,38 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
             {presenters.map((presenter) => (
               <div
                 key={presenter.name}
-                className="flex flex-col items-center rounded-2xl border border-white/8 bg-white/[0.04] px-6 py-8 text-center backdrop-blur-sm"
+                className="flex flex-col items-center rounded-2xl border border-white/8 bg-white/[0.04] px-8 py-10 text-center backdrop-blur-sm"
               >
                 {presenter.image ? (
                   <Image
                     src={presenter.image}
                     alt={presenter.name}
-                    width={128}
-                    height={128}
-                    className="mb-5 h-28 w-28 rounded-full object-cover shadow-lg shadow-black/20"
+                    width={160}
+                    height={160}
+                    className="mb-6 h-36 w-36 rounded-full object-cover shadow-lg shadow-black/20"
                   />
                 ) : (
-                  <div className="mb-5 flex h-28 w-28 items-center justify-center rounded-full bg-white/10 text-2xl font-semibold text-white/70">
+                  <div className="mb-6 flex h-36 w-36 items-center justify-center rounded-full bg-white/10 text-3xl font-semibold text-white/70">
                     {presenter.name
                       .split(" ")
                       .map((part) => part[0])
                       .join("")}
                   </div>
                 )}
-                <span className="text-lg font-semibold">{presenter.name}</span>
-                <span className="mt-1 text-sm text-white/50">{presenter.role}</span>
+                <span className="text-xl font-semibold">{presenter.name}</span>
+                <span className="mt-1 text-base text-white/50">{presenter.role}</span>
                 {presenter.linkedin && (
                   <a
                     href={presenter.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/10 hover:text-white"
+                    className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/10 hover:text-white"
                   >
-                    <LinkedInIcon className="h-3.5 w-3.5" />
+                    <LinkedInIcon className="h-4 w-4" />
                     LinkedIn
                   </a>
                 )}
