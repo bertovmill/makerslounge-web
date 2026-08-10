@@ -10,7 +10,7 @@ import { LearningWall } from "@/components/learning-wall";
 import { LearningWallTrigger } from "@/components/learning-wall-trigger";
 import { WorkshopHelperWidget } from "@/components/workshop-helper-widget";
 import { DemoSlots } from "@/components/demo-slots";
-import { Clock } from "lucide-react";
+import { CalendarCheck, CalendarDays, Clock, Mail, ShieldCheck } from "lucide-react";
 
 function Inline({ children }: { children: React.ReactNode }) {
   return (
@@ -204,6 +204,54 @@ const structure: { path: string; what: string; task: string }[] = [
     path: "agent/channels/",
     what: "HTTP & messaging entry points (Slack, webhooks, …)",
     task: "Peek at a channel and try wiring one up — Slack, a webhook, whatever you use.",
+  },
+];
+
+// Closing slide: everything we want people to scan before they leave the room.
+const stayInTouch: {
+  id: string;
+  title: string;
+  blurb: string;
+  cta: string;
+  href: string;
+  qr: string;
+  Icon: typeof CalendarCheck;
+}[] = [
+  {
+    id: "book-berto",
+    title: "Book 30 min with Berto",
+    blurb: "A follow-up on your agent — what you built, what's stuck, what's next.",
+    cta: "Grab a slot",
+    href: "https://calendar.app.google/Uckkazz4uUzBcyft6",
+    qr: "/images/qr-book-berto.svg",
+    Icon: CalendarCheck,
+  },
+  {
+    id: "tmu-cyber-summit",
+    title: "TMU Cyber Summit",
+    blurb: "Register your interest for the summit at Toronto Metropolitan University.",
+    cta: "Register",
+    href: "https://docs.google.com/forms/d/e/1FAIpQLSdTXJmwg4CDZouFuuRKnW73MgkD35Jf0kDWm0RCjySXCTE1IA/viewform",
+    qr: "/images/qr-tmu-cyber-summit.svg",
+    Icon: ShieldCheck,
+  },
+  {
+    id: "harmix-newsletter",
+    title: "Harmix newsletter",
+    blurb: "What we're building and what we're learning, straight to your inbox.",
+    cta: "Subscribe",
+    href: "https://manager.harmix.ai/newsletter",
+    qr: "/images/qr-harmix-newsletter.svg",
+    Icon: Mail,
+  },
+  {
+    id: "makerslounge-calendar",
+    title: "Makers Lounge calendar",
+    blurb: "Every upcoming session at the lounge — come back and build with us.",
+    cta: "See what's on",
+    href: "https://luma.com/calendar/manage/cal-FGHayLJ6ZAmkYJi",
+    qr: "/images/qr-makerslounge-calendar.svg",
+    Icon: CalendarDays,
   },
 ];
 
@@ -1205,6 +1253,63 @@ export default function Home() {
           <div className="mt-5">
             <DemoSlots />
           </div>
+        </div>
+      </section>
+
+      {/* Slide 12 — Stay in touch */}
+      <section
+        data-slide
+        id="stay-in-touch"
+        className="flex h-dvh snap-start items-center overflow-hidden bg-white px-6 py-8 text-ink"
+      >
+        <div className="mx-auto w-full max-w-5xl">
+          <StepBadge>Before you go 👋</StepBadge>
+          <h3 className="mb-2.5 text-3xl font-extrabold tracking-tight md:text-4xl">
+            Stay in touch
+          </h3>
+          <p className="max-w-[760px] text-base text-ink-muted md:text-lg">
+            Point your phone camera at any of these — no typing required.
+          </p>
+
+          <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {stayInTouch.map(({ id, title, blurb, cta, href, qr, Icon }) => (
+              <li
+                key={id}
+                className="flex flex-col rounded-2xl border border-[#e3ecf5] bg-white p-4 shadow-sm"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#e8f1fb] text-brand-dark">
+                    <Icon className="size-4" />
+                  </span>
+                  <h4 className="text-sm leading-tight font-bold text-ink md:text-base">{title}</h4>
+                </div>
+                <p className="mt-2 text-xs leading-snug text-ink-muted md:text-[13px]">{blurb}</p>
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 block rounded-xl border border-[#e3ecf5] bg-white p-2 transition hover:border-brand/40"
+                >
+                  <Image
+                    src={qr}
+                    alt={`QR code — ${title}`}
+                    width={512}
+                    height={512}
+                    className="h-auto w-full"
+                    unoptimized
+                  />
+                </a>
+                <Button
+                  asChild
+                  className="mt-3 w-full bg-gradient-to-br from-brand to-brand-dark text-white hover:opacity-90"
+                >
+                  <a href={href} target="_blank" rel="noreferrer">
+                    {cta} →
+                  </a>
+                </Button>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
     </main>
