@@ -3,11 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Presentation, Users } from "lucide-react";
+import { BookOpen, Presentation, Users } from "lucide-react";
 
 const items = [
   { href: "/", label: "Presentation", icon: Presentation },
   { href: "/room", label: "Meet other people in the room", icon: Users },
+  { href: "/resources", label: "Resources", icon: BookOpen },
 ];
 
 export function LeftSidebar() {
