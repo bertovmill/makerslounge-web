@@ -88,7 +88,12 @@ export function WelcomeTour({ children }: { children: React.ReactNode }) {
 
 function WelcomeModal({ onSkip, onTour }: { onSkip: () => void; onTour: () => void }) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-ink/60 px-6 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-ink/60 px-6 backdrop-blur-sm"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onSkip();
+      }}
+    >
       <div className="w-full max-w-md rounded-2xl border border-[#e3ecf5] bg-white p-8 text-center shadow-[0_20px_60px_rgba(15,28,46,0.25)]">
         <Image
           src="/icon.png"
