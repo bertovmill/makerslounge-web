@@ -168,19 +168,14 @@ const attendeeThemes = [
   { label: "Email & inbox", count: 6 },
 ];
 
+// Anonymized — quotes are verbatim, attribution is intentionally omitted
 const attendeeQuotes = [
-  { quote: "Bridge the gap between “I have an idea” and “it exists.”", author: "Saliha" },
-  { quote: "I need Jarvis from Iron Man.", author: "Davies" },
-  {
-    quote: "Do useful things non-stop for me, especially when my brain is fried.",
-    author: "Tam",
-  },
-  {
-    quote: "Help me with workflows day to day — like an actual competent co-worker.",
-    author: "Viyasan",
-  },
-  { quote: "Take action on all my ideas simultaneously.", author: "Hitesh" },
-  { quote: "Handle these tedious copy-and-paste tasks for me.", author: "Ayame" },
+  "Bridge the gap between ‘I have an idea’ and ‘it exists.’",
+  "I need Jarvis from Iron Man.",
+  "Do useful things non-stop for me, especially when my brain is fried.",
+  "Help me with workflows day to day — like an actual competent co-worker.",
+  "Take action on all my ideas simultaneously.",
+  "Handle these tedious copy-and-paste tasks for me.",
 ];
 
 const prereqs = [
@@ -568,11 +563,14 @@ export default function Home() {
             <p className="mb-4 text-[13px] font-semibold tracking-[0.28em] text-brand-light uppercase">
               In the room tonight
             </p>
-            <h2 className="mb-3 text-4xl leading-[0.98] font-semibold tracking-tight text-balance md:text-6xl">
+            <h2 className="mb-3 text-5xl leading-[0.98] font-semibold tracking-tight text-balance md:text-7xl">
               51 Builders in the Room
             </h2>
-            <p className="mx-auto max-w-[560px] text-base leading-relaxed text-white/60 md:text-lg">
+            <p className="mx-auto max-w-[600px] text-lg leading-relaxed text-white/60 md:text-xl">
               Here&apos;s what you told us on the way in.
+            </p>
+            <p className="mt-3 text-sm font-medium text-brand-light/80 md:text-base">
+              Let&apos;s hear from you! 👋
             </p>
           </div>
 
@@ -582,66 +580,65 @@ export default function Home() {
                 key={stat.label}
                 className="rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-5 text-center backdrop-blur-sm"
               >
-                <div className="text-4xl font-semibold tracking-tight text-brand-light md:text-5xl">
+                <div className="text-5xl font-semibold tracking-tight text-brand-light md:text-6xl">
                   {stat.value}
                 </div>
-                <div className="mt-1 text-xs text-white/50 md:text-sm">{stat.label}</div>
+                <div className="mt-1.5 text-sm text-white/50 md:text-base">{stat.label}</div>
               </div>
             ))}
           </div>
 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
             <div>
-              <p className="mb-4 text-[12px] font-semibold tracking-[0.2em] text-brand-light uppercase">
+              <p className="mb-4 text-sm font-semibold tracking-[0.2em] text-brand-light uppercase">
                 Tools you already use
               </p>
               <div className="space-y-2.5">
                 {attendeeTools.map((tool) => (
                   <div key={tool.name} className="flex items-center gap-3">
-                    <span className="w-[76px] shrink-0 text-sm text-white/70">{tool.name}</span>
+                    <span className="w-[92px] shrink-0 text-base text-white/70 md:text-lg">{tool.name}</span>
                     <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/8">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-brand to-brand-light"
                         style={{ width: `${Math.round((tool.count / 51) * 100)}%` }}
                       />
                     </div>
-                    <span className="w-7 shrink-0 text-right font-mono text-sm text-white/50">
+                    <span className="w-8 shrink-0 text-right font-mono text-base text-white/50 md:text-lg">
                       {tool.count}
                     </span>
                   </div>
                 ))}
               </div>
 
-              <p className="mt-7 mb-3 text-[12px] font-semibold tracking-[0.2em] text-brand-light uppercase">
+              <p className="mt-7 mb-3 text-sm font-semibold tracking-[0.2em] text-brand-light uppercase">
                 What you want agents to do
               </p>
               <div className="flex flex-wrap gap-2">
                 {attendeeThemes.map((theme) => (
                   <span
                     key={theme.label}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-3.5 py-1.5 text-sm text-white/75"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-base text-white/75 md:text-lg"
                   >
                     {theme.label}
-                    <span className="font-mono text-xs text-brand-light">{theme.count}</span>
+                    <span className="font-mono text-sm text-brand-light">{theme.count}</span>
                   </span>
                 ))}
               </div>
             </div>
 
             <div>
-              <p className="mb-4 text-[12px] font-semibold tracking-[0.2em] text-brand-light uppercase">
+              <p className="mb-4 text-sm font-semibold tracking-[0.2em] text-brand-light uppercase">
                 In your own words
               </p>
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                {attendeeQuotes.map((item) => (
+                {attendeeQuotes.map((quote) => (
                   <blockquote
-                    key={item.author}
-                    className="rounded-xl border border-white/8 bg-white/[0.04] px-4 py-3 backdrop-blur-sm"
+                    key={quote}
+                    className="flex items-center rounded-xl border border-white/8 bg-white/[0.04] px-4 py-4 backdrop-blur-sm"
                   >
-                    <p className="text-sm leading-snug text-white/80">
-                      &ldquo;{item.quote}&rdquo;
+                    <p className="text-base leading-snug text-white/85 md:text-lg">
+                      &ldquo;{quote}&rdquo;
                     </p>
-                    <footer className="mt-2 text-xs text-white/40">— {item.author}</footer>
                   </blockquote>
                 ))}
               </div>
