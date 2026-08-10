@@ -541,15 +541,15 @@ export default function Home() {
               Build a UI for your agent
             </h3>
             <p className="mx-auto max-w-[600px] text-sm text-ink-muted md:text-base">
-              Once Eve is installed, keep chatting with Cursor — ask it to build a showcase app
+              Once Eve is installed, keep chatting with opencode — ask it to build a showcase app
               with a chat interface using shadcn and Vercel&apos;s AI Elements kit.
             </p>
           </div>
           <Image
-            src="/images/cursor-ask-ui.png"
-            alt="Cursor's chat panel with a prompt asking it to build a Next.js and shadcn app with a chat interface using Vercel AI Elements"
+            src="/images/opencode-ask-ui.png"
+            alt="opencode's terminal with a prompt asking it to build a Next.js and shadcn app with a chat interface using Vercel AI Elements"
             width={2000}
-            height={1307}
+            height={1310}
             className="my-3 h-auto max-h-[62vh] w-auto max-w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
           />
           <div className="flex w-full shrink-0 flex-wrap items-center justify-center gap-4">
