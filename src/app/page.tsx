@@ -537,7 +537,7 @@ export default function Home() {
         id="ask-cursor"
         className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
       >
-        <div className="mx-auto flex h-full w-full max-w-4xl flex-col items-center justify-center">
+        <div className="mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center">
           <div className="w-full shrink-0 text-center">
             <Badge
               variant="outline"
@@ -553,15 +553,15 @@ export default function Home() {
               agent matches your subscription — it can run the same setup steps for you.
             </p>
           </div>
-          <div className="my-4 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="my-6 grid w-full max-w-5xl grid-cols-1 gap-8 sm:grid-cols-3">
             <Card className="border-[#e3ecf5]">
-              <CardContent className="flex flex-col items-center gap-2 px-4 py-5 text-center">
+              <CardContent className="flex flex-col items-center gap-3 px-6 py-8 text-center">
                 <Image
                   src="/images/claude-logo.png"
                   alt="Claude logo"
-                  width={48}
-                  height={48}
-                  className="h-12 w-12"
+                  width={64}
+                  height={64}
+                  className="h-16 w-16"
                 />
                 <span className="text-base font-bold tracking-[0.1em] text-brand-dark uppercase">
                   Have a Claude subscription
@@ -585,13 +585,13 @@ export default function Home() {
               </CardContent>
             </Card>
             <Card className="border-[#e3ecf5]">
-              <CardContent className="flex flex-col items-center gap-2 px-4 py-5 text-center">
+              <CardContent className="flex flex-col items-center gap-3 px-6 py-8 text-center">
                 <Image
                   src="/images/codex-logo.png"
                   alt="Codex logo"
-                  width={48}
-                  height={48}
-                  className="h-12 w-12"
+                  width={64}
+                  height={64}
+                  className="h-16 w-16"
                 />
                 <span className="text-base font-bold tracking-[0.1em] text-brand-dark uppercase">
                   Have a Codex subscription
@@ -615,13 +615,13 @@ export default function Home() {
               </CardContent>
             </Card>
             <Card className="border-[#e3ecf5]">
-              <CardContent className="flex flex-col items-center gap-2 px-4 py-5 text-center">
+              <CardContent className="flex flex-col items-center gap-3 px-6 py-8 text-center">
                 <Image
                   src="/images/opencode-logo.png"
                   alt="OpenCode logo"
-                  width={48}
-                  height={48}
-                  className="h-12 w-12 rounded-md"
+                  width={64}
+                  height={64}
+                  className="h-16 w-16 rounded-md"
                 />
                 <span className="text-base font-bold tracking-[0.1em] text-brand-dark uppercase">
                   Have neither
