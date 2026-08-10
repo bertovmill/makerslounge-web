@@ -95,6 +95,25 @@ const schedule = [
   },
 ];
 
+const objectives = [
+  {
+    title: "Get set up with Cursor",
+    detail: "Install the editor and get comfortable running an AI agent from its terminal.",
+  },
+  {
+    title: "Get set up with Next.js",
+    detail: "Have a working Next.js project ready to build in, locally on your machine.",
+  },
+  {
+    title: "Get set up with Eve Agents",
+    detail: "Scaffold an Eve agent project and understand its filesystem-first structure.",
+  },
+  {
+    title: "Develop a use case",
+    detail: "Turn an idea into a working agent you can keep building on after tonight.",
+  },
+];
+
 const presenters = [
   {
     name: "Matias Gonzalez",
@@ -319,6 +338,47 @@ export default function Home() {
                 RSVP on Luma
               </a>
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Slide 2.5 — Objectives for this session */}
+      <section
+        data-slide
+        id="objectives"
+        className="relative flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.10),transparent_55%)]" />
+
+        <div className="relative mx-auto w-full max-w-4xl">
+          <div className="mb-10 text-center">
+            <p className="mb-5 text-[13px] font-semibold tracking-[0.28em] text-brand-dark uppercase">
+              What you&apos;ll leave with
+            </p>
+            <h2 className="mb-4 text-5xl leading-[0.98] font-semibold tracking-tight text-balance md:text-7xl">
+              Objectives for This Session
+            </h2>
+            <p className="mx-auto max-w-[560px] text-lg leading-relaxed text-ink-muted md:text-xl">
+              Get everyone to a working AI agent use case they can take home and keep building on.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {objectives.map((objective, i) => (
+              <Card key={objective.title} className="border-[#e3ecf5]">
+                <CardContent className="flex items-start gap-4 px-6 py-5">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand/10 text-base font-bold text-brand-dark">
+                    {i + 1}
+                  </span>
+                  <span>
+                    <p className="text-lg font-semibold">{objective.title}</p>
+                    <p className="mt-0.5 text-sm leading-relaxed text-ink-muted">
+                      {objective.detail}
+                    </p>
+                  </span>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
