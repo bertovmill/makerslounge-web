@@ -47,3 +47,6 @@ next-env.d.ts
 /docs/reference/*
 !/docs/reference/.gitkeep
 !/docs/reference/AI Agent-Building Workshop @ TMU - Guests - 2026-08-10-16-42-04.csv
+
+# Claude Code local config, skills, and worktrees
+/.claude/
