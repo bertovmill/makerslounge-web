@@ -16,6 +16,14 @@ function Inline({ children }: { children: React.ReactNode }) {
   );
 }
 
+function LinkedInIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z" />
+    </svg>
+  );
+}
+
 function Checkpoint({ children }: { children: React.ReactNode }) {
   return (
     <div className="mt-3 rounded-r-xl border-l-4 border-brand-dark bg-[#eaf4fe] px-4 py-3 text-sm">
@@ -69,16 +77,25 @@ const presenters = [
     name: "Matias Gonzalez",
     role: "Design Engineer, Vercel",
     image: "/images/presenters/matias-gonzalez.png",
+    linkedin: null,
   },
   {
     name: "Nazar Ponochevnyi",
     role: "AI Agent MCP",
     image: "/images/presenters/nazar-ponochevnyi.png",
+    linkedin: null,
   },
   {
     name: "Danial Hasan",
     role: "Key principles",
     image: "/images/presenters/danial-hasan.png",
+    linkedin: "https://www.linkedin.com/in/dhasandev/",
+  },
+  {
+    name: "Kelly Sun",
+    role: "Founder, AI Infrastructure Startup",
+    image: "/images/presenters/kelly-sun.png",
+    linkedin: "https://www.linkedin.com/in/sunkelly/",
   },
 ];
 
@@ -268,7 +285,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
             {presenters.map((presenter) => (
               <div
                 key={presenter.name}
@@ -292,6 +309,17 @@ export default function Home() {
                 )}
                 <span className="text-lg font-semibold">{presenter.name}</span>
                 <span className="mt-1 text-sm text-white/50">{presenter.role}</span>
+                {presenter.linkedin && (
+                  <a
+                    href={presenter.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold text-white/80 transition hover:border-white/30 hover:bg-white/10 hover:text-white"
+                  >
+                    <LinkedInIcon className="h-3.5 w-3.5" />
+                    LinkedIn
+                  </a>
+                )}
               </div>
             ))}
           </div>
