@@ -37,7 +37,6 @@ const SLIDE_LABELS: Record<string, string> = {
   itinerary: "Tonight's Itinerary",
   presenters: "Presenters",
   objectives: "Objectives",
-  "getting-started": "Getting Started",
   "install-cursor": "Step 0 — Install Cursor",
   "ask-cursor": "Just Ask Cursor",
   "build-ui": "Build a UI",

@@ -182,33 +182,6 @@ const attendeeQuotes = [
   "Handle these tedious copy-and-paste tasks for me.",
 ];
 
-const prereqs = [
-  {
-    title: "Node.js 24 or newer",
-    detail: (
-      <>
-        Check with <Inline>node -v</Inline>. Install from{" "}
-        <a href="https://nodejs.org" className="text-brand-dark underline">
-          nodejs.org
-        </a>{" "}
-        or <Inline>brew install node</Inline>.
-      </>
-    ),
-  },
-  {
-    title: "A free Vercel account",
-    detail: (
-      <>
-        Sign up at{" "}
-        <a href="https://vercel.com/signup" className="text-brand-dark underline">
-          vercel.com/signup
-        </a>{" "}
-        for AI model access via the Vercel AI Gateway — no separate API keys.
-      </>
-    ),
-  },
-];
-
 // Step 2 is a hands-on 10-minute lab: each folder comes with something to
 // actually open and change, not just a description to read.
 const structure: { path: string; what: string; task: string }[] = [
@@ -674,53 +647,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 5 — Getting started intro + prerequisites */}
-      <section
-        data-slide
-        id="getting-started"
-        className="relative flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
-      >
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.10),transparent_55%)]" />
-
-        <div className="relative mx-auto w-full max-w-3xl">
-          <div className="mb-10 text-center">
-            <p className="mb-5 text-[13px] font-semibold tracking-[0.28em] text-brand-dark uppercase">
-              Let&apos;s build
-            </p>
-            <h2 className="mb-4 text-4xl leading-[0.98] font-semibold tracking-tight text-balance md:text-6xl">
-              Getting Started with Eve
-            </h2>
-            <p className="mx-auto max-w-[600px] text-lg leading-relaxed text-ink-muted md:text-xl">
-              Eve agents are TypeScript projects — you describe an agent with files under{" "}
-              <Inline>agent/</Inline>, and Eve runs it as a durable service. Everything below
-              works from a plain terminal.
-            </p>
-          </div>
-
-          <p className="mb-3 text-[13px] font-semibold tracking-[0.2em] text-brand-dark uppercase">
-            Before you start
-          </p>
-          <div className="overflow-hidden rounded-2xl border border-[#e3ecf5] bg-white shadow-sm">
-            {prereqs.map((item, i) => (
-              <div
-                key={item.title}
-                className={`flex items-start gap-4 px-6 py-5 ${i < prereqs.length - 1 ? "border-b border-[#e3ecf5]" : ""}`}
-              >
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-sm font-bold text-brand-dark">
-                  ✓
-                </span>
-                <span className="text-base leading-relaxed">
-                  <strong className="font-semibold">{item.title}</strong>
-                  <br className="sm:hidden" />
-                  <span className="text-ink-muted"> — {item.detail}</span>
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Slide 6 — Step 0 */}
+      {/* Slide 5 — Step 0 */}
       <section
         data-slide
         id="install-cursor"
