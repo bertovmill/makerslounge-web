@@ -1390,8 +1390,11 @@ export default function Home() {
       <section
         data-slide
         id="demo-time"
-        className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-8 text-ink"
+        className="relative flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-8 text-ink"
       >
+        <p className="absolute right-6 bottom-5 text-xs font-medium tracking-[0.2em] text-ink-muted/60">
+          8:15&nbsp;PM
+        </p>
         <div className="mx-auto w-full max-w-4xl">
           <div className="flex flex-wrap items-center gap-2">
             <StepBadge>Demo time! 🎤</StepBadge>
