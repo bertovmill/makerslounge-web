@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mic, Plus, X } from "lucide-react";
+import { Hourglass, Mic, Pencil, Plus, Trash2, X } from "lucide-react";
 
 type Slot = {
   slot: number;
@@ -13,6 +13,8 @@ type Slot = {
 };
 
 const SLOT_COUNT = 8;
+// 9 and 10 only go on if the night is running ahead of schedule.
+const STANDBY_SLOTS = [9, 10];
 const POLL_MS = 5000;
 
 export function DemoSlots() {
@@ -51,6 +53,14 @@ export function DemoSlots() {
     }
     setError(null);
     setDraft(user?.firstName ?? user?.fullName ?? "");
+    setClaiming(slot);
+  }
+
+  // Editing is the same upsert as claiming — the API only lets the owner
+  // rewrite a taken slot — so it just seeds the form with the current name.
+  function openEdit(slot: number, name: string) {
+    setError(null);
+    setDraft(name);
     setClaiming(slot);
   }
 
@@ -100,96 +110,131 @@ export function DemoSlots() {
 
   const byNumber = new Map(slots.map((s) => [s.slot, s]));
   const takenByMe = slots.find((s) => s.mine);
-  const remaining = SLOT_COUNT - slots.length;
+  const remaining = SLOT_COUNT - slots.filter((s) => s.slot <= SLOT_COUNT).length;
+
+  function renderSlot(n: number, standby = false) {
+    const taken = byNumber.get(n);
+    const isClaiming = claiming === n;
+
+    return (
+      <li
+        key={n}
+        className={`flex min-h-[58px] items-center gap-3 rounded-xl border px-3.5 py-2.5 transition ${
+          taken?.mine
+            ? "border-brand/40 bg-brand/5"
+            : taken
+              ? "border-[#e3ecf5] bg-white"
+              : standby
+                ? "border-dashed border-[#dfe7ef] bg-white/60"
+                : "border-dashed border-[#cddcec] bg-[#fbfdff]"
+        }`}
+      >
+        <span
+          className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+            taken ? "bg-brand text-white" : standby ? "bg-[#eef2f6] text-ink-muted" : "bg-[#e8f1fb] text-brand-dark"
+          }`}
+        >
+          {n}
+        </span>
+
+        {isClaiming ? (
+          <form
+            className="flex min-w-0 flex-1 items-center gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              claim(n);
+            }}
+          >
+            <input
+              autoFocus
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setClaiming(null);
+              }}
+              placeholder="Your name"
+              maxLength={40}
+              className="min-w-0 flex-1 rounded-lg border border-[#cddcec] bg-white px-2.5 py-1.5 text-sm text-ink outline-none focus:border-brand"
+            />
+            <button
+              type="submit"
+              disabled={busy || !draft.trim()}
+              className="shrink-0 cursor-pointer rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-dark disabled:opacity-50"
+            >
+              {busy ? "…" : taken ? "Save" : "I'm in"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setClaiming(null)}
+              aria-label="Cancel"
+              className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition hover:bg-[#f1f6fb] hover:text-ink"
+            >
+              <X className="size-4" />
+            </button>
+          </form>
+        ) : taken ? (
+          <>
+            <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
+              {taken.name}
+              {taken.mine && (
+                <span className="ml-1.5 text-xs font-normal text-ink-muted">(you)</span>
+              )}
+            </span>
+            {taken.mine && (
+              <span className="flex shrink-0 items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => openEdit(n, taken.name)}
+                  disabled={busy}
+                  aria-label="Edit the name in your demo slot"
+                  title="Edit"
+                  className="flex size-7 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition hover:bg-[#f1f6fb] hover:text-brand-dark disabled:opacity-50"
+                >
+                  <Pencil className="size-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => release(n)}
+                  disabled={busy}
+                  aria-label="Delete your demo slot"
+                  title="Delete"
+                  className="flex size-7 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              </span>
+            )}
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => openClaim(n)}
+            disabled={!!takenByMe}
+            className="flex flex-1 cursor-pointer items-center gap-1.5 text-left text-sm text-ink-muted transition hover:text-brand-dark disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Plus className="size-3.5" />
+            {takenByMe ? "Open" : standby ? "Add your name (standby)" : "Add your name"}
+          </button>
+        )}
+      </li>
+    );
+  }
 
   return (
     <div>
       <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-        {Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).map((n) => {
-          const taken = byNumber.get(n);
-          const isClaiming = claiming === n;
-
-          return (
-            <li
-              key={n}
-              className={`flex min-h-[58px] items-center gap-3 rounded-xl border px-3.5 py-2.5 transition ${
-                taken?.mine
-                  ? "border-brand/40 bg-brand/5"
-                  : taken
-                    ? "border-[#e3ecf5] bg-white"
-                    : "border-dashed border-[#cddcec] bg-[#fbfdff]"
-              }`}
-            >
-              <span
-                className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                  taken ? "bg-brand text-white" : "bg-[#e8f1fb] text-brand-dark"
-                }`}
-              >
-                {n}
-              </span>
-
-              {taken ? (
-                <>
-                  <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
-                    {taken.name}
-                    {taken.mine && (
-                      <span className="ml-1.5 text-xs font-normal text-ink-muted">(you)</span>
-                    )}
-                  </span>
-                  {taken.mine && (
-                    <button
-                      type="button"
-                      onClick={() => release(n)}
-                      disabled={busy}
-                      aria-label="Give up your demo slot"
-                      className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition hover:bg-[#f1f6fb] hover:text-ink disabled:opacity-50"
-                    >
-                      <X className="size-4" />
-                    </button>
-                  )}
-                </>
-              ) : isClaiming ? (
-                <form
-                  className="flex min-w-0 flex-1 items-center gap-2"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    claim(n);
-                  }}
-                >
-                  <input
-                    autoFocus
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") setClaiming(null);
-                    }}
-                    placeholder="Your name"
-                    maxLength={40}
-                    className="min-w-0 flex-1 rounded-lg border border-[#cddcec] bg-white px-2.5 py-1.5 text-sm text-ink outline-none focus:border-brand"
-                  />
-                  <button
-                    type="submit"
-                    disabled={busy || !draft.trim()}
-                    className="shrink-0 cursor-pointer rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-dark disabled:opacity-50"
-                  >
-                    {busy ? "…" : "I'm in"}
-                  </button>
-                </form>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => openClaim(n)}
-                  disabled={!!takenByMe}
-                  className="flex flex-1 cursor-pointer items-center gap-1.5 text-left text-sm text-ink-muted transition hover:text-brand-dark disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Plus className="size-3.5" />
-                  {takenByMe ? "Open" : "Add your name"}
-                </button>
-              )}
-            </li>
-          );
-        })}
+        {Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).map((n) => renderSlot(n))}
       </ul>
+
+      <div className="mt-3 rounded-xl border border-[#e3ecf5] bg-white/50 px-3 py-3">
+        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-[0.08em] text-ink-muted uppercase">
+          <Hourglass className="size-3.5" />
+          Stand by — if we have time
+        </p>
+        <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          {STANDBY_SLOTS.map((n) => renderSlot(n, true))}
+        </ul>
+      </div>
 
       <p className="mt-3 flex items-center justify-center gap-2 text-center text-sm text-ink-muted">
         <Mic className="size-4 text-brand" />
@@ -204,8 +249,9 @@ export function DemoSlots() {
           </span>
         ) : takenByMe ? (
           <span>
-            You&apos;re up in slot <strong className="text-ink">{takenByMe.slot}</strong> — get
-            something on screen you can show in 2 minutes.
+            You&apos;re up in slot <strong className="text-ink">{takenByMe.slot}</strong>
+            {takenByMe.slot > SLOT_COUNT ? " (standby)" : ""} — edit or free it up any time with the
+            icons on your row.
           </span>
         ) : remaining > 0 ? (
           <span>
@@ -213,7 +259,7 @@ export function DemoSlots() {
             person, first come first serve
           </span>
         ) : (
-          <span>All 8 slots are full — grab one if someone drops out!</span>
+          <span>All 8 slots are full — put your name on standby, or grab one if someone drops.</span>
         )}
       </p>
     </div>

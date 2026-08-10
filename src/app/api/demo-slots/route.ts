@@ -5,6 +5,8 @@ import { getDb } from "@/db";
 import { demoSlots } from "@/db/schema";
 
 export const SLOT_COUNT = 8;
+// 9 and 10 are the "if we have time" standby slots.
+const MAX_SLOT = 10;
 const MAX_NAME_LENGTH = 40;
 
 function toPublic(row: typeof demoSlots.$inferSelect, userId: string) {
@@ -33,8 +35,8 @@ export async function POST(req: NextRequest) {
   const slot = Number(body?.slot);
   const name = typeof body?.name === "string" ? body.name.trim() : "";
 
-  if (!Number.isInteger(slot) || slot < 1 || slot > SLOT_COUNT) {
-    return NextResponse.json({ error: "Pick one of the 8 slots" }, { status: 400 });
+  if (!Number.isInteger(slot) || slot < 1 || slot > MAX_SLOT) {
+    return NextResponse.json({ error: `Pick a slot between 1 and ${MAX_SLOT}` }, { status: 400 });
   }
   if (!name) {
     return NextResponse.json({ error: "Add your name" }, { status: 400 });
