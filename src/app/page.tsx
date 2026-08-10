@@ -1286,7 +1286,50 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 8c — While that's running: set up PAM */}
+      {/* Slide 8c — Step 1: AI Gateway API key */}
+      <section
+        data-slide
+        id="ai-gateway-api-key"
+        className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
+      >
+        <div className="mx-auto w-full max-w-3xl">
+          <StepBadge>Step 1</StepBadge>
+          <h3 className="mb-2.5 text-3xl font-extrabold tracking-tight md:text-5xl">
+            Add a Vercel API key
+          </h3>
+          <p className="max-w-[640px] text-lg text-ink-muted">
+            Eve talks to AI models through the <strong>Vercel AI Gateway</strong>. Paste tonight&apos;s
+            shared key into your agent&apos;s <Inline>.env.local</Inline> — it&apos;s capped at $100
+            for the room.
+          </p>
+          {/* Read from the back of the room — the key is the whole point of this slide */}
+          <CodeBlock
+            lines={[
+              "AI_GATEWAY_API_KEY=vck_2gBjXeEqEs7j0yDNVS5OXEaAtuNAxrK9zJPKbwaPzQotsmFAkj1y8x3p",
+            ]}
+            copyText="vck_2gBjXeEqEs7j0yDNVS5OXEaAtuNAxrK9zJPKbwaPzQotsmFAkj1y8x3p"
+            className="p-6 pt-12 text-lg leading-relaxed break-all whitespace-pre-wrap md:text-2xl"
+          />
+          <Button
+            asChild
+            className="mt-4 rounded-full bg-brand px-6 text-base font-medium text-white shadow-lg shadow-brand/20 hover:bg-brand-dark"
+          >
+            <a
+              href="https://vercel.com/docs/ai-gateway/getting-started"
+              target="_blank"
+              rel="noreferrer"
+            >
+              AI Gateway quickstart →
+            </a>
+          </Button>
+          <Checkpoint>
+            ✅ <strong className="text-brand-dark">Checkpoint:</strong> send your agent a message
+            and get a real response back.
+          </Checkpoint>
+        </div>
+      </section>
+
+      {/* Slide 9 — While that's running: set up PAM */}
       <section
         data-slide
         id="setup-pam"
@@ -1331,37 +1374,6 @@ export default function Home() {
               to Claude Code or Cursor.
             </Checkpoint>
           </div>
-        </div>
-      </section>
-
-      {/* Slide 9 — Step 1 */}
-      <section
-        data-slide
-        id="step-1"
-        className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
-      >
-        <div className="mx-auto w-full max-w-3xl">
-          <StepBadge>Step 1</StepBadge>
-          <h3 className="mb-2.5 text-3xl font-extrabold tracking-tight md:text-5xl">
-            Add a Vercel API key
-          </h3>
-          <p className="max-w-[640px] text-lg text-ink-muted">
-            Eve talks to AI models through the <strong>Vercel AI Gateway</strong>. Paste tonight&apos;s
-            shared key into your agent&apos;s <Inline>.env.local</Inline> — it&apos;s capped at $100
-            for the room.
-          </p>
-          {/* Read from the back of the room — the key is the whole point of this slide */}
-          <CodeBlock
-            lines={[
-              "AI_GATEWAY_API_KEY=vck_2gBjXeEqEs7j0yDNVS5OXEaAtuNAxrK9zJPKbwaPzQotsmFAkj1y8x3p",
-            ]}
-            copyText="vck_2gBjXeEqEs7j0yDNVS5OXEaAtuNAxrK9zJPKbwaPzQotsmFAkj1y8x3p"
-            className="p-6 pt-12 text-lg leading-relaxed break-all whitespace-pre-wrap md:text-2xl"
-          />
-          <Checkpoint>
-            ✅ <strong className="text-brand-dark">Checkpoint:</strong> send your agent a message
-            and get a real response back.
-          </Checkpoint>
         </div>
       </section>
 

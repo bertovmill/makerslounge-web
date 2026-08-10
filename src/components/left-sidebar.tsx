@@ -3,18 +3,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SignOutButton } from "@clerk/nextjs";
-import { BookOpen, LogOut, Presentation, Users } from "lucide-react";
+import { useState } from "react";
+import { BookOpen, LogOut, Presentation, User, Users } from "lucide-react";
 import { useTourActiveHref } from "@/components/welcome-tour";
+import { signOutAction } from "@/app/profile/actions";
 
 const items = [
   { href: "/", label: "Presentation", icon: Presentation },
   { href: "/attendees", label: "Attendees", icon: Users },
   { href: "/resources", label: "Resources", icon: BookOpen },
+  { href: "/profile", label: "Profile", icon: User },
 ];
 
 export function LeftSidebar() {
   const pathname = usePathname();
+  const [signingOut, setSigningOut] = useState(false);
   const tourActiveHref = useTourActiveHref();
   const touring = tourActiveHref !== null;
 

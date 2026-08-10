@@ -44,7 +44,7 @@ const SLIDE_LABELS: Record<string, string> = {
   "build-ui": "Build a UI",
   "run-dev-server": "Run the Dev Server",
   "open-localhost": "Open localhost",
-  "step-1": "Step 1 — Add a Vercel API Key",
+  "ai-gateway-api-key": "Step 1 — Add a Vercel API Key",
   "poke-around-the-repo": "Step 2 — Poke around the repo",
   "step-3": "Step 3 — Project Structure",
   attendees: "Attendees",
