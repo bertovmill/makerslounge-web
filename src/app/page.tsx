@@ -537,18 +537,18 @@ export default function Home() {
         id="ask-cursor"
         className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
       >
-        <div className="mx-auto flex h-full w-full max-w-4xl flex-col items-center">
+        <div className="mx-auto flex h-full w-full max-w-4xl flex-col items-center justify-center">
           <div className="w-full shrink-0 text-center">
             <Badge
               variant="outline"
-              className="mb-2 w-fit border-brand/30 text-sm font-bold tracking-[0.12em] text-brand-dark uppercase"
+              className="mb-2 w-fit border-brand/30 text-base font-bold tracking-[0.12em] text-brand-dark uppercase"
             >
               Prefer chat?
             </Badge>
-            <h3 className="mb-1.5 text-3xl font-extrabold tracking-tight md:text-4xl">
+            <h3 className="mb-1.5 text-4xl font-extrabold tracking-tight md:text-5xl">
               Pick your AI agent
             </h3>
-            <p className="mx-auto max-w-[640px] text-base text-ink-muted md:text-lg">
+            <p className="mx-auto max-w-[640px] text-lg text-ink-muted md:text-xl">
               Open Cursor&apos;s built-in terminal (<Inline>Ctrl+`</Inline>) and run whichever
               agent matches your subscription — it can run the same setup steps for you.
             </p>
@@ -563,13 +563,13 @@ export default function Home() {
                   height={48}
                   className="h-12 w-12"
                 />
-                <span className="text-sm font-bold tracking-[0.1em] text-brand-dark uppercase">
+                <span className="text-base font-bold tracking-[0.1em] text-brand-dark uppercase">
                   Have a Claude subscription
                 </span>
-                <p className="text-xl font-extrabold">Claude Code</p>
+                <p className="text-2xl font-extrabold">Claude Code</p>
                 <Badge
                   variant="outline"
-                  className="w-fit border-amber-300 bg-amber-50 text-[10px] font-bold tracking-[0.08em] text-amber-700 uppercase"
+                  className="w-fit border-amber-300 bg-amber-50 text-xs font-bold tracking-[0.08em] text-amber-700 uppercase"
                 >
                   Subscription Required
                 </Badge>
@@ -578,7 +578,7 @@ export default function Home() {
                   href="https://code.claude.com/docs/en/quickstart"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-sm font-semibold text-brand-dark hover:underline"
+                  className="text-base font-semibold text-brand-dark hover:underline"
                 >
                   Quickstart docs →
                 </a>
@@ -593,13 +593,13 @@ export default function Home() {
                   height={48}
                   className="h-12 w-12"
                 />
-                <span className="text-sm font-bold tracking-[0.1em] text-brand-dark uppercase">
+                <span className="text-base font-bold tracking-[0.1em] text-brand-dark uppercase">
                   Have a Codex subscription
                 </span>
-                <p className="text-xl font-extrabold">Codex</p>
+                <p className="text-2xl font-extrabold">Codex</p>
                 <Badge
                   variant="outline"
-                  className="w-fit border-amber-300 bg-amber-50 text-[10px] font-bold tracking-[0.08em] text-amber-700 uppercase"
+                  className="w-fit border-amber-300 bg-amber-50 text-xs font-bold tracking-[0.08em] text-amber-700 uppercase"
                 >
                   Subscription Required
                 </Badge>
@@ -608,7 +608,7 @@ export default function Home() {
                   href="https://learn.chatgpt.com/docs/codex/cli"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-sm font-semibold text-brand-dark hover:underline"
+                  className="text-base font-semibold text-brand-dark hover:underline"
                 >
                   CLI docs →
                 </a>
@@ -623,13 +623,13 @@ export default function Home() {
                   height={48}
                   className="h-12 w-12 rounded-md"
                 />
-                <span className="text-sm font-bold tracking-[0.1em] text-brand-dark uppercase">
+                <span className="text-base font-bold tracking-[0.1em] text-brand-dark uppercase">
                   Have neither
                 </span>
-                <p className="text-xl font-extrabold">OpenCode</p>
+                <p className="text-2xl font-extrabold">OpenCode</p>
                 <Badge
                   variant="outline"
-                  className="w-fit border-emerald-300 bg-emerald-50 text-[10px] font-bold tracking-[0.08em] text-emerald-700 uppercase"
+                  className="w-fit border-emerald-300 bg-emerald-50 text-xs font-bold tracking-[0.08em] text-emerald-700 uppercase"
                 >
                   Open Source - Free
                 </Badge>
@@ -638,7 +638,7 @@ export default function Home() {
                   href="https://opencode.ai/docs/"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-sm font-semibold text-brand-dark hover:underline"
+                  className="text-base font-semibold text-brand-dark hover:underline"
                 >
                   Docs →
                 </a>
@@ -646,10 +646,6 @@ export default function Home() {
             </Card>
           </div>
           <div className="flex w-full shrink-0 flex-wrap items-center justify-center gap-4">
-            <CopyLine
-              text="I want to install the Vercel Eve agent framework to this project"
-              className="max-w-xl"
-            />
             <Checkpoint>
               ✅ <strong className="text-brand-dark">Checkpoint:</strong> click{" "}
               <strong className="text-ink">Add Vercel</strong> when it shows up.
