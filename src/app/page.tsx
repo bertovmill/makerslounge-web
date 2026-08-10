@@ -8,7 +8,7 @@ import { SlideNav } from "@/components/slide-nav";
 import { LeftSidebar } from "@/components/left-sidebar";
 import { WorkshopHelperWidget } from "@/components/workshop-helper-widget";
 import { DemoSlots } from "@/components/demo-slots";
-import { CalendarDays, Clock, ShieldCheck } from "lucide-react";
+import { CalendarDays, Clock, Mail, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function Inline({ children }: { children: React.ReactNode }) {
@@ -1641,6 +1641,16 @@ export default function Home() {
               </li>
             ))}
           </ul>
+
+          <div className="mt-8 flex items-start gap-3 rounded-2xl border border-[#e3ecf5] bg-[#f5f9fd] p-4 md:p-5">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#e8f1fb] text-brand-dark">
+              <Mail className="size-4" />
+            </span>
+            <p className="text-sm leading-relaxed text-ink-muted md:text-base">
+              <span className="font-bold text-ink">We&apos;d love your feedback</span> — through the
+              email sent out at 9&nbsp;PM tonight. It helps us make the next one better.
+            </p>
+          </div>
         </div>
       </section>
     </main>
