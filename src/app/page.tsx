@@ -11,6 +11,7 @@ import { LearningWallTrigger } from "@/components/learning-wall-trigger";
 import { WorkshopHelperWidget } from "@/components/workshop-helper-widget";
 import { DemoSlots } from "@/components/demo-slots";
 import { CalendarDays, Clock, ShieldCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 function Inline({ children }: { children: React.ReactNode }) {
   return (
@@ -51,9 +52,14 @@ function SlackIcon({ className }: { className?: string }) {
   );
 }
 
-function Checkpoint({ children }: { children: React.ReactNode }) {
+function Checkpoint({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className="mt-3 rounded-r-xl border-l-4 border-brand-dark bg-[#eaf4fe] px-4 py-3 text-sm">
+    <div
+      className={cn(
+        "mt-3 rounded-r-xl border-l-4 border-brand-dark bg-[#eaf4fe] px-4 py-3 text-sm",
+        className,
+      )}
+    >
       {children}
     </div>
   );
@@ -197,29 +203,13 @@ const attendeeQuotes = [
   "Handle these tedious copy-and-paste tasks for me.",
 ];
 
-// Step 2 is a hands-on 10-minute lab: each folder comes with something to
-// actually open and change, not just a description to read.
-const structure: { path: string; what: string; task: string }[] = [
-  {
-    path: "agent/instructions.md",
-    what: "Your agent's always-on system prompt — its personality & job",
-    task: "Open it and rewrite the personality. Ask your agent something and watch it answer differently.",
-  },
-  {
-    path: "agent/tools/",
-    what: "Typed functions the model can call",
-    task: "Read a tool file, then add your own — a new file here becomes a new tool.",
-  },
-  {
-    path: "agent/skills/",
-    what: "Procedures loaded contextually when needed",
-    task: "Skim a skill and notice when the agent decides to load it.",
-  },
-  {
-    path: "agent/channels/",
-    what: "HTTP & messaging entry points (Slack, webhooks, …)",
-    task: "Peek at a channel and try wiring one up — Slack, a webhook, whatever you use.",
-  },
+// Step 2 is a hands-on lab, so the slide stays deliberately sparse — one line
+// per folder, and the talking happens out loud in the room.
+const structure: { path: string; what: string }[] = [
+  { path: "agent/instructions.md", what: "Its personality & job" },
+  { path: "agent/tools/", what: "Functions it can call" },
+  { path: "agent/skills/", what: "Procedures it loads when needed" },
+  { path: "agent/channels/", what: "Slack, webhooks, HTTP" },
 ];
 
 // Closing slide: everything we want people to scan before they leave the room.
@@ -331,6 +321,10 @@ export default function Home() {
             BUILD&nbsp;·&nbsp;CONNECT&nbsp;·&nbsp;CREATE
           </p>
         </div>
+
+        <p className="absolute inset-x-0 bottom-6 z-10 text-center text-xs font-medium tracking-[0.2em] text-white/40">
+          6:15&nbsp;PM
+        </p>
       </section>
 
       {/* Slide 2 — Join Slack */}
@@ -1345,10 +1339,10 @@ export default function Home() {
       {/* Slide 10 — Step 2 */}
       <section
         data-slide
-        id="step-2"
+        id="poke-around-the-repo"
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
       >
-        <div className="mx-auto w-full max-w-3xl">
+        <div className="mx-auto w-full max-w-4xl">
           <div className="flex flex-wrap items-center gap-2">
             <StepBadge>Step 2</StepBadge>
             <Badge className="mb-3 w-fit gap-1.5 bg-white text-xs font-bold tracking-[0.06em] text-brand-dark uppercase ring-1 ring-brand/25">
@@ -1356,58 +1350,40 @@ export default function Home() {
               10 min · hands on
             </Badge>
           </div>
-          <h3 className="mb-2 text-2xl font-extrabold tracking-tight md:text-3xl">
-            Poke around your agent
+          <h3 className="mb-3 text-3xl font-extrabold tracking-tight md:text-5xl">
+            Poke around the repo
           </h3>
-          <p className="max-w-[660px] text-sm text-ink-muted md:text-base">
-            Eve is <strong className="text-ink">filesystem-first</strong>: you teach your agent by
-            adding files under <Inline>agent/</Inline>. A file at{" "}
-            <Inline>agent/tools/get_weather.ts</Inline> becomes the <Inline>get_weather</Inline>{" "}
-            tool. Spend the next 10 minutes <strong className="text-ink">opening these files</strong>{" "}
-            and changing things — you can&apos;t break anything that <Inline>git checkout</Inline>{" "}
-            won&apos;t fix.
+          <p className="max-w-[760px] text-lg leading-snug text-ink md:text-2xl">
+            Look through your project folders — what do you see? Can you adjust{" "}
+            <Inline>instructions.md</Inline> manually?
+          </p>
+          <p className="mt-2 text-lg font-bold text-brand-dark md:text-2xl">
+            Let&apos;s hear from the audience 🎤
           </p>
 
-          <ul className="mt-4 grid grid-cols-1 gap-2.5 md:grid-cols-2">
-            {structure.map(({ path, what, task }, i) => (
+          <ul className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2">
+            {structure.map(({ path, what }, i) => (
               <li
                 key={path}
-                className="rounded-xl border border-[#e3ecf5] bg-white px-3.5 py-3 shadow-sm"
+                className="rounded-xl border border-[#e3ecf5] bg-white px-4 py-3.5 shadow-sm"
               >
-                <div className="flex items-center gap-2">
-                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#e8f1fb] text-[11px] font-bold text-brand-dark">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#e8f1fb] text-sm font-bold text-brand-dark">
                     {i + 1}
                   </span>
-                  <code className="truncate font-mono text-[13px] font-semibold text-brand-dark">
+                  <code className="truncate font-mono text-base font-semibold text-brand-dark md:text-lg">
                     {path}
                   </code>
                 </div>
-                <p className="mt-1.5 text-xs text-ink-muted">{what}</p>
-                <p className="mt-1.5 text-[13px] leading-snug text-ink">
-                  <span className="font-semibold text-brand-dark">Try it: </span>
-                  {task}
-                </p>
+                <p className="mt-1.5 text-base text-ink-muted md:text-lg">{what}</p>
               </li>
             ))}
           </ul>
 
-          <Checkpoint>
-            ✅ <strong className="text-brand-dark">Checkpoint:</strong> you&apos;ve read at least
-            one file in every folder, edited <Inline>instructions.md</Inline>, and got your agent to
-            answer in a voice you gave it. Stuck? Ask a neighbour, or ask the helper agent in the
-            corner. 💬
+          <Checkpoint className="mt-6 text-base md:text-xl">
+            ✅ <strong className="text-brand-dark">Checkpoint:</strong> you&apos;ve opened{" "}
+            <Inline>instructions.md</Inline> and made your agent answer in a voice you gave it.
           </Checkpoint>
-
-          <div className="mt-4 text-center">
-            <Button
-              asChild
-              className="bg-gradient-to-br from-brand to-brand-dark px-6 text-white hover:opacity-90"
-            >
-              <a href="https://eve.dev/docs/getting-started" target="_blank" rel="noreferrer">
-                Full docs at eve.dev →
-              </a>
-            </Button>
-          </div>
         </div>
       </section>
 

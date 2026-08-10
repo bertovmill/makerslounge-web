@@ -43,7 +43,7 @@ const SLIDE_LABELS: Record<string, string> = {
   "run-dev-server": "Run the Dev Server",
   "open-localhost": "Open localhost",
   "step-1": "Step 1 — Scaffold & Run",
-  "step-2": "Step 2 — Connect a Model",
+  "poke-around-the-repo": "Step 2 — Poke around the repo",
   "step-3": "Step 3 — Project Structure",
   attendees: "Attendees",
   resources: "Resources",
