@@ -7,6 +7,7 @@ import { CopyLine } from "@/components/copy-line";
 import { SlideNav } from "@/components/slide-nav";
 import { LeftSidebar } from "@/components/left-sidebar";
 import { QAWidget } from "@/components/qa-widget";
+import { WorkshopHelperWidget } from "@/components/workshop-helper-widget";
 
 function Inline({ children }: { children: React.ReactNode }) {
   return (
@@ -218,6 +219,7 @@ export default function Home() {
       <SlideNav />
       <LeftSidebar />
       <QAWidget />
+      <WorkshopHelperWidget />
 
       {/* Slide 1 — Hero */}
       <section
