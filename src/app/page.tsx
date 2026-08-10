@@ -130,6 +130,12 @@ const objectives = [
   },
 ];
 
+const workshopTips = [
+  "Ask lots of questions",
+  "Try the hard things",
+  "Share your work, wherever you get",
+];
+
 const presenters = [
   {
     name: "Matias Gonzalez",
@@ -494,6 +500,24 @@ export default function Home() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+
+          {/* Kept as a light inline row rather than cards — the slide is already
+              at full height, and this is a closing note, not a fifth objective. */}
+          <div className="mt-8">
+            <p className="mb-3 text-center text-[12px] font-semibold tracking-[0.24em] text-ink-muted uppercase">
+              How to make the most of tonight
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {workshopTips.map((tip, i) => (
+                <div key={tip} className="flex items-center justify-center gap-2.5 text-center">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-bold text-brand-dark">
+                    {i + 1}
+                  </span>
+                  <p className="text-sm font-medium text-balance text-ink md:text-base">{tip}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
