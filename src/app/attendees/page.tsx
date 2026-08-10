@@ -34,6 +34,7 @@ const guests: Guest[] = [
     tools: `Claude`,
     wish: `Slide deck draft (storytelling, greyboxing...)`,
     topic: `Learning how to create and launch agents`,
+    linkedin: "https://www.linkedin.com/in/hunterwedgbury/",
   },
   {
     name: `Ayame Ishii`,
