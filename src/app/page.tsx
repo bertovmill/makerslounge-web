@@ -327,57 +327,83 @@ export default function Home() {
         </p>
       </section>
 
-      {/* Slide 2 — Join Slack */}
+      {/* Slide 2 — About us */}
       <section
         data-slide
-        id="join-slack"
+        id="about-us"
         className="relative flex h-dvh snap-start items-center overflow-hidden bg-gradient-to-b from-ink to-[#141f30] px-6 py-10 text-white"
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.16),transparent_55%)]" />
 
-        <div className="relative mx-auto w-full max-w-2xl text-center">
-          <SlackIcon className="mx-auto mb-6 h-16 w-16" />
-          <p className="mb-5 text-[13px] font-semibold tracking-[0.28em] text-brand-light uppercase">
-            Stay connected
-          </p>
-          <h2 className="mb-4 text-5xl leading-[0.98] font-semibold tracking-tight text-balance md:text-7xl">
-            Join Us on Slack
-          </h2>
-          <p className="mx-auto mb-8 max-w-[520px] text-lg leading-relaxed text-white/60 md:text-xl">
-            Get help, share what you&apos;re building, and keep the conversation going after
-            tonight.
-          </p>
-          <a
-            href="https://join.slack.com/t/makerslounge/shared_invite/zt-43ly03o4m-Uz5arHN0w98OBU50_cPhsA"
-            target="_blank"
-            rel="noreferrer"
-            className="mx-auto mb-4 block w-fit rounded-3xl bg-white p-5 shadow-2xl shadow-black/30 ring-1 ring-white/20 transition hover:scale-[1.02]"
-          >
-            <Image
-              src="/images/slack-invite-qr.svg"
-              alt="QR code linking to the Makers Lounge Slack invite"
-              width={320}
-              height={320}
-              unoptimized
-              className="h-[240px] w-[240px] md:h-[300px] md:w-[300px]"
-            />
-          </a>
-          <p className="mb-6 text-sm font-medium tracking-wide text-white/50">
-            Scan with your phone camera to join
-          </p>
-          <Button
-            asChild
-            size="lg"
-            className="rounded-full bg-brand px-7 text-base font-medium text-white shadow-lg shadow-brand/20 hover:bg-brand-dark"
-          >
+        <div className="relative mx-auto grid w-full max-w-6xl items-center gap-10 md:grid-cols-2 md:gap-14">
+          {/* Left — who we are */}
+          <div className="text-center md:text-left">
+            <p className="mb-5 text-[13px] font-semibold tracking-[0.28em] text-brand-light uppercase">
+              About us
+            </p>
+            <h2 className="mb-4 text-4xl leading-[0.98] font-semibold tracking-tight text-balance md:text-6xl">
+              Berto &amp; Katy
+            </h2>
+            <p className="mb-6 max-w-[480px] text-lg leading-relaxed text-white/60 md:text-xl">
+              Co-founders of Makers Lounge — we run nights like this one so builders in Toronto have
+              a place to ship together.
+            </p>
+            <div className="overflow-hidden rounded-3xl shadow-2xl shadow-black/40 ring-1 ring-white/15">
+              <Image
+                src="/images/berto-katy-in-action.jpg"
+                alt="Berto and Katy, Makers Lounge co-founders, working with builders at a Makers Lounge event"
+                width={1080}
+                height={720}
+                className="h-auto w-full object-cover"
+              />
+            </div>
+          </div>
+
+          {/* Right — join the Slack */}
+          <div className="text-center">
+            <SlackIcon className="mx-auto mb-6 h-14 w-14" />
+            <p className="mb-4 text-[13px] font-semibold tracking-[0.28em] text-brand-light uppercase">
+              Stay connected
+            </p>
+            <h3 className="mb-3 text-3xl leading-[1.02] font-semibold tracking-tight text-balance md:text-5xl">
+              Join Us on Slack
+            </h3>
+            <p className="mx-auto mb-6 max-w-[440px] text-base leading-relaxed text-white/60 md:text-lg">
+              Get help, share what you&apos;re building, and keep the conversation going after
+              tonight.
+            </p>
             <a
               href="https://join.slack.com/t/makerslounge/shared_invite/zt-43ly03o4m-Uz5arHN0w98OBU50_cPhsA"
               target="_blank"
               rel="noreferrer"
+              className="mx-auto mb-4 block w-fit rounded-3xl bg-white p-4 shadow-2xl shadow-black/30 ring-1 ring-white/20 transition hover:scale-[1.02]"
             >
-              Join the Slack
+              <Image
+                src="/images/slack-invite-qr.svg"
+                alt="QR code linking to the Makers Lounge Slack invite"
+                width={320}
+                height={320}
+                unoptimized
+                className="h-[190px] w-[190px] md:h-[230px] md:w-[230px]"
+              />
             </a>
-          </Button>
+            <p className="mb-5 text-sm font-medium tracking-wide text-white/50">
+              Scan with your phone camera to join
+            </p>
+            <Button
+              asChild
+              size="lg"
+              className="rounded-full bg-brand px-7 text-base font-medium text-white shadow-lg shadow-brand/20 hover:bg-brand-dark"
+            >
+              <a
+                href="https://join.slack.com/t/makerslounge/shared_invite/zt-43ly03o4m-Uz5arHN0w98OBU50_cPhsA"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Join the Slack
+              </a>
+            </Button>
+          </div>
         </div>
       </section>
 

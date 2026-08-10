@@ -11,7 +11,7 @@ import { z } from "zod";
  */
 const SLIDES = [
   { id: "hero", label: "Welcome" },
-  { id: "join-slack", label: "Join Slack" },
+  { id: "about-us", label: "About us & Join Slack" },
   { id: "itinerary", label: "Tonight's itinerary" },
   { id: "objectives", label: "Objectives" },
   { id: "thank-you-host", label: "Thank you, TMU Byte" },
