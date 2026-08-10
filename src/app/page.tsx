@@ -1212,6 +1212,67 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Slide 8b3 — Where the API key goes: .env.local */}
+      <section
+        data-slide
+        id="add-api-key-env-local"
+        className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
+      >
+        <div className="mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center">
+          <div className="w-full shrink-0 text-center">
+            <Badge
+              variant="outline"
+              className="mb-1.5 w-fit border-brand/30 text-xs font-bold tracking-[0.12em] text-brand-dark uppercase"
+            >
+              Plug in the brain
+            </Badge>
+            <h3 className="mb-1 text-2xl font-extrabold tracking-tight md:text-3xl">
+              Add your API key{" "}
+              <span className="text-base font-semibold text-ink-muted md:text-lg">
+                (see next slide for where to get it)
+              </span>
+            </h3>
+            <p className="mx-auto max-w-[760px] text-sm text-ink-muted md:text-base">
+              Your agent needs a model to think with. The key lives in a file called{" "}
+              <Inline>.env.local</Inline> at the root of your project — one line,{" "}
+              <Inline>AI_GATEWAY_API_KEY=…</Inline>. It&apos;s gitignored, so it never leaves your
+              laptop.
+            </p>
+          </div>
+
+          {/* Percentages are measured against the 2000×1328 screenshot so the
+              ring stays pinned to the .env.local row in the file sidebar. */}
+          <div
+            className="relative my-3 aspect-[2000/1328]"
+            style={{ width: "min(100%, calc(64vh * 2000 / 1328))" }}
+          >
+            <Image
+              src="/images/env-local-api-key.png"
+              alt="The editor with .env.local open, showing the AI_GATEWAY_API_KEY line (key redacted)"
+              width={2000}
+              height={1328}
+              className="h-full w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
+            />
+            <div
+              className="absolute animate-pulse rounded-md ring-4 ring-amber-400 ring-offset-2 ring-offset-white/0"
+              style={{ left: "4.2%", top: "35.2%", width: "17.8%", height: "2.8%" }}
+            >
+              <span className="absolute -top-8 left-0 rounded-full bg-amber-400 px-2 py-0.5 text-[11px] font-extrabold text-ink shadow">
+                create this file
+              </span>
+            </div>
+          </div>
+
+          <div className="flex w-full shrink-0 flex-wrap items-center justify-center gap-4">
+            <CopyLine text="AI_GATEWAY_API_KEY=" className="max-w-xs" />
+            <Checkpoint>
+              ✅ <strong className="text-brand-dark">Checkpoint:</strong> you have a{" "}
+              <Inline>.env.local</Inline> in your project root with your key on one line.
+            </Checkpoint>
+          </div>
+        </div>
+      </section>
+
       {/* Slide 8c — While that's running: set up PAM */}
       <section
         data-slide
