@@ -141,6 +141,48 @@ const presenters = [
   },
 ];
 
+// Aggregated from the approved-guest list for tonight's event
+// (docs/reference/AI Agent-Building Workshop @ TMU - Approved Guests - 2026-08-10.csv)
+const attendeeStats = [
+  { value: "51", label: "Builders confirmed" },
+  { value: "47", label: "Shared a use case" },
+  { value: "12", label: "AI tools named" },
+  { value: "6", label: "Recurring themes" },
+];
+
+const attendeeTools = [
+  { name: "Claude", count: 37 },
+  { name: "ChatGPT", count: 29 },
+  { name: "Gemini", count: 10 },
+  { name: "Codex", count: 10 },
+  { name: "Copilot", count: 4 },
+  { name: "Cursor", count: 3 },
+];
+
+const attendeeThemes = [
+  { label: "Build & ship ideas", count: 17 },
+  { label: "Personal productivity", count: 15 },
+  { label: "Business ops", count: 10 },
+  { label: "Research & analysis", count: 8 },
+  { label: "Marketing & social", count: 6 },
+  { label: "Email & inbox", count: 6 },
+];
+
+const attendeeQuotes = [
+  { quote: "Bridge the gap between “I have an idea” and “it exists.”", author: "Saliha" },
+  { quote: "I need Jarvis from Iron Man.", author: "Davies" },
+  {
+    quote: "Do useful things non-stop for me, especially when my brain is fried.",
+    author: "Tam",
+  },
+  {
+    quote: "Help me with workflows day to day — like an actual competent co-worker.",
+    author: "Viyasan",
+  },
+  { quote: "Take action on all my ideas simultaneously.", author: "Hitesh" },
+  { quote: "Handle these tedious copy-and-paste tasks for me.", author: "Ayame" },
+];
+
 const prereqs = [
   {
     title: "Node.js 24 or newer",
@@ -401,6 +443,56 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Slide 3.5 — Thank you, TMU Byte (event host) */}
+      <section
+        data-slide
+        id="thank-you-host"
+        className="relative flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.10),transparent_55%)]" />
+
+        <div className="relative mx-auto w-full max-w-3xl text-center">
+          <p className="mb-5 text-[13px] font-semibold tracking-[0.28em] text-brand-dark uppercase">
+            Our event host
+          </p>
+          <h2 className="mb-4 text-5xl leading-[0.98] font-semibold tracking-tight text-balance md:text-7xl">
+            Thank You, TMU Byte
+          </h2>
+          <p className="mx-auto max-w-[560px] text-lg leading-relaxed text-ink-muted md:text-xl">
+            For hosting us and offering the space tonight.
+          </p>
+
+          <div className="mt-10 rounded-3xl bg-ink px-10 py-12 shadow-xl shadow-ink/10">
+            <Image
+              src="/images/tmu-byte-logo-white.png"
+              alt="TMU Byte"
+              width={1600}
+              height={569}
+              className="mx-auto h-auto w-[260px] md:w-[360px]"
+              priority={false}
+            />
+            <p className="mt-10 text-2xl font-semibold text-white md:text-3xl">
+              Build Your Technical Experience
+            </p>
+            <p className="mt-2 text-lg text-white/60 md:text-xl">
+              TMU&apos;s first project-based AI Lab.
+            </p>
+          </div>
+
+          <div className="mt-8">
+            <Button
+              asChild
+              size="lg"
+              className="rounded-full bg-brand px-7 text-base font-medium text-white shadow-lg shadow-brand/20 hover:bg-brand-dark"
+            >
+              <a href="https://tmubyte.com" target="_blank" rel="noreferrer">
+                Visit tmubyte.com
+              </a>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Slide 4 — Thank you, presenters */}
       <section
         data-slide
@@ -459,6 +551,101 @@ export default function Home() {
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Slide 4.5 — Who's in the room tonight */}
+      <section
+        data-slide
+        id="attendees"
+        className="relative flex h-dvh snap-start items-center overflow-hidden bg-gradient-to-b from-[#141f30] to-ink px-6 py-10 text-white"
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.16),transparent_55%)]" />
+
+        <div className="relative mx-auto w-full max-w-6xl">
+          <div className="mb-8 text-center">
+            <p className="mb-4 text-[13px] font-semibold tracking-[0.28em] text-brand-light uppercase">
+              In the room tonight
+            </p>
+            <h2 className="mb-3 text-4xl leading-[0.98] font-semibold tracking-tight text-balance md:text-6xl">
+              51 Builders in the Room
+            </h2>
+            <p className="mx-auto max-w-[560px] text-base leading-relaxed text-white/60 md:text-lg">
+              Here&apos;s what you told us on the way in.
+            </p>
+          </div>
+
+          <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+            {attendeeStats.map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-5 text-center backdrop-blur-sm"
+              >
+                <div className="text-4xl font-semibold tracking-tight text-brand-light md:text-5xl">
+                  {stat.value}
+                </div>
+                <div className="mt-1 text-xs text-white/50 md:text-sm">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <div>
+              <p className="mb-4 text-[12px] font-semibold tracking-[0.2em] text-brand-light uppercase">
+                Tools you already use
+              </p>
+              <div className="space-y-2.5">
+                {attendeeTools.map((tool) => (
+                  <div key={tool.name} className="flex items-center gap-3">
+                    <span className="w-[76px] shrink-0 text-sm text-white/70">{tool.name}</span>
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/8">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-brand to-brand-light"
+                        style={{ width: `${Math.round((tool.count / 51) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="w-7 shrink-0 text-right font-mono text-sm text-white/50">
+                      {tool.count}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <p className="mt-7 mb-3 text-[12px] font-semibold tracking-[0.2em] text-brand-light uppercase">
+                What you want agents to do
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {attendeeThemes.map((theme) => (
+                  <span
+                    key={theme.label}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-3.5 py-1.5 text-sm text-white/75"
+                  >
+                    {theme.label}
+                    <span className="font-mono text-xs text-brand-light">{theme.count}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-4 text-[12px] font-semibold tracking-[0.2em] text-brand-light uppercase">
+                In your own words
+              </p>
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                {attendeeQuotes.map((item) => (
+                  <blockquote
+                    key={item.author}
+                    className="rounded-xl border border-white/8 bg-white/[0.04] px-4 py-3 backdrop-blur-sm"
+                  >
+                    <p className="text-sm leading-snug text-white/80">
+                      &ldquo;{item.quote}&rdquo;
+                    </p>
+                    <footer className="mt-2 text-xs text-white/40">— {item.author}</footer>
+                  </blockquote>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
