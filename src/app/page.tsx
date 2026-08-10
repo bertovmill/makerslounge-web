@@ -7,7 +7,11 @@ import { CopyLine } from "@/components/copy-line";
 import { SlideNav } from "@/components/slide-nav";
 import { LeftSidebar } from "@/components/left-sidebar";
 import { QAWidget } from "@/components/qa-widget";
+import { LearningWall } from "@/components/learning-wall";
+import { LearningWallTrigger } from "@/components/learning-wall-trigger";
 import { WorkshopHelperWidget } from "@/components/workshop-helper-widget";
+import { DemoSlots } from "@/components/demo-slots";
+import { Clock } from "lucide-react";
 
 function Inline({ children }: { children: React.ReactNode }) {
   return (
@@ -206,11 +210,29 @@ const prereqs = [
   },
 ];
 
-const structure = [
-  ["agent/instructions.md", "Your agent's always-on system prompt — its personality & job"],
-  ["agent/tools/", "Typed functions the model can call"],
-  ["agent/skills/", "Procedures loaded contextually when needed"],
-  ["agent/channels/", "HTTP & messaging entry points (Slack, webhooks, …)"],
+// Step 2 is a hands-on 10-minute lab: each folder comes with something to
+// actually open and change, not just a description to read.
+const structure: { path: string; what: string; task: string }[] = [
+  {
+    path: "agent/instructions.md",
+    what: "Your agent's always-on system prompt — its personality & job",
+    task: "Open it and rewrite the personality. Ask your agent something and watch it answer differently.",
+  },
+  {
+    path: "agent/tools/",
+    what: "Typed functions the model can call",
+    task: "Read a tool file, then add your own — a new file here becomes a new tool.",
+  },
+  {
+    path: "agent/skills/",
+    what: "Procedures loaded contextually when needed",
+    task: "Skim a skill and notice when the agent decides to load it.",
+  },
+  {
+    path: "agent/channels/",
+    what: "HTTP & messaging entry points (Slack, webhooks, …)",
+    task: "Peek at a channel and try wiring one up — Slack, a webhook, whatever you use.",
+  },
 ];
 
 export default function Home() {
@@ -219,6 +241,7 @@ export default function Home() {
       <SlideNav />
       <LeftSidebar />
       <QAWidget />
+      <LearningWall />
       <WorkshopHelperWidget />
 
       {/* Slide 1 — Hero */}
@@ -561,7 +584,7 @@ export default function Home() {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.16),transparent_55%)]" />
 
         <div className="relative mx-auto w-full max-w-6xl">
-          <div className="mb-8 text-center">
+          <div className="mb-6 text-center">
             <p className="mb-4 text-[13px] font-semibold tracking-[0.28em] text-brand-light uppercase">
               In the room tonight
             </p>
@@ -576,11 +599,11 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+          <div className="mb-7 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             {attendeeStats.map((stat) => (
               <div
                 key={stat.label}
-                className="rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-5 text-center backdrop-blur-sm"
+                className="rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-4 text-center backdrop-blur-sm"
               >
                 <div className="text-5xl font-semibold tracking-tight text-brand-light md:text-6xl">
                   {stat.value}
@@ -595,7 +618,7 @@ export default function Home() {
               <p className="mb-4 text-sm font-semibold tracking-[0.2em] text-brand-light uppercase">
                 Tools you already use
               </p>
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {attendeeTools.map((tool) => (
                   <div key={tool.name} className="flex items-center gap-3">
                     <span className="w-[92px] shrink-0 text-base text-white/70 md:text-lg">{tool.name}</span>
@@ -612,14 +635,14 @@ export default function Home() {
                 ))}
               </div>
 
-              <p className="mt-7 mb-3 text-sm font-semibold tracking-[0.2em] text-brand-light uppercase">
+              <p className="mt-6 mb-3 text-sm font-semibold tracking-[0.2em] text-brand-light uppercase">
                 What you want agents to do
               </p>
               <div className="flex flex-wrap gap-2">
                 {attendeeThemes.map((theme) => (
                   <span
                     key={theme.label}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-base text-white/75 md:text-lg"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-4 py-1.5 text-base text-white/75 md:text-lg"
                   >
                     {theme.label}
                     <span className="font-mono text-sm text-brand-light">{theme.count}</span>
@@ -636,13 +659,17 @@ export default function Home() {
                 {attendeeQuotes.map((quote) => (
                   <blockquote
                     key={quote}
-                    className="flex items-center rounded-xl border border-white/8 bg-white/[0.04] px-4 py-4 backdrop-blur-sm"
+                    className="flex items-center rounded-xl border border-white/8 bg-white/[0.04] px-4 py-3 backdrop-blur-sm"
                   >
                     <p className="text-base leading-snug text-white/85 md:text-lg">
                       &ldquo;{quote}&rdquo;
                     </p>
                   </blockquote>
                 ))}
+              </div>
+
+              <div className="mt-5 border-t border-white/8 pt-5">
+                <LearningWallTrigger />
               </div>
             </div>
           </div>
@@ -994,48 +1021,56 @@ export default function Home() {
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
       >
         <div className="mx-auto w-full max-w-3xl">
-          <StepBadge>Step 2</StepBadge>
-          <h3 className="mb-2.5 text-2xl font-extrabold tracking-tight md:text-3xl">
-            Know your way around
+          <div className="flex flex-wrap items-center gap-2">
+            <StepBadge>Step 2</StepBadge>
+            <Badge className="mb-3 w-fit gap-1.5 bg-white text-xs font-bold tracking-[0.06em] text-brand-dark uppercase ring-1 ring-brand/25">
+              <Clock className="size-3.5" />
+              10 min · hands on
+            </Badge>
+          </div>
+          <h3 className="mb-2 text-2xl font-extrabold tracking-tight md:text-3xl">
+            Poke around your agent
           </h3>
-          <p className="max-w-[640px] text-ink-muted">
+          <p className="max-w-[660px] text-sm text-ink-muted md:text-base">
             Eve is <strong className="text-ink">filesystem-first</strong>: you teach your agent by
             adding files under <Inline>agent/</Inline>. A file at{" "}
-            <Inline>agent/tools/get_weather.ts</Inline> automatically becomes the{" "}
-            <Inline>get_weather</Inline> tool.
+            <Inline>agent/tools/get_weather.ts</Inline> becomes the <Inline>get_weather</Inline>{" "}
+            tool. Spend the next 10 minutes <strong className="text-ink">opening these files</strong>{" "}
+            and changing things — you can&apos;t break anything that <Inline>git checkout</Inline>{" "}
+            won&apos;t fix.
           </p>
-          <Card className="overflow-x-auto ring-[#e3ecf5]">
-            <CardContent>
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr>
-                    <th className="border-b border-[#e3ecf5] px-3 py-2 text-left text-xs tracking-[0.08em] text-ink-muted uppercase">
-                      Path
-                    </th>
-                    <th className="border-b border-[#e3ecf5] px-3 py-2 text-left text-xs tracking-[0.08em] text-ink-muted uppercase">
-                      What it does
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {structure.map(([path, desc]) => (
-                    <tr key={path}>
-                      <td className="border-b border-[#e3ecf5] px-3 py-2">
-                        <code className="font-mono text-[13px] text-brand-dark">{path}</code>
-                      </td>
-                      <td className="border-b border-[#e3ecf5] px-3 py-2">{desc}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
+
+          <ul className="mt-4 grid grid-cols-1 gap-2.5 md:grid-cols-2">
+            {structure.map(({ path, what, task }, i) => (
+              <li
+                key={path}
+                className="rounded-xl border border-[#e3ecf5] bg-white px-3.5 py-3 shadow-sm"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#e8f1fb] text-[11px] font-bold text-brand-dark">
+                    {i + 1}
+                  </span>
+                  <code className="truncate font-mono text-[13px] font-semibold text-brand-dark">
+                    {path}
+                  </code>
+                </div>
+                <p className="mt-1.5 text-xs text-ink-muted">{what}</p>
+                <p className="mt-1.5 text-[13px] leading-snug text-ink">
+                  <span className="font-semibold text-brand-dark">Try it: </span>
+                  {task}
+                </p>
+              </li>
+            ))}
+          </ul>
+
           <Checkpoint>
-            ✅ <strong className="text-brand-dark">Checkpoint:</strong> open{" "}
-            <Inline>agent/instructions.md</Inline>, change the personality, and watch your agent
-            become someone new.
+            ✅ <strong className="text-brand-dark">Checkpoint:</strong> you&apos;ve read at least
+            one file in every folder, edited <Inline>instructions.md</Inline>, and got your agent to
+            answer in a voice you gave it. Stuck? Ask a neighbour, or ask the helper agent in the
+            corner. 💬
           </Checkpoint>
-          <div className="mt-6 text-center">
+
+          <div className="mt-4 text-center">
             <Button
               asChild
               className="bg-gradient-to-br from-brand to-brand-dark px-6 text-white hover:opacity-90"
@@ -1044,6 +1079,34 @@ export default function Home() {
                 Full docs at eve.dev →
               </a>
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Slide 11 — Demo time */}
+      <section
+        data-slide
+        id="demo-time"
+        className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
+      >
+        <div className="mx-auto w-full max-w-3xl">
+          <div className="flex flex-wrap items-center gap-2">
+            <StepBadge>Demo time! 🎤</StepBadge>
+            <Badge className="mb-3 w-fit gap-1.5 bg-white text-xs font-bold tracking-[0.06em] text-brand-dark uppercase ring-1 ring-brand/25">
+              <Clock className="size-3.5" />
+              2 min each
+            </Badge>
+          </div>
+          <h3 className="mb-2 text-2xl font-extrabold tracking-tight md:text-3xl">
+            Show us what you built
+          </h3>
+          <p className="max-w-[660px] text-sm text-ink-muted md:text-base">
+            Eight slots, first come first serve — put your name down and take two minutes at the
+            front. Half-working counts. Broken-but-interesting <em>really</em> counts.
+          </p>
+
+          <div className="mt-4">
+            <DemoSlots />
           </div>
         </div>
       </section>
