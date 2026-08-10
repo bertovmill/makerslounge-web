@@ -119,13 +119,13 @@ const presenters = [
     name: "Matias Gonzalez",
     role: "Design Engineer, Vercel",
     image: "/images/presenters/matias-gonzalez.png",
-    linkedin: null,
+    linkedin: "https://www.linkedin.com/in/mgonzalezf/",
   },
   {
     name: "Nazar Ponochevnyi",
     role: "AI Agent MCP",
     image: "/images/presenters/nazar-ponochevnyi.png",
-    linkedin: null,
+    linkedin: "https://www.linkedin.com/in/nazar-ponochevnyi/",
   },
   {
     name: "Danial Hasan",
