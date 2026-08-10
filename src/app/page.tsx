@@ -6,8 +6,6 @@ import { CodeBlock } from "@/components/code-block";
 import { CopyLine } from "@/components/copy-line";
 import { SlideNav } from "@/components/slide-nav";
 import { LeftSidebar } from "@/components/left-sidebar";
-import { LearningWall } from "@/components/learning-wall";
-import { LearningWallTrigger } from "@/components/learning-wall-trigger";
 import { WorkshopHelperWidget } from "@/components/workshop-helper-widget";
 import { DemoSlots } from "@/components/demo-slots";
 import { CalendarDays, Clock, ShieldCheck } from "lucide-react";
@@ -244,7 +242,6 @@ export default function Home() {
     <main className="h-dvh snap-y snap-mandatory overflow-y-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <SlideNav />
       <LeftSidebar />
-      <LearningWall />
       <WorkshopHelperWidget stacked />
 
       {/* Slide 1 — Hero */}
@@ -708,10 +705,6 @@ export default function Home() {
                     </p>
                   </blockquote>
                 ))}
-              </div>
-
-              <div className="mt-5 border-t border-white/8 pt-5">
-                <LearningWallTrigger />
               </div>
             </div>
           </div>
