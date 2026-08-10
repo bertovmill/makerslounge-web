@@ -10,7 +10,7 @@ const SLIDE_CONTEXT: Record<string, string> = {
   itinerary: "Tonight's itinerary for the Aug 10 Agent-Building Session: intros, state of AI agents talks, a hands-on agent-building session, demos, and wrap-up.",
   "getting-started": "An intro to Eve, Vercel's filesystem-first framework for durable AI agents, and the prerequisites needed (Node.js 24+, a free Vercel account).",
   "install-cursor": "Instructions to download and open Cursor, the AI code editor used for tonight's workshop, and click 'Open project'.",
-  "ask-cursor": "Shows how to ask Cursor's built-in AI chat to install the Eve agent framework directly, as an alternative to using the terminal.",
+  "pick-your-ai-coding-agent": "Attendees pick the AI coding agent that matches their subscription — Claude Code, Codex, or the free open-source OpenCode — and run it from Cursor's built-in terminal (Ctrl+`) to do the setup steps for them.",
   "build-ui": "Shows how to ask opencode to build a Next.js + shadcn showcase UI with a chat interface for your Eve agent, using Vercel's AI Elements kit — the agent scaffolds and runs the project itself as part of this.",
   "run-dev-server": "Shows how to start the scaffolded Next.js app locally by running `npm run dev` in the project's terminal and opening http://localhost:3000 to see the agent's chat UI.",
   "open-localhost": "Explains the `npm run dev` output: cmd-click the printed Local: http://localhost:PORT URL to open the app. Beginner explanation of what a dev server is (a web server on your own laptop, localhost = this machine, hot reload on save) and why the port may be 3002 instead of 3000 (3000 already in use).",

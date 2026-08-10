@@ -21,7 +21,7 @@ const SLIDE_LABELS: Record<string, string> = {
   presenters: "Thank You, Presenters",
   "getting-started": "Getting Started",
   "install-cursor": "Install Cursor",
-  "ask-cursor": "Just Ask Cursor",
+  "pick-your-ai-coding-agent": "Pick Your AI Coding Agent",
   "build-ui": "Build a UI",
   "run-dev-server": "Run the Dev Server",
   "open-localhost": "Open localhost",

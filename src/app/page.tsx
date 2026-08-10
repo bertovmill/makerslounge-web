@@ -781,9 +781,12 @@ export default function Home() {
       {/* Slide 7 — Pick your AI agent */}
       <section
         data-slide
-        id="ask-cursor"
-        className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
+        id="pick-your-ai-coding-agent"
+        className="relative flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
       >
+        <p className="absolute right-6 bottom-5 text-xs font-medium tracking-[0.2em] text-ink-muted/60">
+          7:20&nbsp;PM
+        </p>
         <div className="mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center">
           <div className="w-full shrink-0 text-center">
             <Badge
@@ -793,7 +796,7 @@ export default function Home() {
               Prefer chat?
             </Badge>
             <h3 className="mb-1.5 text-4xl font-extrabold tracking-tight md:text-5xl">
-              Pick your AI agent
+              Pick your AI coding agent
             </h3>
             <p className="mx-auto max-w-[640px] text-lg text-ink-muted md:text-xl">
               Open Cursor&apos;s built-in terminal (<Inline>Ctrl+`</Inline>) and run whichever
