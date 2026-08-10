@@ -242,7 +242,7 @@ export default function Home() {
       <LeftSidebar />
       <QAWidget />
       <LearningWall />
-      <WorkshopHelperWidget />
+      <WorkshopHelperWidget stacked />
 
       {/* Slide 1 — Hero */}
       <section

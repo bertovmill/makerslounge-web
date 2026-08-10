@@ -17,6 +17,15 @@ const SLIDE_LABELS: Record<string, string> = {
   "step-1": "Step 1 — Scaffold & Run",
   "step-2": "Step 2 — Connect a Model",
   "step-3": "Step 3 — Project Structure",
+  attendees: "Attendees",
+  resources: "Resources",
+};
+
+type WorkshopHelperWidgetProps = {
+  /** Where the attendee is when there are no `[data-slide]` sections — e.g. "attendees". */
+  contextId?: string;
+  /** Shift left to clear the Q&A button (the slide deck stacks both). */
+  stacked?: boolean;
 };
 
 type InputRequest = {
@@ -41,11 +50,14 @@ function messageText(parts: readonly { type: string; text?: string }[]) {
     .join("");
 }
 
-export function WorkshopHelperWidget() {
+export function WorkshopHelperWidget({
+  contextId = "hero",
+  stacked = false,
+}: WorkshopHelperWidgetProps = {}) {
   const [open, setOpen] = useState(false);
-  const [slideId, setSlideId] = useState("hero");
+  const [slideId, setSlideId] = useState(contextId);
   const [draft, setDraft] = useState("");
-  const slideIdRef = useRef("hero");
+  const slideIdRef = useRef(contextId);
   const listRef = useRef<HTMLDivElement>(null);
 
   const agent = useEveAgent({
@@ -101,7 +113,7 @@ export function WorkshopHelperWidget() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="Workshop helper"
-        className="fixed right-20 bottom-5 z-50 flex size-12 cursor-pointer items-center justify-center rounded-full bg-brand-dark text-white shadow-lg shadow-brand/30 transition-transform hover:scale-105 hover:bg-brand"
+        className={`fixed ${stacked ? "right-20" : "right-5"} bottom-5 z-50 flex size-12 cursor-pointer items-center justify-center rounded-full bg-brand-dark text-white shadow-lg shadow-brand/30 transition-transform hover:scale-105 hover:bg-brand`}
       >
         {open ? <X className="size-5" /> : <Bot className="size-5" />}
       </button>

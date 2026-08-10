@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { LeftSidebar } from "@/components/left-sidebar";
+import { WorkshopHelperWidget } from "@/components/workshop-helper-widget";
 
 type Resource = {
   title: string;
@@ -26,6 +27,7 @@ export default function ResourcesPage() {
   return (
     <main className="min-h-dvh bg-[#f7fafd] pl-16 text-ink">
       <LeftSidebar />
+      <WorkshopHelperWidget contextId="resources" />
 
       <div className="mx-auto w-full max-w-5xl px-6 py-16">
         <div className="mb-12 text-center">
