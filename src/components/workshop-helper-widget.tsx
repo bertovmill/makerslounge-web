@@ -41,6 +41,7 @@ const SLIDE_LABELS: Record<string, string> = {
   "ask-cursor": "Just Ask Cursor",
   "build-ui": "Build a UI",
   "run-dev-server": "Run the Dev Server",
+  "open-localhost": "Open localhost",
   "step-1": "Step 1 — Scaffold & Run",
   "step-2": "Step 2 — Connect a Model",
   "step-3": "Step 3 — Project Structure",

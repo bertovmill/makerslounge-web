@@ -858,29 +858,58 @@ export default function Home() {
         id="run-dev-server"
         className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
       >
-        <div className="mx-auto flex h-full w-full max-w-4xl flex-col items-center">
+        <div className="mx-auto flex h-full w-full max-w-7xl flex-col items-center">
           <div className="w-full shrink-0 text-center">
             <Badge
               variant="outline"
-              className="mb-2 w-fit border-brand/30 text-xs font-bold tracking-[0.12em] text-brand-dark uppercase"
+              className="mb-1.5 w-fit border-brand/30 text-xs font-bold tracking-[0.12em] text-brand-dark uppercase"
             >
               See it live
             </Badge>
-            <h3 className="mb-1.5 text-2xl font-extrabold tracking-tight md:text-3xl">
+            <h3 className="mb-1 text-2xl font-extrabold tracking-tight md:text-3xl">
               Run the dev server
             </h3>
-            <p className="mx-auto max-w-[600px] text-sm text-ink-muted md:text-base">
-              Once the app is scaffolded, open a terminal in your project folder and start it up.
-              Then visit <Inline>http://localhost:3000</Inline> to see your agent&apos;s UI.
+            <p className="mx-auto max-w-[720px] text-sm text-ink-muted md:text-base">
+              <strong className="text-ink">1.</strong> Hit the <strong className="text-ink">+</strong>{" "}
+              in the terminal panel to open a new terminal ·{" "}
+              <strong className="text-ink">2.</strong> Run <Inline>npm run dev</Inline> and open{" "}
+              <Inline>http://localhost:3000</Inline>.
             </p>
           </div>
-          <Image
-            src="/images/run-dev-server.png"
-            alt="An editor terminal in the eve-agent-workshop project running npm run dev"
-            width={2000}
-            height={1310}
-            className="my-3 h-auto max-h-[72vh] w-auto max-w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
-          />
+          {/* Percentages are measured against the 1864×1174 screenshot so the
+              callouts stay pinned to the + button and the typed command. */}
+          {/* Sized so the box matches the screenshot exactly (no letterboxing),
+              which keeps the percentage-positioned callouts aligned. */}
+          <div
+            className="relative my-2 aspect-[1864/1174]"
+            style={{ width: "min(100%, calc(72vh * 1864 / 1174))" }}
+          >
+            <Image
+              src="/images/run-dev-server.png"
+              alt="An editor terminal in the eve-agent-workshop project running npm run dev"
+              width={1864}
+              height={1174}
+              className="h-full w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
+            />
+            {/* 1 — the + that opens a new terminal */}
+            <div
+              className="absolute animate-pulse rounded-full ring-4 ring-amber-400 ring-offset-2 ring-offset-white/0"
+              style={{ left: "79.9%", top: "8.4%", width: "2.4%", height: "3.8%" }}
+            >
+              <span className="absolute -top-2 -left-7 flex size-6 items-center justify-center rounded-full bg-amber-400 text-xs font-extrabold text-ink shadow">
+                1
+              </span>
+            </div>
+            {/* 2 — the npm run dev command */}
+            <div
+              className="absolute animate-pulse rounded-md ring-4 ring-amber-400 ring-offset-2 ring-offset-white/0"
+              style={{ left: "67.5%", top: "16.8%", width: "10.7%", height: "3.5%" }}
+            >
+              <span className="absolute -top-3 -left-8 flex size-6 items-center justify-center rounded-full bg-amber-400 text-xs font-extrabold text-ink shadow">
+                2
+              </span>
+            </div>
+          </div>
           <div className="flex w-full shrink-0 flex-wrap items-center justify-center gap-4">
             <CopyLine text="npm run dev" className="max-w-xs" />
             <Checkpoint>
@@ -891,7 +920,111 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 8b — While that's running: set up PAM */}
+      {/* Slide 8b — Open the local URL / what a dev server is */}
+      <section
+        data-slide
+        id="open-localhost"
+        className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
+      >
+        <div className="mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center">
+          <div className="w-full shrink-0 text-center">
+            <Badge
+              variant="outline"
+              className="mb-1.5 w-fit border-brand/30 text-xs font-bold tracking-[0.12em] text-brand-dark uppercase"
+            >
+              It&apos;s alive
+            </Badge>
+            <h3 className="mb-1 text-2xl font-extrabold tracking-tight md:text-3xl">
+              Click the localhost link
+            </h3>
+            <p className="mx-auto max-w-[720px] text-sm text-ink-muted md:text-base">
+              The terminal prints a <strong className="text-ink">Local:</strong> URL. Cmd-click it
+              (Ctrl-click on Windows) to open your app in the browser.
+            </p>
+          </div>
+
+          <div className="my-3 grid w-full grid-cols-1 items-center gap-5 lg:grid-cols-[1.35fr_1fr]">
+            {/* A recreation of the `npm run dev` output, so the port line can be
+                called out precisely instead of buried in a screenshot. */}
+            <div className="overflow-hidden rounded-xl bg-white ring-1 ring-[#e3ecf5]">
+              <div className="flex items-center gap-1.5 border-b border-[#eef3f9] bg-[#f7f8fa] px-3 py-2">
+                <span className="size-2.5 rounded-full bg-[#ff5f57]" />
+                <span className="size-2.5 rounded-full bg-[#febc2e]" />
+                <span className="size-2.5 rounded-full bg-[#28c840]" />
+                <span className="ml-2 text-[11px] font-semibold text-ink-muted">
+                  Terminal — node
+                </span>
+              </div>
+              <pre className="overflow-x-auto px-4 py-3 font-mono text-[11px] leading-relaxed md:text-xs">
+                <code>
+                  <span className="text-ink-muted">
+                    bertomill@Bertos-MacBook-Pro eve-agent-workshop %{" "}
+                  </span>
+                  npm run dev{"\n\n"}
+                  <span className="text-ink-muted">{"> eve-agent-workshop@0.1.0 dev\n"}</span>
+                  <span className="text-ink-muted">{"> next dev\n\n"}</span>
+                  <span className="text-amber-600">
+                    {"⚠ Port 3000 is in use, using available port 3002 instead.\n"}
+                  </span>
+                  <span className="font-semibold text-purple-700">{"▲ Next.js 16.3.0 "}</span>
+                  <span className="text-ink-muted">{"(Turbopack)\n"}</span>
+                  <span className="rounded bg-amber-100 px-1 font-bold text-ink ring-2 ring-amber-400">
+                    {"- Local:    http://localhost:3002"}
+                  </span>
+                  {"\n"}
+                  <span className="text-ink-muted">
+                    {"- Network:  http://10.88.111.21:3002\n"}
+                  </span>
+                  <span className="text-emerald-600">{"✓ Ready in 355ms\n"}</span>
+                  <span className="text-ink-muted">
+                    {"[eve:dev] server listening at http://127.0.0.1:57889/\n"}
+                  </span>
+                  <span className="text-emerald-600">{"GET / 200 "}</span>
+                  <span className="text-ink-muted">{"in 1138ms"}</span>
+                </code>
+              </pre>
+            </div>
+
+            <div className="space-y-3">
+              <Card className="border-[#e3ecf5]">
+                <CardContent className="px-5 py-4">
+                  <p className="mb-1 text-xs font-bold tracking-[0.1em] text-brand-dark uppercase">
+                    What&apos;s a dev server?
+                  </p>
+                  <p className="text-sm text-ink-muted">
+                    It&apos;s a small web server running <strong className="text-ink">on your own
+                    laptop</strong> that serves your app while you build it. Nothing is published
+                    to the internet — <Inline>localhost</Inline> means &ldquo;this machine.&rdquo; Save a
+                    file and it reloads the page instantly, so you see your changes as you type.
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-[#e3ecf5]">
+                <CardContent className="px-5 py-4">
+                  <p className="mb-1 text-xs font-bold tracking-[0.1em] text-brand-dark uppercase">
+                    Why 3002 and not 3000?
+                  </p>
+                  <p className="text-sm text-ink-muted">
+                    The port is just the door number. <Inline>3000</Inline> was already taken by
+                    another app, so Next.js grabbed the next free one. Always open the exact URL
+                    your terminal prints. Stop the server anytime with{" "}
+                    <Inline>Ctrl+C</Inline>.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          <div className="flex w-full shrink-0 flex-wrap items-center justify-center gap-4">
+            <Checkpoint>
+              ✅ <strong className="text-brand-dark">Checkpoint:</strong> your app opens in the
+              browser at the <Inline>localhost</Inline> URL from your terminal.
+            </Checkpoint>
+          </div>
+        </div>
+      </section>
+
+      {/* Slide 8c — While that's running: set up PAM */}
       <section
         data-slide
         id="setup-pam"
