@@ -137,24 +137,28 @@ const presenters = [
     name: "Matias Gonzalez",
     role: "Design Engineer, Vercel",
     image: "/images/presenters/matias-gonzalez.png",
+    time: "6:30 PM",
     linkedin: "https://www.linkedin.com/in/mgonzalezf/",
   },
   {
     name: "Nazar Ponochevnyi",
     role: "AI Agent MCP",
     image: "/images/presenters/nazar-ponochevnyi.png",
+    time: "6:45 PM",
     linkedin: "https://www.linkedin.com/in/nazar-ponochevnyi/",
   },
   {
     name: "Danial Hasan",
     role: "Key principles",
     image: "/images/presenters/danial-hasan.png",
+    time: "7:00 PM",
     linkedin: "https://www.linkedin.com/in/dhasandev/",
   },
   {
     name: "Kelly Sun",
     role: "Founder, AI Infrastructure Startup",
     image: "/images/presenters/kelly-sun.png",
+    time: "7:10 PM",
     linkedin: "https://www.linkedin.com/in/sunkelly/",
   },
 ];
@@ -591,6 +595,10 @@ export default function Home() {
                 )}
                 <span className="text-xl font-semibold">{presenter.name}</span>
                 <span className="mt-1 text-base text-white/50">{presenter.role}</span>
+                <span className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-xs font-semibold tracking-[0.12em] text-brand-light uppercase">
+                  <Clock className="h-3.5 w-3.5" />
+                  {presenter.time}
+                </span>
                 {presenter.linkedin && (
                   <a
                     href={presenter.linkedin}
