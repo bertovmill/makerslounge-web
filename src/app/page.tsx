@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CodeBlock } from "@/components/code-block";
 import { SlideNav } from "@/components/slide-nav";
 import { LeftSidebar } from "@/components/left-sidebar";
+import { QAWidget } from "@/components/qa-widget";
 
 function Inline({ children }: { children: React.ReactNode }) {
   return (
@@ -119,6 +120,7 @@ export default function Home() {
     <main className="h-dvh snap-y snap-mandatory overflow-y-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <SlideNav />
       <LeftSidebar />
+      <QAWidget />
 
       {/* Slide 1 — Hero */}
       <section
@@ -197,36 +199,35 @@ export default function Home() {
       <section
         data-slide
         id="itinerary"
-        className="flex h-dvh snap-start items-center overflow-hidden bg-gradient-to-b from-ink to-[#141f30] px-6 py-10 text-white"
+        className="relative flex h-dvh snap-start items-center overflow-hidden bg-gradient-to-b from-ink to-[#141f30] px-6 py-10 text-white"
       >
-        <div className="mx-auto w-full max-w-3xl">
-          <div className="mb-6 text-center">
-            <Badge className="mb-4 border-brand/30 bg-brand/10 text-xs font-bold tracking-[0.18em] text-brand-light uppercase">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.16),transparent_55%)]" />
+
+        <div className="relative mx-auto w-full max-w-3xl">
+          <div className="mb-10 text-center">
+            <p className="mb-5 text-[13px] font-semibold tracking-[0.28em] text-brand-light uppercase">
               Monday, August 10 · 6–9 PM
-            </Badge>
-            <h2 className="mb-2 text-2xl font-extrabold tracking-tight md:text-4xl">
+            </p>
+            <h2 className="mb-4 text-5xl leading-[0.98] font-semibold tracking-tight text-balance md:text-7xl">
               Tonight&apos;s Itinerary
             </h2>
-            <p className="mx-auto max-w-[560px] text-sm text-white/70 md:text-base">
+            <p className="mx-auto max-w-[520px] text-lg leading-relaxed text-white/60 md:text-xl">
               Work with expert coaches to get your very own agent up and running.
             </p>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {schedule.map((block) => (
               <div
                 key={block.title}
-                className="flex flex-col gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2.5 sm:flex-row sm:items-baseline sm:gap-4"
+                className="flex flex-col gap-1 rounded-2xl border border-white/8 bg-white/[0.04] px-5 py-3.5 backdrop-blur-sm sm:flex-row sm:items-baseline sm:gap-6"
               >
-                <Badge
-                  variant="outline"
-                  className="w-fit shrink-0 border-white/15 font-mono text-[10px] font-medium text-white/70"
-                >
+                <span className="w-fit shrink-0 font-mono text-[11px] font-medium tracking-wide text-brand-light/80 sm:w-[132px]">
                   {block.time}
-                </Badge>
+                </span>
                 <div className="min-w-0">
-                  <span className="mr-2 text-sm font-bold">{block.title}</span>
-                  <span className="text-xs leading-snug text-white/60">
+                  <span className="mr-2 text-[15px] font-semibold">{block.title}</span>
+                  <span className="text-sm leading-snug text-white/50">
                     {block.items.join(" · ")}
                   </span>
                 </div>
@@ -234,10 +235,11 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="mt-6 text-center">
+          <div className="mt-10 text-center">
             <Button
               asChild
-              className="bg-gradient-to-br from-brand to-brand-dark px-6 text-white hover:opacity-90"
+              size="lg"
+              className="rounded-full bg-brand px-7 text-base font-medium text-white shadow-lg shadow-brand/20 hover:bg-brand-dark"
             >
               <a href="https://luma.com/makers-vbwi" target="_blank" rel="noreferrer">
                 RSVP on Luma
