@@ -217,20 +217,17 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-6">
             {schedule.map((block) => (
-              <div
-                key={block.title}
-                className="flex flex-col gap-1 rounded-2xl border border-white/8 bg-white/[0.04] px-5 py-3.5 backdrop-blur-sm sm:flex-row sm:items-baseline sm:gap-6"
-              >
-                <span className="w-fit shrink-0 font-mono text-[11px] font-medium tracking-wide text-brand-light/80 sm:w-[132px]">
+              <div key={block.title} className="flex flex-col gap-1 text-left sm:flex-row sm:items-baseline sm:gap-6">
+                <span className="w-fit shrink-0 font-mono text-sm font-medium tracking-wide text-brand-light/80 sm:w-[132px]">
                   {block.time}
                 </span>
                 <div className="min-w-0">
-                  <span className="mr-2 text-[15px] font-semibold">{block.title}</span>
-                  <span className="text-sm leading-snug text-white/50">
+                  <div className="text-xl font-semibold md:text-2xl">{block.title}</div>
+                  <div className="pl-4 text-base leading-snug text-white/50 md:text-lg">
                     {block.items.join(" · ")}
-                  </span>
+                  </div>
                 </div>
               </div>
             ))}
