@@ -696,6 +696,54 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Slide 8b — While that's running: set up PAM */}
+      <section
+        data-slide
+        id="setup-pam"
+        className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
+      >
+        <div className="mx-auto flex h-full w-full max-w-4xl flex-col items-center">
+          <div className="w-full shrink-0 text-center">
+            <Badge
+              variant="outline"
+              className="mb-2 w-fit border-brand/30 text-xs font-bold tracking-[0.12em] text-brand-dark uppercase"
+            >
+              While that&apos;s running
+            </Badge>
+            <h3 className="mb-1.5 text-2xl font-extrabold tracking-tight md:text-3xl">
+              Setting up PAM
+            </h3>
+            <p className="mx-auto max-w-[640px] text-sm text-ink-muted md:text-base">
+              Your agent doesn&apos;t know your company. PAM Memory gives it persistent
+              organizational context — no ingestion pipelines, no schema mapping. Grab a key at{" "}
+              <a
+                href="https://pam.harmix.ai"
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-brand-dark hover:underline"
+              >
+                pam.harmix.ai
+              </a>{" "}
+              while opencode builds.
+            </p>
+          </div>
+          <Image
+            src="/images/pam-landing.png"
+            alt="PAM landing page showing the MCP server config for pam_memory"
+            width={2000}
+            height={1302}
+            className="my-3 h-auto max-h-[62vh] w-auto max-w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
+          />
+          <div className="flex w-full shrink-0 flex-wrap items-center justify-center gap-4">
+            <Checkpoint>
+              ✅ <strong className="text-brand-dark">Checkpoint:</strong> you have a{" "}
+              <Inline>pam_mkey_…</Inline> key and the <Inline>pam_memory</Inline> MCP server added
+              to Claude Code or Cursor.
+            </Checkpoint>
+          </div>
+        </div>
+      </section>
+
       {/* Slide 9 — Step 1 */}
       <section
         data-slide

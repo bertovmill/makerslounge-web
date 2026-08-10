@@ -21,6 +21,7 @@ const SLIDE_LABELS: Record<string, string> = {
   "install-cursor": "Install Cursor",
   "ask-cursor": "Just Ask Cursor",
   "build-ui": "Build a UI",
+  "setup-pam": "Setting up PAM",
   "step-1": "Step 1 — Connect a Model",
   "step-2": "Step 2 — Project Structure",
 };
