@@ -204,6 +204,34 @@ const attendeeQuotes = [
   "Handle these tedious copy-and-paste tasks for me.",
 ];
 
+// The hands-on hour: four groups, one instructor each, roaming to unblock people.
+const buildGroups = [
+  {
+    group: "Group 1",
+    name: "Berto Mill",
+    role: "Host, Makers Lounge",
+    image: null,
+  },
+  {
+    group: "Group 2",
+    name: "Nazar Ponochevnyi",
+    role: "AI Agent MCP",
+    image: "/images/presenters/nazar-ponochevnyi.png",
+  },
+  {
+    group: "Group 3",
+    name: "Jacob Mobbin",
+    role: "Instructor",
+    image: null,
+  },
+  {
+    group: "Group 4",
+    name: "Danial Hasan",
+    role: "Key principles",
+    image: "/images/presenters/danial-hasan.png",
+  },
+];
+
 // Step 2 is a hands-on lab, so the slide stays deliberately sparse — one line
 // per folder, and the talking happens out loud in the room.
 const structure: { path: string; what: string }[] = [
@@ -757,6 +785,72 @@ export default function Home() {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Slide 4.75 — The hands-on hour */}
+      <section
+        data-slide
+        id="build-session"
+        className="relative flex h-dvh snap-start items-center overflow-hidden bg-gradient-to-b from-ink to-[#141f30] px-6 py-10 text-white"
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.16),transparent_55%)]" />
+
+        <div className="relative mx-auto w-full max-w-6xl">
+          <div className="mb-10 text-center">
+            <p className="mb-5 text-[13px] font-semibold tracking-[0.28em] text-brand-light uppercase">
+              The next 60 minutes
+            </p>
+            <h2 className="mb-4 text-5xl leading-[0.98] font-semibold tracking-tight text-balance md:text-7xl">
+              Build Session
+            </h2>
+            <p className="mx-auto max-w-[620px] text-lg leading-relaxed text-white/60 md:text-xl">
+              Four groups, four instructors. Your instructor stays with your group the
+              whole hour — get stuck, wave them over.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-5 lg:grid-cols-4 lg:gap-8">
+            {buildGroups.map((instructor) => (
+              <div
+                key={instructor.name}
+                className="flex flex-col items-center rounded-2xl border border-white/8 bg-white/[0.04] px-6 py-8 text-center backdrop-blur-sm"
+              >
+                <span className="mb-5 inline-flex items-center rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-xs font-semibold tracking-[0.14em] text-brand-light uppercase">
+                  {instructor.group}
+                </span>
+                {instructor.image ? (
+                  <Image
+                    src={instructor.image}
+                    alt={instructor.name}
+                    width={160}
+                    height={160}
+                    className="mb-5 h-32 w-32 rounded-full object-cover shadow-lg shadow-black/20"
+                  />
+                ) : (
+                  <div className="mb-5 flex h-32 w-32 items-center justify-center rounded-full bg-white/10 text-3xl font-semibold text-white/70">
+                    {instructor.name
+                      .split(" ")
+                      .map((part) => part[0])
+                      .join("")}
+                  </div>
+                )}
+                <span className="text-xl font-semibold">{instructor.name}</span>
+                <span className="mt-1 text-base text-white/50">{instructor.role}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+            {workshopTips.map((tip) => (
+              <span
+                key={tip}
+                className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-4 py-1.5 text-base text-white/75 md:text-lg"
+              >
+                {tip}
+              </span>
+            ))}
           </div>
         </div>
       </section>
