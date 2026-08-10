@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CodeBlock } from "@/components/code-block";
 import { SlideNav } from "@/components/slide-nav";
+import { LeftSidebar } from "@/components/left-sidebar";
+import { QAWidget } from "@/components/qa-widget";
 
 function Inline({ children }: { children: React.ReactNode }) {
   return (
@@ -61,6 +63,24 @@ const schedule = [
   },
 ];
 
+const presenters = [
+  {
+    name: "Matias Gonzalez",
+    role: "Design Engineer, Vercel",
+    image: "/images/presenters/matias-gonzalez.png",
+  },
+  {
+    name: "Nazar Ponochevnyi",
+    role: "AI Agent MCP",
+    image: "/images/presenters/nazar-ponochevnyi.png",
+  },
+  {
+    name: "Danial Hasan",
+    role: "Key principles",
+    image: null,
+  },
+];
+
 const prereqs = [
   {
     title: "Node.js 24 or newer",
@@ -99,10 +119,13 @@ export default function Home() {
   return (
     <main className="h-dvh snap-y snap-mandatory overflow-y-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <SlideNav />
+      <LeftSidebar />
+      <QAWidget />
 
       {/* Slide 1 — Hero */}
       <section
         data-slide
+        id="hero"
         className="relative flex h-dvh snap-start items-end overflow-hidden"
       >
         <Image
@@ -112,36 +135,61 @@ export default function Home() {
           priority
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-brand-dark/40" />
-        <div className="absolute inset-0 bg-gradient-to-br from-brand/20 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-ink/35" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink from-5% via-ink/85 via-50% to-ink/25" />
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-dark/20 via-transparent to-transparent" />
 
-        <div className="relative z-10 mx-auto w-full max-w-3xl px-6 pb-16 pt-32 text-center text-white">
-          <Badge className="mb-5 border-white/20 bg-white/10 text-xs font-bold tracking-[0.18em] text-white uppercase backdrop-blur-sm">
+        <div className="absolute top-8 right-8 z-10 flex items-center gap-5 md:top-10 md:right-10">
+          <Image
+            src="/vercel.svg"
+            alt="Vercel logo"
+            width={100}
+            height={21}
+            className="h-auto w-20 opacity-90 md:w-24"
+          />
+          <Image
+            src="/byte_white-logo_s26.png"
+            alt="Byte logo"
+            width={140}
+            height={140}
+            className="h-auto w-16 opacity-90 md:w-20"
+          />
+        </div>
+
+        <div className="relative z-10 mx-auto w-full max-w-4xl px-6 pb-20 pt-32 text-center text-white">
+          <Image
+            src="/icon.png"
+            alt="Makers Lounge logo"
+            width={88}
+            height={88}
+            className="mx-auto mb-6 h-[88px] w-[88px] rounded-2xl shadow-lg shadow-black/20"
+          />
+          <p className="mb-6 text-[13px] font-semibold tracking-[0.28em] text-brand-light uppercase">
             Welcome to
-          </Badge>
-          <h1 className="mb-4 text-4xl font-extrabold tracking-tight md:text-6xl">
+          </p>
+          <h1 className="mb-6 text-7xl leading-[0.95] font-semibold tracking-tight text-balance md:text-9xl">
             Makers Lounge
           </h1>
-          <p className="mx-auto mb-8 max-w-[560px] text-lg text-white/90 md:text-xl">
+          <p className="mx-auto mb-10 max-w-[600px] text-xl leading-relaxed text-white/80 md:text-2xl">
             A community of builders, founders, and makers — coming together to learn, ship, and
             grow together.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <Button
               size="lg"
-              className="bg-gradient-to-br from-brand to-brand-dark px-6 text-white hover:opacity-90"
+              className="rounded-full bg-brand px-7 text-base font-medium text-white shadow-lg shadow-brand/20 hover:bg-brand-dark"
             >
               Explore the workshop
             </Button>
             <Button
               size="lg"
-              variant="outline"
-              className="border-white/30 bg-white/5 px-6 text-white hover:bg-white/15"
+              variant="ghost"
+              className="rounded-full px-7 text-base font-medium text-white hover:bg-white/10"
             >
-              Visit makerslounge.ca
+              Visit makerslounge.ca ›
             </Button>
           </div>
-          <p className="mt-10 text-sm font-bold tracking-[0.1em] text-white/80">
+          <p className="mt-14 text-xs font-medium tracking-[0.2em] text-white/50">
             BUILD&nbsp;·&nbsp;CONNECT&nbsp;·&nbsp;CREATE
           </p>
         </div>
@@ -150,36 +198,36 @@ export default function Home() {
       {/* Slide 2 — Itinerary */}
       <section
         data-slide
-        className="flex h-dvh snap-start items-center overflow-hidden bg-gradient-to-b from-ink to-[#141f30] px-6 py-10 text-white"
+        id="itinerary"
+        className="relative flex h-dvh snap-start items-center overflow-hidden bg-gradient-to-b from-ink to-[#141f30] px-6 py-10 text-white"
       >
-        <div className="mx-auto w-full max-w-3xl">
-          <div className="mb-6 text-center">
-            <Badge className="mb-4 border-brand/30 bg-brand/10 text-xs font-bold tracking-[0.18em] text-brand-light uppercase">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.16),transparent_55%)]" />
+
+        <div className="relative mx-auto w-full max-w-3xl">
+          <div className="mb-10 text-center">
+            <p className="mb-5 text-[13px] font-semibold tracking-[0.28em] text-brand-light uppercase">
               Monday, August 10 · 6–9 PM
-            </Badge>
-            <h2 className="mb-2 text-2xl font-extrabold tracking-tight md:text-4xl">
+            </p>
+            <h2 className="mb-4 text-5xl leading-[0.98] font-semibold tracking-tight text-balance md:text-7xl">
               Tonight&apos;s Itinerary
             </h2>
-            <p className="mx-auto max-w-[560px] text-sm text-white/70 md:text-base">
+            <p className="mx-auto max-w-[520px] text-lg leading-relaxed text-white/60 md:text-xl">
               Work with expert coaches to get your very own agent up and running.
             </p>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {schedule.map((block) => (
               <div
                 key={block.title}
-                className="flex flex-col gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2.5 sm:flex-row sm:items-baseline sm:gap-4"
+                className="flex flex-col gap-1 rounded-2xl border border-white/8 bg-white/[0.04] px-5 py-3.5 backdrop-blur-sm sm:flex-row sm:items-baseline sm:gap-6"
               >
-                <Badge
-                  variant="outline"
-                  className="w-fit shrink-0 border-white/15 font-mono text-[10px] font-medium text-white/70"
-                >
+                <span className="w-fit shrink-0 font-mono text-[11px] font-medium tracking-wide text-brand-light/80 sm:w-[132px]">
                   {block.time}
-                </Badge>
+                </span>
                 <div className="min-w-0">
-                  <span className="mr-2 text-sm font-bold">{block.title}</span>
-                  <span className="text-xs leading-snug text-white/60">
+                  <span className="mr-2 text-[15px] font-semibold">{block.title}</span>
+                  <span className="text-sm leading-snug text-white/50">
                     {block.items.join(" · ")}
                   </span>
                 </div>
@@ -187,10 +235,11 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="mt-6 text-center">
+          <div className="mt-10 text-center">
             <Button
               asChild
-              className="bg-gradient-to-br from-brand to-brand-dark px-6 text-white hover:opacity-90"
+              size="lg"
+              className="rounded-full bg-brand px-7 text-base font-medium text-white shadow-lg shadow-brand/20 hover:bg-brand-dark"
             >
               <a href="https://luma.com/makers-vbwi" target="_blank" rel="noreferrer">
                 RSVP on Luma
@@ -200,9 +249,61 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 3 — Getting started intro + prerequisites */}
+      {/* Slide 3 — Thank you, presenters */}
       <section
         data-slide
+        id="presenters"
+        className="relative flex h-dvh snap-start items-center overflow-hidden bg-gradient-to-b from-ink to-[#141f30] px-6 py-10 text-white"
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.16),transparent_55%)]" />
+
+        <div className="relative mx-auto w-full max-w-4xl">
+          <div className="mb-12 text-center">
+            <p className="mb-5 text-[13px] font-semibold tracking-[0.28em] text-brand-light uppercase">
+              With gratitude
+            </p>
+            <h2 className="mb-4 text-5xl leading-[0.98] font-semibold tracking-tight text-balance md:text-7xl">
+              Thank You, Presenters
+            </h2>
+            <p className="mx-auto max-w-[520px] text-lg leading-relaxed text-white/60 md:text-xl">
+              Tonight&apos;s session wouldn&apos;t happen without them.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            {presenters.map((presenter) => (
+              <div
+                key={presenter.name}
+                className="flex flex-col items-center rounded-2xl border border-white/8 bg-white/[0.04] px-6 py-8 text-center backdrop-blur-sm"
+              >
+                {presenter.image ? (
+                  <Image
+                    src={presenter.image}
+                    alt={presenter.name}
+                    width={128}
+                    height={128}
+                    className="mb-5 h-28 w-28 rounded-full object-cover shadow-lg shadow-black/20"
+                  />
+                ) : (
+                  <div className="mb-5 flex h-28 w-28 items-center justify-center rounded-full bg-white/10 text-2xl font-semibold text-white/70">
+                    {presenter.name
+                      .split(" ")
+                      .map((part) => part[0])
+                      .join("")}
+                  </div>
+                )}
+                <span className="text-lg font-semibold">{presenter.name}</span>
+                <span className="mt-1 text-sm text-white/50">{presenter.role}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Slide 4 — Getting started intro + prerequisites */}
+      <section
+        data-slide
+        id="getting-started"
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
       >
         <div className="mx-auto w-full max-w-3xl">
@@ -247,9 +348,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 4 — Step 0 */}
+      {/* Slide 5 — Step 0 */}
       <section
         data-slide
+        id="install-cursor"
         className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
       >
         <div className="mx-auto flex h-full w-full max-w-4xl flex-col items-center">
@@ -286,9 +388,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 5 — Or just ask Cursor */}
+      {/* Slide 6 — Pick your AI agent */}
       <section
         data-slide
+        id="ask-cursor"
         className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
       >
         <div className="mx-auto flex h-full w-full max-w-4xl flex-col items-center">
@@ -300,20 +403,42 @@ export default function Home() {
               Prefer chat?
             </Badge>
             <h3 className="mb-1.5 text-2xl font-extrabold tracking-tight md:text-3xl">
-              Just ask Cursor
+              Pick your AI agent
             </h3>
             <p className="mx-auto max-w-[600px] text-sm text-ink-muted md:text-base">
-              Open the chat panel (<Inline>Cmd+L</Inline>) and just type what you want — it can
-              run the same setup steps for you.
+              Open Cursor&apos;s built-in terminal (<Inline>Ctrl+`</Inline>) and run whichever
+              agent matches your subscription — it can run the same setup steps for you.
             </p>
           </div>
-          <Image
-            src="/images/cursor-ask-eve.png"
-            alt="Cursor's chat panel with the prompt 'I want to install the vercel eve agent framework to this project'"
-            width={2000}
-            height={1307}
-            className="my-3 h-auto max-h-[62vh] w-auto max-w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
-          />
+          <div className="my-4 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
+            <Card className="border-[#e3ecf5]">
+              <CardContent className="flex flex-col items-center gap-2 px-4 py-5 text-center">
+                <span className="text-xs font-bold tracking-[0.1em] text-brand-dark uppercase">
+                  Have a Claude subscription
+                </span>
+                <p className="text-lg font-extrabold">Claude Code</p>
+                <Inline>claude</Inline>
+              </CardContent>
+            </Card>
+            <Card className="border-[#e3ecf5]">
+              <CardContent className="flex flex-col items-center gap-2 px-4 py-5 text-center">
+                <span className="text-xs font-bold tracking-[0.1em] text-brand-dark uppercase">
+                  Have a Codex subscription
+                </span>
+                <p className="text-lg font-extrabold">Codex</p>
+                <Inline>codex</Inline>
+              </CardContent>
+            </Card>
+            <Card className="border-[#e3ecf5]">
+              <CardContent className="flex flex-col items-center gap-2 px-4 py-5 text-center">
+                <span className="text-xs font-bold tracking-[0.1em] text-brand-dark uppercase">
+                  Have neither
+                </span>
+                <p className="text-lg font-extrabold">OpenCode</p>
+                <Inline>opencode</Inline>
+              </CardContent>
+            </Card>
+          </div>
           <div className="flex w-full shrink-0 flex-wrap items-center justify-center gap-4">
             <div className="rounded-xl border border-[#e3ecf5] bg-white px-4 py-2.5 text-sm text-ink-muted italic">
               &ldquo;I want to install the Vercel Eve agent framework to this project&rdquo;
@@ -326,9 +451,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 6 — Build a UI for it */}
+      {/* Slide 7 — Build a UI for it */}
       <section
         data-slide
+        id="build-ui"
         className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
       >
         <div className="mx-auto flex h-full w-full max-w-4xl flex-col items-center">
@@ -368,9 +494,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 7 — Step 1 */}
+      {/* Slide 8 — Step 1 */}
       <section
         data-slide
+        id="step-1"
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
       >
         <div className="mx-auto w-full max-w-3xl">
@@ -400,9 +527,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 8 — Step 2 */}
+      {/* Slide 9 — Step 2 */}
       <section
         data-slide
+        id="step-2"
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
       >
         <div className="mx-auto w-full max-w-3xl">
@@ -438,9 +566,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Slide 9 — Step 3 */}
+      {/* Slide 10 — Step 3 */}
       <section
         data-slide
+        id="step-3"
         className="flex h-dvh snap-start items-center overflow-hidden bg-[#f7fafd] px-6 py-10 text-ink"
       >
         <div className="mx-auto w-full max-w-3xl">
