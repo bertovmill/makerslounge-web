@@ -105,19 +105,12 @@ const schedule = [
   },
 ];
 
+// Deliberately title-only — these read from the back of the room, and the
+// nuance gets said out loud rather than printed under each one.
 const overarchingGoals = [
-  {
-    title: "What are AI agents?",
-    detail: "Get a clear mental model of what an agent actually is — and isn't.",
-  },
-  {
-    title: "How do you deploy one?",
-    detail: "See an agent go from local code to something running in the real world.",
-  },
-  {
-    title: "What are the best use cases?",
-    detail: "Learn where agents genuinely shine, and where they don't earn their keep.",
-  },
+  "What are AI agents?",
+  "How do you deploy one?",
+  "What are the best use cases?",
 ];
 
 const objectives = [
@@ -440,6 +433,16 @@ export default function Home() {
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(58,159,243,0.10),transparent_55%)]" />
 
+        {/* Oversized, heavily faded Makers Lounge mark sitting behind the content */}
+        <Image
+          src="/icon.png"
+          alt=""
+          aria-hidden
+          width={900}
+          height={900}
+          className="pointer-events-none absolute top-1/2 left-1/2 w-[560px] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-[0.06] md:w-[760px]"
+        />
+
         <div className="relative mx-auto w-full max-w-4xl">
           <div className="mb-8 text-center">
             <p className="mb-4 text-[13px] font-semibold tracking-[0.28em] text-brand-dark uppercase">
@@ -459,12 +462,11 @@ export default function Home() {
             </p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {overarchingGoals.map((goal) => (
-                <Card key={goal.title} className="border-brand/25 bg-white/70">
-                  <CardContent className="px-5 py-4">
-                    <p className="text-base font-semibold text-brand-dark md:text-lg">
-                      {goal.title}
+                <Card key={goal} className="border-brand/25 bg-white/70">
+                  <CardContent className="flex min-h-[104px] items-center justify-center px-5 py-6">
+                    <p className="text-center text-lg font-semibold text-balance text-brand-dark md:text-xl">
+                      {goal}
                     </p>
-                    <p className="mt-1 text-sm leading-relaxed text-ink-muted">{goal.detail}</p>
                   </CardContent>
                 </Card>
               ))}
