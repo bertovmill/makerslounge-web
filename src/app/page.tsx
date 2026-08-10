@@ -8,8 +8,9 @@ import { SlideNav } from "@/components/slide-nav";
 import { LeftSidebar } from "@/components/left-sidebar";
 import { WorkshopHelperWidget } from "@/components/workshop-helper-widget";
 import { DemoSlots } from "@/components/demo-slots";
-import { CalendarDays, Clock, Mail, ShieldCheck } from "lucide-react";
+import { CalendarDays, Clock, Mail, ShieldCheck, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { wifi } from "@/lib/wifi";
 
 function Inline({ children }: { children: React.ReactNode }) {
   return (
@@ -345,9 +346,30 @@ export default function Home() {
               Visit makerslounge.ca ›
             </Button>
           </div>
-          <p className="mt-14 text-xs font-medium tracking-[0.2em] text-white/50">
-            BUILD&nbsp;·&nbsp;CONNECT&nbsp;·&nbsp;CREATE
-          </p>
+          {/* Wi-Fi is the first thing everyone needs, so it reads from the back
+              of the room rather than living only on the /wifi page. */}
+          <div className="mx-auto mt-10 flex max-w-3xl flex-col items-center gap-4 rounded-3xl border border-white/15 bg-white/10 px-8 py-6 backdrop-blur-md sm:flex-row sm:justify-center sm:gap-10">
+            <div className="flex items-center gap-3 text-brand-light">
+              <Wifi className="h-7 w-7" />
+              <span className="text-sm font-semibold tracking-[0.24em] uppercase">Wi-Fi</span>
+            </div>
+            <div className="grid grid-cols-1 gap-4 text-left sm:grid-cols-3 sm:gap-8">
+              {[
+                { label: "Network", value: wifi.network },
+                { label: "Username", value: wifi.username },
+                { label: "Password", value: wifi.password },
+              ].map(({ label, value }) => (
+                <div key={label}>
+                  <p className="text-[11px] font-semibold tracking-[0.2em] text-white/50 uppercase">
+                    {label}
+                  </p>
+                  <p className="font-mono text-2xl font-bold tracking-tight text-white md:text-3xl">
+                    {value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <p className="absolute inset-x-0 bottom-6 z-10 text-center text-xs font-medium tracking-[0.2em] text-white/40">

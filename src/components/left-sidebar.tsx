@@ -4,13 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { BookOpen, LogOut, Presentation, User, Users } from "lucide-react";
+import { BookOpen, LogOut, Presentation, User, Users, Wifi } from "lucide-react";
 import { useTourActiveHref } from "@/components/welcome-tour";
 import { signOutAction } from "@/app/profile/actions";
 
 const items = [
   { href: "/", label: "Presentation", icon: Presentation },
   { href: "/attendees", label: "Attendees", icon: Users },
+  { href: "/wifi", label: "Wi-Fi", icon: Wifi },
   { href: "/resources", label: "Resources", icon: BookOpen },
   { href: "/profile", label: "Profile", icon: User },
 ];
