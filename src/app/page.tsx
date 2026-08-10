@@ -71,7 +71,7 @@ const presenters = [
   {
     name: "Nazar Ponochevnyi",
     role: "AI Agent MCP",
-    image: null,
+    image: "/images/presenters/nazar-ponochevnyi.png",
   },
   {
     name: "Danial Hasan",
