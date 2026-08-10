@@ -369,7 +369,7 @@ export default function Home() {
             alt="Cursor's start screen with the Open project box highlighted"
             width={2000}
             height={1307}
-            className="my-3 h-auto max-h-[58vh] w-auto max-w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
+            className="my-3 h-auto max-h-[68vh] w-auto max-w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
           />
           <div className="flex w-full shrink-0 flex-wrap items-center justify-center gap-4">
             <Button
@@ -413,29 +413,74 @@ export default function Home() {
           <div className="my-4 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
             <Card className="border-[#e3ecf5]">
               <CardContent className="flex flex-col items-center gap-2 px-4 py-5 text-center">
+                <Image
+                  src="/images/claude-logo.png"
+                  alt="Claude logo"
+                  width={40}
+                  height={40}
+                  className="h-10 w-10"
+                />
                 <span className="text-xs font-bold tracking-[0.1em] text-brand-dark uppercase">
                   Have a Claude subscription
                 </span>
                 <p className="text-lg font-extrabold">Claude Code</p>
                 <Inline>claude</Inline>
+                <a
+                  href="https://code.claude.com/docs/en/quickstart"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-semibold text-brand-dark hover:underline"
+                >
+                  Quickstart docs →
+                </a>
               </CardContent>
             </Card>
             <Card className="border-[#e3ecf5]">
               <CardContent className="flex flex-col items-center gap-2 px-4 py-5 text-center">
+                <Image
+                  src="/images/codex-logo.png"
+                  alt="Codex logo"
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 rounded-md"
+                />
                 <span className="text-xs font-bold tracking-[0.1em] text-brand-dark uppercase">
                   Have a Codex subscription
                 </span>
                 <p className="text-lg font-extrabold">Codex</p>
                 <Inline>codex</Inline>
+                <a
+                  href="https://learn.chatgpt.com/docs/codex/cli"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-semibold text-brand-dark hover:underline"
+                >
+                  CLI docs →
+                </a>
               </CardContent>
             </Card>
             <Card className="border-[#e3ecf5]">
               <CardContent className="flex flex-col items-center gap-2 px-4 py-5 text-center">
+                <Image
+                  src="/images/opencode-logo.png"
+                  alt="OpenCode logo"
+                  width={40}
+                  height={40}
+                  className="h-10 w-10"
+                />
                 <span className="text-xs font-bold tracking-[0.1em] text-brand-dark uppercase">
                   Have neither
                 </span>
                 <p className="text-lg font-extrabold">OpenCode</p>
                 <Inline>opencode</Inline>
+                <a
+                  href="https://opencode.ai/docs/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-semibold text-brand-dark hover:underline"
+                >
+                  Docs →
+                </a>
               </CardContent>
             </Card>
           </div>
@@ -478,7 +523,7 @@ export default function Home() {
             alt="Cursor's chat panel with a prompt asking it to build a Next.js and shadcn app with a chat interface using Vercel AI Elements"
             width={2000}
             height={1307}
-            className="my-3 h-auto max-h-[52vh] w-auto max-w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
+            className="my-3 h-auto max-h-[62vh] w-auto max-w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
           />
           <div className="flex w-full shrink-0 flex-wrap items-center justify-center gap-4">
             <div className="max-w-xl rounded-xl border border-[#e3ecf5] bg-white px-4 py-2.5 text-sm text-ink-muted italic">
