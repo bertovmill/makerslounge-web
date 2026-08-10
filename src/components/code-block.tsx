@@ -1,8 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
-export function CodeBlock({ lines, copyText }: { lines: string[]; copyText?: string }) {
+export function CodeBlock({
+  lines,
+  copyText,
+  className,
+}: {
+  lines: string[];
+  copyText?: string;
+  className?: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   const copy = () => {
@@ -14,7 +23,12 @@ export function CodeBlock({ lines, copyText }: { lines: string[]; copyText?: str
   };
 
   return (
-    <pre className="relative mt-4 overflow-x-auto rounded-xl bg-ink p-5 font-mono text-[15px] leading-7 text-code-text">
+    <pre
+      className={cn(
+        "relative mt-4 overflow-x-auto rounded-xl bg-ink p-5 font-mono text-[15px] leading-7 text-code-text",
+        className,
+      )}
+    >
       <button
         onClick={copy}
         className="absolute top-2.5 right-2.5 cursor-pointer rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20"
