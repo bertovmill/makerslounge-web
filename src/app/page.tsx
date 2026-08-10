@@ -462,19 +462,19 @@ export default function Home() {
             For hosting us and offering the space tonight.
           </p>
 
-          <div className="mt-10 rounded-3xl bg-ink px-10 py-12 shadow-xl shadow-ink/10">
+          <div className="mt-12">
             <Image
-              src="/images/tmu-byte-logo-white.png"
+              src="/images/tmu-byte-logo-black.png"
               alt="TMU Byte"
               width={1600}
-              height={569}
-              className="mx-auto h-auto w-[260px] md:w-[360px]"
+              height={568}
+              className="mx-auto h-auto w-[280px] md:w-[400px]"
               priority={false}
             />
-            <p className="mt-10 text-2xl font-semibold text-white md:text-3xl">
+            <p className="mt-10 text-2xl font-semibold md:text-3xl">
               Build Your Technical Experience
             </p>
-            <p className="mt-2 text-lg text-white/60 md:text-xl">
+            <p className="mt-2 text-lg text-ink-muted md:text-xl">
               TMU&apos;s first project-based AI Lab.
             </p>
           </div>
