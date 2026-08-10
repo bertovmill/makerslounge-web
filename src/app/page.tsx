@@ -1108,6 +1108,110 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Slide 8b2 — Debugging: copy the error, paste it to your agent */}
+      <section
+        data-slide
+        id="debug-copy-paste-error"
+        className="flex h-dvh snap-start flex-col items-center justify-center overflow-hidden bg-[#f7fafd] px-6 py-6 text-ink"
+      >
+        <div className="mx-auto flex h-full w-full max-w-7xl flex-col items-center justify-center">
+          <div className="w-full shrink-0 text-center">
+            <Badge
+              variant="outline"
+              className="mb-1.5 w-fit border-brand/30 text-xs font-bold tracking-[0.12em] text-brand-dark uppercase"
+            >
+              When it breaks
+            </Badge>
+            <h3 className="mb-1 text-2xl font-extrabold tracking-tight md:text-3xl">
+              Debugging: copy the error, paste it to your agent
+            </h3>
+            <p className="mx-auto max-w-[760px] text-sm text-ink-muted md:text-base">
+              Red screen? Don&apos;t panic and don&apos;t retype it.{" "}
+              <strong className="text-ink">1.</strong> Hit the copy icon on the error overlay ·{" "}
+              <strong className="text-ink">2.</strong> Paste the whole thing into opencode and let it
+              fix it.
+            </p>
+          </div>
+
+          <div className="my-3 grid w-full grid-cols-1 items-start gap-5 lg:grid-cols-2">
+            {/* 1 — the browser error overlay, with the copy button called out */}
+            <div className="flex flex-col items-center">
+              <p className="mb-1.5 flex items-center gap-2 text-sm font-bold text-ink">
+                <span className="flex size-5 items-center justify-center rounded-full bg-amber-400 text-[11px] font-extrabold text-ink">
+                  1
+                </span>
+                Copy the error from the browser
+              </p>
+              {/* Percentages are measured against the 2000×1286 screenshot so the
+                  ring stays pinned to the copy icon in the error overlay. */}
+              <div
+                className="relative aspect-[2000/1286] w-full"
+                style={{ maxWidth: "calc(52vh * 2000 / 1286)" }}
+              >
+                <Image
+                  src="/images/debug-copy-error.png"
+                  alt="A Next.js console error overlay in the browser, with the copy-to-clipboard icon in the top-right of the error card"
+                  width={2000}
+                  height={1286}
+                  className="h-full w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
+                />
+                <div
+                  className="absolute animate-pulse rounded-md ring-4 ring-amber-400 ring-offset-2 ring-offset-white/0"
+                  style={{ left: "72.1%", top: "26.1%", width: "2.3%", height: "3.1%" }}
+                >
+                  <span className="absolute -top-3 -left-8 flex size-6 items-center justify-center rounded-full bg-amber-400 text-xs font-extrabold text-ink shadow">
+                    1
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 2 — the same error pasted into opencode */}
+            <div className="flex flex-col items-center">
+              <p className="mb-1.5 flex items-center gap-2 text-sm font-bold text-ink">
+                <span className="flex size-5 items-center justify-center rounded-full bg-amber-400 text-[11px] font-extrabold text-ink">
+                  2
+                </span>
+                Paste it straight into opencode
+              </p>
+              {/* Percentages are measured against the 2000×1328 screenshot so the
+                  ring wraps the pasted error text in the terminal. */}
+              <div
+                className="relative aspect-[2000/1328] w-full"
+                style={{ maxWidth: "calc(52vh * 2000 / 1328)" }}
+              >
+                <Image
+                  src="/images/debug-paste-error.png"
+                  alt="The editor terminal running opencode with the full error message pasted in as a prompt"
+                  width={2000}
+                  height={1328}
+                  className="h-full w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
+                />
+                <div
+                  className="absolute animate-pulse rounded-md ring-4 ring-amber-400 ring-offset-2 ring-offset-white/0"
+                  style={{ left: "24.5%", top: "17.2%", width: "65.5%", height: "58.0%" }}
+                >
+                  <span className="absolute -top-3 -left-8 flex size-6 items-center justify-center rounded-full bg-amber-400 text-xs font-extrabold text-ink shadow">
+                    2
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex w-full shrink-0 flex-wrap items-center justify-center gap-4">
+            <CopyLine
+              text="Here's the error I'm getting — please read it, find the root cause, and fix it:"
+              className="max-w-lg"
+            />
+            <Checkpoint>
+              ✅ <strong className="text-brand-dark">Checkpoint:</strong> your agent reads the error,
+              fixes the file, and the page reloads clean.
+            </Checkpoint>
+          </div>
+        </div>
+      </section>
+
       {/* Slide 8c — While that's running: set up PAM */}
       <section
         data-slide
