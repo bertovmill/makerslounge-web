@@ -448,10 +448,10 @@ export default function Home() {
             </p>
           </div>
           <Image
-            src="/images/cursor-open-project.png"
-            alt="Cursor's start screen with the Open project box highlighted"
+            src="/images/cursor-download-page.png"
+            alt="Cursor's download page with the Download for macOS button highlighted"
             width={2000}
-            height={1307}
+            height={1424}
             className="my-3 h-auto max-h-[68vh] w-auto max-w-full rounded-xl object-contain ring-1 ring-[#e3ecf5]"
           />
           <div className="flex w-full shrink-0 flex-wrap items-center justify-center gap-4">
@@ -459,7 +459,7 @@ export default function Home() {
               asChild
               className="bg-gradient-to-br from-brand to-brand-dark px-6 text-white hover:opacity-90"
             >
-              <a href="https://cursor.com/download" target="_blank" rel="noreferrer">
+              <a href="https://cursor.com/lp/agent-workflow" target="_blank" rel="noreferrer">
                 Download Cursor →
               </a>
             </Button>
