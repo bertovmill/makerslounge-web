@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { LeftSidebar } from "@/components/left-sidebar";
@@ -12,6 +13,10 @@ type Guest = {
   tools?: string;
   wish?: string;
   topic?: string;
+  /** Headshot in /public/attendees — e.g. "/attendees/berto-mill.png" */
+  photo?: string;
+  /** Full LinkedIn profile URL */
+  linkedin?: string;
 };
 
 const guests: Guest[] = [
@@ -20,6 +25,8 @@ const guests: Guest[] = [
     role: "Host — Makers Lounge",
     bio: "Organizing tonight's session and building with Eve.",
     tags: ["Host"],
+    photo: "/attendees/berto-mill.png",
+    linkedin: "https://www.linkedin.com/in/bertomill/",
   },
   {
     name: `Hunter Wedgbury`,
@@ -381,8 +388,39 @@ export default function AttendeesPage() {
                 key={guest.name}
                 className="rounded-2xl border border-[#e3ecf5] bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
               >
-                <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-dark text-base font-bold text-white">
-                  {initials(guest.name)}
+                <div className="mb-3 flex items-center gap-3">
+                  {guest.photo ? (
+                    <Image
+                      src={guest.photo}
+                      alt={guest.name}
+                      width={44}
+                      height={44}
+                      className="h-11 w-11 shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-dark text-base font-bold text-white">
+                      {initials(guest.name)}
+                    </div>
+                  )}
+                  {guest.linkedin && (
+                    <a
+                      href={guest.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${guest.name} on LinkedIn`}
+                      title={`${guest.name} on LinkedIn`}
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0a66c2]/10 text-[#0a66c2] transition-colors hover:bg-[#0a66c2] hover:text-white"
+                    >
+                      <svg
+                        className="h-3.5 w-3.5"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z" />
+                      </svg>
+                    </a>
+                  )}
                 </div>
                 <h3 className="text-base font-bold tracking-tight">{guest.name}</h3>
 
