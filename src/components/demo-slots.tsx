@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,7 +15,7 @@ type Slot = {
 const SLOT_COUNT = 8;
 // 9 and 10 only go on if the night is running ahead of schedule.
 const STANDBY_SLOTS = [9, 10];
-const POLL_MS = 5000;
+const POLL_MS = 8000;
 
 export function DemoSlots() {
   const { user, isSignedIn, isLoaded } = useUser();
@@ -25,6 +25,8 @@ export function DemoSlots() {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [onScreen, setOnScreen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -37,14 +39,48 @@ export function DemoSlots() {
     }
   }, []);
 
+  // This slide lives partway down a long deck, so most of the night it's
+  // scrolled off screen with nobody looking at it. Only poll when it's actually
+  // in view — polling the whole time is one invocation per attendee per tick
+  // for a list nobody can see.
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setOnScreen(entry.isIntersecting),
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   // The slide is on a public page — only fetch once Clerk says we're signed in,
   // otherwise every poll is a guaranteed 401.
   useEffect(() => {
-    if (!isSignedIn) return;
-    load();
-    const id = setInterval(load, POLL_MS);
-    return () => clearInterval(id);
-  }, [load, isSignedIn]);
+    if (!isSignedIn || !onScreen) return;
+
+    let interval: ReturnType<typeof setInterval> | undefined;
+
+    const stop = () => {
+      clearInterval(interval);
+      interval = undefined;
+    };
+
+    const start = () => {
+      if (interval) return;
+      load();
+      interval = setInterval(load, POLL_MS);
+    };
+
+    const onVisibility = () => (document.hidden ? stop() : start());
+
+    onVisibility();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [load, isSignedIn, onScreen]);
 
   function openClaim(slot: number) {
     if (!isSignedIn) {
@@ -221,7 +257,7 @@ export function DemoSlots() {
   }
 
   return (
-    <div>
+    <div ref={rootRef}>
       <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).map((n) => renderSlot(n))}
       </ul>

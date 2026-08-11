@@ -59,8 +59,16 @@ export function QAWidget() {
     return () => observer.disconnect();
   }, []);
 
+  // The question list only exists inside the open panel, and a hidden tab has
+  // nobody watching it — polling in either case is a function invocation per
+  // attendee per tick with nothing to show for it, which is what tripped
+  // Vercel's fair-use limit during the last workshop.
   useEffect(() => {
+    if (!open) return;
+
     let cancelled = false;
+    let interval: ReturnType<typeof setInterval> | undefined;
+
     const load = async () => {
       try {
         const res = await fetch(`/api/questions?slideId=${encodeURIComponent(slideId)}`);
@@ -71,13 +79,28 @@ export function QAWidget() {
         // ignore transient errors, next poll will retry
       }
     };
-    load();
-    const interval = setInterval(load, 4000);
+
+    const stop = () => {
+      clearInterval(interval);
+      interval = undefined;
+    };
+
+    const start = () => {
+      if (interval) return;
+      load();
+      interval = setInterval(load, 8000);
+    };
+
+    const onVisibility = () => (document.hidden ? stop() : start());
+
+    onVisibility();
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [slideId]);
+  }, [slideId, open]);
 
   useEffect(() => {
     if (open) listRef.current?.scrollTo({ top: 0 });
