@@ -296,21 +296,31 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-t from-ink from-5% via-ink/85 via-50% to-ink/25" />
         <div className="absolute inset-0 bg-gradient-to-br from-brand-dark/20 via-transparent to-transparent" />
 
-        <div className="absolute top-8 right-8 z-10 flex items-center gap-5 md:top-10 md:right-10">
-          <Image
-            src="/vercel.svg"
-            alt="Vercel logo"
-            width={100}
-            height={21}
-            className="h-auto w-20 opacity-90 md:w-24"
-          />
-          <Image
-            src="/byte_white-logo_s26.png"
-            alt="Byte logo"
-            width={140}
-            height={140}
-            className="h-auto w-16 opacity-90 md:w-20"
-          />
+        {/* The URL is the one thing every attendee has to type, so it gets the
+            full width of the top bar and shares the row with the logos rather
+            than competing with them for the corner. */}
+        <div className="absolute inset-x-0 top-0 z-20 border-b border-white/15 bg-ink/50 backdrop-blur-md">
+          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-6 px-6 py-4 md:px-10 md:py-5">
+            <p className="text-2xl leading-none font-semibold tracking-tight text-white sm:text-4xl md:text-6xl">
+              eve.makerslounge.ca
+            </p>
+            <div className="flex shrink-0 items-center gap-5">
+              <Image
+                src="/vercel.svg"
+                alt="Vercel logo"
+                width={100}
+                height={21}
+                className="h-auto w-20 opacity-90 md:w-24"
+              />
+              <Image
+                src="/byte_white-logo_s26.png"
+                alt="Byte logo"
+                width={140}
+                height={140}
+                className="h-auto w-16 opacity-90 md:w-20"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="relative z-10 mx-auto w-full max-w-4xl px-6 pb-20 pt-32 text-center text-white">
