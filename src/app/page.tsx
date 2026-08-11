@@ -8,7 +8,7 @@ import { SlideNav } from "@/components/slide-nav";
 import { LeftSidebar } from "@/components/left-sidebar";
 import { WorkshopHelperWidget } from "@/components/workshop-helper-widget";
 import { DemoSlots } from "@/components/demo-slots";
-import { CalendarDays, Clock, Mail, ShieldCheck, Wifi } from "lucide-react";
+import { CalendarDays, Clock, Mail, Phone, ShieldCheck, Video, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { wifi } from "@/lib/wifi";
 
@@ -95,7 +95,11 @@ const schedule = [
   {
     time: "8:15 – 8:45 PM",
     title: "Demos",
-    items: ["Zoom link for everyone", "3-minute demos × 10", "Use case, friction, next steps"],
+    items: [
+      "Google Meet link for everyone",
+      "3-minute demos × 10",
+      "Use case, friction, next steps",
+    ],
   },
   {
     time: "8:45 – 9:00 PM",
@@ -1604,6 +1608,45 @@ export default function Home() {
             Eight slots, first come first serve — put your name down and take two minutes at the
             front. Half-working counts. Broken-but-interesting <em>really</em> counts.
           </p>
+
+          {/* Remote folks demo over Meet, so the join link sits with the slot
+              list rather than only in the calendar invite. */}
+          <div className="mt-5 rounded-2xl border border-brand/20 bg-white px-5 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+              <div className="flex items-center gap-3">
+                <Video className="size-5 shrink-0 text-brand-dark" />
+                <div>
+                  <p className="text-[11px] font-bold tracking-[0.14em] text-ink-muted uppercase">
+                    Joining remotely?
+                  </p>
+                  <a
+                    href="https://meet.google.com/wjw-pvdk-xez"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-lg font-semibold tracking-tight text-brand-dark underline decoration-brand/30 underline-offset-4 hover:decoration-brand"
+                  >
+                    meet.google.com/wjw-pvdk-xez
+                  </a>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5 text-sm text-ink-muted">
+                <Phone className="size-4 shrink-0" />
+                <span>
+                  Or dial <strong className="font-semibold text-ink">(CA) +1 587-688-3295</strong>{" "}
+                  &middot; PIN <strong className="font-semibold text-ink">595 163 693#</strong>
+                  {" · "}
+                  <a
+                    href="https://tel.meet/wjw-pvdk-xez?pin=2329542293958"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline underline-offset-4 hover:text-brand-dark"
+                  >
+                    more numbers
+                  </a>
+                </span>
+              </div>
+            </div>
+          </div>
 
           <div className="mt-5">
             <DemoSlots />
