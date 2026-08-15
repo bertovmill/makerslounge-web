@@ -61,10 +61,10 @@
   --radius: 4px;
 
   /* --- Flat palette --- */
-  --paper: #F7F2E9;   /* warm ground */
-  --sand: #EDE3D2;    /* warm mid  */
-  --shell: #FFFDF7;   /* raised surface */
-  --ink: #16161D;     /* near-black, blue cast */
+  --paper: #FBF8F2;   /* warm ground, kept light for readability */
+  --sand: #F3EDE2;    /* warm mid  */
+  --shell: #FFFFFF;   /* raised surface — pure white so cards separate cleanly */
+  --ink: #1B1B23;     /* near-black, blue cast */
 
   --blue-deep: #0E3F7E;
   --blue-core: #1A6FD4;
@@ -87,15 +87,15 @@
   --secondary: var(--sand);
   --secondary-foreground: var(--ink);
   --muted: #EFE7D9;
-  --muted-foreground: #6E6455;
+  --muted-foreground: #5E574B;
 
   --accent: var(--blue-pale);
   --accent-foreground: var(--blue-deep);
 
   --destructive: #B7362B;
 
-  --border: #D6C6AC;
-  --input: #D6C6AC;
+  --border: #E4DACA;
+  --input: #E4DACA;
   --ring: var(--blue-core);
 
   /* Legacy aliases — now flat */
@@ -110,23 +110,23 @@
 
   /* Depth = offset ink edges, not blur */
   --shadow-subtle: 0 1px 0 var(--border);
-  --shadow-card: 3px 3px 0 rgba(22, 22, 29, 0.09);
-  --shadow-card-hover: 5px 5px 0 rgba(22, 22, 29, 0.14);
+  --shadow-card: 2px 2px 0 rgba(27, 27, 35, 0.055);
+  --shadow-card-hover: 4px 4px 0 rgba(27, 27, 35, 0.10);
   --shadow-input-focus: 0 0 0 3px rgba(26, 111, 212, 0.22);
   --shadow-blue-glow: 4px 4px 0 var(--blue-deep);
 
   /* The hero "sun". Theme-aware so headline text keeps contrast against it:
      a light tint on the cream ground, a deep navy on the dark ground. */
-  --motif-sun: var(--blue-light);
+  --motif-sun: #CBE4F8;
 
-  --grain-opacity: 0.30;
-  --grain-blend: multiply;
+  --grain-opacity: 0.13;
+  --grain-blend: soft-light;
 }
 
 .dark {
-  --paper: #12131A;
+  --paper: #16171F;
   --sand: #1E2029;
-  --shell: #191B24;
+  --shell: #1D1F29;
   --ink: #EFE7D9;
 
   --blue-deep: #0B2F60;
@@ -149,7 +149,7 @@
   --secondary: var(--sand);
   --secondary-foreground: var(--ink);
   --muted: #23262F;
-  --muted-foreground: #9A9384;
+  --muted-foreground: #A7A093;
 
   --accent: var(--blue-pale);
   --accent-foreground: var(--blue-light);
@@ -177,8 +177,8 @@
 
   --motif-sun: #17304E;
 
-  --grain-opacity: 0.22;
-  --grain-blend: overlay;
+  --grain-opacity: 0.10;
+  --grain-blend: soft-light;
 }
 
 @layer base {
@@ -229,9 +229,9 @@ body::after {
    resolves empty at :root and silently invalidates the whole declaration. */
 h1, h2, h3 {
   font-family: var(--font-instrument-serif), Georgia, serif;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
   font-weight: 400;
-  line-height: 1.05;
+  line-height: 1.1;
   text-wrap: balance;
 }
 
@@ -422,7 +422,7 @@ html {
 /* Flat card — hard edge, offset ink block, no blur */
 .flat-card {
   background: var(--card);
-  border: 1.5px solid var(--ink);
+  border: 1px solid var(--border);
   box-shadow: var(--shadow-card);
   transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
