@@ -20,7 +20,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     pathname === "/auth" ||
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/hackathons") ||
-    pathname.startsWith("/podcasts");
+    pathname.startsWith("/podcasts") ||
+    // The Eve workshop ships its own sidebar and chrome.
+    pathname.startsWith("/eve-workshop");
 
   if (isFullPage || !user) {
     return <main>{children}</main>;

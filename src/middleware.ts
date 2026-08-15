@@ -1,7 +1,53 @@
 import { createServerClient } from "@supabase/ssr";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
+/**
+ * Two auth systems share this file while the site migrates from Supabase to
+ * Clerk:
+ *
+ * - Clerk owns `/eve-workshop/*` — the Eve Agent Workshop, folded in from its
+ *   own repo. Its attendee records are keyed by Clerk user ids.
+ * - Supabase owns everything else, where the only job is refreshing the auth
+ *   token on each request.
+ *
+ * Clerk is mounted app-wide (see `ClerkProvider` in the root layout) but only
+ * *enforced* on the routes below, so the rest of the site is untouched until
+ * the migration proper.
+ */
+
+// Workshop routes that must stay reachable while signed out.
+//
+// `/eve/*` is the workshop agent's own HTTP surface. It authenticates itself
+// in `workshop-helper/agent/channels/eve.ts` (Clerk session, then Vercel
+// OIDC) and fails closed, so it must not be redirect-protected here — a 307 to
+// the sign-in page would break non-browser callers like the eve TUI.
+// Note the `/eve` patterns are written as `/eve` + `/eve/(.*)` rather than
+// `/eve(.*)`: the latter also matches `/eve-workshop/...`, which would quietly
+// make every workshop page public.
+const isPublicWorkshopRoute = createRouteMatcher([
+  "/eve-workshop",
+  "/eve-workshop/sign-in(.*)",
+  "/eve-workshop/sign-up(.*)",
+  "/eve",
+  "/eve/(.*)",
+]);
+
+const isWorkshopRoute = createRouteMatcher([
+  "/eve-workshop",
+  "/eve-workshop/(.*)",
+  "/api/eve-workshop/(.*)",
+  "/eve",
+  "/eve/(.*)",
+]);
+
+const withClerk = clerkMiddleware(async (auth, req) => {
+  if (isWorkshopRoute(req) && !isPublicWorkshopRoute(req)) {
+    await auth.protect();
+  }
+});
+
+async function refreshSupabaseSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -33,6 +79,19 @@ export async function middleware(request: NextRequest) {
   await supabase.auth.getUser();
 
   return supabaseResponse;
+}
+
+export default function middleware(
+  request: NextRequest,
+  event: Parameters<typeof withClerk>[1]
+) {
+  // Workshop routes never touch Supabase, and the rest of the site never pays
+  // the cost of Clerk's handshake.
+  if (isWorkshopRoute(request)) {
+    return withClerk(request, event);
+  }
+
+  return refreshSupabaseSession(request);
 }
 
 export const config = {
