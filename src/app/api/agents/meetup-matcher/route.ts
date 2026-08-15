@@ -1,5 +1,5 @@
-import Anthropic from "@anthropic-ai/sdk";
-import type { MessageParam, ContentBlockParam, ToolResultBlockParam, ToolUseBlock } from "@anthropic-ai/sdk/resources/messages";
+import { generateText, stepCountIs, tool } from "ai";
+import { z } from "zod";
 
 export const maxDuration = 300;
 
@@ -72,53 +72,20 @@ PRIVATE NOTES
 - No person matched with themselves
 - Prioritize quality — a specific insightful match beats a generic one`;
 
-const TOOLS: Anthropic.Tool[] = [
-  {
-    name: "survey_group",
-    description: "Get complete profiles for all participants. Call this first — it returns everything you need to generate matches.",
-    input_schema: {
-      type: "object" as const,
-      properties: {},
-      required: [],
-    },
-  },
-  {
-    name: "submit_matches",
-    description: "Submit the final top-3 matches for ALL participants. Must include every participant with exactly 3 matches each.",
-    input_schema: {
-      type: "object" as const,
-      properties: {
-        matches: {
-          type: "array",
-          description: "Array of match results — one entry per participant",
-          items: {
-            type: "object",
-            properties: {
-              person_id: { type: "string", description: "The participant's ID" },
-              person_name: { type: "string", description: "The participant's name" },
-              matches: {
-                type: "array",
-                description: "Top 3 matches for this person",
-                items: {
-                  type: "object",
-                  properties: {
-                    matched_id: { type: "string", description: "Matched person's ID" },
-                    matched_name: { type: "string", description: "Matched person's name" },
-                    reason: { type: "string", description: "1-2 sentences: why this is a great match" },
-                    conversation_starter: { type: "string", description: "A specific, natural conversation opener" },
-                  },
-                  required: ["matched_id", "matched_name", "reason", "conversation_starter"],
-                },
-              },
-            },
-            required: ["person_id", "person_name", "matches"],
-          },
-        },
-      },
-      required: ["matches"],
-    },
-  },
-];
+const personMatchesSchema = z.object({
+  person_id: z.string().describe("The participant's ID"),
+  person_name: z.string().describe("The participant's name"),
+  matches: z
+    .array(
+      z.object({
+        matched_id: z.string().describe("Matched person's ID"),
+        matched_name: z.string().describe("Matched person's name"),
+        reason: z.string().describe("1-2 sentences: why this is a great match"),
+        conversation_starter: z.string().describe("A specific, natural conversation opener"),
+      })
+    )
+    .describe("Top 3 matches for this person"),
+});
 
 class MeetupMatcherState {
   private participants: Participant[];
@@ -145,10 +112,6 @@ export async function POST(request: Request) {
     return Response.json({ error: "Need at least 3 participants" }, { status: 400 });
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return Response.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
-  }
-
   const encoder = new TextEncoder();
   const state = new MeetupMatcherState(participants);
 
@@ -163,70 +126,46 @@ export async function POST(request: Request) {
       const keepalive = setInterval(() => send("ping", { ts: Date.now() }), 15000);
 
       try {
-        const anthropic = new Anthropic();
-
         send("step", { message: "Starting analysis..." });
 
-        const messages: MessageParam[] = [
-          {
-            role: "user",
-            content: `Meetup: "${meetupName}" — ${participants.length} participants.
+        let finalMatches: PersonMatches[] | null = null;
+
+        await generateText({
+          model: "anthropic/claude-sonnet-4",
+          maxOutputTokens: 32000,
+          system: SYSTEM_PROMPT,
+          prompt: `Meetup: "${meetupName}" — ${participants.length} participants.
 
 Call survey_group to read all profiles, then call submit_matches with top 3 matches per person.
 
 Prioritise need vs offer signals from "looking_for_help" and any custom event fields. Reference specific details in conversation starters.`,
+          stopWhen: stepCountIs(5),
+          tools: {
+            survey_group: tool({
+              description:
+                "Get complete profiles for all participants. Call this first — it returns everything you need to generate matches.",
+              inputSchema: z.object({}),
+              execute: async () => {
+                send("step", { message: `Reading all ${participants.length} profiles...` });
+                return state.handleToolCall("survey_group");
+              },
+            }),
+            submit_matches: tool({
+              description:
+                "Submit the final top-3 matches for ALL participants. Must include every participant with exactly 3 matches each.",
+              inputSchema: z.object({
+                matches: z
+                  .array(personMatchesSchema)
+                  .describe("Array of match results — one entry per participant"),
+              }),
+              execute: async ({ matches }) => {
+                send("step", { message: `Finalising matches for ${participants.length} people...` });
+                finalMatches = matches;
+                return { success: true };
+              },
+            }),
           },
-        ];
-
-        let finalMatches: PersonMatches[] | null = null;
-        const maxTurns = 5;
-
-        for (let turn = 0; turn < maxTurns; turn++) {
-          const response = await anthropic.messages
-            .stream({
-              model: "claude-sonnet-4-20250514",
-              max_tokens: 32000,
-              system: SYSTEM_PROMPT,
-              tools: TOOLS,
-              messages,
-            })
-            .finalMessage();
-
-          const toolUses: ToolUseBlock[] = [];
-          const contentBlocks: ContentBlockParam[] = [];
-
-          for (const block of response.content) {
-            if (block.type === "text") {
-              contentBlocks.push({ type: "text", text: block.text });
-            } else if (block.type === "tool_use") {
-              toolUses.push(block);
-              contentBlocks.push({ type: "tool_use", id: block.id, name: block.name, input: block.input as Record<string, unknown> });
-            }
-          }
-
-          messages.push({ role: "assistant", content: contentBlocks });
-
-          if (toolUses.length === 0 && response.stop_reason === "end_turn") break;
-
-          const toolResults: ToolResultBlockParam[] = [];
-
-          for (const toolUse of toolUses) {
-            if (toolUse.name === "survey_group") {
-              send("step", { message: `Reading all ${participants.length} profiles...` });
-              const result = state.handleToolCall(toolUse.name);
-              toolResults.push({ type: "tool_result", tool_use_id: toolUse.id, content: JSON.stringify(result) });
-            } else if (toolUse.name === "submit_matches") {
-              send("step", { message: `Finalising matches for ${participants.length} people...` });
-              finalMatches = (toolUse.input as { matches: PersonMatches[] }).matches;
-              toolResults.push({ type: "tool_result", tool_use_id: toolUse.id, content: JSON.stringify({ success: true }) });
-              messages.push({ role: "user", content: toolResults });
-              break;
-            }
-          }
-
-          if (finalMatches) break;
-          if (toolResults.length > 0) messages.push({ role: "user", content: toolResults });
-        }
+        });
 
         if (finalMatches) {
           send("complete", { matches: finalMatches, meetupName });

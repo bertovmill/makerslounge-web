@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { generateText } from "ai";
 
 export async function POST(request: Request) {
   try {
@@ -11,14 +11,6 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
-    if (!process.env.ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY not configured");
-    }
-
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
 
     // Define action-specific prompts
     const actionPrompts: Record<string, { system: string; instruction: string }> = {
@@ -64,18 +56,15 @@ ${notes ? `Notes: ${notes}` : "(no notes)"}
 
 ${selectedAction.instruction}`;
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1500,
+    const { text } = await generateText({
+      model: "anthropic/claude-sonnet-4",
+      maxOutputTokens: 1500,
       system: selectedAction.system,
-      messages: [{ role: "user", content: userContent }],
+      prompt: userContent,
     });
 
-    const generatedContent =
-      response.content[0].type === "text" ? response.content[0].text : "";
-
     return NextResponse.json({
-      result: generatedContent.trim(),
+      result: text.trim(),
       action,
     });
   } catch (error: unknown) {

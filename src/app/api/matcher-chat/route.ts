@@ -1,4 +1,3 @@
-import { anthropic } from "@ai-sdk/anthropic";
 import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from "ai";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
@@ -77,7 +76,7 @@ IMPORTANT:
 ADMIN MODE: You have access to the full community database including community contacts (event attendees who haven't signed up yet). These show as type "community_contact" in results and link to /community/[id]. When presenting community contacts, note they are "community members" (not yet registered). You can still recommend them for introductions.` : ""}${userContext}`;
 
   const result = streamText({
-    model: anthropic("claude-sonnet-4-20250514"),
+    model: "anthropic/claude-sonnet-4",
     system: systemPrompt,
     messages: await convertToModelMessages(messages),
     tools: {

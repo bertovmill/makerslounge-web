@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { generateText } from "ai";
 
 interface Contact {
   id: string;
@@ -24,16 +24,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "ANTHROPIC_API_KEY not configured" },
-        { status: 500 }
-      );
-    }
-
-    const anthropic = new Anthropic({ apiKey });
 
     // Format contacts for the prompt
     const contactList = contacts
@@ -61,20 +51,18 @@ Create pairs from these people. Each person can only be in one pair. If there's 
 Respond with ONLY a JSON array of pairs in this exact format (no markdown, no explanation):
 [{"person1_id": "id1", "person2_id": "id2", "reason": "Brief explanation of why they're paired"}]`;
 
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      messages: [{ role: "user", content: prompt }],
+    const { text } = await generateText({
+      model: "anthropic/claude-sonnet-4",
+      maxOutputTokens: 1024,
+      prompt,
     });
 
-    // Extract the text response
-    const textContent = message.content.find((block) => block.type === "text");
-    if (!textContent || textContent.type !== "text") {
+    if (!text) {
       throw new Error("No text response from Claude");
     }
 
     // Parse the JSON response
-    const pairs: PairResult[] = JSON.parse(textContent.text);
+    const pairs: PairResult[] = JSON.parse(text);
 
     return NextResponse.json({ pairs });
   } catch (error) {

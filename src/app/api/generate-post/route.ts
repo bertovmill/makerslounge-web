@@ -1,50 +1,27 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { anthropic } from "@ai-sdk/anthropic";
+import { generateText } from "ai";
 
 interface WebSource {
   title: string;
   url: string;
-  cited_text?: string;
 }
 
-// Extract text content and citations from the response
-function extractContentAndSources(response: Anthropic.Message): {
-  content: string;
-  sources: WebSource[];
-  webSearchUsed: boolean;
-} {
-  let content = "";
-  const sources: WebSource[] = [];
-  let webSearchUsed = false;
+// Collapse the SDK's url sources into unique {title, url} pairs.
+// `Source` isn't exported from "ai", so infer it off generateText's result.
+type ResultSources = Awaited<ReturnType<typeof generateText>>["sources"];
+
+function dedupeSources(sources: ResultSources): WebSource[] {
   const seenUrls = new Set<string>();
+  const out: WebSource[] = [];
 
-  for (const block of response.content) {
-    if (block.type === "text") {
-      content += block.text;
-
-      // Extract citations if present
-      if ("citations" in block && Array.isArray(block.citations)) {
-        for (const citation of block.citations) {
-          if (
-            citation.type === "web_search_result_location" &&
-            citation.url &&
-            !seenUrls.has(citation.url)
-          ) {
-            seenUrls.add(citation.url);
-            sources.push({
-              title: citation.title || "Source",
-              url: citation.url,
-              cited_text: citation.cited_text || undefined,
-            });
-          }
-        }
-      }
-    } else if (block.type === "server_tool_use" && block.name === "web_search") {
-      webSearchUsed = true;
-    }
+  for (const source of sources) {
+    if (source.sourceType !== "url" || seenUrls.has(source.url)) continue;
+    seenUrls.add(source.url);
+    out.push({ title: source.title || "Source", url: source.url });
   }
 
-  return { content: content.trim(), sources, webSearchUsed };
+  return out;
 }
 
 export async function POST(request: Request) {
@@ -57,14 +34,6 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
-    if (!process.env.ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY not configured");
-    }
-
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
 
     // Define channel-specific guidelines
     const channelGuidelines: Record<string, string> = {
@@ -198,53 +167,39 @@ Output only the final post content - no explanations, no "here's your post", jus
 Title/Topic: ${title}
 ${notes ? `\nNotes/Context: ${notes}` : ""}${searchHint}`;
 
-    // Build request options - use explicit type for web search tool compatibility
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const requestOptions: any = {
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1000,
+    // Anthropic runs web search server-side; the gateway passes the tool through.
+    const webSearchTool = { web_search: anthropic.tools.webSearch_20250305({ maxUses: 3 }) };
+
+    const result = await generateText({
+      model: "anthropic/claude-sonnet-4",
+      maxOutputTokens: 1000,
       system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }],
-    };
+      prompt: userPrompt,
+      tools: useWebSearch ? webSearchTool : undefined,
+    });
 
-    // Add web search tool if enabled
-    if (useWebSearch) {
-      requestOptions.tools = [
-        {
-          type: "web_search_20250305",
-          name: "web_search",
-          max_uses: 3,
-        },
-      ];
-    }
-
-    const response = await anthropic.messages.create(requestOptions);
-
-    // Extract content and sources from response
-    const { content: generatedContent, sources, webSearchUsed } = extractContentAndSources(response);
+    const sources = dedupeSources(result.sources);
 
     return NextResponse.json({
-      content: generatedContent,
+      content: result.text.trim(),
       channel: selectedChannel,
       tone: selectedTone,
       mediaType: selectedMediaType,
-      webSearchUsed,
+      webSearchUsed: sources.length > 0,
       sources: sources.length > 0 ? sources : undefined,
       // Debug info for viewing the API call
       debug: {
         request: {
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
+          model: "anthropic/claude-sonnet-4",
+          maxOutputTokens: 1000,
           system: systemPrompt,
-          messages: [{ role: "user", content: userPrompt }],
-          tools: useWebSearch ? [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }] : undefined,
+          prompt: userPrompt,
+          tools: useWebSearch ? ["web_search"] : undefined,
         },
         response: {
-          id: response.id,
-          model: response.model,
-          usage: response.usage,
-          content: response.content,
-          stop_reason: response.stop_reason,
+          usage: result.usage,
+          finishReason: result.finishReason,
+          content: result.content,
         },
       },
     });

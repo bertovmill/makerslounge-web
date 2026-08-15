@@ -1,7 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { generateText, stepCountIs, tool, type ModelMessage } from "ai";
+import { z } from "zod";
 import { Sandbox } from "@e2b/code-interpreter";
-
-const anthropic = new Anthropic();
 
 const SYSTEM_PROMPT = `You are the "Find an Idea" agent for MakersLounge, a community of makers and builders.
 
@@ -37,28 +36,10 @@ For each idea, provide:
 - When you have enough info (usually after 2-3 exchanges), generate ideas immediately
 - Use the run_code tool ONLY when you need to verify something (e.g., check if an API is accessible, test a concept)`;
 
-const tools: Anthropic.Messages.Tool[] = [
-  {
-    name: "run_code",
-    description:
-      "Run Python or JavaScript code in a sandboxed environment to validate ideas, check APIs, or prototype concepts. Use this when you need to verify feasibility of a project idea.",
-    input_schema: {
-      type: "object" as const,
-      properties: {
-        code: {
-          type: "string",
-          description: "The code to execute",
-        },
-        language: {
-          type: "string",
-          enum: ["python", "javascript"],
-          description: "Programming language to use",
-        },
-      },
-      required: ["code", "language"],
-    },
-  },
-];
+const runCodeInputSchema = z.object({
+  code: z.string().describe("The code to execute"),
+  language: z.enum(["python", "javascript"]).describe("Programming language to use"),
+});
 
 interface ConversationMessage {
   role: "user" | "assistant";
@@ -94,13 +75,6 @@ export async function POST(request: Request) {
       groupSize?: string;
     };
 
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
     if (!process.env.E2B_API_KEY) {
       return new Response(
         JSON.stringify({ error: "E2B_API_KEY not configured" }),
@@ -109,12 +83,10 @@ export async function POST(request: Request) {
     }
 
     // Build the messages for the API call
-    const apiMessages: Anthropic.Messages.MessageParam[] = messages.map(
-      (msg) => ({
-        role: msg.role,
-        content: msg.content,
-      })
-    );
+    const apiMessages: ModelMessage[] = messages.map((msg) => ({
+      role: msg.role,
+      content: msg.content,
+    }));
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
@@ -132,97 +104,40 @@ export async function POST(request: Request) {
         };
 
         try {
-          // Agentic loop - keep going until we get a final text response
-          let currentMessages = [...apiMessages];
-          let turns = 0;
-          const maxTurns = 10;
-
-          while (turns < maxTurns) {
-            turns++;
-
-            const response = await anthropic.messages.create({
-              model: "claude-sonnet-4-20250514",
-              max_tokens: 2048,
-              system: SYSTEM_PROMPT,
-              tools,
-              messages: currentMessages,
-            });
-
-            // Check if the response has tool use
-            const toolUseBlocks = response.content.filter(
-              (block) => block.type === "tool_use"
-            );
-            const textBlocks = response.content.filter(
-              (block) => block.type === "text"
-            );
-
-            if (toolUseBlocks.length > 0) {
-              // Process tool calls
-              const toolResults: Anthropic.Messages.ToolResultBlockParam[] = [];
-
-              for (const toolUse of toolUseBlocks) {
-                if (
-                  toolUse.type === "tool_use" &&
-                  toolUse.name === "run_code"
-                ) {
-                  const input = toolUse.input as {
-                    code: string;
-                    language: string;
-                  };
-
+          const { text: finalText } = await generateText({
+            model: "anthropic/claude-sonnet-4",
+            maxOutputTokens: 2048,
+            system: SYSTEM_PROMPT,
+            messages: apiMessages,
+            stopWhen: stepCountIs(10),
+            tools: {
+              run_code: tool({
+                description:
+                  "Run Python or JavaScript code in a sandboxed environment to validate ideas, check APIs, or prototype concepts. Use this when you need to verify feasibility of a project idea.",
+                inputSchema: runCodeInputSchema,
+                execute: async ({ code, language }) => {
                   send("tool_call", {
                     name: "run_code",
-                    language: input.language,
-                    code: input.code.slice(0, 200) + (input.code.length > 200 ? "..." : ""),
+                    language,
+                    code: code.slice(0, 200) + (code.length > 200 ? "..." : ""),
                   });
 
-                  const result = await runCodeInSandbox(
-                    input.code,
-                    input.language
-                  );
+                  const result = await runCodeInSandbox(code, language);
 
-                  send("tool_result", {
-                    name: "run_code",
-                    output: result.slice(0, 500),
-                  });
-
-                  toolResults.push({
-                    type: "tool_result",
-                    tool_use_id: toolUse.id,
-                    content: result,
-                  });
-                }
+                  send("tool_result", { name: "run_code", output: result.slice(0, 500) });
+                  return result;
+                },
+              }),
+            },
+            // Text emitted alongside a tool call still streams to the client.
+            onStepFinish: ({ text, toolCalls }) => {
+              if (toolCalls.length > 0 && text.trim()) {
+                send("text", { content: text });
               }
+            },
+          });
 
-              // Add assistant message and tool results to conversation
-              currentMessages = [
-                ...currentMessages,
-                { role: "assistant", content: response.content },
-                { role: "user", content: toolResults },
-              ];
-
-              // If there was also text alongside tool use, send it
-              if (textBlocks.length > 0) {
-                const text = textBlocks
-                  .map((b) => (b.type === "text" ? b.text : ""))
-                  .join("\n");
-                if (text.trim()) {
-                  send("text", { content: text });
-                }
-              }
-
-              // Continue the loop for the next turn
-              continue;
-            }
-
-            // No tool use — this is the final response
-            const finalText = textBlocks
-              .map((b) => (b.type === "text" ? b.text : ""))
-              .join("\n");
-
-            send("message", { content: finalText, done: true });
-            break;
-          }
+          send("message", { content: finalText, done: true });
         } catch (error) {
           send("error", {
             error:

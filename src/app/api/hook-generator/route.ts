@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { generateText } from "ai";
 
 export async function POST(request: Request) {
   try {
@@ -11,14 +11,6 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
-    if (!process.env.ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY not configured");
-    }
-
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
 
     const systemPrompt = `You are an expert YouTube content strategist who specializes in creating hooks that maximize viewer retention. You understand what makes people stop scrolling and watch.
 
@@ -56,21 +48,18 @@ Only respond with valid JSON, no other text.`;
 
     const userPrompt = `Generate 5 compelling hooks for a ${videoType || "tutorial"} video about: "${topic}"`;
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1500,
+    const { text } = await generateText({
+      model: "anthropic/claude-sonnet-4",
+      maxOutputTokens: 1500,
       system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }],
+      prompt: userPrompt,
     });
 
-    let text =
-      response.content[0].type === "text" ? response.content[0].text : "";
-
     // Strip markdown code blocks if present
-    text = text.replace(/^```json\s*\n?/, "").replace(/\n?```\s*$/, "").trim();
+    const json = text.replace(/^```json\s*\n?/, "").replace(/\n?```\s*$/, "").trim();
 
     // Parse the JSON response
-    const hooks = JSON.parse(text);
+    const hooks = JSON.parse(json);
 
     return NextResponse.json(hooks);
   } catch (error: unknown) {

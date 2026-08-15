@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { generateText } from "ai";
 
 interface Contact {
   name: string;
@@ -33,16 +33,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "ANTHROPIC_API_KEY not configured" },
-        { status: 500 }
-      );
-    }
-
-    const anthropic = new Anthropic({ apiKey });
 
     // Format contacts for the prompt
     const contactList = contacts
@@ -90,24 +80,23 @@ Example format:
   ]
 }]`;
 
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
-      messages: [{ role: "user", content: prompt }],
+    const { text } = await generateText({
+      model: "anthropic/claude-sonnet-4",
+      maxOutputTokens: 4096,
+      prompt,
     });
 
-    const textContent = message.content.find((block) => block.type === "text");
-    if (!textContent || textContent.type !== "text") {
+    if (!text) {
       throw new Error("No text response from Claude");
     }
 
     // Parse the JSON response
     let groups: GroupResult[];
     try {
-      groups = JSON.parse(textContent.text);
+      groups = JSON.parse(text);
     } catch {
       // Try to extract JSON from the response
-      const jsonMatch = textContent.text.match(/\[[\s\S]*\]/);
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         groups = JSON.parse(jsonMatch[0]);
       } else {

@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { generateText, type ModelMessage } from "ai";
 
 export const maxDuration = 30;
 
@@ -43,29 +43,18 @@ Only include the profile JSON when you're confident you have enough info. The sk
 
 export async function POST(request: Request) {
   try {
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return Response.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
-    }
-
     const { messages }: { messages: ConversationMessage[] } = await request.json();
 
-    const anthropic = new Anthropic();
+    const modelMessages: ModelMessage[] = messages.length === 0
+      ? [{ role: "user", content: "Hi! I just signed up." }]
+      : messages.map(m => ({ role: m.role, content: m.content }));
 
-    const anthropicMessages = messages.length === 0
-      ? [{ role: "user" as const, content: "Hi! I just signed up." }]
-      : messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
-
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
+    const { text: reply } = await generateText({
+      model: "anthropic/claude-sonnet-4",
+      maxOutputTokens: 1024,
       system: SYSTEM_PROMPT,
-      messages: anthropicMessages,
+      messages: modelMessages,
     });
-
-    const reply = response.content
-      .filter(b => b.type === "text")
-      .map(b => b.type === "text" ? b.text : "")
-      .join("");
 
     // Check if profile data was extracted
     const profileMatch = reply.match(/```profile\n([\s\S]*?)\n```/);

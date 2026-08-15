@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { generateText, type ModelMessage } from "ai";
 
 interface EventData {
   title: string;
@@ -14,14 +14,6 @@ interface EventData {
 export async function POST(request: Request) {
   try {
     const { prompt, event, conversationHistory } = await request.json();
-
-    if (!process.env.ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY not configured");
-    }
-
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
 
     const eventDetails = event as EventData;
     const startDate = new Date(eventDetails.start_time);
@@ -45,7 +37,7 @@ export async function POST(request: Request) {
         })}`;
 
     // Build conversation history for Claude
-    const messages: Array<{ role: "user" | "assistant"; content: string }> =
+    const messages: ModelMessage[] =
       conversationHistory
         ? conversationHistory.map(
             (msg: { role: string; content: string }) => ({
@@ -92,15 +84,12 @@ When generating social posts, include:
 - A LinkedIn version (professional, can be longer)
 - An Instagram caption (engaging, with hashtag suggestions)`;
 
-    const response = await anthropic.messages.create({
-      model: "claude-3-7-sonnet-20250219",
-      max_tokens: 2048,
+    const { text } = await generateText({
+      model: "anthropic/claude-3.7-sonnet",
+      maxOutputTokens: 2048,
       system: systemPrompt,
-      messages: messages,
+      messages,
     });
-
-    const text =
-      response.content[0].type === "text" ? response.content[0].text : "";
 
     return NextResponse.json({ response: text });
   } catch (error: unknown) {

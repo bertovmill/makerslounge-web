@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { generateObject } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 
 const ADMIN_EMAIL = "bertmill19@gmail.com";
@@ -83,7 +82,7 @@ export async function POST(
   let parsed: LinkedinData;
   try {
     const result = await generateObject({
-      model: anthropic("claude-sonnet-4-20250514"),
+      model: "anthropic/claude-sonnet-4",
       schema: linkedinSchema,
       system:
         "You are extracting structured profile information from pasted LinkedIn content. Pull only what is clearly stated. Use null for anything missing — never invent details. Keep descriptions concise (max 2 sentences each).",

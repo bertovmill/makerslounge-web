@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { generateText } from "ai";
 import { createClient } from "@supabase/supabase-js";
 import type { ClaudeSearchResponse, Profile, SearchRequest } from "@/types/search";
 
@@ -48,16 +48,6 @@ export async function POST(request: NextRequest) {
       return await getAllProfiles(startTime);
     }
 
-    // API key check
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      console.error("ANTHROPIC_API_KEY not configured");
-      return NextResponse.json(
-        { error: "AI search not configured" },
-        { status: 500 }
-      );
-    }
-
     // Initialize Supabase client
     const supabase: any = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -98,22 +88,19 @@ Respond with ONLY a JSON object (no markdown, no explanation) in this exact form
   }
 }`;
 
-    // Call Claude API
-    const anthropic = new Anthropic({ apiKey });
-    const message = await anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 512,
-      messages: [{ role: "user", content: prompt }],
+    // Call Claude through the Vercel AI Gateway
+    const { text } = await generateText({
+      model: "anthropic/claude-haiku-4.5",
+      maxOutputTokens: 512,
+      prompt,
     });
 
-    // Extract text response
-    const textContent = message.content.find((block) => block.type === "text");
-    if (!textContent || textContent.type !== "text") {
+    if (!text) {
       throw new Error("No text response from Claude");
     }
 
     // Parse Claude's response
-    const claudeResponse: ClaudeSearchResponse = JSON.parse(textContent.text);
+    const claudeResponse: ClaudeSearchResponse = JSON.parse(text);
 
     // Execute search based on Claude's interpretation
     const results = await executeSearch(
