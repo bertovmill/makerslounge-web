@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { generateText } from "ai";
 
 interface Message {
   role: "user" | "assistant";
@@ -23,14 +23,6 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
-    if (!process.env.ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY not configured");
-    }
-
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
 
     // Channel-specific constraints
     const channelConstraints: Record<string, string> = {
@@ -94,15 +86,14 @@ Output only the refined post content - no explanations, no quotes, just the cont
       });
     }
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1000,
+    const { text, usage } = await generateText({
+      model: "anthropic/claude-sonnet-4",
+      maxOutputTokens: 1000,
       system: systemPrompt,
-      messages: messages,
+      messages,
     });
 
-    const refinedContent =
-      response.content[0].type === "text" ? response.content[0].text.trim() : "";
+    const refinedContent = text.trim();
 
     // Build updated conversation history
     const updatedHistory: Message[] = [
@@ -115,13 +106,12 @@ Output only the refined post content - no explanations, no quotes, just the cont
       conversationHistory: updatedHistory,
       debug: {
         request: {
-          model: "claude-sonnet-4-20250514",
+          model: "anthropic/claude-sonnet-4",
           system: systemPrompt,
           messages: messages,
         },
         response: {
-          id: response.id,
-          usage: response.usage,
+          usage,
         },
       },
     });

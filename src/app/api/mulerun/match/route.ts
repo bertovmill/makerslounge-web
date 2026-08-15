@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import Anthropic from "@anthropic-ai/sdk";
+import { generateText } from "ai";
 import { CATEGORIES } from "@/app/hackathons/mulerun/categories";
 import { buildTeams, type Signup, type Team } from "@/app/hackathons/mulerun/teamBuilder";
 
@@ -13,11 +13,9 @@ function nameOf(slug: string): string {
 }
 
 async function polishWhyWithClaude(teams: Team[]): Promise<Team[]> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey || teams.length === 0) return teams;
+  if (teams.length === 0) return teams;
 
   try {
-    const client = new Anthropic({ apiKey });
     const teamsForPrompt = teams.map((t, i) => ({
       id: i,
       members: t.members.map((m) => ({
@@ -28,26 +26,16 @@ async function polishWhyWithClaude(teams: Team[]): Promise<Team[]> {
       union: t.unionCategories.map(nameOf),
     }));
 
-    const message = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1024,
-      messages: [
-        {
-          role: "user",
-          content: `You're helping pair up hackers at an AI hackathon. Below are ${teams.length} teams already grouped by overlapping interests. For each team, write ONE short sentence (12–22 words) explaining why this team is a good fit — reference shared interests and what they could build together. Be specific, energetic, and concrete. No filler.
+    const { text } = await generateText({
+      model: "anthropic/claude-haiku-4.5",
+      maxOutputTokens: 1024,
+      prompt: `You're helping pair up hackers at an AI hackathon. Below are ${teams.length} teams already grouped by overlapping interests. For each team, write ONE short sentence (12–22 words) explaining why this team is a good fit — reference shared interests and what they could build together. Be specific, energetic, and concrete. No filler.
 
 Respond as a JSON object with this exact shape: {"reasons": ["...", "..."]} with one string per team in the same order. No prose, just JSON.
 
 Teams:
 ${JSON.stringify(teamsForPrompt, null, 2)}`,
-        },
-      ],
     });
-
-    const text = message.content
-      .filter((b): b is Anthropic.TextBlock => b.type === "text")
-      .map((b) => b.text)
-      .join("");
 
     // Pull JSON out even if Claude wrapped it in code fences
     const jsonMatch = text.match(/\{[\s\S]*\}/);

@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-
-const anthropic = new Anthropic();
+import { anthropic } from "@ai-sdk/anthropic";
+import { streamText, type ModelMessage } from "ai";
 
 const SYSTEM_PROMPT = `You are an AI video content assistant for MakersLounge. Your job is to help users plan and create engaging video content.
 
@@ -88,74 +87,49 @@ export async function POST(request: NextRequest) {
       systemPrompt += `\n\n## User's Broadcast Ideas\n\nThe user has the following content ideas from their planning board. You can reference these when helping them create videos. If the user asks about their ideas, list them. If they say "use my first idea" or similar, use the corresponding idea.\n\n${ideasList}`;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const requestOptions: any = {
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 8000,
+    const result = streamText({
+      model: "anthropic/claude-sonnet-4",
+      maxOutputTokens: 8000,
       system: systemPrompt,
-      tools: [
-        {
-          type: "web_search_20250305",
-          name: "web_search",
-          max_uses: 3,
-        },
-      ],
+      // Anthropic runs web search server-side; the gateway passes the tool through.
+      tools: { web_search: anthropic.tools.webSearch_20250305({ maxUses: 3 }) },
       messages: messages.map((msg: { role: string; content: string }) => ({
         role: msg.role as "user" | "assistant",
         content: msg.content,
-      })),
-    };
-
-    const stream = await anthropic.messages.stream(requestOptions);
+      })) as ModelMessage[],
+    });
 
     const encoder = new TextEncoder();
 
+    // Re-emit the SDK's stream as the SSE protocol this route's UI already speaks.
     const readable = new ReadableStream({
       async start(controller) {
+        const send = (payload: Record<string, unknown>) =>
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
+
         try {
-          for await (const event of stream) {
-            if (event.type === "content_block_start") {
-              if (event.content_block.type === "text") {
-                controller.enqueue(
-                  encoder.encode(
-                    `data: ${JSON.stringify({ type: "text_start" })}\n\n`
-                  )
-                );
-              } else if (
-                event.content_block.type === "server_tool_use" &&
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (event.content_block as any).name === "web_search"
-              ) {
-                controller.enqueue(
-                  encoder.encode(
-                    `data: ${JSON.stringify({ type: "search_status", text: "Researching..." })}\n\n`
-                  )
-                );
-              }
-            } else if (event.type === "content_block_delta") {
-              if (event.delta.type === "text_delta") {
-                controller.enqueue(
-                  encoder.encode(
-                    `data: ${JSON.stringify({ type: "text_delta", text: event.delta.text })}\n\n`
-                  )
-                );
-              }
-            } else if (event.type === "message_stop") {
-              controller.enqueue(
-                encoder.encode(
-                  `data: ${JSON.stringify({ type: "done" })}\n\n`
-                )
-              );
+          for await (const part of result.fullStream) {
+            switch (part.type) {
+              case "text-start":
+                send({ type: "text_start" });
+                break;
+              case "text-delta":
+                send({ type: "text_delta", text: part.text });
+                break;
+              case "tool-call":
+                if (part.toolName === "web_search") {
+                  send({ type: "search_status", text: "Researching..." });
+                }
+                break;
+              case "finish":
+                send({ type: "done" });
+                break;
             }
           }
           controller.close();
         } catch (error) {
           console.error("Stream error:", error);
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ type: "error", text: "Something went wrong" })}\n\n`
-            )
-          );
+          send({ type: "error", text: "Something went wrong" });
           controller.close();
         }
       },

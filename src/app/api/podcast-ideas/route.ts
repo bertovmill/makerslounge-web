@@ -1,20 +1,12 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { generateText, type ModelMessage } from "ai";
 
 export async function POST(request: Request) {
   try {
     const { message, history } = await request.json();
 
-    if (!process.env.ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY not configured");
-    }
-
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
-
     // Build conversation history for Claude
-    const conversationHistory: Array<{ role: "user" | "assistant"; content: string }> = history
+    const conversationHistory: ModelMessage[] = history
       .map((msg: { role: string; content: string }) => ({
         role: msg.role === "user" ? ("user" as const) : ("assistant" as const),
         content: msg.content,
@@ -25,9 +17,9 @@ export async function POST(request: Request) {
       content: message,
     });
 
-    const response = await anthropic.messages.create({
-      model: "claude-3-7-sonnet-20250219",
-      max_tokens: 1024,
+    const { text } = await generateText({
+      model: "anthropic/claude-3.7-sonnet",
+      maxOutputTokens: 1024,
       system: `You are a creative podcast consultant helping brainstorm episode ideas for the MakersLounge Podcast.
 
 The podcast focuses on interviewing the most productive and creative individuals in the world to discuss their process for creating their best work.
@@ -43,8 +35,6 @@ When suggesting ideas:
 Keep responses conversational and helpful.`,
       messages: conversationHistory,
     });
-
-    const text = response.content[0].type === "text" ? response.content[0].text : "";
 
     return NextResponse.json({ response: text });
   } catch (error: any) {

@@ -1,7 +1,5 @@
 import { NextRequest } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-
-const anthropic = new Anthropic();
+import { streamText, type ModelMessage } from "ai";
 
 const SYSTEM_PROMPT = `You are an AI Agent Builder assistant for MakersLounge, a community platform for makers and builders.
 
@@ -60,68 +58,57 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const stream = await anthropic.messages.stream({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 16000,
-      thinking: {
-        type: "enabled",
-        budget_tokens: 8000,
-      },
+    const result = streamText({
+      model: "anthropic/claude-sonnet-4",
+      maxOutputTokens: 16000,
       system: SYSTEM_PROMPT,
       messages: messages.map((msg: { role: string; content: string }) => ({
         role: msg.role as "user" | "assistant",
         content: msg.content,
-      })),
+      })) as ModelMessage[],
+      providerOptions: {
+        anthropic: {
+          thinking: { type: "enabled", budgetTokens: 8000 },
+        },
+      },
     });
 
     const encoder = new TextEncoder();
 
+    // Re-emit the SDK's stream as the SSE protocol this route's UI already speaks.
     const readable = new ReadableStream({
       async start(controller) {
+        const send = (payload: Record<string, unknown>) =>
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
+
         try {
-          for await (const event of stream) {
-            if (event.type === "content_block_start") {
-              if (event.content_block.type === "thinking") {
-                controller.enqueue(
-                  encoder.encode(`data: ${JSON.stringify({ type: "thinking_start" })}\n\n`)
-                );
-              } else if (event.content_block.type === "text") {
-                controller.enqueue(
-                  encoder.encode(`data: ${JSON.stringify({ type: "text_start" })}\n\n`)
-                );
-              }
-            } else if (event.type === "content_block_delta") {
-              if (event.delta.type === "thinking_delta") {
-                controller.enqueue(
-                  encoder.encode(
-                    `data: ${JSON.stringify({ type: "thinking_delta", text: event.delta.thinking })}\n\n`
-                  )
-                );
-              } else if (event.delta.type === "text_delta") {
-                controller.enqueue(
-                  encoder.encode(
-                    `data: ${JSON.stringify({ type: "text_delta", text: event.delta.text })}\n\n`
-                  )
-                );
-              }
-            } else if (event.type === "content_block_stop") {
-              controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ type: "block_stop" })}\n\n`)
-              );
-            } else if (event.type === "message_stop") {
-              controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ type: "done" })}\n\n`)
-              );
+          for await (const part of result.fullStream) {
+            switch (part.type) {
+              case "reasoning-start":
+                send({ type: "thinking_start" });
+                break;
+              case "text-start":
+                send({ type: "text_start" });
+                break;
+              case "reasoning-delta":
+                send({ type: "thinking_delta", text: part.text });
+                break;
+              case "text-delta":
+                send({ type: "text_delta", text: part.text });
+                break;
+              case "reasoning-end":
+              case "text-end":
+                send({ type: "block_stop" });
+                break;
+              case "finish":
+                send({ type: "done" });
+                break;
             }
           }
           controller.close();
         } catch (error) {
           console.error("Stream error:", error);
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ type: "error", text: "Something went wrong" })}\n\n`
-            )
-          );
+          send({ type: "error", text: "Something went wrong" });
           controller.close();
         }
       },

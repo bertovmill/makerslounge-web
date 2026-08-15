@@ -1,6 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { APICallError, generateText, stepCountIs, tool } from "ai";
+import { z } from "zod";
 import type { Group, Contact } from "@/types/matcher";
-import type { MessageParam, ContentBlockParam, ToolResultBlockParam, ToolUseBlock } from "@anthropic-ai/sdk/resources/messages";
 
 export const maxDuration = 180; // 3 minutes for agentic multi-turn
 
@@ -21,7 +21,7 @@ async function withRetry<T>(
     } catch (error) {
       lastError = error as Error;
       const isRateLimit =
-        error instanceof Anthropic.RateLimitError ||
+        (APICallError.isInstance(error) && error.statusCode === 429) ||
         (error instanceof Error && error.message.includes("rate_limit"));
 
       if (isRateLimit && attempt < maxRetries - 1) {
@@ -203,119 +203,92 @@ class MatcherState {
   }
 }
 
-// Tool definitions for the Anthropic API
-const MATCHER_TOOLS: Anthropic.Tool[] = [
-  {
-    name: "get_all_contacts",
-    description:
-      "Get all contacts with their full data. Returns the contact list, available columns, and total count. Use this first to understand the data.",
-    input_schema: {
-      type: "object" as const,
-      properties: {},
-      required: [],
-    },
-  },
-  {
-    name: "search_contacts",
-    description:
-      "Search contacts by a field value. Useful for finding people with specific skills or needs.",
-    input_schema: {
-      type: "object" as const,
-      properties: {
-        field: {
-          type: "string",
-          description: "The column/field name to search in (e.g., 'skills', 'needs', 'project')",
-        },
-        contains: {
-          type: "string",
-          description: "The text to search for (case-insensitive partial match)",
-        },
-      },
-      required: ["field", "contains"],
-    },
-  },
-  {
-    name: "get_contact_by_name",
-    description: "Get full details for a specific contact by their name.",
-    input_schema: {
-      type: "object" as const,
-      properties: {
-        name: {
-          type: "string",
-          description: "The name of the contact to look up",
-        },
-      },
-      required: ["name"],
-    },
-  },
-  {
-    name: "propose_groups",
-    description:
-      "Propose a grouping of contacts. After proposing, use verify_groups to check validity.",
-    input_schema: {
-      type: "object" as const,
-      properties: {
-        groups: {
-          type: "array",
-          description: "Array of group objects",
-          items: {
-            type: "object",
-            properties: {
-              members: {
-                type: "array",
-                items: { type: "string" },
-                description: "Array of member names (must match exactly)",
-              },
-              theme: {
-                type: "string",
-                description: "Short 3-5 word theme for this group",
-              },
-              reason: {
-                type: "string",
-                description: "2-3 sentence explanation of why this group works",
-              },
-              connections: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    from: { type: "string" },
-                    to: { type: "string" },
-                    reason: { type: "string" },
-                    strength: { type: "number" },
-                  },
-                },
-                description: "Important connections between members. Include at least 5-8 connections per group showing who should talk to whom and why.",
-              },
-            },
-            required: ["members", "theme", "reason"],
-          },
-        },
-      },
-      required: ["groups"],
-    },
-  },
-  {
-    name: "verify_groups",
-    description:
-      "Verify the proposed groups are valid. Checks that everyone is placed exactly once and group count is correct. ALWAYS call this after propose_groups.",
-    input_schema: {
-      type: "object" as const,
-      properties: {},
-      required: [],
-    },
-  },
-  {
-    name: "submit_final_groups",
-    description:
-      "Submit the final verified groups. Only call this after verify_groups returns valid=true.",
-    input_schema: {
-      type: "object" as const,
-      properties: {},
-      required: [],
-    },
-  },
-];
+// Hooks let the streaming route emit SSE around each tool call without
+// duplicating the tool definitions for the non-streaming path.
+interface ToolHooks {
+  onCall?: (name: string, input: Record<string, unknown>) => void;
+  onResult?: (name: string, result: unknown) => void;
+}
+
+function createMatcherTools(state: MatcherState, hooks: ToolHooks = {}) {
+  // Every tool runs through here so the hooks fire uniformly.
+  const run = (name: string, input: Record<string, unknown>) => {
+    hooks.onCall?.(name, input);
+    const result = state.handleToolCall(name, input);
+    hooks.onResult?.(name, result);
+    return result;
+  };
+
+  return {
+    get_all_contacts: tool({
+      description:
+        "Get all contacts with their full data. Returns the contact list, available columns, and total count. Use this first to understand the data.",
+      inputSchema: z.object({}),
+      execute: async () => run("get_all_contacts", {}),
+    }),
+    search_contacts: tool({
+      description:
+        "Search contacts by a field value. Useful for finding people with specific skills or needs.",
+      inputSchema: z.object({
+        field: z
+          .string()
+          .describe("The column/field name to search in (e.g., 'skills', 'needs', 'project')"),
+        contains: z.string().describe("The text to search for (case-insensitive partial match)"),
+      }),
+      execute: async (input) => run("search_contacts", input),
+    }),
+    get_contact_by_name: tool({
+      description: "Get full details for a specific contact by their name.",
+      inputSchema: z.object({
+        name: z.string().describe("The name of the contact to look up"),
+      }),
+      execute: async (input) => run("get_contact_by_name", input),
+    }),
+    propose_groups: tool({
+      description:
+        "Propose a grouping of contacts. After proposing, use verify_groups to check validity.",
+      inputSchema: z.object({
+        groups: z
+          .array(
+            z.object({
+              members: z
+                .array(z.string())
+                .describe("Array of member names (must match exactly)"),
+              theme: z.string().describe("Short 3-5 word theme for this group"),
+              reason: z.string().describe("2-3 sentence explanation of why this group works"),
+              connections: z
+                .array(
+                  z.object({
+                    from: z.string(),
+                    to: z.string(),
+                    reason: z.string(),
+                    strength: z.number(),
+                  })
+                )
+                .optional()
+                .describe(
+                  "Important connections between members. Include at least 5-8 connections per group showing who should talk to whom and why."
+                ),
+            })
+          )
+          .describe("Array of group objects"),
+      }),
+      execute: async (input) => run("propose_groups", input),
+    }),
+    verify_groups: tool({
+      description:
+        "Verify the proposed groups are valid. Checks that everyone is placed exactly once and group count is correct. ALWAYS call this after propose_groups.",
+      inputSchema: z.object({}),
+      execute: async () => run("verify_groups", {}),
+    }),
+    submit_final_groups: tool({
+      description:
+        "Submit the final verified groups. Only call this after verify_groups returns valid=true.",
+      inputSchema: z.object({}),
+      execute: async () => run("submit_final_groups", {}),
+    }),
+  };
+}
 
 
 const SYSTEM_PROMPT = `You are an efficient networking matchmaker for MakersLounge.
@@ -357,13 +330,6 @@ export async function POST(request: Request) {
       return Response.json(
         { error: "Need at least 2 contacts" },
         { status: 400 }
-      );
-    }
-
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return Response.json(
-        { error: "ANTHROPIC_API_KEY not configured" },
-        { status: 500 }
       );
     }
 
@@ -412,8 +378,6 @@ async function handleStreamingRequest(
       }, 15000); // Every 15 seconds
 
       try {
-        const anthropic = new Anthropic();
-
         const initialPrompt = `Create ${numGroups} groups from ${contactCount} attendees (approximately ${peoplePerGroup} people per group).
 
 Start by calling get_all_contacts to see the data, then analyze, create groups, verify, and submit.
@@ -433,181 +397,102 @@ Remember: ALWAYS verify your groups before submitting. If verification fails, fi
         const maxTurns = 20;
         let turn = 0;
 
-        // Build conversation history
-        const messages: MessageParam[] = [
-          { role: "user", content: initialPrompt }
-        ];
+        const tools = createMatcherTools(state, {
+          onCall: (toolName, toolInput) => {
+            send("tool_call", { turn, id: toolName, name: toolName, input: toolInput, status: "running" });
 
-        // Agentic loop
-        while (turn < maxTurns) {
-          turn++;
-
-          // Send turn start event with max turns so UI can show progress
-          send("turn_start", { turn, maxTurns });
-
-          // Call Claude with retry logic for rate limits
-          const response = await withRetry(
-            () =>
-              anthropic.messages.create({
-                model: "claude-sonnet-4-20250514",
-                max_tokens: 4096,
-                system: SYSTEM_PROMPT,
-                tools: MATCHER_TOOLS,
-                messages,
-              }),
-            3,
-            5000,
-            (attempt, delayMs) => {
-              // Notify client about rate limit retry
-              send("thinking", { text: `Rate limited, retrying in ${Math.round(delayMs / 1000)}s (attempt ${attempt}/3)...` });
+            // Update phase based on tool
+            if (toolName === "get_all_contacts" && currentPhase !== "exploring") {
+              currentPhase = "exploring";
+              send("step", { step: "Exploring contact data...", phase: "exploring", icon: "1" });
+            } else if (toolName === "search_contacts") {
+              if (currentPhase !== "analyzing") {
+                currentPhase = "analyzing";
+                send("step", { step: "Analyzing patterns...", phase: "analyzing", icon: "2" });
+              }
+            } else if (toolName === "propose_groups") {
+              currentPhase = "proposing";
+              send("step", { step: "Proposing groups...", phase: "proposing", icon: "3" });
+            } else if (toolName === "verify_groups") {
+              currentPhase = "verifying";
+              send("step", { step: "Verifying groups...", phase: "verifying", icon: "4" });
+            } else if (toolName === "submit_final_groups") {
+              currentPhase = "submitting";
+              send("step", { step: "Submitting final groups...", phase: "submitting", icon: "5" });
             }
-          );
+          },
+          onResult: (toolName, result) => {
+            send("tool_result", { turn, id: toolName, name: toolName, result, status: "complete" });
 
-          // Small delay between turns to avoid rate limits
-          if (turn > 1) {
-            await delay(1000);
-          }
-
-          // Track token usage
-          inputTokens += response.usage.input_tokens;
-          outputTokens += response.usage.output_tokens;
-          send("tokens", { input: inputTokens, output: outputTokens, estimated: false });
-
-          // Process response content
-          const toolUses: ToolUseBlock[] = [];
-          const contentBlocks: ContentBlockParam[] = [];
-          let turnThinking = "";
-
-          for (const block of response.content) {
-            if (block.type === "text" && block.text) {
-              const text = block.text.trim();
-              if (text.length > 20 && !text.startsWith("{")) {
-                turnThinking = text;
-                const preview = text.slice(0, 200);
-                send("thinking", { text: preview + (text.length > 200 ? "..." : "") });
-              }
-              contentBlocks.push({ type: "text", text: block.text });
-            } else if (block.type === "tool_use") {
-              toolUses.push(block);
-              contentBlocks.push({
-                type: "tool_use",
-                id: block.id,
-                name: block.name,
-                input: block.input as Record<string, unknown>,
-              });
-            }
-          }
-
-          // Send turn thinking if any
-          if (turnThinking) {
-            send("turn_thinking", { turn, thinking: turnThinking.slice(0, 500) });
-          }
-
-          // Add assistant response to history
-          messages.push({ role: "assistant", content: contentBlocks });
-
-          // If no tool calls and stop_reason is end_turn, we're done
-          if (toolUses.length === 0 && response.stop_reason === "end_turn") {
-            break;
-          }
-
-          // Process tool calls
-          if (toolUses.length > 0) {
-            const toolResults: ToolResultBlockParam[] = [];
-
-            for (const toolUse of toolUses) {
-              const toolName = toolUse.name;
-              const toolInput = toolUse.input as Record<string, unknown>;
-
-              // Send tool_call event (before execution)
-              send("tool_call", {
-                turn,
-                id: toolUse.id,
-                name: toolName,
-                input: toolInput,
-                status: "running",
-              });
-
-              // Update phase based on tool
-              if (toolName === "get_all_contacts" && currentPhase !== "exploring") {
-                currentPhase = "exploring";
-                send("step", { step: "Exploring contact data...", phase: "exploring", icon: "1" });
-              } else if (toolName === "search_contacts") {
-                if (currentPhase !== "analyzing") {
-                  currentPhase = "analyzing";
-                  send("step", { step: "Analyzing patterns...", phase: "analyzing", icon: "2" });
-                }
-              } else if (toolName === "propose_groups") {
-                currentPhase = "proposing";
-                send("step", { step: "Proposing groups...", phase: "proposing", icon: "3" });
-              } else if (toolName === "verify_groups") {
-                currentPhase = "verifying";
-                send("step", { step: "Verifying groups...", phase: "verifying", icon: "4" });
-              } else if (toolName === "submit_final_groups") {
-                currentPhase = "submitting";
-                send("step", { step: "Submitting final groups...", phase: "submitting", icon: "5" });
-              }
-
-              // Execute the tool
-              const result = state.handleToolCall(toolName, toolInput);
-
-              // Send tool_result event (after execution)
-              send("tool_result", {
-                turn,
-                id: toolUse.id,
-                name: toolName,
-                result,
-                status: "complete",
-              });
-
-              // Send legacy thinking events for specific tools
-              if (toolName === "verify_groups") {
-                const verification = result as VerificationResult;
-                if (verification.valid) {
-                  send("thinking", { text: "✓ Verification passed! All contacts placed correctly." });
-                  // Auto-submit if verification passes to ensure completion
-                  send("thinking", { text: "Auto-submitting verified groups..." });
-                  const submitResult = state.submitFinalGroups();
-                  if (submitResult.success) {
-                    finalGroups = submitResult.groups;
-                    submitResult.groups.forEach((group, idx) => {
-                      send("group", { group, index: idx });
-                    });
-                  }
-                } else {
-                  send("thinking", { text: `⚠ Issues found: ${verification.issues.join("; ")}` });
-                }
-              }
-
-              if (toolName === "submit_final_groups") {
-                const submission = result as { success: boolean; groups: Group[]; issues?: string[] };
-                if (submission.success) {
-                  finalGroups = submission.groups;
-                  // Send each group
-                  submission.groups.forEach((group, idx) => {
+            // Send legacy thinking events for specific tools
+            if (toolName === "verify_groups") {
+              const verification = result as VerificationResult;
+              if (verification.valid) {
+                send("thinking", { text: "✓ Verification passed! All contacts placed correctly." });
+                // Auto-submit if verification passes to ensure completion
+                send("thinking", { text: "Auto-submitting verified groups..." });
+                const submitResult = state.submitFinalGroups();
+                if (submitResult.success) {
+                  finalGroups = submitResult.groups;
+                  submitResult.groups.forEach((group, idx) => {
                     send("group", { group, index: idx });
                   });
-                } else if (submission.issues) {
-                  send("thinking", { text: `⚠ Submission failed: ${submission.issues.join("; ")}` });
                 }
+              } else {
+                send("thinking", { text: `⚠ Issues found: ${verification.issues.join("; ")}` });
               }
-
-              toolResults.push({
-                type: "tool_result",
-                tool_use_id: toolUse.id,
-                content: JSON.stringify(result),
-              });
             }
 
-            // Add tool results to history
-            messages.push({ role: "user", content: toolResults });
-          }
+            if (toolName === "submit_final_groups") {
+              const submission = result as { success: boolean; groups: Group[]; issues?: string[] };
+              if (submission.success) {
+                finalGroups = submission.groups;
+                // Send each group
+                submission.groups.forEach((group, idx) => {
+                  send("group", { group, index: idx });
+                });
+              } else if (submission.issues) {
+                send("thinking", { text: `⚠ Submission failed: ${submission.issues.join("; ")}` });
+              }
+            }
+          },
+        });
 
-          // Check if we got final groups
-          if (finalGroups.length > 0) {
-            break;
+        // The SDK drives the tool loop; retries stay hand-rolled so the client
+        // still hears about rate-limit backoff.
+        await withRetry(
+          () =>
+            generateText({
+              model: "anthropic/claude-sonnet-4",
+              maxOutputTokens: 4096,
+              system: SYSTEM_PROMPT,
+              prompt: initialPrompt,
+              tools,
+              stopWhen: [stepCountIs(maxTurns), () => finalGroups.length > 0],
+              onStepStart: () => {
+                turn++;
+                send("turn_start", { turn, maxTurns });
+              },
+              onStepFinish: ({ text, usage }) => {
+                inputTokens += usage.inputTokens ?? 0;
+                outputTokens += usage.outputTokens ?? 0;
+                send("tokens", { input: inputTokens, output: outputTokens, estimated: false });
+
+                const trimmed = text.trim();
+                if (trimmed.length > 20 && !trimmed.startsWith("{")) {
+                  const preview = trimmed.slice(0, 200);
+                  send("thinking", { text: preview + (trimmed.length > 200 ? "..." : "") });
+                  send("turn_thinking", { turn, thinking: trimmed.slice(0, 500) });
+                }
+              },
+            }),
+          3,
+          5000,
+          (attempt, delayMs) => {
+            // Notify client about rate limit retry
+            send("thinking", { text: `Rate limited, retrying in ${Math.round(delayMs / 1000)}s (attempt ${attempt}/3)...` });
           }
-        }
+        );
 
         // Send completion
         if (finalGroups.length > 0) {
@@ -647,94 +532,45 @@ async function handleNonStreamingRequest(
   numGroups: number,
   peoplePerGroup: number
 ) {
-  const anthropic = new Anthropic();
-
   const initialPrompt = `Create ${numGroups} groups from ${contactCount} attendees (approximately ${peoplePerGroup} people per group).
 
 Start by calling get_all_contacts to see the data, then analyze, create groups, verify, and submit.`;
 
   let finalGroups: Group[] = [];
   const maxTurns = 20;
-  let turn = 0;
 
-  const messages: MessageParam[] = [
-    { role: "user", content: initialPrompt }
-  ];
-
-  while (turn < maxTurns) {
-    turn++;
-
-    const response = await withRetry(() =>
-      anthropic.messages.create({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 4096,
-        system: SYSTEM_PROMPT,
-        tools: MATCHER_TOOLS,
-        messages,
-      })
-    );
-
-    const toolUses: ToolUseBlock[] = [];
-    const contentBlocks: ContentBlockParam[] = [];
-
-    for (const block of response.content) {
-      if (block.type === "text") {
-        contentBlocks.push({ type: "text", text: block.text });
-      } else if (block.type === "tool_use") {
-        toolUses.push(block);
-        contentBlocks.push({
-          type: "tool_use",
-          id: block.id,
-          name: block.name,
-          input: block.input as Record<string, unknown>,
-        });
-      }
-    }
-
-    messages.push({ role: "assistant", content: contentBlocks });
-
-    if (toolUses.length === 0 && response.stop_reason === "end_turn") {
-      break;
-    }
-
-    if (toolUses.length > 0) {
-      const toolResults: ToolResultBlockParam[] = [];
-
-      for (const toolUse of toolUses) {
-        const result = state.handleToolCall(toolUse.name, toolUse.input as Record<string, unknown>);
-
-        if (toolUse.name === "verify_groups") {
-          const verification = result as VerificationResult;
-          if (verification.valid) {
-            // Auto-submit if verification passes
-            const submitResult = state.submitFinalGroups();
-            if (submitResult.success) {
-              finalGroups = submitResult.groups;
-            }
+  const tools = createMatcherTools(state, {
+    onResult: (toolName, result) => {
+      if (toolName === "verify_groups") {
+        const verification = result as VerificationResult;
+        if (verification.valid) {
+          // Auto-submit if verification passes
+          const submitResult = state.submitFinalGroups();
+          if (submitResult.success) {
+            finalGroups = submitResult.groups;
           }
         }
-
-        if (toolUse.name === "submit_final_groups") {
-          const submission = result as { success: boolean; groups: Group[]; issues?: string[] };
-          if (submission.success) {
-            finalGroups = submission.groups;
-          }
-        }
-
-        toolResults.push({
-          type: "tool_result",
-          tool_use_id: toolUse.id,
-          content: JSON.stringify(result),
-        });
       }
 
-      messages.push({ role: "user", content: toolResults });
-    }
+      if (toolName === "submit_final_groups") {
+        const submission = result as { success: boolean; groups: Group[]; issues?: string[] };
+        if (submission.success) {
+          finalGroups = submission.groups;
+        }
+      }
+    },
+  });
 
-    if (finalGroups.length > 0) {
-      break;
-    }
-  }
+  await withRetry(() =>
+    generateText({
+      model: "anthropic/claude-sonnet-4",
+      maxOutputTokens: 4096,
+      system: SYSTEM_PROMPT,
+      prompt: initialPrompt,
+      tools,
+      stopWhen: [stepCountIs(maxTurns), () => finalGroups.length > 0],
+    })
+  );
 
   if (finalGroups.length === 0) {
     return Response.json({

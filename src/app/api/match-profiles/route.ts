@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-
-const anthropic = new Anthropic();
+import { generateText } from "ai";
 
 interface ProfileSummary {
   id: string;
@@ -73,29 +71,19 @@ matchStrength should be:
 
 Only include people from the member list. Be specific about WHY each person is a good match.`;
 
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1500,
-      messages: [
-        {
-          role: "user",
-          content: userPrompt,
-        },
-      ],
+    const { text } = await generateText({
+      model: "anthropic/claude-sonnet-4",
+      maxOutputTokens: 1500,
       system: systemPrompt,
+      prompt: userPrompt,
     });
 
-    // Extract text content
-    const textContent = message.content.find((c) => c.type === "text");
-    if (!textContent || textContent.type !== "text") {
+    if (!text) {
       throw new Error("No text response from AI");
     }
 
-    // Parse the JSON response
-    const responseText = textContent.text;
-
     // Try to extract JSON from the response
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       throw new Error("Could not parse AI response as JSON");
     }
