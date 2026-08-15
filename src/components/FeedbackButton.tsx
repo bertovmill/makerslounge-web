@@ -154,6 +154,11 @@ export default function FeedbackButton() {
     return null;
   }
 
+  // The workshop has its own helper widget pinned in the same corner.
+  if (pathname.startsWith("/eve-workshop")) {
+    return null;
+  }
+
   return (
     <>
       {showModal && (

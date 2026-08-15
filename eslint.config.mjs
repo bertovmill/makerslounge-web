@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The Eve Agent Workshop's helper agent is its own package with its own
+    // tsconfig and build (see `next.config.ts` → `withEve`), and `.eve/`
+    // holds generated nitro output.
+    "workshop-helper/**",
+    ".eve/**",
   ]),
 ]);
 

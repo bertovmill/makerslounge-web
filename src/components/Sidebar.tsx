@@ -53,7 +53,8 @@ export default function Sidebar() {
   const [logoHovered, setLogoHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const isHidden = pathname === "/" || pathname === "/auth" || pathname === "/onboarding" || pathname.startsWith("/hackathons") || pathname.startsWith("/podcasts");
+  // `/eve-workshop` ships its own sidebar (see `components/eve-workshop/left-sidebar.tsx`).
+  const isHidden = pathname === "/" || pathname === "/auth" || pathname === "/onboarding" || pathname.startsWith("/hackathons") || pathname.startsWith("/podcasts") || pathname.startsWith("/eve-workshop");
 
   useEffect(() => {
     if (!user) return;

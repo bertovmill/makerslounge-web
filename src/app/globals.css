@@ -1,5 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/* Custom variants (data-open/data-checked/…) and utilities (scroll-fade,
+   shimmer, no-scrollbar) used by the shadcn components under
+   `components/eve-workshop/ui`. Adds no base styles of its own. */
+@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -27,14 +31,16 @@
   --color-ring: var(--ring);
   /* Editorial motif: shapes are hard-edged. Radii are flattened across the
      whole scale so existing rounded-2xl/3xl usage becomes crisp automatically.
-     rounded-full is deliberately untouched — circles are part of the motif. */
-  --radius-sm: 2px;
-  --radius-md: 3px;
-  --radius-lg: var(--radius);
-  --radius-xl: 6px;
-  --radius-2xl: 8px;
-  --radius-3xl: 10px;
-  --radius-4xl: 12px;
+     rounded-full is deliberately untouched — circles are part of the motif.
+     Routed through vars so `.eve-workshop` can restore a rounded scale for the
+     workshop's shadcn components without touching the rest of the site. */
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+  --radius-2xl: var(--r-2xl);
+  --radius-3xl: var(--r-3xl);
+  --radius-4xl: var(--r-4xl);
   --animate-aurora: aurora 60s linear infinite;
   --animate-twinkle: twinkle 4s ease-in-out infinite;
 }
@@ -59,6 +65,15 @@
 
 :root {
   --radius: 4px;
+
+  /* Editorial radius scale — consumed by `@theme inline` above. */
+  --r-sm: 2px;
+  --r-md: 3px;
+  --r-lg: var(--radius);
+  --r-xl: 6px;
+  --r-2xl: 8px;
+  --r-3xl: 10px;
+  --r-4xl: 12px;
 
   /* --- Flat palette --- */
   --paper: #FBF8F2;   /* warm ground, kept light for readability */
@@ -195,8 +210,10 @@
   }
   /* The motif is flat: nothing frosts. Neutralises the ~38 components still
      carrying `backdrop-blur-*` without having to touch each one. Opt back in
-     with `.allow-blur` if a surface genuinely needs it. */
-  [class*="backdrop-blur"]:not(.allow-blur) {
+     with `.allow-blur` if a surface genuinely needs it.
+     `/eve-workshop` is exempt — it predates the motif and its chrome is built
+     on frosted surfaces. */
+  body:not(:has(.eve-workshop)) [class*="backdrop-blur"]:not(.allow-blur) {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
@@ -485,4 +502,76 @@ html {
 .field-ink {
   background: var(--ink);
   color: var(--paper);
+}
+
+
+/* ============================================================
+   Eve Agent Workshop — /eve-workshop
+   ------------------------------------------------------------
+   Folded in from its own repo (github.com/bertovmill/eve-workshop). It keeps
+   the look it shipped with: bright blue on white, rounded cards, frosted
+   chrome — not the site's flat editorial motif.
+
+   Its brand colours are global because nothing else in the app uses `-brand`
+   or `-ink` utilities. Everything that *would* collide — the shadcn neutral
+   tokens and the radius scale — is redefined on `body:has(.eve-workshop)`, so
+   it only applies while a workshop page is on screen and can't leak into the
+   rest of the site. Scoping at the body (rather than on `.eve-workshop`
+   itself) is deliberate: Radix portals — dialogs, dropdowns, selects,
+   tooltips — mount as direct children of <body>, outside the wrapper, and
+   would otherwise render with the site's palette.
+   ============================================================ */
+
+@theme {
+  --color-brand-light: #6ac4f7;
+  --color-brand: #3a9ff3;
+  --color-brand-dark: #1a7de8;
+  --color-ink: #0f1c2e;
+  --color-ink-muted: #5a6b80;
+  --color-code-text: #d7e6f5;
+  --color-code-comment: #7d93ad;
+}
+
+body:has(.eve-workshop) {
+  /* Rounded again — the workshop's cards and buttons predate the flat motif. */
+  --radius: 0.625rem;
+  --r-sm: calc(var(--radius) * 0.6);
+  --r-md: calc(var(--radius) * 0.8);
+  --r-lg: var(--radius);
+  --r-xl: calc(var(--radius) * 1.4);
+  --r-2xl: calc(var(--radius) * 1.8);
+  --r-3xl: calc(var(--radius) * 2.2);
+  --r-4xl: calc(var(--radius) * 2.6);
+
+  /* shadcn neutral palette, exactly as the workshop shipped it. */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+
+  /* The deck always reads light, even when the rest of the site is in dark
+     mode — these slides are projected in a room. */
+  color-scheme: light;
+  background-color: #f7fafd;
+  color: var(--color-ink);
+}
+
+/* The site-wide grain would sit over the slides; the workshop is meant to be
+   clean flat colour. */
+body:has(.eve-workshop)::after {
+  display: none;
 }

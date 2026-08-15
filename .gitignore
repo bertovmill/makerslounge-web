@@ -75,3 +75,17 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+
+# clerk configuration (can include secrets) — Eve Agent Workshop
+/.clerk/
+
+# drizzle migration output — Eve Agent Workshop schema
+/drizzle/
+
+# local reference files (may contain PII — CSVs, spreadsheets, exports)
+/docs/eve-workshop/reference/*
+!/docs/eve-workshop/reference/.gitkeep
+!/docs/eve-workshop/reference/AI Agent-Building Workshop @ TMU - Guests - 2026-08-10-16-42-04.csv
+
+# eve agent build output — Eve Agent Workshop
+/.eve/
