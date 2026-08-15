@@ -97,6 +97,15 @@ Required in `.env.local`:
 - `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/eve-workshop/sign-in`,
   `NEXT_PUBLIC_CLERK_SIGN_UP_URL=/eve-workshop/sign-up`
 
+Values in `.env.local` are written **quoted** (`KEY="pk_test_…"`). Next's dotenv
+parser strips the quotes, so locally this is invisible — but anything that
+copies a raw line into Vercel (`vercel env add`, a sync script) ships the quotes
+as part of the value. A quoted `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` gets inlined
+at build time and makes Clerk throw `Publishable key not valid`, which surfaces
+as `MIDDLEWARE_INVOCATION_FAILED` — a 500 on every Clerk-routed path while the
+rest of the site stays green. Strip surrounding quotes before pushing env values
+upstream.
+
 ### Deploys
 
 Vercel blocks any deployment whose commit author it can't map to the linked
