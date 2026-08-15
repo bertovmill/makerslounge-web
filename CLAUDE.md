@@ -56,11 +56,54 @@ MakersLounge is a Next.js 16 app for connecting makers/builders. It uses the App
 - `/people` - Browse all makers
 - `/matcher` - Contact matching tool
 - `/feedback` - User feedback submission
+- `/eve-workshop` - Eve Agent Workshop (see below)
+
+### Eve Agent Workshop (`/eve-workshop`)
+
+Folded in from its own repo (`bertovmill/eve-workshop`) in Aug 2026. It is a
+second app living inside this one, and it deliberately does **not** share this
+site's conventions — treat it as a walled garden:
+
+- **Auth is Clerk, not Supabase.** Its attendee data is keyed by Clerk user ids,
+  which is why it wasn't ported. `src/middleware.ts` dispatches on path: Clerk
+  for `/eve-workshop/*` and `/eve/*`, Supabase for everything else. Only
+  `/eve-workshop` itself and its sign-in/sign-up pages are public.
+- **Data is Neon + Drizzle, not Supabase.** Schema in `src/db/schema.ts`
+  (`questions`, `demo_slots`, `agent_memories`, `learning_goals`).
+- **Its code is namespaced**: `src/app/eve-workshop/`,
+  `src/app/api/eve-workshop/`, `src/components/eve-workshop/` (with its own
+  `ui/` — do not mix these with `src/components/ui/`), `src/lib/eve-workshop/`,
+  `public/eve-workshop/`.
+- **Its chrome is its own.** `Sidebar`, `AppShell`, and `FeedbackButton` all
+  bail out on `/eve-workshop`. Styling is scoped in `globals.css` on
+  `body:has(.eve-workshop)` — body-level, so Radix portals inherit it — which
+  also disables the site's grain overlay and blur-neutraliser there.
+- **`workshop-helper/`** is the Eve agent, mounted at `/eve/*` by `withEve()` in
+  `next.config.ts`. It is its **own npm package** with its own lockfile and
+  builds as a separate Vercel service — run `npm install` inside it to work on
+  it, and do not hoist its dependencies to the root.
+- **`eve.makerslounge.ca`** is rewritten route-by-route onto `/eve-workshop` in
+  `next.config.ts`. Not a catch-all, on purpose — see the comment there.
+
+A staged plan for moving the *rest* of the site onto Clerk + Neon lives in
+`docs/supabase-to-clerk-neon-migration.md`.
 
 ### Environment Variables
 Required in `.env.local`:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` (Eve workshop)
+- `DATABASE_URL` (Neon, Eve workshop)
+- `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/eve-workshop/sign-in`,
+  `NEXT_PUBLIC_CLERK_SIGN_UP_URL=/eve-workshop/sign-up`
+
+### Deploys
+
+Vercel blocks any deployment whose commit author it can't map to the linked
+GitHub account. This repo's commits **must** be authored as
+`81169127+bertovmill@users.noreply.github.com` (set repo-locally) — commits made
+with the global `rmill@aucctus.com` identity deploy as `BLOCKED` and silently
+never reach production.
 
 ## Branding & Assets
 
