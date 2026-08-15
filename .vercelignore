@@ -1,0 +1,39 @@
+# Files excluded from the deployment upload.
+#
+# public/ was 260MB, which made every deploy upload ~274MB and take minutes.
+# Everything listed here was verified unreferenced by the app before being
+# added — grep src/ and workshop-helper/ before adding anything new, because
+# an ignored file under public/ is not served at all and will 404 in prod.
+#
+# Referenced large assets are deliberately NOT listed (they must keep
+# shipping), e.g.:
+#   public/hackathons/innovation-hackathon/hackathon-image-gen.png  (21MB)
+#   public/headshots/Berto Mill_Headshot.jpg                        (11MB)
+# Both are worth compressing at some point, but that is a content change,
+# not an ignore rule.
+
+# --- Source art for social posts: generated locally, never served ---
+# Only referenced by its own generator scripts inside the same folder.
+public/linkedin-graphic/
+
+# --- Print-resolution event banners (26MB) ---
+# The web-sized banner actually used by the app is the .avif in this folder,
+# which stays. These two are the large-format print originals.
+public/event-banners/Makerslounge Banner.png
+public/event-banners/Makerslounge Banner - 33.5x80 PopUp.png
+
+# --- Poster render output (13MB), produced by poster/generate_poster.py ---
+public/dba5992d-1304-4369-9497-02c9b26fb855.png
+
+# --- Unused hero video (4.7MB) ---
+public/hero-bg.mp4
+
+# --- Hackathon walkthrough recording (58MB), the single largest asset ---
+# Not linked from any page. If this ever needs to be shown, host it on a
+# video service rather than shipping it in the bundle.
+public/hackathons/innovation-hackathon/Obtain Credits.mp4
+
+# --- Working directories that are never part of the build ---
+poster/
+app-store-screenshots/
+ios/
