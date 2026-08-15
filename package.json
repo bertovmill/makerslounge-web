@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "qr:learning-wall": "node scripts/generate-learning-wall-qr.mjs",
-    "qr:stay-in-touch": "node scripts/generate-stay-in-touch-qrs.mjs"
+    "qr:stay-in-touch": "node scripts/generate-stay-in-touch-qrs.mjs",
+    "postinstall": "npm install --prefix workshop-helper --no-audit --no-fund"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.39",
