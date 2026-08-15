@@ -25,11 +25,18 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  /* Editorial motif: shapes are hard-edged. Radii are flattened across the
+     whole scale so existing rounded-2xl/3xl usage becomes crisp automatically.
+     rounded-full is deliberately untouched — circles are part of the motif. */
+  --radius-sm: 2px;
+  --radius-md: 3px;
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: 6px;
+  --radius-2xl: 8px;
+  --radius-3xl: 10px;
+  --radius-4xl: 12px;
   --animate-aurora: aurora 60s linear infinite;
+  --animate-twinkle: twinkle 4s ease-in-out infinite;
 }
 
 @keyframes aurora {
@@ -41,97 +48,137 @@
   }
 }
 
+/* ============================================================
+   Flat editorial system — blue + warm neutrals.
+
+   Every colour is a solid, printable flat. Gradients survive only as
+   token aliases so legacy `.bg-gradient-blue*` usage keeps rendering, but
+   they now resolve to flat fills. Depth comes from hard edges, layered
+   colour blocks and grain — never from blur or glow.
+   ============================================================ */
+
 :root {
-  --radius: 0.5rem;
+  --radius: 4px;
 
-  /* Light mode — warm, clean */
-  --background: #faf9f7;
-  --foreground: #1a1a1a;
+  /* --- Flat palette --- */
+  --paper: #F7F2E9;   /* warm ground */
+  --sand: #EDE3D2;    /* warm mid  */
+  --shell: #FFFDF7;   /* raised surface */
+  --ink: #16161D;     /* near-black, blue cast */
 
-  --card: #ffffff;
-  --card-foreground: #1a1a1a;
-  --popover: #ffffff;
-  --popover-foreground: #1a1a1a;
+  --blue-deep: #0E3F7E;
+  --blue-core: #1A6FD4;
+  --blue-mid: #4A9FE5;
+  --blue-light: #9DCBF2;
+  --blue-pale: #DDEBF9;
 
-  --primary: #4A9FE5;
-  --primary-foreground: #ffffff;
+  /* Light mode */
+  --background: var(--paper);
+  --foreground: var(--ink);
 
-  --secondary: #f0eee9;
-  --secondary-foreground: #1a1a1a;
-  --muted: #f0eee9;
-  --muted-foreground: #6b6560;
+  --card: var(--shell);
+  --card-foreground: var(--ink);
+  --popover: var(--shell);
+  --popover-foreground: var(--ink);
 
-  --accent: #f0eee9;
-  --accent-foreground: #1a1a1a;
+  --primary: var(--blue-core);
+  --primary-foreground: #FFFDF7;
 
-  --destructive: #c43333;
+  --secondary: var(--sand);
+  --secondary-foreground: var(--ink);
+  --muted: #EFE7D9;
+  --muted-foreground: #6E6455;
 
-  --border: #e8e5e0;
-  --input: #e8e5e0;
-  --ring: #4A9FE5;
+  --accent: var(--blue-pale);
+  --accent-foreground: var(--blue-deep);
 
-  /* Blue accent system */
-  --blue-start: #4A9FE5;
-  --blue-mid: #6DB3F0;
-  --blue-end: #89C4F4;
-  --blue-glow: rgba(74, 159, 229, 0.25);
-  --gradient-blue: linear-gradient(135deg, #4A9FE5 0%, #6DB3F0 50%, #89C4F4 100%);
-  --gradient-blue-subtle: linear-gradient(135deg, rgba(74, 159, 229, 0.08) 0%, rgba(137, 196, 244, 0.04) 100%);
-  --gradient-blue-vibrant: linear-gradient(135deg, #3B8BD4 0%, #4A9FE5 30%, #89C4F4 70%, #A8D4F7 100%);
+  --destructive: #B7362B;
 
-  /* Shadows & accents */
-  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.03);
-  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.07), 0 2px 6px rgba(0, 0, 0, 0.04);
-  --shadow-input-focus: 0 0 0 3px rgba(74, 159, 229, 0.12);
-  --shadow-blue-glow: 0 0 20px rgba(74, 159, 229, 0.15), 0 0 60px rgba(74, 159, 229, 0.05);
-  --primary-gradient: linear-gradient(135deg, #4A9FE5 0%, #3b8ad4 100%);
-  --surface-shine: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 50%);
+  --border: #D6C6AC;
+  --input: #D6C6AC;
+  --ring: var(--blue-core);
+
+  /* Legacy aliases — now flat */
+  --blue-start: var(--blue-core);
+  --blue-end: var(--blue-light);
+  --blue-glow: transparent;
+  --gradient-blue: var(--blue-core);
+  --gradient-blue-subtle: var(--blue-pale);
+  --gradient-blue-vibrant: var(--blue-deep);
+  --primary-gradient: var(--blue-core);
+  --surface-shine: none;
+
+  /* Depth = offset ink edges, not blur */
+  --shadow-subtle: 0 1px 0 var(--border);
+  --shadow-card: 3px 3px 0 rgba(22, 22, 29, 0.09);
+  --shadow-card-hover: 5px 5px 0 rgba(22, 22, 29, 0.14);
+  --shadow-input-focus: 0 0 0 3px rgba(26, 111, 212, 0.22);
+  --shadow-blue-glow: 4px 4px 0 var(--blue-deep);
+
+  /* The hero "sun". Theme-aware so headline text keeps contrast against it:
+     a light tint on the cream ground, a deep navy on the dark ground. */
+  --motif-sun: var(--blue-light);
+
+  --grain-opacity: 0.30;
+  --grain-blend: multiply;
 }
 
 .dark {
-  --background: #111110;
-  --foreground: #e8e6e1;
+  --paper: #12131A;
+  --sand: #1E2029;
+  --shell: #191B24;
+  --ink: #EFE7D9;
 
-  --card: #1a1918;
-  --card-foreground: #e8e6e1;
-  --popover: #1a1918;
-  --popover-foreground: #e8e6e1;
+  --blue-deep: #0B2F60;
+  --blue-core: #4A9FE5;
+  --blue-mid: #6DB3F0;
+  --blue-light: #9DCBF2;
+  --blue-pale: #1D2E44;
 
-  --primary: #5eb0f0;
-  --primary-foreground: #0f0f0e;
+  --background: var(--paper);
+  --foreground: var(--ink);
 
-  --secondary: #232220;
-  --secondary-foreground: #e8e6e1;
-  --muted: #232220;
-  --muted-foreground: #8a8580;
+  --card: var(--shell);
+  --card-foreground: var(--ink);
+  --popover: var(--shell);
+  --popover-foreground: var(--ink);
 
-  --accent: #232220;
-  --accent-foreground: #e8e6e1;
+  --primary: var(--blue-core);
+  --primary-foreground: #0B1220;
 
-  --destructive: #e54d4d;
+  --secondary: var(--sand);
+  --secondary-foreground: var(--ink);
+  --muted: #23262F;
+  --muted-foreground: #9A9384;
 
-  --border: #2e2d2a;
-  --input: #2e2d2a;
-  --ring: #5eb0f0;
+  --accent: var(--blue-pale);
+  --accent-foreground: var(--blue-light);
 
-  /* Blue accent system */
-  --blue-start: #5EB0F0;
-  --blue-mid: #7AC0F5;
-  --blue-end: #99D1FA;
-  --blue-glow: rgba(94, 176, 240, 0.3);
-  --gradient-blue: linear-gradient(135deg, #5EB0F0 0%, #7AC0F5 50%, #99D1FA 100%);
-  --gradient-blue-subtle: linear-gradient(135deg, rgba(94, 176, 240, 0.1) 0%, rgba(153, 209, 250, 0.05) 100%);
-  --gradient-blue-vibrant: linear-gradient(135deg, #4A9CE0 0%, #5EB0F0 30%, #99D1FA 70%, #B8E0FC 100%);
+  --destructive: #E2564A;
 
-  /* Shadows & accents — dark mode */
-  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 1px rgba(255, 255, 255, 0.05);
-  --shadow-card-hover: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 1px rgba(255, 255, 255, 0.08);
-  --shadow-input-focus: 0 0 0 3px rgba(94, 176, 240, 0.15);
-  --shadow-blue-glow: 0 0 25px rgba(94, 176, 240, 0.2), 0 0 80px rgba(94, 176, 240, 0.08);
-  --primary-gradient: linear-gradient(135deg, #5eb0f0 0%, #4a9ce0 100%);
-  --surface-shine: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 50%);
+  --border: #353B4B;
+  --input: #353B4B;
+  --ring: var(--blue-core);
+
+  --blue-start: var(--blue-core);
+  --blue-end: var(--blue-light);
+  --blue-glow: transparent;
+  --gradient-blue: var(--blue-core);
+  --gradient-blue-subtle: var(--blue-pale);
+  --gradient-blue-vibrant: var(--blue-mid);
+  --primary-gradient: var(--blue-core);
+  --surface-shine: none;
+
+  --shadow-subtle: 0 1px 0 var(--border);
+  --shadow-card: 3px 3px 0 rgba(0, 0, 0, 0.45);
+  --shadow-card-hover: 5px 5px 0 rgba(0, 0, 0, 0.55);
+  --shadow-input-focus: 0 0 0 3px rgba(74, 159, 229, 0.28);
+  --shadow-blue-glow: 4px 4px 0 var(--blue-deep);
+
+  --motif-sun: #17304E;
+
+  --grain-opacity: 0.22;
+  --grain-blend: overlay;
 }
 
 @layer base {
@@ -146,20 +193,63 @@
   body {
     overflow-x: hidden;
   }
+  /* The motif is flat: nothing frosts. Neutralises the ~38 components still
+     carrying `backdrop-blur-*` without having to touch each one. Opt back in
+     with `.allow-blur` if a surface genuinely needs it. */
+  [class*="backdrop-blur"]:not(.allow-blur) {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }
 
 /* --- Global polish --- */
 
-/* Headings use Instrument Serif */
-h1, h2, h3 {
-  font-family: var(--font-serif), Georgia, serif;
-  letter-spacing: -0.01em;
-  font-weight: 400;
+/* Grain over the entire app. This is the single most load-bearing part of
+   the motif: it turns flat fills into printed colour. Fixed + non-interactive
+   so it never intercepts pointer events or scrolls out of register. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: var(--grain-blend);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
 }
 
-/* Sticky headers get a subtle shadow when scrolled */
+@media print, (prefers-reduced-transparency: reduce) {
+  body::after { display: none; }
+}
+
+/* Headings use Instrument Serif — larger, tighter, more editorial.
+   Reference --font-instrument-serif directly rather than the @theme-derived
+   --font-serif: the next/font variable class sits on <body>, so --font-serif
+   resolves empty at :root and silently invalidates the whole declaration. */
+h1, h2, h3 {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  letter-spacing: -0.025em;
+  font-weight: 400;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+/* Small caps label — the editorial counterweight to the big serif */
+.label-caps {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+/* Sticky headers sit on a hard rule, not a blur */
 header[class*="sticky"], header[class*="fixed"] {
-  box-shadow: var(--shadow-subtle);
+  box-shadow: none;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--background);
 }
 
 /* All border-t section dividers get a subtle gradient fade */
@@ -260,89 +350,139 @@ html {
   display: none;
 }
 
-/* --- Blue gradient accent system --- */
+/* ============================================================
+   Flat accent system
+   Legacy `gradient` class names are kept so existing markup keeps working —
+   they now paint solid colour instead.
+   ============================================================ */
 
-/* Gradient text — use sparingly on hero headings or key labels */
 .text-gradient-blue {
-  background: linear-gradient(135deg, #2B7DC9 0%, #3A8FDB 50%, #4A9FE5 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-:is(.dark *).text-gradient-blue {
-  background: var(--gradient-blue);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--blue-core);
+  -webkit-text-fill-color: currentColor;
 }
 
-/* Gradient background for buttons, badges, or small accent areas */
-.bg-gradient-blue {
-  background: var(--gradient-blue);
-}
+.bg-gradient-blue { background: var(--blue-core); color: var(--primary-foreground); }
+.bg-gradient-blue-subtle { background: var(--blue-pale); }
+.bg-gradient-blue-vibrant { background: var(--blue-deep); color: #FFFDF7; }
 
-/* Subtle gradient wash — for section backgrounds or cards */
-.bg-gradient-blue-subtle {
-  background: var(--gradient-blue-subtle);
-}
+/* Offset ink block instead of a glow */
+.shadow-blue-glow { box-shadow: var(--shadow-blue-glow); }
 
-/* Vibrant gradient — for hero sections or special moments */
-.bg-gradient-blue-vibrant {
-  background: var(--gradient-blue-vibrant);
-}
-
-/* Blue glow shadow — for cards or elements that need pop */
-.shadow-blue-glow {
-  box-shadow: var(--shadow-blue-glow);
-}
-
-/* Gradient border — pill/badge/card outline effect */
 .border-gradient-blue {
-  position: relative;
-  background-clip: padding-box;
-  border: 1px solid transparent;
+  border: 1.5px solid var(--blue-core);
 }
-.border-gradient-blue::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: var(--gradient-blue);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
+.border-gradient-blue::before { content: none; }
 
-/* Grainy texture overlay — add to gradient backgrounds for depth */
-.grain-overlay {
-  position: relative;
-}
+/* Scoped grain — for individual colour blocks that need extra tooth.
+   The global body grain already covers the page, so keep this light. */
+.grain-overlay { position: relative; }
 .grain-overlay::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  opacity: 0.35;
+  opacity: 0.22;
   mix-blend-mode: overlay;
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 128px 128px;
 }
 
-/* Blue accent dot — tiny status/decorative dot */
 .dot-blue {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--gradient-blue);
-  box-shadow: 0 0 8px var(--blue-glow);
+  background: var(--blue-core);
 }
 
-/* Gradient divider line */
+/* Hard editorial rule, replaces the faded gradient divider */
 .divider-gradient-blue {
-  height: 1px;
-  background: linear-gradient(to right, transparent, var(--blue-start), var(--blue-end), transparent);
+  height: 2px;
+  background: var(--blue-core);
   border: none;
+}
+
+/* ============================================================
+   Motif primitives
+   ============================================================ */
+
+/* `.glass` / `.glass-card` were referenced across the app but never defined.
+   They now resolve to flat surfaces so those call sites render deliberately. */
+.glass,
+.glass-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.glass-card {
+  box-shadow: var(--shadow-card);
+}
+
+/* Flat card — hard edge, offset ink block, no blur */
+.flat-card {
+  background: var(--card);
+  border: 1.5px solid var(--ink);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.flat-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translate(-2px, -2px);
+}
+
+/* Oversized arc — the "sun" behind hero content. Purely decorative. */
+.motif-arc {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Hard-edged colour block, offset behind content */
+.motif-block {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Four-point sparkle, drawn with a clip-path so it needs no asset */
+.sparkle {
+  display: inline-block;
+  background: currentColor;
+  clip-path: polygon(
+    50% 0%, 58% 42%, 100% 50%, 58% 58%,
+    50% 100%, 42% 58%, 0% 50%, 42% 42%
+  );
+  aspect-ratio: 1;
+  width: 1em;
+}
+.sparkle-twinkle { animation: var(--animate-twinkle); }
+
+@keyframes twinkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.82); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sparkle-twinkle { animation: none; }
+  .flat-card:hover { transform: none; }
+}
+
+/* Section that sits on a solid colour field */
+.field-blue {
+  background: var(--blue-core);
+  color: var(--primary-foreground);
+}
+.field-deep {
+  background: var(--blue-deep);
+  color: #FFFDF7;
+}
+.field-sand {
+  background: var(--sand);
+  color: var(--ink);
+}
+.field-ink {
+  background: var(--ink);
+  color: var(--paper);
 }
