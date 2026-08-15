@@ -11,6 +11,7 @@ import type { LucideIcon } from "lucide-react";
 import { AnimatedLogo } from "@/components/AnimatedLogo";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 import NewsletterPopup, { OPEN_NEWSLETTER_EVENT } from "@/components/NewsletterPopup";
+import { Arc, Constellation, Eyebrow } from "@/components/Motif";
 
 const openNewsletterPopup = () => {
   window.dispatchEvent(new CustomEvent(OPEN_NEWSLETTER_EVENT));
@@ -243,12 +244,16 @@ export default function Home() {
 
   return (
     <div className="min-h-svh flex flex-col relative overflow-hidden">
-      {/* Background layers */}
+      {/* Background: flat colour blocks and arcs — no blur, no gradients.
+          Grain comes from the global body overlay. */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1a2a4a]/30 via-transparent to-[#1a1a2e]/20 dark:from-[#1a2a4a]/60 dark:via-transparent dark:to-[#1a1a2e]/40" />
-        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-[#3A9FF3]/10 dark:bg-[#3A9FF3]/15 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[#6AC4F7]/8 dark:bg-[#6AC4F7]/10 blur-[100px]" />
-        <div className="absolute inset-0 grain-overlay h-full w-full" />
+        {/* The oversized "sun" behind the hero */}
+        <Arc
+          tone="sun"
+          size="min(44rem, 118vw)"
+          className="left-1/2 top-[-10%] -translate-x-1/2"
+        />
+        <Constellation tone="core" className="opacity-35 dark:opacity-55" />
       </div>
 
       {/* Nav */}
@@ -318,7 +323,7 @@ export default function Home() {
 
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
-        <div className="sm:hidden fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+        <div className="sm:hidden fixed inset-0 z-50 bg-background flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
             <Link href="/" className="flex items-center gap-1.5" onClick={() => setMobileMenuOpen(false)}>
               <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
@@ -386,19 +391,18 @@ export default function Home() {
 
       {/* Hero */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pb-4 sm:pb-8">
-        {/* Light glow behind title */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[75%] w-[500px] h-[400px] sm:w-[700px] sm:h-[500px] rounded-full bg-white/60 dark:bg-white/[0.04] blur-[100px] pointer-events-none" />
-
         {/* Animated logo above title */}
         <AnimatedLogo className="relative w-14 h-14 sm:w-20 sm:h-20 mb-5 sm:mb-6" />
 
-        <h1 className="relative text-3xl sm:text-5xl md:text-[3.5rem] font-semibold tracking-tight leading-[1.15] mb-3 sm:mb-5 text-center text-foreground">
+        <Eyebrow className="relative mb-4">Build · Connect · Create</Eyebrow>
+
+        <h1 className="relative text-5xl sm:text-7xl md:text-8xl tracking-[-0.03em] mb-4 sm:mb-6 text-center text-foreground">
           Where <span className="text-gradient-blue">makers</span> build
           <br />
           together
         </h1>
 
-        <p className="text-base sm:text-lg text-foreground/80 dark:text-foreground/60 text-center max-w-md mb-6 sm:mb-10 leading-relaxed">
+        <p className="relative text-base sm:text-lg text-muted-foreground text-center max-w-md mb-6 sm:mb-10 leading-relaxed">
           Our mission is to empower makers to build, connect, and thrive in the age of AI.
         </p>
 
@@ -422,7 +426,7 @@ export default function Home() {
                 {/* Free plan */}
                 <Link
                   href="/auth?mode=signup"
-                  className="flex flex-col items-center text-center p-5 rounded-2xl border border-border bg-card/50 backdrop-blur-sm hover:border-foreground/30 hover:bg-card/80 transition-all"
+                  className="flat-card flex flex-col items-center text-center p-5 rounded-2xl"
                 >
                   <Users className="w-6 h-6 text-foreground/70 mb-2" />
                   <span className="text-base font-semibold text-foreground">Free</span>
@@ -432,11 +436,11 @@ export default function Home() {
                 {/* AI Assistant plan */}
                 <Link
                   href="/auth?mode=apply&plan=ai"
-                  className="flex flex-col items-center text-center p-5 rounded-2xl border border-[#3A9FF3]/40 bg-gradient-to-b from-[#3A9FF3]/5 to-[#1A7DE8]/10 backdrop-blur-sm hover:border-[#3A9FF3]/60 hover:from-[#3A9FF3]/10 hover:to-[#1A7DE8]/15 transition-all"
+                  className="flat-card bg-gradient-blue-subtle flex flex-col items-center text-center p-5 rounded-2xl"
                 >
-                  <Sparkles className="w-6 h-6 text-[#3A9FF3] mb-2" />
+                  <Sparkles className="w-6 h-6 text-primary mb-2" />
                   <span className="text-base font-semibold text-foreground">AI Assistant</span>
-                  <span className="text-xs font-medium text-[#3A9FF3] mt-0.5">$10/mo</span>
+                  <span className="text-xs font-medium text-primary mt-0.5">$10/mo</span>
                   <span className="text-xs text-muted-foreground/70 mt-1">AI-powered matching to find the right people</span>
                 </Link>
               </div>
@@ -495,9 +499,9 @@ export default function Home() {
             ].map((value) => (
               <div
                 key={value.label}
-                className="group flex flex-col rounded-2xl border border-border bg-card/50 backdrop-blur-sm overflow-hidden hover:border-[#3A9FF3]/40 hover:shadow-[0_8px_30px_rgba(58,159,243,0.12)] transition-all duration-300"
+                className="flat-card group flex flex-col rounded-2xl overflow-hidden"
               >
-                <div className="relative aspect-square w-full bg-gradient-to-br from-white to-blue-50/40 dark:from-[#0a1628] dark:to-[#0d1f3d] overflow-hidden">
+                <div className="relative aspect-square w-full bg-gradient-blue-subtle overflow-hidden">
                   <Image
                     src={value.image}
                     alt={value.label}
@@ -517,10 +521,10 @@ export default function Home() {
 
         {/* Podcast Section */}
         <div className="w-full max-w-[640px] mb-8 sm:mb-12">
-          <div className="rounded-2xl border border-border bg-card/50 backdrop-blur-sm overflow-hidden">
+          <div className="flat-card rounded-2xl overflow-hidden">
             <div className="flex items-center gap-4 p-4 sm:p-5">
               {/* Podcast icon */}
-              <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-[#6AC4F7] to-[#1A7DE8] flex items-center justify-center">
+              <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl field-blue flex items-center justify-center">
                 <Mic className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
               </div>
 
@@ -558,10 +562,10 @@ export default function Home() {
 
         {/* Blog Section */}
         <div className="w-full max-w-[640px] mb-8 sm:mb-12">
-          <div className="rounded-2xl border border-border bg-card/50 backdrop-blur-sm overflow-hidden">
+          <div className="flat-card rounded-2xl overflow-hidden">
             <div className="flex items-center gap-4 p-4 sm:p-5">
               {/* Blog icon */}
-              <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-[#6AC4F7] to-[#1A7DE8] flex items-center justify-center">
+              <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl field-blue flex items-center justify-center">
                 <BookOpen className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
               </div>
 
@@ -726,7 +730,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-border bg-card/30 backdrop-blur-sm">
+      <footer className="relative z-10 border-t border-border field-sand">
         <div className="max-w-[640px] mx-auto px-4 sm:px-6 py-8 sm:py-10">
           <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
             {/* Brand */}
