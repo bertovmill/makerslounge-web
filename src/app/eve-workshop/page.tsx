@@ -10,7 +10,7 @@ import { WorkshopHelperWidget } from "@/components/eve-workshop/workshop-helper-
 import { DemoSlots } from "@/components/eve-workshop/demo-slots";
 import { CalendarDays, Clock, Mail, Phone, ShieldCheck, Video, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { wifi } from "@/lib/eve-workshop/wifi";
+import { wifi, WIFI_PASSWORD_FALLBACK } from "@/lib/eve-workshop/wifi";
 
 function Inline({ children }: { children: React.ReactNode }) {
   return (
@@ -371,7 +371,7 @@ export default function Home() {
               {[
                 { label: "Network", value: wifi.network },
                 { label: "Username", value: wifi.username },
-                { label: "Password", value: wifi.password },
+                { label: "Password", value: wifi.password || WIFI_PASSWORD_FALLBACK },
               ].map(({ label, value }) => (
                 <div key={label}>
                   <p className="text-[11px] font-semibold tracking-[0.2em] text-white/50 uppercase">

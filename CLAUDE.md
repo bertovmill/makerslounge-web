@@ -96,6 +96,11 @@ Required in `.env.local`:
 - `DATABASE_URL` (Neon, Eve workshop)
 - `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/eve-workshop/sign-in`,
   `NEXT_PUBLIC_CLERK_SIGN_UP_URL=/eve-workshop/sign-up`
+- `WORKSHOP_WIFI_PASSWORD` (optional) — the venue Wi-Fi password for the next
+  workshop. Deliberately not committed; when unset both the hero slide and
+  `/eve-workshop/wifi` show "Ask a host". Server-side only — never give it a
+  `NEXT_PUBLIC_` prefix, which would inline it into a client chunk that anyone
+  can fetch without signing in.
 
 Values in `.env.local` are written **quoted** (`KEY="pk_test_…"`). Next's dotenv
 parser strips the quotes, so locally this is invisible — but anything that
