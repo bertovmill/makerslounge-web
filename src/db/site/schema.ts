@@ -1,9 +1,10 @@
 // Site schema — the tables behind makerslounge.ca, migrating off Supabase.
 //
-// Generated from the live Supabase database's PostgREST OpenAPI spec rather
-// than from `supabase/migrations/*`, because the committed SQL had drifted from
-// what production actually has. Regenerate with the script in the migration
-// notes if the Supabase schema changes before cutover.
+// Columns, types, primary keys and foreign keys come from the live database's
+// PostgREST OpenAPI spec; UNIQUE constraints and indexes come from a
+// `pg_dump --schema-only` of the same database. Two sources because PostgREST
+// describes neither constraints nor indexes, and a missing UNIQUE does not
+// throw — it silently permits duplicates. Both were taken 2026-08-16.
 //
 // These live in their own Postgres schema (`makerslounge`) inside the same Neon
 // project as the Eve workshop's four tables, which stay in `public`. One
@@ -14,21 +15,14 @@
 // yet, and Supabase remains the source of truth until Phase 2 moves tables
 // over one at a time.
 //
-// ⚠️ INCOMPLETE BY CONSTRUCTION: indexes and UNIQUE constraints are missing.
-// PostgREST's OpenAPI spec describes columns, types, primary keys and foreign
-// keys — it does not expose indexes or unique constraints, so none are below.
-// The committed migrations contain roughly 62 indexes and 9 UNIQUE constraints
-// that this file does not yet reproduce.
-//
-// The unique constraints are the dangerous half. A missing index is slow; a
-// missing UNIQUE on `profiles.username` silently permits duplicate usernames
-// and corrupts `/p/[username]` routing, with no error at the moment it breaks.
-// Recover them from a `pg_dump --schema-only` of the Supabase database (which
-// also dumps the RLS policies Phase 2 has to re-express as application code)
-// before any data moves. Do not treat this file as cutover-ready until then.
+// Still not represented here, and tracked in the migration doc: 112 RLS
+// policies (which become application code), 9 functions, 6 triggers, and the
+// `connection_counts` view. Also one expression index that the Drizzle DSL
+// cannot express, which must be added as raw SQL after the tables are created:
+// blog_posts.idx_blog_posts_search: CREATE INDEX ... USING gin (to_tsvector('english'::regconfig, ((((title || ' '::text) || excerpt) || ' '::text) || content)))
 
-import { boolean, date, integer, jsonb, pgSchema, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
-
+import { boolean, date, index, integer, jsonb, pgSchema, primaryKey, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const site = pgSchema("makerslounge");
 
@@ -48,14 +42,21 @@ export const applications = site.table("applications", {
   skills: text("skills").array(),
   lookingForSkills: text("looking_for_skills").array(),
   otherSocials: jsonb("other_socials"),
-});
+}, (t) => [
+  index("idx_applications_email").on(t.email),
+  index("idx_applications_status").on(t.status),
+]);
 
 export const blockedUsers = site.table("blocked_users", {
   id: uuid("id").primaryKey().defaultRandom(),
   blockerId: uuid("blocker_id").notNull(),
   blockedId: uuid("blocked_id").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-});
+}, (t) => [
+  unique("blocked_users_blocker_id_blocked_id_key").on(t.blockerId, t.blockedId),
+  index("idx_blocked_users_blocked").on(t.blockedId),
+  index("idx_blocked_users_blocker").on(t.blockerId),
+]);
 
 export const blogPosts = site.table("blog_posts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -72,7 +73,15 @@ export const blogPosts = site.table("blog_posts", {
   publishedAt: timestamp("published_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
-});
+}, (t) => [
+  unique("blog_posts_slug_key").on(t.slug),
+  index("idx_blog_posts_author_id").on(t.authorId),
+  index("idx_blog_posts_created_at").on(t.createdAt.desc()),
+  index("idx_blog_posts_featured").on(t.isFeatured, t.publishedAt.desc()),
+  index("idx_blog_posts_published").on(t.isPublished, t.publishedAt.desc()),
+  index("idx_blog_posts_slug").on(t.slug),
+  index("idx_blog_posts_tags").using("gin", t.tags),
+]);
 
 export const broadcastAccounts = site.table("broadcast_accounts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -81,7 +90,9 @@ export const broadcastAccounts = site.table("broadcast_accounts", {
   type: text("type").default("personal").notNull(),
   avatarUrl: text("avatar_url"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-});
+}, (t) => [
+  index("idx_broadcast_accounts_user").on(t.userId),
+]);
 
 export const broadcastChannels = site.table("broadcast_channels", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -89,7 +100,9 @@ export const broadcastChannels = site.table("broadcast_channels", {
   name: text("name").notNull(),
   icon: text("icon").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-});
+}, (t) => [
+  index("idx_broadcast_channels_user").on(t.userId),
+]);
 
 export const comments = site.table("comments", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -99,7 +112,10 @@ export const comments = site.table("comments", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   targetType: text("target_type").default("project"),
   targetId: text("target_id"),
-});
+}, (t) => [
+  index("idx_comments_blog_posts").on(t.targetType, t.targetId).where(sql`target_type = 'blog_post'::text`),
+  index("idx_comments_target").on(t.targetType, t.targetId),
+]);
 
 export const communityContacts = site.table("community_contacts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -124,7 +140,10 @@ export const communityContacts = site.table("community_contacts", {
   phone: text("phone"),
   summary: text("summary"),
   visibility: text("visibility").default("private"),
-});
+}, (t) => [
+  uniqueIndex("community_contacts_email_idx").on(t.email),
+  index("community_contacts_matched_profile_id_idx").on(t.matchedProfileId),
+]);
 
 export const connections = site.table("connections", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -133,7 +152,12 @@ export const connections = site.table("connections", {
   status: text("status").default("pending").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
-});
+}, (t) => [
+  unique("connections_requester_id_recipient_id_key").on(t.requesterId, t.recipientId),
+  index("idx_connections_recipient").on(t.recipientId),
+  index("idx_connections_requester").on(t.requesterId),
+  index("idx_connections_status").on(t.status),
+]);
 
 export const contentEvents = site.table("content_events", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -143,7 +167,9 @@ export const contentEvents = site.table("content_events", {
   eventDate: date("event_date").notNull(),
   color: text("color").default("coral"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-});
+}, (t) => [
+  index("content_events_user_id_idx").on(t.userId),
+]);
 
 export const conversations = site.table("conversations", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -151,7 +177,11 @@ export const conversations = site.table("conversations", {
   participant2: uuid("participant_2").notNull().references(() => profiles.id),
   lastMessageAt: timestamp("last_message_at", { withTimezone: true }).defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-});
+}, (t) => [
+  unique("unique_conversation").on(t.participant1, t.participant2),
+  index("idx_conversations_participant_1").on(t.participant1),
+  index("idx_conversations_participant_2").on(t.participant2),
+]);
 
 export const emailSubscriptions = site.table("email_subscriptions", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -163,7 +193,12 @@ export const emailSubscriptions = site.table("email_subscriptions", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
-});
+}, (t) => [
+  unique("email_subscriptions_email_key").on(t.email),
+  index("idx_email_subscriptions_created_at").on(t.createdAt.desc()),
+  index("idx_email_subscriptions_email").on(t.email),
+  index("idx_email_subscriptions_is_active").on(t.isActive),
+]);
 
 export const events = site.table("events", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -178,7 +213,9 @@ export const events = site.table("events", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
   isAllDay: boolean("is_all_day").default(false),
-});
+}, (t) => [
+  index("events_start_time_idx").on(t.startTime),
+]);
 
 export const feedback = site.table("feedback", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -198,7 +235,9 @@ export const hackathonScores = site.table("hackathon_scores", {
   score: integer("score").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
-});
+}, (t) => [
+  unique("hackathon_scores_judge_name_submission_id_criterion_key_key").on(t.judgeName, t.submissionId, t.criterionKey),
+]);
 
 export const hackathonSubmissions = site.table("hackathon_submissions", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -217,14 +256,19 @@ export const hackathonSubmissions = site.table("hackathon_submissions", {
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
   isFinalist: boolean("is_finalist").default(false),
   isRound2: boolean("is_round2").default(false).notNull(),
-});
+}, (t) => [
+  index("hackathon_submissions_created_at_idx").on(t.createdAt.desc()),
+  index("hackathon_submissions_status_idx").on(t.status),
+]);
 
 export const hackathonVoterNotes = site.table("hackathon_voter_notes", {
   judgeName: text("judge_name").notNull(),
   submissionId: uuid("submission_id").notNull(),
   notes: text("notes").default("").notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-}, (t) => [primaryKey({ columns: [t.judgeName, t.submissionId] })]);
+}, (t) => [
+  primaryKey({ columns: [t.judgeName, t.submissionId] }),
+]);
 
 export const homeVisions = site.table("home_visions", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -236,7 +280,10 @@ export const homeVisions = site.table("home_visions", {
   ruleText: text("rule_text"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => [
+  unique("home_visions_user_id_key").on(t.userId),
+  index("home_visions_user_idx").on(t.userId),
+]);
 
 export const identities = site.table("identities", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -245,7 +292,9 @@ export const identities = site.table("identities", {
   isActive: boolean("is_active").default(true).notNull(),
   sortOrder: integer("sort_order").default(0).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => [
+  index("identities_user_idx").on(t.userId),
+]);
 
 export const innovationHackathonSignups = site.table("innovation_hackathon_signups", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -256,7 +305,9 @@ export const innovationHackathonSignups = site.table("innovation_hackathon_signu
   email: text("email"),
   matchedTeam: text("matched_team"),
   isFinalist: boolean("is_finalist").default(false),
-});
+}, (t) => [
+  index("innovation_hackathon_signups_created_at_idx").on(t.createdAt.desc()),
+]);
 
 export const likes = site.table("likes", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -265,7 +316,11 @@ export const likes = site.table("likes", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   targetType: text("target_type").default("project"),
   targetId: text("target_id"),
-});
+}, (t) => [
+  unique("likes_user_id_project_id_key").on(t.userId, t.projectId),
+  index("idx_likes_blog_posts").on(t.targetType, t.targetId).where(sql`target_type = 'blog_post'::text`),
+  index("idx_likes_target").on(t.targetType, t.targetId),
+]);
 
 export const matcherContacts = site.table("matcher_contacts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -276,7 +331,10 @@ export const matcherContacts = site.table("matcher_contacts", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
   customFields: jsonb("custom_fields"),
-});
+}, (t) => [
+  unique("matcher_contacts_user_id_email_key").on(t.userId, t.email),
+  index("idx_matcher_contacts_user_id").on(t.userId),
+]);
 
 export const matcherEvents = site.table("matcher_events", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -287,7 +345,9 @@ export const matcherEvents = site.table("matcher_events", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   lastQuery: text("last_query"),
   lastRecommendations: jsonb("last_recommendations"),
-});
+}, (t) => [
+  index("idx_matcher_events_user_id").on(t.userId),
+]);
 
 export const meetups = site.table("meetups", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -306,7 +366,10 @@ export const messages = site.table("messages", {
   content: text("content").notNull(),
   readAt: timestamp("read_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-});
+}, (t) => [
+  index("idx_messages_conversation").on(t.conversationId, t.createdAt),
+  index("idx_messages_sender").on(t.senderId),
+]);
 
 export const mulerunDemos = site.table("mulerun_demos", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -315,14 +378,18 @@ export const mulerunDemos = site.table("mulerun_demos", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   teamName: text("team_name"),
   videoUrl: text("video_url"),
-});
+}, (t) => [
+  index("mulerun_demos_created_at_idx").on(t.createdAt.desc()),
+]);
 
 export const mulerunSignups = site.table("mulerun_signups", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   categories: text("categories").array().notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => [
+  index("mulerun_signups_created_at_idx").on(t.createdAt.desc()),
+]);
 
 export const mulerunVotes = site.table("mulerun_votes", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -332,13 +399,18 @@ export const mulerunVotes = site.table("mulerun_votes", {
   thirdId: uuid("third_id").notNull().references(() => mulerunDemos.id),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => [
+  unique("mulerun_votes_voter_id_key").on(t.voterId),
+  index("mulerun_votes_created_at_idx").on(t.createdAt.desc()),
+]);
 
 export const podcastGuests = site.table("podcast_guests", {
   id: uuid("id").primaryKey().defaultRandom(),
   podcastId: uuid("podcast_id").notNull().references(() => podcasts.id),
   profileId: uuid("profile_id").notNull().references(() => profiles.id),
-});
+}, (t) => [
+  unique("podcast_guests_podcast_id_profile_id_key").on(t.podcastId, t.profileId),
+]);
 
 export const podcasts = site.table("podcasts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -356,7 +428,9 @@ export const podcasts = site.table("podcasts", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
   createdBy: uuid("created_by").references(() => profiles.id),
   videoUrl: text("video_url"),
-});
+}, (t) => [
+  unique("podcasts_slug_key").on(t.slug),
+]);
 
 export const profileEventNotes = site.table("profile_event_notes", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -366,7 +440,9 @@ export const profileEventNotes = site.table("profile_event_notes", {
   notes: text("notes"),
   createdBy: uuid("created_by").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => [
+  unique("profile_event_notes_profile_id_meetup_id_key").on(t.profileId, t.meetupId),
+]);
 
 export const profiles = site.table("profiles", {
   id: uuid("id").primaryKey(),
@@ -401,7 +477,12 @@ export const profiles = site.table("profiles", {
   lookingForHelp: text("looking_for_help"),
   linkedinData: jsonb("linkedin_data"),
   linkedinDataUpdatedAt: timestamp("linkedin_data_updated_at", { withTimezone: true }),
-});
+}, (t) => [
+  unique("profiles_username_key").on(t.username),
+  index("idx_profiles_application_status").on(t.applicationStatus),
+  index("idx_profiles_onboarding").on(t.hasCompletedOnboarding),
+  index("profiles_skills_idx").using("gin", t.skills),
+]);
 
 export const projects = site.table("projects", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -414,7 +495,10 @@ export const projects = site.table("projects", {
   // Post category: project_showcase, job_board, question, or update. NULL for legacy posts
   category: text("category"),
   metadata: jsonb("metadata"),
-});
+}, (t) => [
+  index("idx_projects_category").on(t.category),
+  index("idx_projects_category_created_at").on(t.category, t.createdAt.desc()),
+]);
 
 export const reports = site.table("reports", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -427,7 +511,10 @@ export const reports = site.table("reports", {
   status: text("status").default("pending").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
-});
+}, (t) => [
+  index("idx_reports_reporter").on(t.reporterId),
+  index("idx_reports_status").on(t.status),
+]);
 
 export const scheduledPosts = site.table("scheduled_posts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -443,7 +530,10 @@ export const scheduledPosts = site.table("scheduled_posts", {
   postedAt: timestamp("posted_at", { withTimezone: true }),
   qstashMessageId: text("qstash_message_id"),
   mediaUrls: text("media_urls").array(),
-});
+}, (t) => [
+  index("idx_scheduled_posts_pending").on(t.scheduledFor).where(sql`status = 'pending'::text`),
+  index("idx_scheduled_posts_user").on(t.userId),
+]);
 
 export const socialConnections = site.table("social_connections", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -459,7 +549,10 @@ export const socialConnections = site.table("social_connections", {
   scopes: text("scopes").array(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
-});
+}, (t) => [
+  unique("social_connections_user_id_platform_platform_user_id_key").on(t.userId, t.platform, t.platformUserId),
+  index("idx_social_connections_user_platform").on(t.userId, t.platform),
+]);
 
 export const valuePortfolio = site.table("value_portfolio", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -471,7 +564,9 @@ export const valuePortfolio = site.table("value_portfolio", {
   links: jsonb("links"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
-});
+}, (t) => [
+  index("idx_value_portfolio_user_id").on(t.userId),
+]);
 
 export const workshops = site.table("workshops", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -491,4 +586,7 @@ export const workshops = site.table("workshops", {
   isVirtual: boolean("is_virtual").default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
-});
+}, (t) => [
+  index("idx_workshops_date").on(t.date.desc()),
+  index("idx_workshops_published").on(t.isPublished),
+]);
