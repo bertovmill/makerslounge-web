@@ -163,8 +163,40 @@ need re-creating as a view or folding into a query.
 
 **Phase 1 — auth cutover.** The riskiest phase, so it goes early while the
 codebase is otherwise unchanged and a revert is cheap.
-1. Import users into Clerk (bcrypt for password users, verified-email matching
-   for Google/Apple), writing `clerk_user_id` onto `profiles`.
+
+**Step 1 is done (2026-08-16): all users are in Clerk production.**
+
+| | |
+| --- | --- |
+| Clerk production users | 138 |
+| With `external_id` (the Supabase uuid) | 138 / 138 |
+| With a verified email | 138 / 138 |
+| With their existing password carried over | 68 |
+| `profiles.clerk_user_id` populated | 138 / 139 |
+
+Every password hash in `auth.users` was bcrypt (`$2a$`), which Clerk's
+`password_digest` + `password_hasher: "bcrypt"` accepts directly — so **no user
+needs a password reset**. `skip_password_checks` is required on import, or
+legacy passwords that predate Clerk's strength rules get rejected.
+
+The id mapping runs both ways on purpose: Clerk's `external_id` holds the
+Supabase uuid, and `profiles.clerk_user_id` holds the Clerk id (nullable, with a
+partial unique index so two profiles can never collapse onto one Clerk
+identity). `profiles.id` is untouched and remains the Supabase auth uuid, so
+both id spaces coexist and the cutover stays reversible.
+
+One user is unmigrated: `jarodh@gmail` has no TLD and Clerk rejects it as
+malformed. That address cannot receive mail today either, so it needs a
+correction in Supabase, not a workaround.
+
+**Steps 2–4 are blocked**, and must not start until:
+
+- **Google and Apple OAuth credentials** are configured on the Clerk production
+  instance. Production does not use Clerk's shared dev OAuth app, so cutting
+  over first would lock out 69 Google and 3 Apple users on their next sign-in.
+- **A cutover window** is chosen, with the rollback rehearsed.
+
+Remaining steps:
 2. Move `ClerkProvider` from `src/app/eve-workshop/layout.tsx` to the root
    layout, and widen `middleware.ts` from the workshop-only matcher to the whole
    site.
