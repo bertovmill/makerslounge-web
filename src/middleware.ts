@@ -68,14 +68,27 @@ function isEveWorkshopHost(request: NextRequest) {
   return host === EVE_WORKSHOP_HOST;
 }
 
+// Clerk now runs on every request, because `ClerkProvider` sits in the root
+// layout and its session cannot resolve on a route the middleware skipped.
+// Enforcement is still narrow: only the workshop redirects to a sign-in page.
+// The rest of the site decides its own access in the page, exactly as before.
 const withClerk = clerkMiddleware(async (auth, req) => {
-  const isPublic = isEveWorkshopHost(req)
-    ? isPublicEveHostRoute(req)
-    : isPublicWorkshopRoute(req);
+  const onWorkshop = isEveWorkshopHost(req) || isWorkshopRoute(req);
 
-  if (!isPublic) {
-    await auth.protect();
+  if (onWorkshop) {
+    const isPublic = isEveWorkshopHost(req)
+      ? isPublicEveHostRoute(req)
+      : isPublicWorkshopRoute(req);
+    if (!isPublic) {
+      await auth.protect();
+    }
+    // The workshop never touched Supabase and still doesn't.
+    return;
   }
+
+  // Everywhere else, keep refreshing the Supabase token while pre-cutover
+  // sessions are still in play. Drops out once everyone is on Clerk.
+  return refreshSupabaseSession(req);
 });
 
 async function refreshSupabaseSession(request: NextRequest) {
@@ -112,19 +125,7 @@ async function refreshSupabaseSession(request: NextRequest) {
   return supabaseResponse;
 }
 
-export default function middleware(
-  request: NextRequest,
-  event: Parameters<typeof withClerk>[1]
-) {
-  // Workshop routes never touch Supabase, and the rest of the site never pays
-  // the cost of Clerk's handshake. On the workshop's own host, every path is a
-  // workshop path.
-  if (isEveWorkshopHost(request) || isWorkshopRoute(request)) {
-    return withClerk(request, event);
-  }
-
-  return refreshSupabaseSession(request);
-}
+export default withClerk;
 
 export const config = {
   matcher: [
