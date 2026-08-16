@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { Check, X, Clock, ExternalLink, ArrowLeft, Mail } from "lucide-react";
 import Link from "next/link";
@@ -26,6 +27,7 @@ interface Application {
 const ADMIN_EMAIL = "bertmill19@gmail.com";
 
 export default function ApplicationsAdmin() {
+  const { user: authUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +43,7 @@ export default function ApplicationsAdmin() {
   }, [isAdmin, filter]);
 
   const checkAdmin = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = authUser;
     if (!user || user.email !== ADMIN_EMAIL) {
       router.push("/home");
       return;
@@ -66,7 +68,7 @@ export default function ApplicationsAdmin() {
   };
 
   const updateStatus = async (id: string, status: "pending" | "approved" | "rejected") => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = authUser;
     const { error } = await supabase
       .from("applications")
       .update({

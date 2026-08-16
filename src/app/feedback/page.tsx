@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { User } from "@supabase/supabase-js";
+import { useAuth, type AuthUser } from "@/context/AuthContext";
 import { LiquidGlassCard } from "@/components/LiquidGlass";
 
 interface Feedback {
@@ -15,14 +15,15 @@ interface Feedback {
 }
 
 export default function FeedbackPage() {
-  const [user, setUser] = useState<User | null>(null);
+  const { user: authUser, loading: authLoading } = useAuth();
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [enlargedScreenshot, setEnlargedScreenshot] = useState<string | null>(null);
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = authUser;
       setUser(user);
 
       if (user?.email === "bertmill19@gmail.com") {

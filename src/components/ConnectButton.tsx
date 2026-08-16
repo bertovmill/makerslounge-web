@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Clock, UserCheck, X, Check } from "lucide-react";
 
@@ -18,6 +19,7 @@ interface ConnectButtonProps {
 }
 
 export function ConnectButton({ profileId, className }: ConnectButtonProps) {
+  const { user } = useAuth();
   const [status, setStatus] = useState<ConnectionStatus>("loading");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [connectionId, setConnectionId] = useState<string | null>(null);
@@ -26,9 +28,6 @@ export function ConnectButton({ profileId, className }: ConnectButtonProps) {
   // Check auth and connection status on mount
   useEffect(() => {
     const checkConnectionStatus = async () => {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-
       if (!user) {
         setStatus("none");
         return;
@@ -71,7 +70,7 @@ export function ConnectButton({ profileId, className }: ConnectButtonProps) {
     };
 
     checkConnectionStatus();
-  }, [profileId]);
+  }, [profileId, user]);
 
   const sendRequest = async () => {
     if (!currentUserId) return;

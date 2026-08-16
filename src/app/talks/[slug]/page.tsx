@@ -5,6 +5,7 @@ import MarketingShell from "@/components/MarketingShell";
 import TalkPlayer from "@/components/TalkPlayer";
 import TalkSignupGate from "@/components/TalkSignupGate";
 import { createClient } from "@/lib/supabase-server";
+import { getServerAppUser } from "@/lib/clerk-server";
 import { fetchTalkBySlug, fetchTalkContent, formatTalkDuration, formatSpeaker } from "@/lib/talks";
 
 interface TalkPageProps {
@@ -42,9 +43,7 @@ export default async function TalkPage({ params }: TalkPageProps) {
   const talk = await fetchTalkBySlug(supabase, slug);
   if (!talk) notFound();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getServerAppUser();
 
   // RLS does the real gatekeeping — this comes back null when signed out, so a
   // bug in the UI can't leak the id.

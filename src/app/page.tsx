@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, Instagram, Linkedin, Menu, X, Mic, Play, ExternalLink, BookOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -160,24 +161,15 @@ const ACTION_TREE: ActionCategory[] = [
 ];
 
 export default function Home() {
+  const { user: authUser, loading: authLoading } = useAuth();
+  // Signed-in visitors go straight to the feed. AuthContext tracks the session,
+  // so the extra auth listener this used to keep is gone — and `authUser` in
+  // the deps is what makes it fire once Clerk has actually resolved, rather
+  // than on the first render when it is still null.
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      window.location.href = "/home";
-    };
-
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        checkAuth();
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    if (authLoading || !authUser) return;
+    window.location.href = "/home";
+  }, [authLoading, authUser]);
 
   const { resolved, setTheme } = useTheme();
   const toggleTheme = () => setTheme(resolved === "dark" ? "light" : "dark");

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerAppUser } from "@/lib/clerk-server";
 import { createClient } from "@/lib/supabase-server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { generateObject } from "ai";
@@ -58,9 +59,7 @@ export async function POST(
   const { id: profileId } = await params;
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getServerAppUser();
 
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
