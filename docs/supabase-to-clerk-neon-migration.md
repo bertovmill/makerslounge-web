@@ -114,22 +114,51 @@ because production had 38 tables against 31 in the plan and the committed SQL
 had drifted. Regenerate the same way if the Supabase schema changes before
 cutover.
 
-Two things that introspection could not see, both of which must be closed before
-Phase 2 moves any data:
+Constraints and indexes come from a second source, a `pg_dump --schema-only`
+taken the same day, because PostgREST describes neither. **15 UNIQUE
+constraints, 1 unique index and 53 further indexes** are now in the schema —
+including `profiles_username_key`, whose absence would have silently permitted
+duplicate usernames and broken `/p/[username]` with no error at the point of
+failure.
 
-1. **Indexes and UNIQUE constraints.** The OpenAPI spec exposes columns, types,
-   primary keys and foreign keys — nothing else. The committed migrations hold
-   roughly 62 indexes and 9 UNIQUE constraints with no counterpart in the
-   generated schema. The unique ones are the hazard: a missing UNIQUE on
-   `profiles.username` doesn't throw, it silently allows duplicates and breaks
-   `/p/[username]`.
-2. **RLS policies**, which Phase 2 has to re-express as application code.
+The dump lives at `~/supabase-schema-backups/schema-public.sql`, deliberately
+outside the repo.
 
-Both come out of a `pg_dump --schema-only` against Supabase (connection string
-from Dashboard → Settings → Database). That dump is the real prerequisite for
-Phase 1, and it's worth taking as a backup regardless.
+### Getting the dump again
 
-`connection_counts` was excluded — it's an aggregate view, not a table, and will
+The obvious path does not work. `db.<ref>.supabase.co` is **IPv6-only** since
+Supabase dropped IPv4 for direct connections, so it fails to resolve on an
+IPv4-only machine. Use the **session pooler** instead — note `aws-1`, and note
+the username carries the project ref:
+
+```
+postgresql://postgres.<ref>:<password>@aws-1-us-east-1.pooler.supabase.com:5432/postgres
+```
+
+Port 5432, not the transaction pooler's 6543 — `pg_dump` needs session mode.
+`pg_dump` itself comes from Homebrew `libpq` (client only). If the pooler
+answers `Tenant or user not found` the region prefix is wrong; if it answers
+`password authentication failed`, the host is right and only the password is
+wrong.
+
+### What the dump found that this plan had missed
+
+- **112 RLS policies across 35 tables**, catalogued in
+  `docs/rls-policy-inventory.md`. 66 are row-owner checks, 14 hardcode an admin
+  email, 19 are wide open. That file is the Phase 2 worksheet.
+- **`hackathon_voter_notes` has RLS enabled with zero policies** — which in
+  Postgres denies everything to `anon` and `authenticated`, not "allows
+  everything". Only the service-role key reaches it today.
+- **9 functions and 6 triggers**, which the original inventory did not mention
+  at all. They need reading and porting or replacing before Phase 2 completes;
+  a trigger that silently stops firing is the same class of failure as a
+  dropped RLS policy.
+- **One expression index** (`idx_blog_posts_search`, a GIN full-text index over
+  `title || excerpt || content`) that the Drizzle DSL cannot express. It must be
+  added as raw SQL after the tables are created, or blog search degrades to a
+  sequential scan.
+
+`connection_counts` is excluded — it's an aggregate view, not a table, and will
 need re-creating as a view or folding into a query.
 
 **Phase 1 — auth cutover.** The riskiest phase, so it goes early while the
@@ -167,11 +196,13 @@ somewhere durable).
 ~~1. **Realtime**~~ — decided: polling. See "Decisions taken" above.
 ~~2. **One Neon project or two?**~~ — decided: one, split by Postgres schema.
 
+~~3. **`pg_dump --schema-only`**~~ — taken 2026-08-16; constraints folded in and
+policies catalogued.
+
 Still open:
 
-1. **`pg_dump --schema-only` from Supabase.** Blocks Phase 1: it's the only
-   source for the indexes, UNIQUE constraints and RLS policies that PostgREST
-   introspection cannot see. Also the backup you want before touching anything.
+1. **A data dump.** The schema dump is structure only. Before any cutover, take
+   a full `pg_dump` with rows as a real backup — that has not been done.
 2. **Clerk instance.** The workshop currently runs against a Clerk
    **development** instance (`*.clerk.accounts.dev`), which is exactly why
    `src/app/eve-workshop/profile/actions.ts` has a hand-rolled server-side
