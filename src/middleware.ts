@@ -41,8 +41,39 @@ const isWorkshopRoute = createRouteMatcher([
   "/eve/(.*)",
 ]);
 
+// eve.makerslounge.ca serves the workshop from unprefixed paths (`/wifi`,
+// `/attendees`, …) via the host rewrites in `next.config.ts`.
+//
+// Middleware runs BEFORE those rewrites, so on that host it sees `/wifi`, not
+// `/eve-workshop/wifi` — the matchers above would all miss, Clerk would never
+// run, and the rewrite would then happily serve a page that is auth-gated on
+// the main domain. So the host gets its own matcher over the unprefixed paths.
+// The whole subdomain is the workshop, so everything on it is a workshop route.
+const EVE_WORKSHOP_HOST = "eve.makerslounge.ca";
+
+const isPublicEveHostRoute = createRouteMatcher([
+  "/",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/eve",
+  "/eve/(.*)",
+  // Reachable unprefixed too, since the app's own routes still resolve here.
+  "/eve-workshop",
+  "/eve-workshop/sign-in(.*)",
+  "/eve-workshop/sign-up(.*)",
+]);
+
+function isEveWorkshopHost(request: NextRequest) {
+  const host = request.headers.get("host")?.split(":")[0].toLowerCase();
+  return host === EVE_WORKSHOP_HOST;
+}
+
 const withClerk = clerkMiddleware(async (auth, req) => {
-  if (isWorkshopRoute(req) && !isPublicWorkshopRoute(req)) {
+  const isPublic = isEveWorkshopHost(req)
+    ? isPublicEveHostRoute(req)
+    : isPublicWorkshopRoute(req);
+
+  if (!isPublic) {
     await auth.protect();
   }
 });
@@ -86,8 +117,9 @@ export default function middleware(
   event: Parameters<typeof withClerk>[1]
 ) {
   // Workshop routes never touch Supabase, and the rest of the site never pays
-  // the cost of Clerk's handshake.
-  if (isWorkshopRoute(request)) {
+  // the cost of Clerk's handshake. On the workshop's own host, every path is a
+  // workshop path.
+  if (isEveWorkshopHost(request) || isWorkshopRoute(request)) {
     return withClerk(request, event);
   }
 
