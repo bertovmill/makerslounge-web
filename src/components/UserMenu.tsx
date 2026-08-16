@@ -17,7 +17,7 @@ interface Profile {
 
 export default function UserMenu() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { resolved, setTheme } = useTheme();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -57,7 +57,7 @@ export default function UserMenu() {
   const toggleTheme = () => setTheme(resolved === "dark" ? "light" : "dark");
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     router.push("/");
   };
 

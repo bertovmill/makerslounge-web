@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Download, FileJson, FileSpreadsheet, Trophy } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 
 const MIN_FINALISTS = 6;
 const MAX_FINALISTS = 9;
@@ -66,6 +67,7 @@ function timestampForFilename(): string {
 }
 
 export default function HackathonSignupsAdmin() {
+  const { user: authUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const [signups, setSignups] = useState<Signup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,9 +76,7 @@ export default function HackathonSignupsAdmin() {
 
   useEffect(() => {
     const init = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const user = authUser;
       if (!user || user.email !== ADMIN_EMAIL) {
         router.push("/home");
         return;

@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { getServerAppUser } from "@/lib/clerk-server";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
 import SubmissionsTable, { type Submission } from "./SubmissionsTable";
@@ -11,9 +12,7 @@ const ADMIN_EMAIL = "bertmill19@gmail.com";
 
 export default async function HackathonAdminPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getServerAppUser();
 
   if (!user) {
     redirect("/auth?next=/hackathons/2026-innovation-hackathon/admin");

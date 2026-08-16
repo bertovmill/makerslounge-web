@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import BlogPostForm from "../BlogPostForm";
 
 export default function NewBlogPostPage() {
+  const { user: authUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -16,7 +18,7 @@ export default function NewBlogPostPage() {
   }, []);
 
   const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = authUser;
 
     if (!user || user.email !== "bertmill19@gmail.com") {
       router.push("/profile");

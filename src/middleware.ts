@@ -1,19 +1,14 @@
-import { createServerClient } from "@supabase/ssr";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest } from "next/server";
 
 /**
- * Two auth systems share this file while the site migrates from Supabase to
- * Clerk:
+ * Clerk authenticates the entire site. Supabase is the database only and no
+ * longer has a session to refresh here.
  *
- * - Clerk owns `/eve-workshop/*` — the Eve Agent Workshop, folded in from its
- *   own repo. Its attendee records are keyed by Clerk user ids.
- * - Supabase owns everything else, where the only job is refreshing the auth
- *   token on each request.
- *
- * Clerk is mounted app-wide (see `ClerkProvider` in the root layout) but only
- * *enforced* on the routes below, so the rest of the site is untouched until
- * the migration proper.
+ * Clerk runs on every request because `ClerkProvider` sits in the root layout
+ * and a session cannot resolve on a route the middleware skipped. Enforcement
+ * stays narrow: only the workshop redirects to a sign-in page. Everywhere else
+ * decides its own access in the page, as it always has.
  */
 
 // Workshop routes that must stay reachable while signed out.
@@ -68,62 +63,19 @@ function isEveWorkshopHost(request: NextRequest) {
   return host === EVE_WORKSHOP_HOST;
 }
 
-// Clerk now runs on every request, because `ClerkProvider` sits in the root
-// layout and its session cannot resolve on a route the middleware skipped.
-// Enforcement is still narrow: only the workshop redirects to a sign-in page.
-// The rest of the site decides its own access in the page, exactly as before.
 const withClerk = clerkMiddleware(async (auth, req) => {
+  // Clerk still runs everywhere so the session resolves, but only the workshop
+  // is redirect-protected here.
   const onWorkshop = isEveWorkshopHost(req) || isWorkshopRoute(req);
+  if (!onWorkshop) return;
 
-  if (onWorkshop) {
-    const isPublic = isEveWorkshopHost(req)
-      ? isPublicEveHostRoute(req)
-      : isPublicWorkshopRoute(req);
-    if (!isPublic) {
-      await auth.protect();
-    }
-    // The workshop never touched Supabase and still doesn't.
-    return;
+  const isPublic = isEveWorkshopHost(req)
+    ? isPublicEveHostRoute(req)
+    : isPublicWorkshopRoute(req);
+  if (!isPublic) {
+    await auth.protect();
   }
-
-  // Everywhere else, keep refreshing the Supabase token while pre-cutover
-  // sessions are still in play. Drops out once everyone is on Clerk.
-  return refreshSupabaseSession(req);
 });
-
-async function refreshSupabaseSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  // IMPORTANT: Do not remove this line - it refreshes the auth token
-  await supabase.auth.getUser();
-
-  return supabaseResponse;
-}
 
 export default withClerk;
 

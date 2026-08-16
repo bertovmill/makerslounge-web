@@ -7,24 +7,24 @@ import { supabase } from "@/lib/supabase";
 import { resolveProfileId } from "@/lib/clerk-profile";
 
 /**
- * Auth for the whole site, during and after the move to Clerk.
+ * Auth for the whole site. Clerk owns the session; Supabase owns the data.
  *
- * Deliberately dual-mode, the same way `current_profile_id()` is in the
- * database: a Clerk session is preferred, and an existing Supabase session
- * still works. That is what makes this shippable before the cutover instead of
- * as a big-bang switch — deploying it does not sign anybody out, and users move
- * across as they next sign in. The Supabase branch comes out once no live
- * sessions remain.
- *
- * `user.id` is deliberately still the profile uuid, not the Clerk id — every
- * foreign key and all ~72 `user.id` call sites depend on it. Clerk's id is
- * exposed separately for the rare caller that needs it.
+ * `user.id` is the profile uuid, not the Clerk id — every foreign key and all
+ * ~72 `user.id` call sites depend on it. `clerkUserId` is exposed separately
+ * for the few callers that need the identity provider's own id.
  */
 export interface AuthUser {
   /** Profile uuid. The id every table's foreign keys point at. */
   id: string;
   email: string | null;
   clerkUserId: string;
+  /**
+   * What Supabase used to expose as `user_metadata.full_name` /
+   * `avatar_url` — the display name and picture the OAuth provider supplied.
+   * Onboarding and the profile editor prefill from these.
+   */
+  fullName: string | null;
+  imageUrl: string | null;
 }
 
 interface AuthContextType {
@@ -54,60 +54,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Resolve whichever session exists — Clerk first, then a legacy Supabase one.
+  // Map the Clerk session onto a profile uuid.
   useEffect(() => {
     if (!isLoaded) return;
 
     let cancelled = false;
 
-    const clearUser = () => {
-      setUser(null);
-      setOnboardingComplete(true);
-      hasCheckedOnboarding.current = false;
-      setLoading(false);
-    };
-
     (async () => {
-      if (isSignedIn && clerkUser) {
-        const profileId = await resolveProfileId(clerkUser.id, {
-          firstName: clerkUser.firstName,
-          lastName: clerkUser.lastName,
-        });
+      if (!isSignedIn || !clerkUser) {
         if (cancelled) return;
-
-        if (!profileId) {
-          // Authenticated but unusable. Surfacing this beats silently rendering
-          // a signed-out UI to someone who is in fact signed in.
-          console.error("[auth] could not resolve a profile for", clerkUser.id);
-          clearUser();
-          return;
-        }
-
-        setUser({
-          id: profileId,
-          email: clerkUser.primaryEmailAddress?.emailAddress ?? null,
-          clerkUserId: clerkUser.id,
-        });
+        setUser(null);
+        setOnboardingComplete(true);
+        hasCheckedOnboarding.current = false;
+        setLoading(false);
         return;
       }
 
-      // No Clerk session: fall back to a Supabase one so people signed in
-      // before the cutover are not logged out by a deploy.
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const profileId = await resolveProfileId(clerkUser.id, {
+        firstName: clerkUser.firstName,
+        lastName: clerkUser.lastName,
+      });
       if (cancelled) return;
 
-      const legacy = session?.user;
-      if (!legacy) {
-        clearUser();
+      if (!profileId) {
+        // Authenticated but unusable. Surfacing this beats silently rendering a
+        // signed-out UI to someone who is in fact signed in.
+        console.error("[auth] could not resolve a profile for", clerkUser.id);
+        setUser(null);
+        setLoading(false);
         return;
       }
 
       setUser({
-        id: legacy.id,
-        email: legacy.email ?? null,
-        clerkUserId: "",
+        id: profileId,
+        email: clerkUser.primaryEmailAddress?.emailAddress ?? null,
+        clerkUserId: clerkUser.id,
+        fullName: clerkUser.fullName ?? null,
+        imageUrl: clerkUser.imageUrl ?? null,
       });
     })();
 
@@ -115,26 +98,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [isLoaded, isSignedIn, clerkUser]);
-
-  // Keep tracking legacy Supabase sign-in/sign-out while any such sessions
-  // remain. Removed once everyone is on Clerk.
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (isSignedIn) return; // a Clerk session wins
-      const legacy = session?.user;
-      if (legacy) {
-        setUser({ id: legacy.id, email: legacy.email ?? null, clerkUserId: "" });
-      } else {
-        setUser(null);
-        setOnboardingComplete(true);
-        hasCheckedOnboarding.current = false;
-        setLoading(false);
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [isSignedIn]);
 
   // Check onboarding once when user is set
   useEffect(() => {
@@ -167,10 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setOnboardingComplete(!!(profile?.name?.trim()));
   };
 
-  // Sign out of both, since a user may hold either kind of session.
   const signOut = async () => {
-    if (isSignedIn) await clerkSignOut();
-    await supabase.auth.signOut();
+    await clerkSignOut();
   };
 
   // Single redirect — only when we've finished checking

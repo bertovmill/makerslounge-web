@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getServerAppUser } from "@/lib/clerk-server";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
 import { getAllPostsAdmin } from "@/lib/blog";
@@ -9,8 +10,7 @@ import DeletePostButton from "./DeletePostButton";
 
 export default async function AdminBlogPage() {
   // Check authentication
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getServerAppUser();
 
   if (!user || user.email !== "bertmill19@gmail.com") {
     redirect("/profile");

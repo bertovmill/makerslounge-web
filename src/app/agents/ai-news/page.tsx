@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { DitherShader } from "@/components/ui/dither-shader";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
+import { useAuth as useClerkAuth } from "@clerk/nextjs";
 import { AnimatePresence, motion } from "motion/react";
 
 interface Comment {
@@ -500,6 +502,8 @@ function PostCard({
 }
 
 export default function AINewsAgentPage() {
+  const { user: authUser, isAdmin: authIsAdmin } = useAuth();
+  const { getToken } = useClerkAuth();
   const [isFollowing, setIsFollowing] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -518,11 +522,9 @@ export default function AINewsAgentPage() {
 
   // Check if user is admin and get user ID
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setIsAdmin(user?.email === "bertmill19@gmail.com");
-      setCurrentUserId(user?.id || null);
-    });
-  }, []);
+    setIsAdmin(authIsAdmin);
+    setCurrentUserId(authUser?.id || null);
+  }, [authIsAdmin, authUser]);
 
   // Fetch agent posts (posts with posted_by_agent metadata)
   useEffect(() => {
@@ -604,14 +606,14 @@ export default function AINewsAgentPage() {
     setRunResult(null);
 
     try {
-      // Get current session token for API authentication
-      const { data: { session } } = await supabase.auth.getSession();
+      // Clerk issues the bearer token now; the route verifies it the same way.
+      const token = await getToken();
 
       const response = await fetch("/api/agents/ai-news", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.access_token || ""}`,
+          "Authorization": `Bearer ${token || ""}`,
         },
         body: JSON.stringify({ action: "run", stream: true, userId: currentUserId }),
       });
