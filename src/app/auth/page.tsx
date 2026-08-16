@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { rememberPostAuthRedirect, takePostAuthRedirect } from "@/lib/post-auth-redirect";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { DottedGlowBackground } from "@/components/ui/dotted-glow-background";
@@ -387,6 +388,14 @@ function AuthContent() {
       return;
     }
 
+    // A gated page (e.g. a talk) parked its path here before sending the user
+    // over; honour it ahead of the matcher and the default feed.
+    const next = takePostAuthRedirect();
+    if (next) {
+      router.push(next);
+      return;
+    }
+
     const pendingQuery = searchParams.get("q") || localStorage.getItem("pendingMatcherQuery");
 
     if (pendingQuery) {
@@ -402,6 +411,7 @@ function AuthContent() {
     if (q) {
       localStorage.setItem("pendingMatcherQuery", q);
     }
+    rememberPostAuthRedirect(searchParams.get("next"));
   }, [searchParams]);
 
   useEffect(() => {
