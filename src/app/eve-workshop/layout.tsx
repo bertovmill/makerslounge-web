@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
 import { WelcomeTour } from "@/components/eve-workshop/welcome-tour";
 
 export const metadata: Metadata = {
@@ -15,10 +14,10 @@ export const metadata: Metadata = {
  * radius scale in `globals.css`, so its palette can't leak into the rest of
  * the site and the site's editorial motif can't bleed into the slides.
  *
- * `ClerkProvider` sits here rather than in the root layout because Clerk is
- * only *enforced* on these routes for now (see `middleware.ts`) — mounting it
- * at the root would make every Supabase-authed page depend on Clerk's
- * middleware having run. It moves up when the site migrates to Clerk proper.
+ * `ClerkProvider` used to sit here, back when Clerk was enforced only on these
+ * routes. It now lives in the root layout because Clerk authenticates the whole
+ * site — nesting a second provider here would give the workshop its own Clerk
+ * context and split the session.
  */
 export default function EveWorkshopLayout({
   children,
@@ -26,10 +25,8 @@ export default function EveWorkshopLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
-      <div className="eve-workshop flex min-h-svh flex-col antialiased">
-        <WelcomeTour>{children}</WelcomeTour>
-      </div>
-    </ClerkProvider>
+    <div className="eve-workshop flex min-h-svh flex-col antialiased">
+      <WelcomeTour>{children}</WelcomeTour>
+    </div>
   );
 }
