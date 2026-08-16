@@ -3,20 +3,21 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { User } from "@supabase/supabase-js";
+import { useAuth, type AuthUser } from "@/context/AuthContext";
 import QuickForm from "@/components/onboarding/QuickForm";
 import ProfilePreview, { type ProfileData } from "@/components/onboarding/ProfilePreview";
 
 export default function QuickOnboardingPage() {
+  const { user: authUser, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialData, setInitialData] = useState<Partial<ProfileData>>({});
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = authUser;
       if (!user) { router.push("/auth"); return; }
       setUser(user);
 
@@ -37,8 +38,8 @@ export default function QuickOnboardingPage() {
         const parts = profile.name.split(" ");
         partial.firstName = parts[0] || "";
         partial.lastName = parts.slice(1).join(" ") || "";
-      } else if (user.user_metadata?.full_name) {
-        const parts = user.user_metadata.full_name.split(" ");
+      } else if (user.fullName) {
+        const parts = user.fullName.split(" ");
         partial.firstName = parts[0] || "";
         partial.lastName = parts.slice(1).join(" ") || "";
       }

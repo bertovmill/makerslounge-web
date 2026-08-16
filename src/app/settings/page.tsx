@@ -3,7 +3,8 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { User } from "@supabase/supabase-js";
+import { useAuth, type AuthUser } from "@/context/AuthContext";
+import { useUser as useClerkUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Capacitor } from "@capacitor/core";
 
@@ -12,8 +13,10 @@ import { Capacitor } from "@capacitor/core";
 const SubscriptionSection = lazy(() => import("@/components/SubscriptionSection"));
 
 export default function SettingsPage() {
+  const { user: authUser, loading: authLoading, signOut } = useAuth();
+  const { user: clerkUser } = useClerkUser();
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const isNative = Capacitor.isNativePlatform();
 
@@ -37,7 +40,9 @@ export default function SettingsPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    (async () => {
+      const user = authUser;
+      if (authLoading) return;
       if (!user) {
         router.push("/auth");
         return;
@@ -77,11 +82,20 @@ export default function SettingsPage() {
     }
 
     setPasswordLoading(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    // Clerk owns credentials now. It requires the current password unless the
+    // session is recent, which is why the error is surfaced verbatim rather
+    // than swallowed.
+    let error: { message?: string } | null = null;
+    try {
+      await clerkUser?.updatePassword({ newPassword });
+    } catch (err) {
+      const e = err as { errors?: Array<{ longMessage?: string; message?: string }> };
+      error = { message: e?.errors?.[0]?.longMessage || e?.errors?.[0]?.message || "Could not update password." };
+    }
     setPasswordLoading(false);
 
     if (error) {
-      setPasswordMessage({ type: "error", text: error.message });
+      setPasswordMessage({ type: "error", text: error.message ?? "Could not update password." });
     } else {
       setPasswordMessage({ type: "success", text: "Password updated successfully." });
       setNewPassword("");
@@ -103,7 +117,7 @@ export default function SettingsPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
-      await supabase.auth.signOut();
+      await signOut();
       router.push("/");
     } catch (err) {
       console.error("Delete account error:", err);
@@ -112,7 +126,7 @@ export default function SettingsPage() {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     router.push("/");
   };
 

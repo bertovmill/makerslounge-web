@@ -1,25 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AdminLinks() {
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    const checkAdmin = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setIsAdmin(user?.email === "bertmill19@gmail.com");
-    };
-
-    checkAdmin();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAdmin(session?.user?.email === "bertmill19@gmail.com");
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  // AuthContext already tracks the session and derives isAdmin from the Clerk
+  // email, so the local state and auth listener this used to keep are gone.
+  const { isAdmin } = useAuth();
 
   if (!isAdmin) return null;
 

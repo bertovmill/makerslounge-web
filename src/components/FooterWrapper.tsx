@@ -1,25 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import Footer from "./Footer";
 
 export default function FooterWrapper() {
-  const [user, setUser] = useState<boolean | null>(null);
+  // AuthContext tracks the session, so the local mirror and auth listener are
+  // no longer needed.
+  const { user: authUser } = useAuth();
+  const user = !!authUser;
   const pathname = usePathname();
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(!!user);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(!!session?.user);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   // Hide navbar on public pages when not logged in
   const isPublicPage = pathname === "/" || pathname === "/auth";

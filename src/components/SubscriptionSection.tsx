@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User } from "@supabase/supabase-js";
+import type { AuthUser } from "@/context/AuthContext";
 
 interface SubscriptionSectionProps {
-  user: User;
+  user: AuthUser;
   isPremium: boolean;
   stripeCustomerId: string | null;
 }

@@ -45,7 +45,7 @@ const NAV_ITEMS = [
 ];
 
 export default function Sidebar() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const pathname = usePathname();
   const { collapsed, toggleCollapsed } = useSidebar();
   const { openFeedback } = useFeedback();
@@ -197,7 +197,7 @@ export default function Sidebar() {
                 Feedback
               </button>
               <button
-                onClick={async () => { await supabase.auth.signOut(); window.location.href = "/"; }}
+                onClick={async () => { await signOut(); window.location.href = "/"; }}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors w-full text-muted-foreground hover:text-foreground hover:bg-secondary/50"
               >
                 <LogOut className="w-[18px] h-[18px] shrink-0" strokeWidth={1.8} />
@@ -340,7 +340,7 @@ export default function Sidebar() {
           </button>
           <button
             onClick={async () => {
-              await supabase.auth.signOut();
+              await signOut();
               window.location.href = "/";
             }}
             className={cn(

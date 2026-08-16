@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { User } from "@supabase/supabase-js";
+import { useAuth, type AuthUser } from "@/context/AuthContext";
 import SkillsInput from "@/components/SkillsInput";
 import Link from "next/link";
 import {
@@ -35,10 +35,11 @@ interface Profile {
 }
 
 export default function ProfilePage() {
+  const { user: authUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -64,9 +65,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const init = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const user = authUser;
       if (!user) {
         router.push("/");
         return;
@@ -88,12 +87,12 @@ export default function ProfilePage() {
           id: user.id,
           username: null,
           name:
-            user.user_metadata?.full_name ||
+            user.fullName ||
             user.email?.split("@")[0] ||
             "",
           first_name: null,
           last_name: null,
-          photo_url: user.user_metadata?.avatar_url || null,
+          photo_url: user.imageUrl || null,
           bio: "",
           skills: [],
           looking_for_skills: [],

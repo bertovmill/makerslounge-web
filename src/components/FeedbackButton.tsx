@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import ScreenshotEditor from "./ScreenshotEditor";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { User } from "@supabase/supabase-js";
+import { useAuth } from "@/context/AuthContext";
 import { useFeedback } from "@/context/FeedbackContext";
 import { useState } from "react";
 
@@ -20,23 +20,8 @@ export default function FeedbackButton() {
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [capturing, setCapturing] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [checkingAuth, setCheckingAuth] = useState(true);
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      setCheckingAuth(false);
-    };
-    checkUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  // AuthContext owns the session; `loading` replaces the local checkingAuth.
+  const { user, loading: checkingAuth } = useAuth();
 
   const captureScreenshot = async () => {
     setCapturing(true);

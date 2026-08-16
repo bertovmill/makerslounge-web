@@ -3,19 +3,20 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { User } from "@supabase/supabase-js";
+import { useAuth, type AuthUser } from "@/context/AuthContext";
 import GitHubImport from "@/components/onboarding/GitHubImport";
 import ProfilePreview, { type ProfileData } from "@/components/onboarding/ProfilePreview";
 
 export default function GitHubOnboardingPage() {
+  const { user: authUser, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = authUser;
       if (!user) { router.push("/auth"); return; }
       setUser(user);
 

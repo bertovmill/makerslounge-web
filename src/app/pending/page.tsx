@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { Clock, RefreshCw, LogOut, Instagram, Linkedin } from "lucide-react";
 import Link from "next/link";
@@ -9,18 +10,16 @@ import Image from "next/image";
 
 export default function PendingPage() {
   const router = useRouter();
+  const { user, loading, signOut } = useAuth();
   const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     // If not logged in, redirect to auth
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) router.push("/auth");
-    });
-  }, [router]);
+    if (!loading && !user) router.push("/auth");
+  }, [loading, user, router]);
 
   const checkStatus = async () => {
     setChecking(true);
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/auth"); return; }
 
     const { data: profile } = await supabase
@@ -36,7 +35,7 @@ export default function PendingPage() {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     router.push("/");
   };
 
