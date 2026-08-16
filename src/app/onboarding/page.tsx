@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { takePostAuthRedirect } from "@/lib/post-auth-redirect";
 import { User } from "@supabase/supabase-js";
 import { ArrowRight, ArrowLeft, Loader2, Linkedin, Instagram, Globe } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -54,7 +55,7 @@ export default function OnboardingPage() {
 
         // Already onboarded — has a name
         if (profile?.name?.trim()) {
-          router.push("/home");
+          router.push(takePostAuthRedirect() || "/home");
           return;
         }
 
@@ -107,7 +108,8 @@ export default function OnboardingPage() {
 
       if (error) throw error;
       await refreshOnboarding();
-      router.push("/home");
+      // A gated page may have sent this user to sign up; deliver them to it.
+      router.push(takePostAuthRedirect() || "/home");
     } catch (error) {
       console.error("Error saving profile:", error);
       setSaving(false);

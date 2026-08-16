@@ -87,6 +87,12 @@ export default function MarketingShell({
           >
             Podcasts
           </Link>
+          <Link
+            href="/talks"
+            className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Talks
+          </Link>
           <button
             onClick={openNewsletterPopup}
             className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
@@ -176,6 +182,13 @@ export default function MarketingShell({
               onClick={() => setMobileMenuOpen(false)}
             >
               Podcasts
+            </Link>
+            <Link
+              href="/talks"
+              className="text-lg font-medium text-foreground/80 hover:text-foreground transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Talks
             </Link>
             <button
               onClick={() => {
