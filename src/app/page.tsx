@@ -184,7 +184,6 @@ export default function Home() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showPlans, setShowPlans] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeSub, setActiveSub] = useState<string | null>(null);
   const [latestPost, setLatestPost] = useState<{
@@ -193,7 +192,6 @@ export default function Home() {
     excerpt: string;
   } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const plansRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     supabase
@@ -303,12 +301,12 @@ export default function Home() {
           >
             Sign in
           </Link>
-          <button
-            onClick={() => { setShowPlans(true); setTimeout(() => plansRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 100); }}
+          <Link
+            href="/auth?mode=signup"
             className="text-sm font-medium px-4 py-2 rounded-md bg-gradient-blue text-white hover:opacity-90 transition-opacity"
           >
             Join Now
-          </button>
+          </Link>
         </div>
 
         {/* Mobile hamburger */}
@@ -372,12 +370,13 @@ export default function Home() {
             >
               Sign in
             </Link>
-            <button
-              onClick={() => { setShowPlans(true); setMobileMenuOpen(false); setTimeout(() => plansRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 100); }}
+            <Link
+              href="/auth?mode=signup"
               className="text-lg font-medium px-8 py-3 rounded-full bg-gradient-blue text-white hover:opacity-90 transition-opacity"
+              onClick={() => setMobileMenuOpen(false)}
             >
               Join Now
-            </button>
+            </Link>
             <button
               onClick={() => { toggleTheme(); setMobileMenuOpen(false); }}
               className="text-lg font-medium text-foreground/60 hover:text-foreground transition-colors flex items-center gap-2"
@@ -407,51 +406,17 @@ export default function Home() {
         </p>
 
         {/* Primary CTA */}
-        <div ref={plansRef} className="flex flex-col items-center gap-3 mb-6 sm:mb-8">
-          {!showPlans ? (
-            <button onClick={() => setShowPlans(true)}>
-              <HoverBorderGradient
-                containerClassName="rounded-full"
-                as="div"
-                className="dark:bg-black bg-white text-foreground dark:text-white flex items-center gap-2 px-6 sm:px-8 py-2 sm:py-2.5 text-sm sm:text-base font-medium"
-              >
-                Join Now
-                <ArrowRight className="w-4 h-4" />
-              </HoverBorderGradient>
-            </button>
-          ) : (
-            <div className="animate-in fade-in slide-in-from-top-2 duration-300 w-full max-w-md">
-              <p className="text-sm font-medium text-foreground text-center mb-3">Choose your plan</p>
-              <div className="grid grid-cols-2 gap-3">
-                {/* Free plan */}
-                <Link
-                  href="/auth?mode=signup"
-                  className="flat-card flex flex-col items-center text-center p-5 rounded-2xl"
-                >
-                  <Users className="w-6 h-6 text-foreground/70 mb-2" />
-                  <span className="text-base font-semibold text-foreground">Free</span>
-                  <span className="text-xs text-muted-foreground/70 mt-1">Browse and connect with other makers</span>
-                </Link>
-
-                {/* AI Assistant plan */}
-                <Link
-                  href="/auth?mode=apply&plan=ai"
-                  className="flat-card bg-gradient-blue-subtle flex flex-col items-center text-center p-5 rounded-2xl"
-                >
-                  <Sparkles className="w-6 h-6 text-primary mb-2" />
-                  <span className="text-base font-semibold text-foreground">AI Assistant</span>
-                  <span className="text-xs font-medium text-primary mt-0.5">$10/mo</span>
-                  <span className="text-xs text-muted-foreground/70 mt-1">AI-powered matching to find the right people</span>
-                </Link>
-              </div>
-              <button
-                onClick={() => setShowPlans(false)}
-                className="mt-3 text-xs text-muted-foreground/50 hover:text-foreground/60 transition-colors mx-auto block"
-              >
-                Back
-              </button>
-            </div>
-          )}
+        <div className="flex flex-col items-center gap-3 mb-6 sm:mb-8">
+          <Link href="/auth?mode=signup">
+            <HoverBorderGradient
+              containerClassName="rounded-full"
+              as="div"
+              className="dark:bg-black bg-white text-foreground dark:text-white flex items-center gap-2 px-6 sm:px-8 py-2 sm:py-2.5 text-sm sm:text-base font-medium"
+            >
+              Join Now
+              <ArrowRight className="w-4 h-4" />
+            </HoverBorderGradient>
+          </Link>
         </div>
 
         {/* Social links */}
