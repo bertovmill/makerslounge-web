@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { eq } from "drizzle-orm";
+import { getSiteDb } from "@/db/site";
+import { scheduledPosts } from "@/db/site/schema";
 import { postToX } from "@/lib/post-to-x";
 
 const QSTASH_CURRENT_SIGNING_KEY = process.env.QSTASH_CURRENT_SIGNING_KEY;
@@ -85,21 +87,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use service role to access scheduled post
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // No session here by design: the caller is QStash, authenticated by the
+    // signature check above, acting on behalf of whoever scheduled the post. That
+    // is what the service-role key was for; there is no RLS to bypass now.
+    const db = getSiteDb();
 
-    // Get the scheduled post
-    const { data: post, error: fetchError } = await supabaseAdmin
-      .from("scheduled_posts")
-      .select("*")
-      .eq("id", scheduledPostId)
-      .single();
+    const [post] = await db
+      .select()
+      .from(scheduledPosts)
+      .where(eq(scheduledPosts.id, scheduledPostId))
+      .limit(1);
 
-    if (fetchError || !post) {
-      console.error("Scheduled post not found:", fetchError);
+    if (!post) {
+      console.error("Scheduled post not found:", scheduledPostId);
       return NextResponse.json(
         { error: "Scheduled post not found" },
         { status: 404 }
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     // Post based on platform
     let result;
     if (post.platform === "x") {
-      result = await postToX(post.user_id, post.content, post.media_urls || []);
+      result = await postToX(post.userId, post.content, post.mediaUrls || []);
     } else {
       return NextResponse.json(
         { error: `Platform ${post.platform} not supported yet` },
@@ -127,27 +127,27 @@ export async function POST(request: NextRequest) {
 
     // Update the scheduled post record
     if (result.success) {
-      await supabaseAdmin
-        .from("scheduled_posts")
-        .update({
+      await db
+        .update(scheduledPosts)
+        .set({
           status: "posted",
-          posted_at: new Date().toISOString(),
-          post_url: result.url,
+          postedAt: new Date().toISOString(),
+          postUrl: result.url,
         })
-        .eq("id", scheduledPostId);
+        .where(eq(scheduledPosts.id, scheduledPostId));
 
       return NextResponse.json({
         success: true,
         url: result.url,
       });
     } else {
-      await supabaseAdmin
-        .from("scheduled_posts")
-        .update({
+      await db
+        .update(scheduledPosts)
+        .set({
           status: "failed",
-          error_message: result.error,
+          errorMessage: result.error,
         })
-        .eq("id", scheduledPostId);
+        .where(eq(scheduledPosts.id, scheduledPostId));
 
       return NextResponse.json(
         { error: result.error },

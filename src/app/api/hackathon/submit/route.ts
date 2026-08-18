@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSiteDb } from "@/db/site";
+import { hackathonSubmissions } from "@/db/site/schema";
 import { Resend } from "resend";
 
 const SUBMISSION_DEADLINE = new Date("2026-05-25T03:59:59Z");
@@ -18,12 +19,6 @@ interface SubmissionBody {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json({ error: "Server not configured" }, { status: 500 });
-    }
-
     if (Date.now() > SUBMISSION_DEADLINE.getTime()) {
       return NextResponse.json(
         { error: "Submissions are closed. Deadline was May 24 at 11:59 PM EDT." },
@@ -96,32 +91,23 @@ export async function POST(request: NextRequest) {
     const ip = forwardedFor ? forwardedFor.split(",")[0]!.trim() : null;
     const ipHash = ip ? await sha256(ip) : null;
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-
     const id = crypto.randomUUID();
 
-    const { error } = await supabase
-      .from("hackathon_submissions")
-      .insert({
+    await getSiteDb()
+      .insert(hackathonSubmissions)
+      .values({
         id,
-        project_link: projectLink,
+        projectLink,
         title: trimOrNull(body.title),
         description: trimOrNull(body.description),
-        video_url: trimOrNull(body.video_url),
-        file_urls: fileUrls,
-        team_name: trimOrNull(body.team_name),
-        builder_emails: builderEmails,
-        challenge_track: trimOrNull(body.challenge_track),
-        user_agent: userAgent,
-        ip_hash: ipHash,
+        videoUrl: trimOrNull(body.video_url),
+        fileUrls,
+        teamName: trimOrNull(body.team_name),
+        builderEmails,
+        challengeTrack: trimOrNull(body.challenge_track),
+        userAgent,
+        ipHash,
       });
-
-    if (error) {
-      console.error("hackathon_submissions insert error:", error);
-      return NextResponse.json({ error: "Could not save submission" }, { status: 500 });
-    }
 
     if (builderEmails.length > 0 && process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY);

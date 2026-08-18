@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { and, asc, eq } from "drizzle-orm";
 import { getServerAppUser } from "@/lib/clerk-server";
-import { createClient } from "@/lib/supabase-server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { getSiteDb } from "@/db/site";
+import { scheduledPosts } from "@/db/site/schema";
 
 const QSTASH_TOKEN = process.env.QSTASH_TOKEN;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -33,7 +34,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user is authenticated
-    const supabase = await createClient();
     const user = await getServerAppUser();
 
     if (!user) {
@@ -43,34 +43,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use service role for insert to bypass RLS issues
-    const supabaseAdmin = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const db = getSiteDb();
 
-    // Create scheduled post record
-    const { data: scheduledPost, error: insertError } = await supabaseAdmin
-      .from("scheduled_posts")
-      .insert({
-        user_id: user.id,
+    // `user_id` comes from the session. The old code reached for the service-role
+    // key here "to bypass RLS issues", which meant the insert trusted whatever it
+    // was given; there is no RLS to bypass now and no reason to.
+    const [scheduledPost] = await db
+      .insert(scheduledPosts)
+      .values({
+        userId: user.id,
         content,
         platform: platform || "x",
-        scheduled_for: scheduledDate.toISOString(),
-        idea_id: ideaId || null,
-        media_urls: mediaUrls || [],
+        scheduledFor: scheduledDate.toISOString(),
+        ideaId: ideaId || null,
+        mediaUrls: mediaUrls || [],
         status: "pending",
       })
-      .select()
-      .single();
-
-    if (insertError) {
-      console.error("Failed to create scheduled post:", insertError);
-      return NextResponse.json(
-        { error: "Failed to create scheduled post" },
-        { status: 500 }
-      );
-    }
+      .returning();
 
     // Schedule with QStash
     if (QSTASH_TOKEN) {
@@ -97,10 +86,10 @@ export async function POST(request: NextRequest) {
         } else {
           const qstashData = await qstashResponse.json();
           // Store QStash message ID for potential cancellation
-          await supabaseAdmin
-            .from("scheduled_posts")
-            .update({ qstash_message_id: qstashData.messageId })
-            .eq("id", scheduledPost.id);
+          await db
+            .update(scheduledPosts)
+            .set({ qstashMessageId: qstashData.messageId })
+            .where(eq(scheduledPosts.id, scheduledPost.id));
         }
       } catch (qstashError) {
         console.error("QStash error:", qstashError);
@@ -116,7 +105,7 @@ export async function POST(request: NextRequest) {
         id: scheduledPost.id,
         content: scheduledPost.content,
         platform: scheduledPost.platform,
-        scheduledFor: scheduledPost.scheduled_for,
+        scheduledFor: scheduledPost.scheduledFor,
         status: scheduledPost.status,
       },
     });
@@ -132,7 +121,6 @@ export async function POST(request: NextRequest) {
 // Get user's scheduled posts
 export async function GET() {
   try {
-    const supabase = await createClient();
     const user = await getServerAppUser();
 
     if (!user) {
@@ -142,19 +130,11 @@ export async function GET() {
       );
     }
 
-    const { data: posts, error } = await supabase
-      .from("scheduled_posts")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("scheduled_for", { ascending: true });
-
-    if (error) {
-      console.error("Failed to fetch scheduled posts:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch scheduled posts" },
-        { status: 500 }
-      );
-    }
+    const posts = await getSiteDb()
+      .select()
+      .from(scheduledPosts)
+      .where(eq(scheduledPosts.userId, user.id))
+      .orderBy(asc(scheduledPosts.scheduledFor));
 
     return NextResponse.json({ posts });
   } catch (error) {
@@ -179,7 +159,6 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
     const user = await getServerAppUser();
 
     if (!user) {
@@ -189,15 +168,16 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Get the post to check ownership and get QStash message ID
-    const { data: post, error: fetchError } = await supabase
-      .from("scheduled_posts")
-      .select("*")
-      .eq("id", postId)
-      .eq("user_id", user.id)
-      .single();
+    const db = getSiteDb();
 
-    if (fetchError || !post) {
+    // Scoped to the owner, so another member's post simply isn't found.
+    const [post] = await db
+      .select()
+      .from(scheduledPosts)
+      .where(and(eq(scheduledPosts.id, postId), eq(scheduledPosts.userId, user.id)))
+      .limit(1);
+
+    if (!post) {
       return NextResponse.json(
         { error: "Scheduled post not found" },
         { status: 404 }
@@ -205,10 +185,10 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Cancel QStash message if exists
-    if (post.qstash_message_id && QSTASH_TOKEN) {
+    if (post.qstashMessageId && QSTASH_TOKEN) {
       try {
         await fetch(
-          `https://qstash.upstash.io/v2/messages/${post.qstash_message_id}`,
+          `https://qstash.upstash.io/v2/messages/${post.qstashMessageId}`,
           {
             method: "DELETE",
             headers: {
@@ -221,18 +201,11 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
-    // Update status to cancelled
-    const { error: updateError } = await supabase
-      .from("scheduled_posts")
-      .update({ status: "cancelled" })
-      .eq("id", postId);
-
-    if (updateError) {
-      return NextResponse.json(
-        { error: "Failed to cancel scheduled post" },
-        { status: 500 }
-      );
-    }
+    // Ownership re-checked in the WHERE rather than relying on the select above.
+    await db
+      .update(scheduledPosts)
+      .set({ status: "cancelled" })
+      .where(and(eq(scheduledPosts.id, postId), eq(scheduledPosts.userId, user.id)));
 
     return NextResponse.json({ success: true });
   } catch (error) {
