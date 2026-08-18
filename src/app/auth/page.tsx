@@ -479,17 +479,9 @@ function AuthContent() {
   const redirectAfterAuth = async (userId: string, email?: string) => {
     if (email) await mergeContactIfExists(userId, email);
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("name")
-      .eq("id", userId)
-      .single();
-
-    if (!profile?.name) {
-      router.push("/onboarding");
-      return;
-    }
-
+    // Everyone who authenticates goes to /home, including brand-new signups.
+    // Onboarding is a page they can fill in later, not a gate in front of the
+    // app — see the note in AuthContext.
     takePostAuthRedirect();
     localStorage.removeItem("pendingMatcherQuery");
     router.push("/home");
