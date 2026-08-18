@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import MarketingShell from "@/components/MarketingShell";
-import { createClient } from "@/lib/supabase-server";
 import { fetchPublishedTalks, formatTalkDuration, formatSpeaker } from "@/lib/talks";
 
 export const metadata: Metadata = {
@@ -10,8 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TalksPage() {
-  const supabase = await createClient();
-  const talks = await fetchPublishedTalks(supabase);
+  const talks = await fetchPublishedTalks();
 
   return (
     <MarketingShell>

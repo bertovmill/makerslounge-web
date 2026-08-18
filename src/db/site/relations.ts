@@ -2,22 +2,18 @@
 // See ./schema.ts for provenance and how to regenerate.
 
 import { relations } from "drizzle-orm/relations";
-import { profiles, connections, meetups, blogPosts, events, applications, blockedUsers, broadcastAccounts, broadcastChannels, projects, comments, communityContacts, contentEvents, conversations, feedback, hackathonSubmissions, hackathonScores, homeVisions, identities, likes, matcherContacts, matcherEvents, messages, mulerunDemos, mulerunVotes, podcasts, podcastGuests, profileEventNotes, reports, scheduledPosts, socialConnections, valuePortfolio } from "./schema";
+import { profiles, talks, talkContent, connections, meetups, blogPosts, events, applications, blockedUsers, broadcastAccounts, broadcastChannels, projects, comments, communityContacts, contentEvents, conversations, feedback, hackathonSubmissions, hackathonScores, homeVisions, identities, likes, matcherContacts, matcherEvents, messages, mulerunDemos, mulerunVotes, podcasts, podcastGuests, profileEventNotes, reports, scheduledPosts, socialConnections, valuePortfolio } from "./schema";
 
-export const connectionsRelations = relations(connections, ({one}) => ({
-	profiles_recipientId: one(profiles, {
-		fields: [connections.recipientId],
-		references: [profiles.id],
-		relationName: "connections_recipientId_profiles_id"
+export const talksRelations = relations(talks, ({one, many}) => ({
+	profiles: one(profiles, {
+		fields: [talks.createdBy],
+		references: [profiles.id]
 	}),
-	profiles_requesterId: one(profiles, {
-		fields: [connections.requesterId],
-		references: [profiles.id],
-		relationName: "connections_requesterId_profiles_id"
-	}),
+	talkContents: many(talkContent),
 }));
 
 export const profilesRelations = relations(profiles, ({many}) => ({
+	talkss: many(talks),
 	connectionss_recipientId: many(connections, {
 		relationName: "connections_recipientId_profiles_id"
 	}),
@@ -70,6 +66,26 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 	scheduledPostss: many(scheduledPosts),
 	socialConnectionss: many(socialConnections),
 	valuePortfolios: many(valuePortfolio),
+}));
+
+export const talkContentRelations = relations(talkContent, ({one}) => ({
+	talks: one(talks, {
+		fields: [talkContent.talkId],
+		references: [talks.id]
+	}),
+}));
+
+export const connectionsRelations = relations(connections, ({one}) => ({
+	profiles_recipientId: one(profiles, {
+		fields: [connections.recipientId],
+		references: [profiles.id],
+		relationName: "connections_recipientId_profiles_id"
+	}),
+	profiles_requesterId: one(profiles, {
+		fields: [connections.requesterId],
+		references: [profiles.id],
+		relationName: "connections_requesterId_profiles_id"
+	}),
 }));
 
 export const meetupsRelations = relations(meetups, ({one, many}) => ({

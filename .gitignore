@@ -89,3 +89,6 @@ next-env.d.ts
 
 # eve agent build output — Eve Agent Workshop
 /.eve/
+
+# Claude Code worktrees — embedded git repos, never part of a commit
+.claude/worktrees/

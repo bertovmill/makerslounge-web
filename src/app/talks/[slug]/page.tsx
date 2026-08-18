@@ -4,7 +4,6 @@ import Link from "next/link";
 import MarketingShell from "@/components/MarketingShell";
 import TalkPlayer from "@/components/TalkPlayer";
 import TalkSignupGate from "@/components/TalkSignupGate";
-import { createClient } from "@/lib/supabase-server";
 import { getServerAppUser } from "@/lib/clerk-server";
 import { fetchTalkBySlug, fetchTalkContent, formatTalkDuration, formatSpeaker } from "@/lib/talks";
 
@@ -14,8 +13,7 @@ interface TalkPageProps {
 
 export async function generateMetadata({ params }: TalkPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const supabase = await createClient();
-  const talk = await fetchTalkBySlug(supabase, slug);
+  const talk = await fetchTalkBySlug(slug);
 
   if (!talk) return { title: "Talk not found | Makerslounge" };
 
@@ -38,16 +36,16 @@ export async function generateMetadata({ params }: TalkPageProps): Promise<Metad
 
 export default async function TalkPage({ params }: TalkPageProps) {
   const { slug } = await params;
-  const supabase = await createClient();
 
-  const talk = await fetchTalkBySlug(supabase, slug);
+  const talk = await fetchTalkBySlug(slug);
   if (!talk) notFound();
 
   const user = await getServerAppUser();
 
-  // RLS does the real gatekeeping — this comes back null when signed out, so a
-  // bug in the UI can't leak the id.
-  const content = user ? await fetchTalkContent(supabase, talk.id) : null;
+  // The gate is `fetchTalkContent` itself: it takes the viewer id and returns null
+  // without one. RLS used to be the backstop behind this call; now this call *is*
+  // the gate, which is why the id is passed rather than checked here.
+  const content = await fetchTalkContent(talk.id, user?.id ?? null);
 
   const speaker = formatSpeaker(talk);
   const duration = formatTalkDuration(talk.duration_seconds);

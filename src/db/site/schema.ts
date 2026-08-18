@@ -17,11 +17,53 @@
 // has no JWT-aware policy layer, so authorization is per-route application code
 // instead. See docs/supabase-to-clerk-neon-migration.md.
 
-import { pgTable, pgSchema, index, check, uuid, text, timestamp, boolean, foreignKey, unique, jsonb, integer, date, uniqueIndex, primaryKey, bigint } from "drizzle-orm/pg-core"
+import { pgTable, pgSchema, index, foreignKey, unique, uuid, text, integer, timestamp, boolean, check, jsonb, date, uniqueIndex, primaryKey, bigint } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const makerslounge = pgSchema("makerslounge");
 
+
+export const talks = makerslounge.table("talks", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	title: text().notNull(),
+	slug: text().notNull(),
+	description: text(),
+	speakerName: text("speaker_name"),
+	speakerTitle: text("speaker_title"),
+	speakerCompany: text("speaker_company"),
+	speakerPhotoUrl: text("speaker_photo_url"),
+	thumbnailUrl: text("thumbnail_url"),
+	durationSeconds: integer("duration_seconds"),
+	recordedAt: timestamp("recorded_at", { withTimezone: true, mode: 'string' }),
+	isPublished: boolean("is_published").default(false),
+	publishedAt: timestamp("published_at", { withTimezone: true, mode: 'string' }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	createdBy: uuid("created_by"),
+}, (table) => [
+	index("talks_published_idx").using("btree", table.isPublished.asc().nullsLast().op("timestamptz_ops"), table.publishedAt.desc().nullsFirst().op("timestamptz_ops")),
+	foreignKey({
+			columns: [table.createdBy],
+			foreignColumns: [profiles.id],
+			name: "talks_created_by_fkey"
+		}),
+	unique("talks_slug_key").on(table.slug),
+]);
+
+export const talkContent = makerslounge.table("talk_content", {
+	talkId: uuid("talk_id").primaryKey().notNull(),
+	provider: text().default('youtube').notNull(),
+	videoId: text("video_id").notNull(),
+	transcript: text(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+}, (table) => [
+	foreignKey({
+			columns: [table.talkId],
+			foreignColumns: [talks.id],
+			name: "talk_content_talk_id_fkey"
+		}).onDelete("cascade"),
+]);
 
 export const innovationHackathonSignups = makerslounge.table("innovation_hackathon_signups", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
@@ -826,4 +868,4 @@ export const hackathonVoterNotes = makerslounge.table("hackathon_voter_notes", {
 export const connectionCounts = makerslounge.view("connection_counts", {	profileId: uuid("profile_id"),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	connectionCount: bigint("connection_count", { mode: "number" }),
-}).as(sql`SELECT p.id AS profile_id, count(DISTINCT CASE WHEN c.status = 'accepted'::text AND (c.requester_id = p.id OR c.recipient_id = p.id) THEN CASE WHEN c.requester_id = p.id THEN c.recipient_id ELSE c.requester_id END ELSE NULL::uuid END) AS connection_count FROM profiles p LEFT JOIN connections c ON c.requester_id = p.id OR c.recipient_id = p.id GROUP BY p.id`);
+}).as(sql`SELECT p.id AS profile_id, count(DISTINCT CASE WHEN c.status = 'accepted'::text AND (c.requester_id = p.id OR c.recipient_id = p.id) THEN CASE WHEN c.requester_id = p.id THEN c.recipient_id ELSE c.requester_id END ELSE NULL::uuid END) AS connection_count FROM makerslounge.profiles p LEFT JOIN makerslounge.connections c ON c.requester_id = p.id OR c.recipient_id = p.id GROUP BY p.id`);
