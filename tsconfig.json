@@ -35,6 +35,7 @@
     ".agents",
     "skills",
     "vitest.config.ts",
-    "workshop-helper"
+    "workshop-helper",
+    "drizzle"
   ]
 }

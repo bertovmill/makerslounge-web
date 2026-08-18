@@ -1,9 +1,8 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useUser, useAuth as useClerkAuth } from "@clerk/nextjs";
-import { supabase } from "@/lib/supabase";
-import { resolveProfileId } from "@/lib/clerk-profile";
+import { fetchCurrentProfile } from "@/lib/clerk-profile";
 
 /**
  * Auth for the whole site. Clerk owns the session; Supabase owns the data.
@@ -46,82 +45,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [onboardingComplete, setOnboardingComplete] = useState(true); // default true to avoid flash redirect
-  const hasCheckedOnboarding = useRef(false);
 
-  // Map the Clerk session onto a profile uuid.
+  // Depend on the Clerk user *id*, not the user object. `useUser()` hands back a
+  // fresh resource object on every token refresh, so depending on the object
+  // re-ran this effect every minute or so — each run cancelling the previous
+  // in-flight lookup. The id is a stable string.
+  const clerkUserId = clerkUser?.id ?? null;
+
+  // Map the Clerk session onto a profile uuid. One round trip to /api/me, which
+  // resolves (and on first sight creates) the row server-side against Neon.
   useEffect(() => {
     if (!isLoaded) return;
 
     let cancelled = false;
 
     (async () => {
-      if (!isSignedIn || !clerkUser) {
+      if (!isSignedIn || !clerkUserId) {
         if (cancelled) return;
         setUser(null);
         setOnboardingComplete(true);
-        hasCheckedOnboarding.current = false;
         setLoading(false);
         return;
       }
 
-      const profileId = await resolveProfileId(clerkUser.id, {
-        firstName: clerkUser.firstName,
-        lastName: clerkUser.lastName,
-      });
+      const me = await fetchCurrentProfile();
       if (cancelled) return;
 
-      if (!profileId) {
+      if (!me) {
         // Authenticated but unusable. Surfacing this beats silently rendering a
         // signed-out UI to someone who is in fact signed in.
-        console.error("[auth] could not resolve a profile for", clerkUser.id);
+        console.error("[auth] could not resolve a profile for", clerkUserId);
         setUser(null);
         setLoading(false);
         return;
       }
 
       setUser({
-        id: profileId,
-        email: clerkUser.primaryEmailAddress?.emailAddress ?? null,
-        clerkUserId: clerkUser.id,
-        fullName: clerkUser.fullName ?? null,
-        imageUrl: clerkUser.imageUrl ?? null,
+        id: me.id,
+        email: me.email,
+        clerkUserId: me.clerkUserId,
+        fullName: me.fullName,
+        imageUrl: me.imageUrl,
       });
+      setOnboardingComplete(me.onboardingComplete);
+      // Clear `loading` here rather than leaving it to a follow-up effect. It
+      // used to hang off a second query, so any failure there left the whole app
+      // stuck on its loading branch with no way out.
+      setLoading(false);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, clerkUser]);
-
-  // Check onboarding once when user is set
-  useEffect(() => {
-    if (!user || hasCheckedOnboarding.current) return;
-    hasCheckedOnboarding.current = true;
-
-    const checkOnboarding = async () => {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("name")
-        .eq("id", user.id)
-        .single();
-
-      // User needs onboarding if they have no name set
-      const complete = !!(profile?.name?.trim());
-      setOnboardingComplete(complete);
-      setLoading(false);
-    };
-
-    checkOnboarding();
-  }, [user]);
+  }, [isLoaded, isSignedIn, clerkUserId]);
 
   const refreshOnboarding = async () => {
-    if (!user) return;
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("name")
-      .eq("id", user.id)
-      .single();
-    setOnboardingComplete(!!(profile?.name?.trim()));
+    const me = await fetchCurrentProfile();
+    if (me) setOnboardingComplete(me.onboardingComplete);
   };
 
   const signOut = async () => {

@@ -1,6 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
+import * as relations from "./relations";
 
 // Drizzle client for the site's own tables, which live in the `makerslounge`
 // Postgres schema. Deliberately separate from `src/db/index.ts` — that one is
@@ -12,7 +13,9 @@ import * as schema from "./schema";
 
 function createSiteDb() {
   const sql = neon(process.env.DATABASE_URL!);
-  return drizzle(sql, { schema });
+  // Relations are passed alongside the tables so `db.query.*.findMany({ with })`
+  // works; without them Drizzle's relational API has nothing to join on.
+  return drizzle(sql, { schema: { ...schema, ...relations } });
 }
 
 let _siteDb: ReturnType<typeof createSiteDb> | null = null;
