@@ -365,29 +365,6 @@ export const projects = makerslounge.table("projects", {
 	check("projects_category_check", sql`category = ANY (ARRAY['project_showcase'::text, 'job_board'::text, 'question'::text, 'update'::text])`),
 ]);
 
-export const comments = makerslounge.table("comments", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	userId: uuid("user_id").notNull(),
-	projectId: uuid("project_id").notNull(),
-	content: text().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-	targetType: text("target_type").default('project'),
-	targetId: text("target_id"),
-}, (table) => [
-	index("idx_comments_blog_posts").using("btree", table.targetType.asc().nullsLast().op("text_ops"), table.targetId.asc().nullsLast().op("text_ops")).where(sql`(target_type = 'blog_post'::text)`),
-	index("idx_comments_target").using("btree", table.targetType.asc().nullsLast().op("text_ops"), table.targetId.asc().nullsLast().op("text_ops")),
-	foreignKey({
-			columns: [table.projectId],
-			foreignColumns: [projects.id],
-			name: "comments_project_id_fkey"
-		}).onDelete("cascade"),
-	foreignKey({
-			columns: [table.userId],
-			foreignColumns: [profiles.id],
-			name: "comments_user_id_fkey"
-		}).onDelete("cascade"),
-]);
-
 export const communityContacts = makerslounge.table("community_contacts", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	email: text(),
@@ -478,6 +455,30 @@ export const feedback = makerslounge.table("feedback", {
 		}).onDelete("set null"),
 ]);
 
+export const comments = makerslounge.table("comments", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	userId: uuid("user_id").notNull(),
+	projectId: uuid("project_id"),
+	content: text().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	targetType: text("target_type").default('project'),
+	targetId: text("target_id"),
+}, (table) => [
+	index("idx_comments_blog_posts").using("btree", table.targetType.asc().nullsLast().op("text_ops"), table.targetId.asc().nullsLast().op("text_ops")).where(sql`(target_type = 'blog_post'::text)`),
+	index("idx_comments_target").using("btree", table.targetType.asc().nullsLast().op("text_ops"), table.targetId.asc().nullsLast().op("text_ops")),
+	foreignKey({
+			columns: [table.projectId],
+			foreignColumns: [projects.id],
+			name: "comments_project_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [profiles.id],
+			name: "comments_user_id_fkey"
+		}).onDelete("cascade"),
+	check("comments_project_id_required_for_projects", sql`(target_type <> 'project'::text) OR (project_id IS NOT NULL)`),
+]);
+
 export const hackathonSubmissions = makerslounge.table("hackathon_submissions", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	projectLink: text("project_link").notNull(),
@@ -553,29 +554,6 @@ export const identities = makerslounge.table("identities", {
 			foreignColumns: [profiles.id],
 			name: "identities_user_id_fkey"
 		}).onDelete("cascade"),
-]);
-
-export const likes = makerslounge.table("likes", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	userId: uuid("user_id").notNull(),
-	projectId: uuid("project_id").notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-	targetType: text("target_type").default('project'),
-	targetId: text("target_id"),
-}, (table) => [
-	index("idx_likes_blog_posts").using("btree", table.targetType.asc().nullsLast().op("text_ops"), table.targetId.asc().nullsLast().op("text_ops")).where(sql`(target_type = 'blog_post'::text)`),
-	index("idx_likes_target").using("btree", table.targetType.asc().nullsLast().op("text_ops"), table.targetId.asc().nullsLast().op("text_ops")),
-	foreignKey({
-			columns: [table.projectId],
-			foreignColumns: [projects.id],
-			name: "likes_project_id_fkey"
-		}).onDelete("cascade"),
-	foreignKey({
-			columns: [table.userId],
-			foreignColumns: [profiles.id],
-			name: "likes_user_id_fkey"
-		}).onDelete("cascade"),
-	unique("likes_user_id_project_id_key").on(table.userId, table.projectId),
 ]);
 
 export const matcherContacts = makerslounge.table("matcher_contacts", {
@@ -856,6 +834,31 @@ export const valuePortfolio = makerslounge.table("value_portfolio", {
 			foreignColumns: [profiles.id],
 			name: "value_portfolio_user_id_fkey"
 		}).onDelete("cascade"),
+]);
+
+export const likes = makerslounge.table("likes", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	userId: uuid("user_id").notNull(),
+	projectId: uuid("project_id"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	targetType: text("target_type").default('project'),
+	targetId: text("target_id"),
+}, (table) => [
+	index("idx_likes_blog_posts").using("btree", table.targetType.asc().nullsLast().op("text_ops"), table.targetId.asc().nullsLast().op("text_ops")).where(sql`(target_type = 'blog_post'::text)`),
+	index("idx_likes_target").using("btree", table.targetType.asc().nullsLast().op("text_ops"), table.targetId.asc().nullsLast().op("text_ops")),
+	uniqueIndex("likes_user_target_key").using("btree", table.userId.asc().nullsLast().op("uuid_ops"), table.targetType.asc().nullsLast().op("text_ops"), table.targetId.asc().nullsLast().op("uuid_ops")).where(sql`(target_type <> 'project'::text)`),
+	foreignKey({
+			columns: [table.projectId],
+			foreignColumns: [projects.id],
+			name: "likes_project_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [profiles.id],
+			name: "likes_user_id_fkey"
+		}).onDelete("cascade"),
+	unique("likes_user_id_project_id_key").on(table.userId, table.projectId),
+	check("likes_project_id_required_for_projects", sql`(target_type <> 'project'::text) OR (project_id IS NOT NULL)`),
 ]);
 
 export const hackathonVoterNotes = makerslounge.table("hackathon_voter_notes", {

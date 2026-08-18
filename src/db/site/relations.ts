@@ -2,7 +2,7 @@
 // See ./schema.ts for provenance and how to regenerate.
 
 import { relations } from "drizzle-orm/relations";
-import { profiles, talks, talkContent, blogPosts, connections, meetups, events, applications, blockedUsers, broadcastAccounts, broadcastChannels, projects, comments, communityContacts, contentEvents, conversations, feedback, hackathonSubmissions, hackathonScores, homeVisions, identities, likes, matcherContacts, matcherEvents, messages, mulerunDemos, mulerunVotes, podcasts, podcastGuests, profileEventNotes, reports, scheduledPosts, socialConnections, valuePortfolio } from "./schema";
+import { profiles, talks, talkContent, blogPosts, connections, meetups, events, applications, blockedUsers, broadcastAccounts, broadcastChannels, projects, communityContacts, contentEvents, conversations, feedback, comments, hackathonSubmissions, hackathonScores, homeVisions, identities, matcherContacts, matcherEvents, messages, mulerunDemos, mulerunVotes, podcasts, podcastGuests, profileEventNotes, reports, scheduledPosts, socialConnections, valuePortfolio, likes } from "./schema";
 
 export const talksRelations = relations(talks, ({one, many}) => ({
 	profiles: one(profiles, {
@@ -33,7 +33,6 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 	broadcastAccountss: many(broadcastAccounts),
 	broadcastChannelss: many(broadcastChannels),
 	projectss: many(projects),
-	commentss: many(comments),
 	communityContactss: many(communityContacts),
 	contentEventss: many(contentEvents),
 	conversationss_participant1: many(conversations, {
@@ -43,9 +42,9 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 		relationName: "conversations_participant2_profiles_id"
 	}),
 	feedbacks: many(feedback),
+	commentss: many(comments),
 	homeVisionss: many(homeVisions),
 	identitiess: many(identities),
-	likess: many(likes),
 	matcherContactss: many(matcherContacts),
 	matcherEventss: many(matcherEvents),
 	messagess: many(messages),
@@ -66,6 +65,7 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 	scheduledPostss: many(scheduledPosts),
 	socialConnectionss: many(socialConnections),
 	valuePortfolios: many(valuePortfolio),
+	likess: many(likes),
 }));
 
 export const talkContentRelations = relations(talkContent, ({one}) => ({
@@ -150,20 +150,8 @@ export const projectsRelations = relations(projects, ({one, many}) => ({
 		references: [profiles.id]
 	}),
 	commentss: many(comments),
+	reportss: many(reports),
 	likess: many(likes),
-	reportss: many(reports),
-}));
-
-export const commentsRelations = relations(comments, ({one, many}) => ({
-	projects: one(projects, {
-		fields: [comments.projectId],
-		references: [projects.id]
-	}),
-	profiles: one(profiles, {
-		fields: [comments.userId],
-		references: [profiles.id]
-	}),
-	reportss: many(reports),
 }));
 
 export const communityContactsRelations = relations(communityContacts, ({one}) => ({
@@ -201,6 +189,18 @@ export const feedbackRelations = relations(feedback, ({one}) => ({
 	}),
 }));
 
+export const commentsRelations = relations(comments, ({one, many}) => ({
+	projects: one(projects, {
+		fields: [comments.projectId],
+		references: [projects.id]
+	}),
+	profiles: one(profiles, {
+		fields: [comments.userId],
+		references: [profiles.id]
+	}),
+	reportss: many(reports),
+}));
+
 export const hackathonScoresRelations = relations(hackathonScores, ({one}) => ({
 	hackathonSubmissions: one(hackathonSubmissions, {
 		fields: [hackathonScores.submissionId],
@@ -222,17 +222,6 @@ export const homeVisionsRelations = relations(homeVisions, ({one}) => ({
 export const identitiesRelations = relations(identities, ({one}) => ({
 	profiles: one(profiles, {
 		fields: [identities.userId],
-		references: [profiles.id]
-	}),
-}));
-
-export const likesRelations = relations(likes, ({one}) => ({
-	projects: one(projects, {
-		fields: [likes.projectId],
-		references: [projects.id]
-	}),
-	profiles: one(profiles, {
-		fields: [likes.userId],
 		references: [profiles.id]
 	}),
 }));
@@ -366,6 +355,17 @@ export const socialConnectionsRelations = relations(socialConnections, ({one}) =
 export const valuePortfolioRelations = relations(valuePortfolio, ({one}) => ({
 	profiles: one(profiles, {
 		fields: [valuePortfolio.userId],
+		references: [profiles.id]
+	}),
+}));
+
+export const likesRelations = relations(likes, ({one}) => ({
+	projects: one(projects, {
+		fields: [likes.projectId],
+		references: [projects.id]
+	}),
+	profiles: one(profiles, {
+		fields: [likes.userId],
 		references: [profiles.id]
 	}),
 }));

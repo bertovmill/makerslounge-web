@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import BlogCard from "@/components/BlogCard";
 import { Card } from "@/components/ui/card";
-import { BlogPost } from "@/lib/blog";
+import type { BlogPost } from "@/lib/blog-types";
 
 interface BlogListProps {
   posts: BlogPost[];

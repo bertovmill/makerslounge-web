@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { deletePost } from "@/lib/blog";
+import { deletePost } from "@/lib/blog-client";
 
 interface DeletePostButtonProps {
   postId: string;
