@@ -19,6 +19,7 @@ export default function OnboardingPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [skipping, setSkipping] = useState(false);
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
 
@@ -85,26 +86,46 @@ export default function OnboardingPage() {
     setStep(nextStep);
   };
 
-  const handleSave = async () => {
-    if (!user) return;
-    setSaving(true);
-    try {
-      const name = `${firstName.trim()} ${lastName.trim()}`.trim();
+  const buildProfile = (partial: boolean) => {
+    const name = `${firstName.trim()} ${lastName.trim()}`.trim();
 
-      const { error } = await supabase.from("profiles").upsert({
-        id: user.id,
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        name,
-        currently_building: currentlyBuilding.trim() || null,
-        skills: skills.length > 0 ? skills : null,
-        bio: lookingForNote.trim() || null,
-        looking_for_skills: lookingForPeople.length > 0 ? lookingForPeople : null,
-        linkedin: linkedin.trim() ? `https://linkedin.com/in/${linkedin.trim()}` : null,
-        twitter: twitter.trim() ? `https://x.com/${twitter.trim()}` : null,
-        instagram: instagram.trim() ? `https://instagram.com/${instagram.trim()}` : null,
-        website: website.trim() ? `https://${website.trim()}` : null,
-      });
+    const full: Record<string, unknown> = {
+      id: user!.id,
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      name,
+      currently_building: currentlyBuilding.trim() || null,
+      skills: skills.length > 0 ? skills : null,
+      bio: lookingForNote.trim() || null,
+      looking_for_skills: lookingForPeople.length > 0 ? lookingForPeople : null,
+      linkedin: linkedin.trim() ? `https://linkedin.com/in/${linkedin.trim()}` : null,
+      twitter: twitter.trim() ? `https://x.com/${twitter.trim()}` : null,
+      instagram: instagram.trim() ? `https://instagram.com/${instagram.trim()}` : null,
+      website: website.trim() ? `https://${website.trim()}` : null,
+    };
+
+    if (!partial) return full;
+
+    // Skipping writes only what was actually filled in. An upsert of the whole
+    // shape would blank out fields the community-contact merge in /auth has
+    // already copied onto the profile (skills, bio, socials).
+    return Object.fromEntries(
+      Object.entries(full).filter(
+        ([key, value]) => key === "id" || (value !== null && value !== "")
+      )
+    );
+  };
+
+  // `partial` is the "Skip for now" path. Either way a name gets written, which
+  // is what AuthContext gates on — without it the user is bounced straight back
+  // here from every page.
+  const finish = async (partial: boolean) => {
+    if (!user) return;
+    if (partial) setSkipping(true);
+    else setSaving(true);
+
+    try {
+      const { error } = await supabase.from("profiles").upsert(buildProfile(partial));
 
       if (error) throw error;
       await refreshOnboarding();
@@ -113,8 +134,12 @@ export default function OnboardingPage() {
     } catch (error) {
       console.error("Error saving profile:", error);
       setSaving(false);
+      setSkipping(false);
     }
   };
+
+  const handleSave = () => finish(false);
+  const handleSkip = () => finish(true);
 
   const canProceedStep1 =
     firstName.trim().length > 0 &&
@@ -492,6 +517,19 @@ export default function OnboardingPage() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Only from step 2 on: step 1 captures the name, and a profile with
+              no name is what AuthContext bounces back to /onboarding. */}
+          {step > 1 && (
+            <button
+              type="button"
+              onClick={handleSkip}
+              disabled={saving || skipping}
+              className="w-full mt-3 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 shrink-0"
+            >
+              {skipping ? "Skipping..." : "Skip for now"}
+            </button>
+          )}
         </div>
       </div>
     </div>
