@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import { getPostById } from "@/lib/blog";
 import { Badge } from "@/components/ui/badge";
 import BlogPostForm from "../BlogPostForm";
 import type { BlogPostRow } from "@/lib/blog";
 
 export default function EditBlogPostPage() {
+  const { user: authUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
   const [userId, setUserId] = useState<string | null>(null);
@@ -21,7 +23,7 @@ export default function EditBlogPostPage() {
 
   const checkAuthAndLoadPost = async () => {
     // Check authentication
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = authUser;
 
     if (!user || user.email !== "bertmill19@gmail.com") {
       router.push("/profile");

@@ -13,6 +13,7 @@ import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import AppShell from "@/components/AppShell";
 import FeedbackButton from "@/components/FeedbackButton";
+import { ClerkProvider } from "@clerk/nextjs";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { SidebarProvider } from "@/context/SidebarContext";
@@ -59,17 +60,23 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${GeistSans.variable} ${GeistMono.variable} ${instrumentSerif.variable} font-sans min-h-svh transition-colors duration-300`}>
-        <ThemeProvider>
-          <AuthProvider>
-            <SidebarProvider>
-              <FeedbackProvider>
-                <Sidebar />
-                <AppShell>{children}</AppShell>
-                <FeedbackButton />
-              </FeedbackProvider>
-            </SidebarProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        {/* Clerk now authenticates the whole site, not just the workshop, so
+            the provider sits at the root. `AuthProvider` reads the Clerk
+            session and maps it to a profile uuid, so it must be nested inside
+            this. */}
+        <ClerkProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <SidebarProvider>
+                <FeedbackProvider>
+                  <Sidebar />
+                  <AppShell>{children}</AppShell>
+                  <FeedbackButton />
+                </FeedbackProvider>
+              </SidebarProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </ClerkProvider>
         <Analytics />
       </body>
     </html>

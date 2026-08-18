@@ -2,15 +2,38 @@
 
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { User } from "@supabase/supabase-js";
+import { useUser, useAuth as useClerkAuth } from "@clerk/nextjs";
 import { supabase } from "@/lib/supabase";
+import { resolveProfileId } from "@/lib/clerk-profile";
+
+/**
+ * Auth for the whole site. Clerk owns the session; Supabase owns the data.
+ *
+ * `user.id` is the profile uuid, not the Clerk id — every foreign key and all
+ * ~72 `user.id` call sites depend on it. `clerkUserId` is exposed separately
+ * for the few callers that need the identity provider's own id.
+ */
+export interface AuthUser {
+  /** Profile uuid. The id every table's foreign keys point at. */
+  id: string;
+  email: string | null;
+  clerkUserId: string;
+  /**
+   * What Supabase used to expose as `user_metadata.full_name` /
+   * `avatar_url` — the display name and picture the OAuth provider supplied.
+   * Onboarding and the profile editor prefill from these.
+   */
+  fullName: string | null;
+  imageUrl: string | null;
+}
 
 interface AuthContextType {
-  user: User | null;
+  user: AuthUser | null;
   loading: boolean;
   isAdmin: boolean;
   onboardingComplete: boolean;
   refreshOnboarding: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,33 +41,63 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Pages that don't require onboarding
 const PUBLIC_PATHS = ["/", "/auth", "/onboarding"];
 
+const ADMIN_EMAIL = "bertmill19@gmail.com";
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const { isLoaded, isSignedIn, user: clerkUser } = useUser();
+  const { signOut: clerkSignOut } = useClerkAuth();
+
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [onboardingComplete, setOnboardingComplete] = useState(true); // default true to avoid flash redirect
   const hasCheckedOnboarding = useRef(false);
   const router = useRouter();
   const pathname = usePathname();
 
+  // Map the Clerk session onto a profile uuid.
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const u = session?.user ?? null;
-      setUser(u);
-      if (!u) {
+    if (!isLoaded) return;
+
+    let cancelled = false;
+
+    (async () => {
+      if (!isSignedIn || !clerkUser) {
+        if (cancelled) return;
+        setUser(null);
         setOnboardingComplete(true);
         hasCheckedOnboarding.current = false;
         setLoading(false);
+        return;
       }
-    });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const u = session?.user ?? null;
-      setUser(u);
-      if (!u) setLoading(false);
-    });
+      const profileId = await resolveProfileId(clerkUser.id, {
+        firstName: clerkUser.firstName,
+        lastName: clerkUser.lastName,
+      });
+      if (cancelled) return;
 
-    return () => subscription.unsubscribe();
-  }, []);
+      if (!profileId) {
+        // Authenticated but unusable. Surfacing this beats silently rendering a
+        // signed-out UI to someone who is in fact signed in.
+        console.error("[auth] could not resolve a profile for", clerkUser.id);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      setUser({
+        id: profileId,
+        email: clerkUser.primaryEmailAddress?.emailAddress ?? null,
+        clerkUserId: clerkUser.id,
+        fullName: clerkUser.fullName ?? null,
+        imageUrl: clerkUser.imageUrl ?? null,
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoaded, isSignedIn, clerkUser]);
 
   // Check onboarding once when user is set
   useEffect(() => {
@@ -77,6 +130,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setOnboardingComplete(!!(profile?.name?.trim()));
   };
 
+  const signOut = async () => {
+    await clerkSignOut();
+  };
+
   // Single redirect — only when we've finished checking
   useEffect(() => {
     if (loading || !user) return;
@@ -90,10 +147,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [loading, user, onboardingComplete, pathname, router]);
 
-  const isAdmin = user?.email === "bertmill19@gmail.com";
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin, onboardingComplete, refreshOnboarding }}>
+    <AuthContext.Provider
+      value={{ user, loading, isAdmin, onboardingComplete, refreshOnboarding, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   );

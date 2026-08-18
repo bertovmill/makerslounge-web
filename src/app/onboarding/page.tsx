@@ -4,19 +4,19 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { takePostAuthRedirect } from "@/lib/post-auth-redirect";
-import { User } from "@supabase/supabase-js";
 import { ArrowRight, ArrowLeft, Loader2, Linkedin, Instagram, Globe } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import SkillsInput from "@/components/SkillsInput";
 import { DottedGlowBackground } from "@/components/ui/dotted-glow-background";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth, type AuthUser } from "@/context/AuthContext";
 
 const TOTAL_STEPS = 4;
 
 export default function OnboardingPage() {
+  const { user: authUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const { refreshOnboarding } = useAuth();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [skipping, setSkipping] = useState(false);
@@ -44,7 +44,7 @@ export default function OnboardingPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = authUser;
         if (!user) { router.push("/auth"); return; }
         setUser(user);
 
@@ -63,8 +63,8 @@ export default function OnboardingPage() {
         if (profile?.first_name) {
           setFirstName(profile.first_name);
           setLastName(profile.last_name || "");
-        } else if (user.user_metadata?.full_name) {
-          const parts = user.user_metadata.full_name.split(" ");
+        } else if (user.fullName) {
+          const parts = user.fullName.split(" ");
           setFirstName(parts[0] || "");
           setLastName(parts.slice(1).join(" ") || "");
         }

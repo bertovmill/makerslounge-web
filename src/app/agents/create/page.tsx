@@ -6,7 +6,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
-import { User } from "@supabase/supabase-js";
+import { useAuth, type AuthUser } from "@/context/AuthContext";
 
 interface Message {
   role: "user" | "assistant";
@@ -80,8 +80,9 @@ function StreamingThinkingIndicator({ thinking }: { thinking: string }) {
 }
 
 export default function CreateAgentPage() {
+  const { user: authUser, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -109,7 +110,7 @@ Tell me what you need help with and I'll design the perfect agent for you!`,
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = authUser;
       setUser(user);
 
       if (!user) {

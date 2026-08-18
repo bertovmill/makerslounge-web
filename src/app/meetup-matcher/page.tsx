@@ -70,6 +70,7 @@ function formatDate(iso: string) {
 }
 
 export default function MeetupMatcherPage() {
+  const { user: authUser, loading: authLoading } = useAuth();
   const { isAdmin } = useAuth();
 
   // Meetup list
@@ -211,7 +212,7 @@ export default function MeetupMatcherPage() {
     if (!activeMeetup || !isEditing || phase !== "setup") return;
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = authUser;
       if (!user) return;
       const { data } = await supabase
         .from("meetups")
@@ -259,7 +260,7 @@ export default function MeetupMatcherPage() {
     if (!meetupName.trim()) return;
     setSaving(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = authUser;
     if (!user) { setSaving(false); return; }
 
     const payload = { name: meetupName.trim(), participants: selected, custom_field_names: customFieldNames, created_by: user.id };

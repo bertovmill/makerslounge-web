@@ -1,8 +1,21 @@
 # Migrating MakersLounge off Supabase → Clerk + Neon/Drizzle + Blob
 
-Status: **plan only, not started.** Written 2026-08-15, right after the Eve
-Agent Workshop was folded into this repo (`/eve-workshop`), which brought Clerk
-and Neon/Drizzle into the codebase for the first time.
+Status: **Phase 0 done, Phase 1 not started.** Written 2026-08-15, right after
+the Eve Agent Workshop was folded into this repo (`/eve-workshop`), which
+brought Clerk and Neon/Drizzle into the codebase for the first time. Decisions
+taken and Phase 0 landed 2026-08-16.
+
+## Decisions taken (2026-08-16)
+
+1. **Scope: everything.** Auth → Clerk, data → Neon/Drizzle, storage → Vercel
+   Blob, then Supabase goes away. Not a database-only swap.
+2. **Realtime: polling.** The four subscriptions are all unread-message badges
+   and live conversation updates; an interval poll is imperceptible for a badge
+   and avoids standing up SSE or Queues for it.
+3. **One Neon project.** The site's tables live in a `makerslounge` Postgres
+   schema alongside the workshop's four in `public`. One connection string, one
+   bill, no name collisions.
+4. **Clerk production instance** is still outstanding — see "Things to decide".
 
 The workshop is the bridgehead: Clerk and Drizzle are already installed,
 configured, and running in production on `/eve-workshop`, so none of the work
@@ -17,8 +30,8 @@ Measured against `src/` at the time of writing:
 | Surface | Size | Target |
 | --- | --- | --- |
 | Files importing Supabase | 102 | — |
-| Tables queried | 31 | Neon Postgres via Drizzle |
-| `supabase.auth.*` call sites | 59, across 34 files | Clerk |
+| Tables queried | 33 (38 exist in production) | Neon Postgres via Drizzle |
+| `supabase.auth.*` call sites | 60, across 34 files | Clerk |
 | Storage buckets | `media`, `podcasts` | Vercel Blob |
 | Realtime subscriptions | 4 (`messages`, `Navbar`, `Sidebar`) | see "Realtime" |
 | Routes using the service-role key | 20 | plain server-side Drizzle |
@@ -79,15 +92,111 @@ clauses or a shared authorization helper, with tests.
 
 Each phase ships independently and leaves the site working.
 
-**Phase 0 — groundwork.** Point Drizzle at a second schema in the same Neon
-project the workshop already uses. Port the schema of the 31 tables into
-`src/db/schema.ts` (they join the workshop's four). No app code changes yet;
-this phase is just "the tables exist and Drizzle knows about them".
+**Phase 0 — groundwork. ✅ Done 2026-08-16.**
+
+- `src/db/site/schema.ts` — all 37 production tables (343 columns, 25 foreign
+  keys) in a `makerslounge` pgSchema.
+- `src/db/site/index.ts` — `getSiteDb()`, deliberately a separate client from
+  the workshop's `getDb()` so a stray import can't join across the boundary.
+- `drizzle.site.config.ts` — `schemaFilter: ["makerslounge"]`, with the existing
+  `drizzle.config.ts` pinned to `["public"]` so neither config generates DROPs
+  for the other's tables.
+- `drizzle/site/0000_init_site_schema.sql` — generated, **not applied**, and not
+  committed (`/drizzle/` is gitignored repo-wide, as it is for the workshop).
+  Regenerate any time with
+  `npx drizzle-kit generate --config drizzle.site.config.ts`.
+
+Nothing imports any of it; Supabase is still the source of truth.
+
+The schema was generated from the **live database's PostgREST OpenAPI spec**
+(`GET /rest/v1/` with the service-role key), not from `supabase/migrations/*`,
+because production had 38 tables against 31 in the plan and the committed SQL
+had drifted. Regenerate the same way if the Supabase schema changes before
+cutover.
+
+Constraints and indexes come from a second source, a `pg_dump --schema-only`
+taken the same day, because PostgREST describes neither. **15 UNIQUE
+constraints, 1 unique index and 53 further indexes** are now in the schema —
+including `profiles_username_key`, whose absence would have silently permitted
+duplicate usernames and broken `/p/[username]` with no error at the point of
+failure.
+
+The dump lives at `~/supabase-schema-backups/schema-public.sql`, deliberately
+outside the repo.
+
+### Getting the dump again
+
+The obvious path does not work. `db.<ref>.supabase.co` is **IPv6-only** since
+Supabase dropped IPv4 for direct connections, so it fails to resolve on an
+IPv4-only machine. Use the **session pooler** instead — note `aws-1`, and note
+the username carries the project ref:
+
+```
+postgresql://postgres.<ref>:<password>@aws-1-us-east-1.pooler.supabase.com:5432/postgres
+```
+
+Port 5432, not the transaction pooler's 6543 — `pg_dump` needs session mode.
+`pg_dump` itself comes from Homebrew `libpq` (client only). If the pooler
+answers `Tenant or user not found` the region prefix is wrong; if it answers
+`password authentication failed`, the host is right and only the password is
+wrong.
+
+### What the dump found that this plan had missed
+
+- **112 RLS policies across 35 tables**, catalogued in
+  `docs/rls-policy-inventory.md`. 66 are row-owner checks, 14 hardcode an admin
+  email, 19 are wide open. That file is the Phase 2 worksheet.
+- **`hackathon_voter_notes` has RLS enabled with zero policies** — which in
+  Postgres denies everything to `anon` and `authenticated`, not "allows
+  everything". Only the service-role key reaches it today.
+- **9 functions and 6 triggers**, which the original inventory did not mention
+  at all. They need reading and porting or replacing before Phase 2 completes;
+  a trigger that silently stops firing is the same class of failure as a
+  dropped RLS policy.
+- **One expression index** (`idx_blog_posts_search`, a GIN full-text index over
+  `title || excerpt || content`) that the Drizzle DSL cannot express. It must be
+  added as raw SQL after the tables are created, or blog search degrades to a
+  sequential scan.
+
+`connection_counts` is excluded — it's an aggregate view, not a table, and will
+need re-creating as a view or folding into a query.
 
 **Phase 1 — auth cutover.** The riskiest phase, so it goes early while the
 codebase is otherwise unchanged and a revert is cheap.
-1. Import users into Clerk (bcrypt for password users, verified-email matching
-   for Google/Apple), writing `clerk_user_id` onto `profiles`.
+
+**Step 1 is done (2026-08-16): all users are in Clerk production.**
+
+| | |
+| --- | --- |
+| Clerk production users | 138 |
+| With `external_id` (the Supabase uuid) | 138 / 138 |
+| With a verified email | 138 / 138 |
+| With their existing password carried over | 68 |
+| `profiles.clerk_user_id` populated | 138 / 139 |
+
+Every password hash in `auth.users` was bcrypt (`$2a$`), which Clerk's
+`password_digest` + `password_hasher: "bcrypt"` accepts directly — so **no user
+needs a password reset**. `skip_password_checks` is required on import, or
+legacy passwords that predate Clerk's strength rules get rejected.
+
+The id mapping runs both ways on purpose: Clerk's `external_id` holds the
+Supabase uuid, and `profiles.clerk_user_id` holds the Clerk id (nullable, with a
+partial unique index so two profiles can never collapse onto one Clerk
+identity). `profiles.id` is untouched and remains the Supabase auth uuid, so
+both id spaces coexist and the cutover stays reversible.
+
+One user is unmigrated: `jarodh@gmail` has no TLD and Clerk rejects it as
+malformed. That address cannot receive mail today either, so it needs a
+correction in Supabase, not a workaround.
+
+**Steps 2–4 are blocked**, and must not start until:
+
+- **Google and Apple OAuth credentials** are configured on the Clerk production
+  instance. Production does not use Clerk's shared dev OAuth app, so cutting
+  over first would lock out 69 Google and 3 Apple users on their next sign-in.
+- **A cutover window** is chosen, with the rollback rehearsed.
+
+Remaining steps:
 2. Move `ClerkProvider` from `src/app/eve-workshop/layout.tsx` to the root
    layout, and widen `middleware.ts` from the workshop-only matcher to the whole
    site.
@@ -116,16 +225,21 @@ somewhere durable).
 
 ## Things to decide before starting
 
-1. **Realtime**: polling, SSE, or Queues? Cheapest is polling; it changes the
-   feel of the messages page slightly.
-2. **One Neon project or two?** The workshop's four tables are already in one.
-   Sharing it is simpler; separating keeps a throwaway workshop DB from sitting
-   next to production user data.
-3. **Clerk instance.** The workshop currently runs against a Clerk
+~~1. **Realtime**~~ — decided: polling. See "Decisions taken" above.
+~~2. **One Neon project or two?**~~ — decided: one, split by Postgres schema.
+
+~~3. **`pg_dump --schema-only`**~~ — taken 2026-08-16; constraints folded in and
+policies catalogued.
+
+Still open:
+
+1. **A data dump.** The schema dump is structure only. Before any cutover, take
+   a full `pg_dump` with rows as a real backup — that has not been done.
+2. **Clerk instance.** The workshop currently runs against a Clerk
    **development** instance (`*.clerk.accounts.dev`), which is exactly why
    `src/app/eve-workshop/profile/actions.ts` has a hand-rolled server-side
    sign-out — third-party cookie blocking breaks Clerk's client-side
    `signOut()` across origins. A site-wide migration needs a **production**
    Clerk instance on `makerslounge.ca`, and that workaround can then be deleted.
-4. **Cutover window.** Phase 1 changes how every user signs in. It wants a
+3. **Cutover window.** Phase 1 changes how every user signs in. It wants a
    quiet window and a tested rollback, not a Friday evening.

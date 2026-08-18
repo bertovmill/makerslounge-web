@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { getServerAppUser } from "@/lib/clerk-server";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,9 +57,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }));
 
   // Get current user (server-side)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getServerAppUser();
 
   // Check if user has liked this post
   let hasLiked = false;

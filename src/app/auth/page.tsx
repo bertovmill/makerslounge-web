@@ -2,40 +2,151 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSignIn, useSignUp, useUser } from "@clerk/nextjs";
 import { supabase } from "@/lib/supabase";
+import { resolveProfileId } from "@/lib/clerk-profile";
 import Link from "next/link";
 import { rememberPostAuthRedirect, takePostAuthRedirect } from "@/lib/post-auth-redirect";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { DottedGlowBackground } from "@/components/ui/dotted-glow-background";
 
+/**
+ * Clerk throws errors carrying an `errors` array; anything else is unexpected.
+ * Showing the raw object would put "[object Object]" in front of the user.
+ */
+function clerkErrorMessage(err: unknown): string {
+  const e = err as {
+    message?: string;
+    longMessage?: string;
+    errors?: Array<{ longMessage?: string; message?: string }>;
+  };
+  return (
+    e?.errors?.[0]?.longMessage ||
+    e?.errors?.[0]?.message ||
+    e?.longMessage ||
+    e?.message ||
+    "Something went wrong. Please try again."
+  );
+}
+
 // --------------- Sign Up Form ---------------
 
 function SignUpForm({ onSignIn }: { onSignIn: () => void }) {
+  const { signUp } = useSignUp();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  // Clerk verifies the address with an emailed code before the account exists,
+  // which Supabase did not require. That second step is this state.
+  const [pendingCode, setPendingCode] = useState(false);
+  const [code, setCode] = useState("");
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!signUp) return;
     setLoading(true);
     setMessage("");
 
-    const { error } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
+    const { error } = await signUp.password({
+      emailAddress: email.trim().toLowerCase(),
       password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
     });
 
     if (error) {
-      setMessage(error.message);
+      setMessage(clerkErrorMessage(error));
+      setLoading(false);
+      return;
+    }
+
+    if (signUp.status === "complete") {
+      await signUp.finalize();
+    } else {
+      const { error: sendError } = await signUp.verifications.sendEmailCode();
+      if (sendError) setMessage(clerkErrorMessage(sendError));
+      else setPendingCode(true);
     }
     setLoading(false);
   };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signUp) return;
+    setLoading(true);
+    setMessage("");
+
+    const { error } = await signUp.verifications.verifyEmailCode({ code: code.trim() });
+    if (error) {
+      setMessage(clerkErrorMessage(error));
+      setLoading(false);
+      return;
+    }
+
+    // finalize turns a complete sign-up into a live session; AuthContext then
+    // creates the profile row and routes to onboarding.
+    const { error: finalizeError } = await signUp.finalize();
+    if (finalizeError) setMessage(clerkErrorMessage(finalizeError));
+    setLoading(false);
+  };
+
+  if (pendingCode) {
+    return (
+      <>
+        <div className="text-center mb-5">
+          <h1 className="text-xl font-semibold mb-0.5">Check your email</h1>
+          <p className="text-sm text-muted-foreground">
+            We sent a code to {email.trim().toLowerCase()}
+          </p>
+        </div>
+
+        <form onSubmit={handleVerify} className="space-y-2.5">
+          <div>
+            <label htmlFor="code" className="block text-sm font-medium mb-1.5">
+              Verification code
+            </label>
+            <input
+              id="code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              placeholder="123456"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="w-full h-10 px-4 rounded-xl border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading || code.trim().length < 4}
+            className="w-full h-11 md:h-10 rounded-xl bg-gradient-blue text-white text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center"
+          >
+            {loading ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              "Verify"
+            )}
+          </button>
+        </form>
+
+        {message && (
+          <div className="mt-3 p-2.5 rounded-xl bg-secondary text-sm text-center text-muted-foreground">
+            {message}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setPendingCode(false)}
+          className="w-full text-sm text-muted-foreground mt-3 hover:text-foreground transition-colors"
+        >
+          Use a different email
+        </button>
+      </>
+    );
+  }
 
   return (
     <>
@@ -127,76 +238,62 @@ function SignUpForm({ onSignIn }: { onSignIn: () => void }) {
 
 function SignInForm({ onSignUp }: { onSignUp: () => void }) {
   const router = useRouter();
+  const { signIn } = useSignIn();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const handleSignInWithApple = async () => {
+  // Clerk handles OAuth by redirecting to /auth/sso-callback, which mounts
+  // <AuthenticateWithRedirectCallback /> and completes the handshake. The
+  // native app follows the same path through an in-app browser — its custom
+  // scheme is no longer involved, since Clerk owns the callback now.
+  const startOAuth = async (strategy: "oauth_google" | "oauth_apple") => {
+    if (!signIn) return;
     setLoading(true);
     setMessage("");
 
-    if (Capacitor.isNativePlatform()) {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "apple",
-        options: {
-          redirectTo: "com.makerslounge.app://auth-callback",
-          skipBrowserRedirect: true,
-          queryParams: { response_type: "token" },
-        },
-      });
-      if (error) { setMessage(error.message); setLoading(false); return; }
-      if (data?.url) {
-        const { Browser } = await import("@capacitor/browser");
-        await Browser.open({ url: data.url, presentationStyle: "fullscreen" });
-      }
+    const { error } = await signIn.sso({
+      strategy,
+      redirectUrl: "/home",
+      redirectCallbackUrl: "/auth/sso-callback",
+    });
+
+    if (error) {
+      setMessage(clerkErrorMessage(error));
       setLoading(false);
-    } else {
-      await supabase.auth.signInWithOAuth({
-        provider: "apple",
-        options: { redirectTo: `${window.location.origin}/auth/callback` },
-      });
     }
   };
 
-  const handleSignInWithGoogle = async () => {
-    setLoading(true);
-
-    if (Capacitor.isNativePlatform()) {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: "com.makerslounge.app://auth-callback",
-          skipBrowserRedirect: true,
-          queryParams: { response_type: "token" },
-        },
-      });
-      if (error) { setMessage(error.message); setLoading(false); return; }
-      if (data?.url) {
-        const { Browser } = await import("@capacitor/browser");
-        await Browser.open({ url: data.url, presentationStyle: "popover" });
-      }
-      setLoading(false);
-    } else {
-      await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}/auth/callback` },
-      });
-    }
-  };
+  const handleSignInWithApple = () => startOAuth("oauth_apple");
+  const handleSignInWithGoogle = () => startOAuth("oauth_google");
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!signIn) return;
     setLoading(true);
     setMessage("");
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
+    const { error } = await signIn.password({
+      identifier: email.trim().toLowerCase(),
       password,
     });
+
     if (error) {
-      setMessage(error.message);
+      setMessage(clerkErrorMessage(error));
+      setLoading(false);
+      return;
+    }
+
+    if (signIn.status === "complete") {
+      // finalize turns it into a live session; AuthContext takes it from there.
+      const { error: finalizeError } = await signIn.finalize();
+      if (finalizeError) setMessage(clerkErrorMessage(finalizeError));
+    } else {
+      // MFA or another step this custom form doesn't implement. The hosted
+      // portal knows how to finish any flow.
+      setMessage("Additional verification needed — continue at accounts.makerslounge.ca");
     }
     setLoading(false);
   };
@@ -336,6 +433,11 @@ function SignInForm({ onSignUp }: { onSignUp: () => void }) {
 function AuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isLoaded, isSignedIn, user: clerkUser } = useUser();
+  const clerkUserId = clerkUser?.id ?? null;
+  const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress ?? null;
+  const clerkFirstName = clerkUser?.firstName ?? null;
+  const clerkLastName = clerkUser?.lastName ?? null;
   const mode = searchParams.get("mode");
   const [isSigningUp, setIsSigningUp] = useState(mode === "signup");
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -414,60 +516,36 @@ function AuthContent() {
     rememberPostAuthRedirect(searchParams.get("next"));
   }, [searchParams]);
 
+  // Clerk owns the session, so this page only has to notice that one exists
+  // and route onwards. The OAuth handshake itself lands on /auth/sso-callback,
+  // and Clerk's own listener updates `isSignedIn` when it completes — no
+  // code exchange or custom-scheme handling left to do here.
   useEffect(() => {
-    let hasRedirected = false;
+    if (!isLoaded) return;
 
-    const handleAuthRedirect = async (userId: string, email?: string) => {
-      if (hasRedirected) return;
-      hasRedirected = true;
-      await redirectAfterAuth(userId, email);
-    };
-
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        handleAuthRedirect(user.id, user.email);
-      } else {
-        setCheckingAuth(false);
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) handleAuthRedirect(session.user.id, session.user.email);
-    });
-
-    if (Capacitor.isNativePlatform()) {
-      import("@capacitor/app").then(({ App }) => {
-        App.addListener("appUrlOpen", async ({ url }) => {
-          if (url.includes("auth-callback")) {
-            import("@capacitor/browser").then(({ Browser }) => Browser.close()).catch(() => {});
-
-            const queryString = url.split("?")[1]?.split("#")[0];
-            if (queryString) {
-              const params = new URLSearchParams(queryString);
-              const code = params.get("code");
-              if (code) {
-                const { error } = await supabase.auth.exchangeCodeForSession(code);
-                if (error) console.error("OAuth code exchange failed:", error.message);
-                return;
-              }
-            }
-
-            const hashPart = url.split("#")[1];
-            if (hashPart) {
-              const params = new URLSearchParams(hashPart);
-              const accessToken = params.get("access_token");
-              const refreshToken = params.get("refresh_token");
-              if (accessToken && refreshToken) {
-                await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-              }
-            }
-          }
-        });
-      });
+    if (!isSignedIn || !clerkUserId) {
+      setCheckingAuth(false);
+      return;
     }
 
-    return () => subscription.unsubscribe();
-  }, [router, searchParams]);
+    let cancelled = false;
+    (async () => {
+      const profileId = await resolveProfileId(clerkUserId, {
+        firstName: clerkFirstName,
+        lastName: clerkLastName,
+      });
+      if (cancelled || !profileId) {
+        if (!cancelled) setCheckingAuth(false);
+        return;
+      }
+      await redirectAfterAuth(profileId, clerkEmail ?? undefined);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, isSignedIn, clerkUserId]);
 
   if (checkingAuth) {
     return (

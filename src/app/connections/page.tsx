@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,6 +30,7 @@ interface Connection {
 }
 
 export default function ConnectionsPage() {
+  const { user: authUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [pendingReceived, setPendingReceived] = useState<Connection[]>([]);
@@ -38,7 +40,7 @@ export default function ConnectionsPage() {
 
   useEffect(() => {
     const fetchConnections = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = authUser;
 
       if (!user) {
         router.push("/auth");
