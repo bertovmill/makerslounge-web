@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { getSocialConnection, isTokenExpired, updateSocialTokens } from "@/lib/social-connection";
 import { uploadMultipleMediaToX } from "./x-media-upload";
 
 const X_CLIENT_ID = process.env.X_CLIENT_ID;
@@ -66,47 +66,25 @@ export async function postToX(
     mediaIds = mediaResult.mediaIds;
   }
 
-  // Get X connection using service role
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
-  const { data: connection, error: connError } = await supabaseAdmin
-    .from("social_connections")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("platform", "x")
-    .single();
-
-  if (connError || !connection) {
+  const connection = await getSocialConnection(userId, "x");
+  if (!connection) {
     return { success: false, error: "X account not connected" };
   }
 
-  let accessToken = connection.access_token;
+  let accessToken = connection.accessToken;
 
-  // Check if token is expired
-  const tokenExpiry = new Date(connection.token_expires_at);
-  const now = new Date();
-
-  if (tokenExpiry <= now && connection.refresh_token) {
-    const newTokens = await refreshAccessToken(connection.refresh_token);
+  if (isTokenExpired(connection) && connection.refreshToken) {
+    const newTokens = await refreshAccessToken(connection.refreshToken);
 
     if (!newTokens) {
       return { success: false, error: "X session expired. Please reconnect." };
     }
 
-    // Update stored tokens
-    const newExpiry = new Date(Date.now() + newTokens.expires_in * 1000);
-    await supabaseAdmin
-      .from("social_connections")
-      .update({
-        access_token: newTokens.access_token,
-        refresh_token: newTokens.refresh_token || connection.refresh_token,
-        token_expires_at: newExpiry.toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", connection.id);
+    await updateSocialTokens(connection.id, {
+      accessToken: newTokens.access_token,
+      refreshToken: newTokens.refresh_token || connection.refreshToken,
+      expiresInSeconds: newTokens.expires_in,
+    });
 
     accessToken = newTokens.access_token;
   }
@@ -138,6 +116,6 @@ export async function postToX(
   return {
     success: true,
     tweetId: tweetData.data.id,
-    url: `https://twitter.com/${connection.platform_username}/status/${tweetData.data.id}`,
+    url: `https://twitter.com/${connection.platformUsername}/status/${tweetData.data.id}`,
   };
 }
