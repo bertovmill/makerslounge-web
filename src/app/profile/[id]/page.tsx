@@ -3,33 +3,31 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { fetchProfile, type PublicProfile } from "@/lib/profiles-client";
 import ProfileView from "@/components/ProfileView";
 
 export default function PublicProfilePage() {
   const params = useParams();
   const userId = params.id as string;
 
-  const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
+  const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, name, photo_url, bio, skills, looking_for_skills, looking_for_help, currently_building, linkedin, twitter, instagram, website, linkedin_data")
-        .eq("id", userId)
-        .single();
+    // Named `load`, not `fetchProfile`: that would shadow the imported
+    // `fetchProfile` and recurse into itself.
+    const load = async () => {
+      const data = await fetchProfile(userId);
 
-      if (error || !data) {
+      if (!data) {
         setNotFound(true);
       } else {
         setProfile(data);
       }
       setLoading(false);
     };
-    fetchProfile();
+    load();
   }, [userId]);
 
   if (loading) {

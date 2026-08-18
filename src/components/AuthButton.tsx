@@ -3,15 +3,18 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { fetchProfile as fetchProfileById } from "@/lib/profiles-client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
 
+// Nullable, not optional: these columns are nullable in the database. PostgREST
+// typed its results loosely enough that `undefined` compiled; the Neon client
+// returns the real shape.
 interface Profile {
-  photo_url?: string;
-  username?: string;
-  name?: string;
+  photo_url?: string | null;
+  username?: string | null;
+  name?: string | null;
 }
 
 export default function AuthButton() {
@@ -47,12 +50,7 @@ export default function AuthButton() {
   }, [menuOpen]);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("photo_url, username, name")
-      .eq("id", userId)
-      .single();
-
+    const data = await fetchProfileById(userId);
     if (data) {
       setProfile(data);
     }
@@ -86,7 +84,7 @@ export default function AuthButton() {
       <div className="relative" ref={menuRef}>
         <div className="flex items-center gap-3 hover:bg-accent/50 p-2 rounded-lg transition-colors cursor-pointer group">
           <Avatar className="size-9">
-            <AvatarImage src={profile?.photo_url} alt={profile?.username || user.email || ""} />
+            <AvatarImage src={profile?.photo_url ?? undefined} alt={profile?.username || user.email || ""} />
             <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
               {getInitials()}
             </AvatarFallback>

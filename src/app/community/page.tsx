@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/lib/supabase";
+import { fetchProfiles } from "@/lib/profiles-client";
 import { Users, Briefcase, Lightbulb, TrendingUp } from "lucide-react";
 
 interface Profile {
@@ -255,14 +255,11 @@ export default function CommunityPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetch() {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, name, bio, skills, photo_url");
-      setProfiles(data || []);
+    async function load() {
+      setProfiles(await fetchProfiles());
       setLoading(false);
     }
-    fetch();
+    load();
   }, []);
 
   const stats = useMemo(() => {

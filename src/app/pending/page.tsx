@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { fetchMyProfile } from "@/lib/profiles-client";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { Clock, RefreshCw, LogOut, Instagram, Linkedin } from "lucide-react";
@@ -22,11 +22,7 @@ export default function PendingPage() {
     setChecking(true);
     if (!user) { router.push("/auth"); return; }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("application_status")
-      .eq("id", user.id)
-      .single();
+    const profile = await fetchMyProfile();
 
     if (profile?.application_status === "approved") {
       router.push("/home");

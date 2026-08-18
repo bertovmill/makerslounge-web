@@ -3,16 +3,19 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { fetchMyProfile } from "@/lib/profiles-client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { User, Settings, LogOut, Sun, Moon } from "lucide-react";
 
+// Nullable, not optional: these columns are nullable in the database. PostgREST
+// typed its results loosely enough that `undefined` compiled; the Neon client
+// returns the real shape.
 interface Profile {
-  photo_url?: string;
-  username?: string;
-  name?: string;
+  photo_url?: string | null;
+  username?: string | null;
+  name?: string | null;
 }
 
 export default function UserMenu() {
@@ -25,14 +28,9 @@ export default function UserMenu() {
 
   useEffect(() => {
     if (user) {
-      supabase
-        .from("profiles")
-        .select("photo_url, username, name")
-        .eq("id", user.id)
-        .single()
-        .then(({ data }) => {
-          if (data) setProfile(data);
-        });
+      fetchMyProfile().then((data) => {
+        if (data) setProfile(data);
+      });
     } else {
       setProfile(null);
     }
@@ -89,7 +87,7 @@ export default function UserMenu() {
         aria-label="User menu"
       >
         <Avatar className="size-8">
-          <AvatarImage src={profile?.photo_url} alt={displayName || ""} />
+          <AvatarImage src={profile?.photo_url ?? undefined} alt={displayName || ""} />
           <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
             {getInitials()}
           </AvatarFallback>
@@ -101,7 +99,7 @@ export default function UserMenu() {
           {/* User info header */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
             <Avatar className="size-10">
-              <AvatarImage src={profile?.photo_url} alt={displayName || ""} />
+              <AvatarImage src={profile?.photo_url ?? undefined} alt={displayName || ""} />
               <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
                 {getInitials()}
               </AvatarFallback>
