@@ -1,5 +1,8 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { eq } from "drizzle-orm";
+import { getSiteDb } from "@/db/site";
+import { profiles } from "@/db/site/schema";
+import { ADMIN_EMAIL } from "@/lib/api/auth";
 
 /**
  * Server-side equivalent of `useAuth()`.
@@ -8,23 +11,14 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  * Clerk owns the session now, but the rest of the app still keys everything on
  * the profile uuid, so this resolves one to the other.
  *
- * The mapping lookup uses the service-role key deliberately: it runs before we
- * know who the caller is, so there is no user token to authorise it with, and
- * it reads exactly one column of one row. Nothing else here bypasses RLS.
+ * Reads from Neon. This previously went through Supabase with the service-role
+ * key to get around RLS; there is no RLS to get around any more, and the
+ * authorization that RLS used to provide now lives in `@/lib/api/auth`.
+ *
+ * These return null rather than throwing, which suits the server components that
+ * use them to decide what to render. API routes should prefer `requireUser()` /
+ * `requireAdmin()` from `@/lib/api/auth`, which fail closed.
  */
-
-let admin: SupabaseClient | null = null;
-
-function adminClient(): SupabaseClient {
-  if (!admin) {
-    admin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { persistSession: false } }
-    );
-  }
-  return admin;
-}
 
 export interface ServerAppUser {
   /** Profile uuid — what every foreign key points at. */
@@ -38,17 +32,12 @@ export async function getServerAppUser(): Promise<ServerAppUser | null> {
   const { userId } = await auth();
   if (!userId) return null;
 
-  const { data } = await adminClient()
-    .from("profiles")
-    .select("id")
-    .eq("clerk_user_id", userId)
-    .maybeSingle();
-
-  if (!data) return null;
+  const profileId = await profileIdForClerkId(userId);
+  if (!profileId) return null;
 
   const user = await currentUser();
   return {
-    id: data.id as string,
+    id: profileId,
     clerkUserId: userId,
     email: user?.primaryEmailAddress?.emailAddress ?? null,
   };
@@ -58,19 +47,22 @@ export async function getServerAppUser(): Promise<ServerAppUser | null> {
 export async function getServerProfileId(): Promise<string | null> {
   const { userId } = await auth();
   if (!userId) return null;
-
-  const { data } = await adminClient()
-    .from("profiles")
-    .select("id")
-    .eq("clerk_user_id", userId)
-    .maybeSingle();
-
-  return (data?.id as string) ?? null;
+  return profileIdForClerkId(userId);
 }
 
-const ADMIN_EMAIL = "bertmill19@gmail.com";
+async function profileIdForClerkId(clerkUserId: string): Promise<string | null> {
+  const db = getSiteDb();
+  const [row] = await db
+    .select({ id: profiles.id })
+    .from(profiles)
+    .where(eq(profiles.clerkUserId, clerkUserId))
+    .limit(1);
+  return row?.id ?? null;
+}
 
 export async function isServerAdmin(): Promise<boolean> {
   const user = await currentUser();
-  return user?.primaryEmailAddress?.emailAddress === ADMIN_EMAIL;
+  return user?.primaryEmailAddress?.emailAddress?.toLowerCase() === ADMIN_EMAIL;
 }
+
+export { ADMIN_EMAIL };

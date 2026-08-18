@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { getSiteDb } from "@/db/site";
 import { communityContacts, profiles } from "@/db/site/schema";
+import { requireUser } from "@/lib/api/auth";
+import { handleApiError } from "@/lib/api/respond";
 
 /**
  * Fold a pre-existing community contact into the signed-in user's profile.
@@ -25,10 +27,15 @@ import { communityContacts, profiles } from "@/db/site/schema";
  * policy was the only thing standing in the way.
  */
 export async function POST() {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
+  try {
+    return await mergeContact();
+  } catch (err) {
+    return handleApiError(err, "api/me/merge-contact");
   }
+}
+
+async function mergeContact() {
+  const profileId = await requireUser();
 
   const user = await currentUser();
   const email = user?.primaryEmailAddress?.emailAddress?.trim().toLowerCase();
@@ -40,7 +47,6 @@ export async function POST() {
 
   const [profile] = await db
     .select({
-      id: profiles.id,
       skills: profiles.skills,
       bio: profiles.bio,
       linkedin: profiles.linkedin,
@@ -49,7 +55,7 @@ export async function POST() {
       website: profiles.website,
     })
     .from(profiles)
-    .where(eq(profiles.clerkUserId, userId))
+    .where(eq(profiles.id, profileId))
     .limit(1);
 
   if (!profile) {
@@ -92,12 +98,12 @@ export async function POST() {
   if (!profile.website && contact.website) updates.website = contact.website;
 
   if (Object.keys(updates).length > 0) {
-    await db.update(profiles).set(updates).where(eq(profiles.id, profile.id));
+    await db.update(profiles).set(updates).where(eq(profiles.id, profileId));
   }
 
   await db
     .update(communityContacts)
-    .set({ matchedProfileId: profile.id, matchedAt: new Date().toISOString() })
+    .set({ matchedProfileId: profileId, matchedAt: new Date().toISOString() })
     .where(
       // Re-check the null guard so two concurrent calls cannot both claim it.
       and(eq(communityContacts.id, contact.id), isNull(communityContacts.matchedProfileId)),

@@ -108,11 +108,9 @@ export default function SettingsPage() {
 
     setDeleteLoading(true);
     try {
-      const res = await fetch("/api/account/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id }),
-      });
+      // No body: the route derives the account from the Clerk session. It used
+      // to take a userId here, which meant anyone could delete anyone.
+      const res = await fetch("/api/account/delete", { method: "POST" });
 
       const data = await res.json();
       if (data.error) throw new Error(data.error);
