@@ -1,56 +1,80 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { and, eq } from "drizzle-orm";
+import { getSiteDb } from "@/db/site";
+import { hackathonScores } from "@/db/site/schema";
+import { requireJudge } from "@/lib/api/judge-auth";
+import { badRequest, handleApiError } from "@/lib/api/respond";
 
-const ADMIN_PASSWORD = "makers2026";
-
-function serviceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } },
-  );
-}
-
-function authorized(req: NextRequest) {
-  return req.headers.get("x-admin-password") === ADMIN_PASSWORD;
-}
-
-// GET /api/admin/hackathon-scores?submission_id=...&judge_name=...
+/** GET /api/admin/hackathon-scores?submission_id=...&judge_name=... */
 export async function GET(req: NextRequest) {
-  if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    requireJudge(req);
 
-  const { searchParams } = new URL(req.url);
-  const submissionId = searchParams.get("submission_id");
-  const judgeName = searchParams.get("judge_name");
-  if (!submissionId || !judgeName) {
-    return NextResponse.json({ error: "submission_id and judge_name required" }, { status: 400 });
+    const { searchParams } = new URL(req.url);
+    const submissionId = searchParams.get("submission_id");
+    const judgeName = searchParams.get("judge_name");
+    if (!submissionId || !judgeName) {
+      return badRequest("submission_id and judge_name required");
+    }
+
+    const rows = await getSiteDb()
+      .select({ criterion_key: hackathonScores.criterionKey, score: hackathonScores.score })
+      .from(hackathonScores)
+      .where(
+        and(
+          eq(hackathonScores.submissionId, submissionId),
+          eq(hackathonScores.judgeName, judgeName),
+        ),
+      );
+
+    return NextResponse.json(rows);
+  } catch (err) {
+    return handleApiError(err, "api/admin/hackathon-scores GET");
   }
-
-  const { data, error } = await serviceClient()
-    .from("hackathon_scores")
-    .select("criterion_key, score")
-    .eq("submission_id", submissionId)
-    .eq("judge_name", judgeName);
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
 }
 
-// POST /api/admin/hackathon-scores  { judge_name, submission_id, criterion_key, score }
+/** POST /api/admin/hackathon-scores  { judge_name, submission_id, criterion_key, score } */
 export async function POST(req: NextRequest) {
-  if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    requireJudge(req);
 
-  const body = (await req.json()) as {
-    judge_name: string;
-    submission_id: string;
-    criterion_key: string;
-    score: number;
-  };
+    const body = (await req.json()) as {
+      judge_name?: string;
+      submission_id?: string;
+      criterion_key?: string;
+      score?: number;
+    };
 
-  const { error } = await serviceClient()
-    .from("hackathon_scores")
-    .upsert(body, { onConflict: "judge_name,submission_id,criterion_key" });
+    // Validated explicitly because the columns are NOT NULL and a missing field
+    // used to surface as an opaque PostgREST error.
+    if (!body.judge_name || !body.submission_id || !body.criterion_key) {
+      return badRequest("judge_name, submission_id and criterion_key are required");
+    }
+    if (typeof body.score !== "number" || !Number.isFinite(body.score)) {
+      return badRequest("score must be a number");
+    }
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+    await getSiteDb()
+      .insert(hackathonScores)
+      .values({
+        judgeName: body.judge_name,
+        submissionId: body.submission_id,
+        criterionKey: body.criterion_key,
+        score: body.score,
+      })
+      // Re-scoring the same criterion overwrites, matching the previous upsert on
+      // hackathon_scores_judge_name_submission_id_criterion_key_key.
+      .onConflictDoUpdate({
+        target: [
+          hackathonScores.judgeName,
+          hackathonScores.submissionId,
+          hackathonScores.criterionKey,
+        ],
+        set: { score: body.score, updatedAt: new Date().toISOString() },
+      });
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return handleApiError(err, "api/admin/hackathon-scores POST");
+  }
 }

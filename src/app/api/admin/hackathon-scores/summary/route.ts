@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { eq, inArray } from "drizzle-orm";
+import { getSiteDb } from "@/db/site";
+import { hackathonScores, hackathonSubmissions } from "@/db/site/schema";
+import { requireJudge } from "@/lib/api/judge-auth";
+import { handleApiError } from "@/lib/api/respond";
 
-const ADMIN_PASSWORD = "makers2026";
 const JUDGE_COUNT = 5;
 
 const TRACK_CRITERIA: Record<string, { key: string; weight: number }[]> = {
@@ -25,36 +28,42 @@ const TRACK_CRITERIA: Record<string, { key: string; weight: number }[]> = {
   ],
 };
 
-function serviceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } },
-  );
+export async function GET(req: NextRequest) {
+  try {
+    return await summary(req);
+  } catch (err) {
+    return handleApiError(err, "api/admin/hackathon-scores/summary");
+  }
 }
 
-export async function GET(req: NextRequest) {
-  if (req.headers.get("x-admin-password") !== ADMIN_PASSWORD) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+async function summary(req: NextRequest) {
+  requireJudge(req);
 
-  const db = serviceClient();
+  const db = getSiteDb();
 
-  const { data: submissions } = await db
-    .from("hackathon_submissions")
-    .select("id, title, team_name, challenge_track")
-    .eq("is_finalist", true);
+  const submissions = await db
+    .select({
+      id: hackathonSubmissions.id,
+      title: hackathonSubmissions.title,
+      team_name: hackathonSubmissions.teamName,
+      challenge_track: hackathonSubmissions.challengeTrack,
+    })
+    .from(hackathonSubmissions)
+    .where(eq(hackathonSubmissions.isFinalist, true));
 
-  if (!submissions?.length) return NextResponse.json({ tracks: {} });
+  if (!submissions.length) return NextResponse.json({ tracks: {} });
 
   const submissionIds = submissions.map((s) => s.id);
 
-  const { data: scores } = await db
-    .from("hackathon_scores")
-    .select("submission_id, judge_name, criterion_key, score")
-    .in("submission_id", submissionIds);
-
-  const allScores = scores ?? [];
+  const allScores = await db
+    .select({
+      submission_id: hackathonScores.submissionId,
+      judge_name: hackathonScores.judgeName,
+      criterion_key: hackathonScores.criterionKey,
+      score: hackathonScores.score,
+    })
+    .from(hackathonScores)
+    .where(inArray(hackathonScores.submissionId, submissionIds));
 
   const result: Record<string, {
     pct: number;
@@ -95,7 +104,7 @@ export async function GET(req: NextRequest) {
       scoresBySubmission[sub.id] = { total: judgeWeightedTotal, judgeCount: judgeNames.length };
     }
 
-    let winner = null;
+    let winner: { title: string; team_name: string | null; avg_score: number } | null = null;
     let bestAvg = -1;
     for (const sub of trackSubs) {
       const entry = scoresBySubmission[sub.id];

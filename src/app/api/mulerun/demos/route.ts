@@ -1,157 +1,118 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { asc, eq } from "drizzle-orm";
+import { getSiteDb } from "@/db/site";
+import { mulerunDemos } from "@/db/site/schema";
+import { requireAdmin } from "@/lib/api/auth";
+import { badRequest, handleApiError } from "@/lib/api/respond";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-function readClient() {
-  if (!SUPABASE_URL || !ANON_KEY) return null;
-  return createClient(SUPABASE_URL, ANON_KEY);
-}
-
-function adminClient() {
-  if (!SUPABASE_URL || !SERVICE_KEY) return null;
-  return createClient(SUPABASE_URL, SERVICE_KEY);
-}
-
+/** List demos. Public — the event's leaderboard and voting screens show these. */
 export async function GET() {
-  const supabase = readClient();
-  if (!supabase) {
-    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
-  }
-  const { data, error } = await supabase
-    .from("mulerun_demos")
-    .select("id, team_name, name, project, video_url, created_at")
-    .order("created_at", { ascending: true });
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-  return NextResponse.json({ demos: data ?? [] });
-}
-
-export async function POST(request: NextRequest) {
-  const supabase = readClient();
-  if (!supabase) {
-    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
-  }
-
-  let body: unknown;
   try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+    const db = getSiteDb();
+    const demos = await db
+      .select({
+        id: mulerunDemos.id,
+        team_name: mulerunDemos.teamName,
+        name: mulerunDemos.name,
+        project: mulerunDemos.project,
+        video_url: mulerunDemos.videoUrl,
+        created_at: mulerunDemos.createdAt,
+      })
+      .from(mulerunDemos)
+      .orderBy(asc(mulerunDemos.createdAt));
 
-  const { team_name, name, project, video_url } = (body ?? {}) as {
-    team_name?: unknown;
-    name?: unknown;
-    project?: unknown;
-    video_url?: unknown;
-  };
-
-  if (
-    typeof team_name !== "string" ||
-    team_name.trim().length === 0 ||
-    team_name.trim().length > 80
-  ) {
-    return NextResponse.json(
-      { error: "Team name is required" },
-      { status: 400 }
-    );
+    return NextResponse.json({ demos });
+  } catch (err) {
+    return handleApiError(err, "api/mulerun/demos GET");
   }
-  if (
-    typeof name !== "string" ||
-    name.trim().length === 0 ||
-    name.trim().length > 120
-  ) {
-    return NextResponse.json(
-      { error: "Member names are required" },
-      { status: 400 }
-    );
-  }
-  if (
-    typeof project !== "string" ||
-    project.trim().length === 0 ||
-    project.trim().length > 200
-  ) {
-    return NextResponse.json(
-      { error: "Tell us what you built" },
-      { status: 400 }
-    );
-  }
-
-  let videoUrl: string | null = null;
-  if (video_url !== undefined && video_url !== null && video_url !== "") {
-    if (typeof video_url !== "string" || video_url.trim().length > 500) {
-      return NextResponse.json(
-        { error: "Video link is too long" },
-        { status: 400 }
-      );
-    }
-    const trimmed = video_url.trim();
-    try {
-      const parsed = new URL(trimmed);
-      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-        throw new Error("bad protocol");
-      }
-    } catch {
-      return NextResponse.json(
-        { error: "Video link must be a valid URL" },
-        { status: 400 }
-      );
-    }
-    videoUrl = trimmed;
-  }
-
-  const { error } = await supabase.from("mulerun_demos").insert({
-    team_name: team_name.trim(),
-    name: name.trim(),
-    project: project.trim(),
-    video_url: videoUrl,
-  });
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-  return NextResponse.json({ ok: true });
 }
 
+/** Register a demo. Open, like the signup form — a walk-up form at an event. */
+export async function POST(request: NextRequest) {
+  try {
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return badRequest("Invalid JSON");
+    }
+
+    const { team_name, name, project, video_url } = (body ?? {}) as {
+      team_name?: unknown;
+      name?: unknown;
+      project?: unknown;
+      video_url?: unknown;
+    };
+
+    if (typeof team_name !== "string" || team_name.trim().length === 0 || team_name.trim().length > 80) {
+      return badRequest("Team name is required");
+    }
+    if (typeof name !== "string" || name.trim().length === 0 || name.trim().length > 120) {
+      return badRequest("Member names are required");
+    }
+    if (typeof project !== "string" || project.trim().length === 0 || project.trim().length > 200) {
+      return badRequest("Tell us what you built");
+    }
+
+    let videoUrl: string | null = null;
+    if (video_url !== undefined && video_url !== null && video_url !== "") {
+      if (typeof video_url !== "string" || video_url.trim().length > 500) {
+        return badRequest("Video link is too long");
+      }
+      const trimmed = video_url.trim();
+      try {
+        const parsed = new URL(trimmed);
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+          throw new Error("bad protocol");
+        }
+      } catch {
+        return badRequest("Video link must be a valid URL");
+      }
+      videoUrl = trimmed;
+    }
+
+    const db = getSiteDb();
+    await db.insert(mulerunDemos).values({
+      teamName: team_name.trim(),
+      name: name.trim(),
+      project: project.trim(),
+      videoUrl,
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return handleApiError(err, "api/mulerun/demos POST");
+  }
+}
+
+/**
+ * Delete one demo, or all of them.
+ *
+ * SECURITY: previously unauthenticated and backed by the service-role key, so
+ * `DELETE ?all=1` was open to anyone. Deleting a demo also cascades to its votes.
+ * Now admin-only.
+ */
 export async function DELETE(request: NextRequest) {
-  const supabase = adminClient();
-  if (!supabase) {
-    return NextResponse.json(
-      { error: "SUPABASE_SERVICE_ROLE_KEY is not configured on the server" },
-      { status: 500 }
-    );
-  }
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
-  const all = searchParams.get("all");
+  try {
+    await requireAdmin();
 
-  if (id) {
-    const { error } = await supabase
-      .from("mulerun_demos")
-      .delete()
-      .eq("id", id);
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    const all = searchParams.get("all");
+    const db = getSiteDb();
+
+    if (id) {
+      await db.delete(mulerunDemos).where(eq(mulerunDemos.id, id));
+      return NextResponse.json({ ok: true });
     }
-    return NextResponse.json({ ok: true });
-  }
 
-  if (all === "1") {
-    const { error } = await supabase
-      .from("mulerun_demos")
-      .delete()
-      .not("id", "is", null);
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (all === "1") {
+      await db.delete(mulerunDemos);
+      return NextResponse.json({ ok: true });
     }
-    return NextResponse.json({ ok: true });
-  }
 
-  return NextResponse.json(
-    { error: "Provide ?id=<uuid> or ?all=1" },
-    { status: 400 }
-  );
+    return badRequest("Provide ?id=<uuid> or ?all=1");
+  } catch (err) {
+    return handleApiError(err, "api/mulerun/demos DELETE");
+  }
 }
