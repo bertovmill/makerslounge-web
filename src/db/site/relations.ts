@@ -2,7 +2,7 @@
 // See ./schema.ts for provenance and how to regenerate.
 
 import { relations } from "drizzle-orm/relations";
-import { profiles, talks, talkContent, connections, meetups, blogPosts, events, applications, blockedUsers, broadcastAccounts, broadcastChannels, projects, comments, communityContacts, contentEvents, conversations, feedback, hackathonSubmissions, hackathonScores, homeVisions, identities, likes, matcherContacts, matcherEvents, messages, mulerunDemos, mulerunVotes, podcasts, podcastGuests, profileEventNotes, reports, scheduledPosts, socialConnections, valuePortfolio } from "./schema";
+import { profiles, talks, talkContent, blogPosts, connections, meetups, events, applications, blockedUsers, broadcastAccounts, broadcastChannels, projects, comments, communityContacts, contentEvents, conversations, feedback, hackathonSubmissions, hackathonScores, homeVisions, identities, likes, matcherContacts, matcherEvents, messages, mulerunDemos, mulerunVotes, podcasts, podcastGuests, profileEventNotes, reports, scheduledPosts, socialConnections, valuePortfolio } from "./schema";
 
 export const talksRelations = relations(talks, ({one, many}) => ({
 	profiles: one(profiles, {
@@ -14,6 +14,7 @@ export const talksRelations = relations(talks, ({one, many}) => ({
 
 export const profilesRelations = relations(profiles, ({many}) => ({
 	talkss: many(talks),
+	blogPostss: many(blogPosts),
 	connectionss_recipientId: many(connections, {
 		relationName: "connections_recipientId_profiles_id"
 	}),
@@ -21,7 +22,6 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 		relationName: "connections_requesterId_profiles_id"
 	}),
 	meetupss: many(meetups),
-	blogPostss: many(blogPosts),
 	eventss: many(events),
 	applicationss: many(applications),
 	blockedUserss_blockedId: many(blockedUsers, {
@@ -75,6 +75,13 @@ export const talkContentRelations = relations(talkContent, ({one}) => ({
 	}),
 }));
 
+export const blogPostsRelations = relations(blogPosts, ({one}) => ({
+	profiles: one(profiles, {
+		fields: [blogPosts.authorId],
+		references: [profiles.id]
+	}),
+}));
+
 export const connectionsRelations = relations(connections, ({one}) => ({
 	profiles_recipientId: one(profiles, {
 		fields: [connections.recipientId],
@@ -94,13 +101,6 @@ export const meetupsRelations = relations(meetups, ({one, many}) => ({
 		references: [profiles.id]
 	}),
 	profileEventNotess: many(profileEventNotes),
-}));
-
-export const blogPostsRelations = relations(blogPosts, ({one}) => ({
-	profiles: one(profiles, {
-		fields: [blogPosts.authorId],
-		references: [profiles.id]
-	}),
 }));
 
 export const eventsRelations = relations(events, ({one}) => ({

@@ -1,16 +1,10 @@
 "use client";
 
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 import { useAuth, type AuthUser } from "@/context/AuthContext";
 import { useUser as useClerkUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import { Capacitor } from "@capacitor/core";
-
-// Lazily load subscription UI so premium-related strings stay out of the
-// main bundle on native iOS (App Store guideline 3.1.1 compliance).
-const SubscriptionSection = lazy(() => import("@/components/SubscriptionSection"));
 
 export default function SettingsPage() {
   const { user: authUser, loading: authLoading, signOut } = useAuth();
@@ -18,11 +12,6 @@ export default function SettingsPage() {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const isNative = Capacitor.isNativePlatform();
-
-  // Subscription (web only — hidden on native iOS per App Store guidelines)
-  const [isPremium, setIsPremium] = useState(false);
-  const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null);
 
   // Password change
   const [newPassword, setNewPassword] = useState("");
@@ -39,33 +28,24 @@ export default function SettingsPage() {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // The body of this effect used to be `(async () => { ... });` — a function
+  // expression that was created and then thrown away, never called. So `loading`
+  // was never cleared and this page rendered "Loading..." forever. It also only
+  // depended on `router`, so it would not have re-run when the Clerk session
+  // finally resolved even if it had been invoked.
+  //
+  // There is nothing async left to do: the only query here fetched Stripe
+  // subscription state, and that feature is gone. Everything needed comes from
+  // AuthContext.
   useEffect(() => {
-    (async () => {
-      const user = authUser;
-      if (authLoading) return;
-      if (!user) {
-        router.push("/auth");
-        return;
-      }
-      setUser(user);
-
-      // Fetch subscription status (web only — not needed on native iOS)
-      if (!isNative) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("is_premium, stripe_customer_id")
-          .eq("id", user.id)
-          .single();
-
-        if (profile) {
-          setIsPremium(profile.is_premium || false);
-          setStripeCustomerId(profile.stripe_customer_id || null);
-        }
-      }
-
-      setLoading(false);
-    });
-  }, [router]);
+    if (authLoading) return;
+    if (!authUser) {
+      router.push("/auth");
+      return;
+    }
+    setUser(authUser);
+    setLoading(false);
+  }, [authUser, authLoading, router]);
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,17 +130,6 @@ export default function SettingsPage() {
           </div>
         </div>
       </section>
-
-      {/* Subscription — web only, lazy-loaded to keep premium strings out of native bundle */}
-      {!isNative && user && (
-        <Suspense fallback={null}>
-          <SubscriptionSection
-            user={user}
-            isPremium={isPremium}
-            stripeCustomerId={stripeCustomerId}
-          />
-        </Suspense>
-      )}
 
       {/* Change Password */}
       <section className="mb-6 md:mb-8">

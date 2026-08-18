@@ -1,7 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import { getServerAppUser } from "@/lib/clerk-server";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase-server";
+import { desc } from "drizzle-orm";
+import { getSiteDb } from "@/db/site";
+import { hackathonSubmissions } from "@/db/site/schema";
 import SubmissionsTable, { type Submission } from "./SubmissionsTable";
 
 export const metadata = {
@@ -11,7 +13,6 @@ export const metadata = {
 const ADMIN_EMAIL = "bertmill19@gmail.com";
 
 export default async function HackathonAdminPage() {
-  const supabase = await createClient();
   const user = await getServerAppUser();
 
   if (!user) {
@@ -22,25 +23,29 @@ export default async function HackathonAdminPage() {
     notFound();
   }
 
-  const { data: submissions, error } = await supabase
-    .from("hackathon_submissions")
-    .select(
-      "id, project_link, title, description, video_url, file_urls, team_name, builder_emails, challenge_track, status, created_at, reviewed_at",
-    )
-    .order("created_at", { ascending: false });
+  // Drizzle throws on a query failure rather than returning an error alongside
+  // the data, so the previous inline error branch is gone — an unexpected failure
+  // now surfaces through the route's error boundary instead of being rendered as
+  // body text on an otherwise-normal admin page.
+  const submissions = await getSiteDb()
+    .select({
+      id: hackathonSubmissions.id,
+      project_link: hackathonSubmissions.projectLink,
+      title: hackathonSubmissions.title,
+      description: hackathonSubmissions.description,
+      video_url: hackathonSubmissions.videoUrl,
+      file_urls: hackathonSubmissions.fileUrls,
+      team_name: hackathonSubmissions.teamName,
+      builder_emails: hackathonSubmissions.builderEmails,
+      challenge_track: hackathonSubmissions.challengeTrack,
+      status: hackathonSubmissions.status,
+      created_at: hackathonSubmissions.createdAt,
+      reviewed_at: hackathonSubmissions.reviewedAt,
+    })
+    .from(hackathonSubmissions)
+    .orderBy(desc(hackathonSubmissions.createdAt));
 
-  if (error) {
-    return (
-      <div className="mx-auto max-w-5xl px-6 py-10">
-        <h1 className="text-2xl font-semibold">Hackathon submissions</h1>
-        <p className="mt-4 text-destructive">
-          Failed to load submissions: {error.message}
-        </p>
-      </div>
-    );
-  }
-
-  const counts = (submissions ?? []).reduce(
+  const counts = submissions.reduce(
     (acc, s) => {
       acc[s.status] = (acc[s.status] ?? 0) + 1;
       return acc;

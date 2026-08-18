@@ -65,6 +65,38 @@ export const talkContent = makerslounge.table("talk_content", {
 		}).onDelete("cascade"),
 ]);
 
+export const blogPosts = makerslounge.table("blog_posts", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	slug: text().notNull(),
+	title: text().notNull(),
+	excerpt: text().notNull(),
+	content: text().notNull(),
+	authorId: uuid("author_id"),
+	coverImage: text("cover_image"),
+	readTimeMinutes: integer("read_time_minutes").default(5),
+	isPublished: boolean("is_published").default(false),
+	isFeatured: boolean("is_featured").default(false),
+	tags: text().array().default([]),
+	publishedAt: timestamp("published_at", { withTimezone: true, mode: 'string' }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	newsletterSentAt: timestamp("newsletter_sent_at", { withTimezone: true, mode: 'string' }),
+}, (table) => [
+	index("idx_blog_posts_author_id").using("btree", table.authorId.asc().nullsLast().op("uuid_ops")),
+	index("idx_blog_posts_created_at").using("btree", table.createdAt.desc().nullsFirst().op("timestamptz_ops")),
+	index("idx_blog_posts_featured").using("btree", table.isFeatured.asc().nullsLast().op("bool_ops"), table.publishedAt.desc().nullsFirst().op("bool_ops")),
+	index("idx_blog_posts_published").using("btree", table.isPublished.asc().nullsLast().op("timestamptz_ops"), table.publishedAt.desc().nullsFirst().op("bool_ops")),
+	index("idx_blog_posts_search").using("gin", sql`to_tsvector('english'::regconfig, ((((title || ' '::text) || excerpt) || ' '::text) || content))`),
+	index("idx_blog_posts_slug").using("btree", table.slug.asc().nullsLast().op("text_ops")),
+	index("idx_blog_posts_tags").using("gin", table.tags.asc().nullsLast().op("array_ops")),
+	foreignKey({
+			columns: [table.authorId],
+			foreignColumns: [profiles.id],
+			name: "blog_posts_author_id_fkey"
+		}).onDelete("cascade"),
+	unique("blog_posts_slug_key").on(table.slug),
+]);
+
 export const innovationHackathonSignups = makerslounge.table("innovation_hackathon_signups", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	name: text().notNull(),
@@ -132,37 +164,6 @@ export const meetups = makerslounge.table("meetups", {
 			foreignColumns: [profiles.id],
 			name: "meetups_created_by_fkey"
 		}).onDelete("cascade"),
-]);
-
-export const blogPosts = makerslounge.table("blog_posts", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	slug: text().notNull(),
-	title: text().notNull(),
-	excerpt: text().notNull(),
-	content: text().notNull(),
-	authorId: uuid("author_id"),
-	coverImage: text("cover_image"),
-	readTimeMinutes: integer("read_time_minutes").default(5),
-	isPublished: boolean("is_published").default(false),
-	isFeatured: boolean("is_featured").default(false),
-	tags: text().array().default([]),
-	publishedAt: timestamp("published_at", { withTimezone: true, mode: 'string' }),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-}, (table) => [
-	index("idx_blog_posts_author_id").using("btree", table.authorId.asc().nullsLast().op("uuid_ops")),
-	index("idx_blog_posts_created_at").using("btree", table.createdAt.desc().nullsFirst().op("timestamptz_ops")),
-	index("idx_blog_posts_featured").using("btree", table.isFeatured.asc().nullsLast().op("bool_ops"), table.publishedAt.desc().nullsFirst().op("bool_ops")),
-	index("idx_blog_posts_published").using("btree", table.isPublished.asc().nullsLast().op("timestamptz_ops"), table.publishedAt.desc().nullsFirst().op("bool_ops")),
-	index("idx_blog_posts_search").using("gin", sql`to_tsvector('english'::regconfig, ((((title || ' '::text) || ex`),
-	index("idx_blog_posts_slug").using("btree", table.slug.asc().nullsLast().op("text_ops")),
-	index("idx_blog_posts_tags").using("gin", table.tags.asc().nullsLast().op("array_ops")),
-	foreignKey({
-			columns: [table.authorId],
-			foreignColumns: [profiles.id],
-			name: "blog_posts_author_id_fkey"
-		}).onDelete("cascade"),
-	unique("blog_posts_slug_key").on(table.slug),
 ]);
 
 export const emailSubscriptions = makerslounge.table("email_subscriptions", {

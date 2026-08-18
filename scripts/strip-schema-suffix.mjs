@@ -104,6 +104,31 @@ for (const { from, to, header } of jobs) {
     process.exitCode = 1;
   }
 
+  // drizzle-kit truncates long index expressions, so the blog full-text index
+  // comes back cut off mid-token: `... || ' '::text) || ex`. Harmless while the
+  // index is only ever read from the database, but `drizzle-kit generate` would
+  // emit that fragment as DDL. Restore the real expression.
+  const truncatedGin =
+    /index\("idx_blog_posts_search"\)\.using\("gin", sql`[^`]*`\)/;
+  if (truncatedGin.test(body)) {
+    body = body.replace(
+      truncatedGin,
+      'index("idx_blog_posts_search").using("gin", sql`to_tsvector(\'english\'::regconfig, ((((title || \' \'::text) || excerpt) || \' \'::text) || content))`)',
+    );
+    console.log("  restored truncated idx_blog_posts_search expression");
+  }
+
+  // Any other truncated expression index would be a silent DDL bug too, so shout
+  // about ones we have no repair for.
+  for (const m of body.matchAll(/index\("([^"]+)"\)\.using\("gin", sql`([^`]*)`\)/g)) {
+    const [, name, expr] = m;
+    const balanced = (expr.match(/\(/g) || []).length === (expr.match(/\)/g) || []).length;
+    if (!balanced) {
+      console.error(`  TRUNCATED expression index with no repair rule: ${name}`);
+      process.exitCode = 1;
+    }
+  }
+
   writeFileSync(to, header + body);
   console.log(`wrote ${to}`);
 }
