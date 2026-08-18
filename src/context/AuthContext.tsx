@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import { useUser, useAuth as useClerkAuth } from "@clerk/nextjs";
 import { supabase } from "@/lib/supabase";
 import { resolveProfileId } from "@/lib/clerk-profile";
@@ -38,9 +37,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Pages that don't require onboarding
-const PUBLIC_PATHS = ["/", "/auth", "/onboarding"];
-
 const ADMIN_EMAIL = "bertmill19@gmail.com";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -51,8 +47,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [onboardingComplete, setOnboardingComplete] = useState(true); // default true to avoid flash redirect
   const hasCheckedOnboarding = useRef(false);
-  const router = useRouter();
-  const pathname = usePathname();
 
   // Map the Clerk session onto a profile uuid.
   useEffect(() => {
@@ -134,18 +128,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await clerkSignOut();
   };
 
-  // Single redirect — only when we've finished checking
-  useEffect(() => {
-    if (loading || !user) return;
-
-    const isPublicPath = PUBLIC_PATHS.some(
-      (p) => pathname === p || pathname.startsWith(p + "/")
-    );
-
-    if (!onboardingComplete && !isPublicPath) {
-      router.replace("/onboarding");
-    }
-  }, [loading, user, onboardingComplete, pathname, router]);
+  // Onboarding is deliberately NOT enforced here. This used to redirect anyone
+  // without a `profiles.name` to /onboarding from every non-public path, which
+  // meant a signup who didn't finish the form could never reach /home — it read
+  // as login being broken. Authenticated means authenticated: land on /home and
+  // fill in the profile whenever. `onboardingComplete` is still published for
+  // anything that wants to *prompt*, just never to gate.
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
