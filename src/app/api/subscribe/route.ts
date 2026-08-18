@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
-import { supabase } from "@/lib/supabase";
+import { eq } from "drizzle-orm";
+import { getSiteDb } from "@/db/site";
+import { emailSubscriptions } from "@/db/site/schema";
 
 async function sendWelcomeEmail(email: string) {
   if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM_EMAIL) {
@@ -65,12 +67,18 @@ export async function POST(request: NextRequest) {
     // Default subscription types if not provided
     const subscriptionTypes = subscribed_to || ["events", "podcasts"];
 
+    const db = getSiteDb();
+
     // Check if email already exists
-    const { data: existingSubscription, error: checkError } = await supabase
-      .from("email_subscriptions")
-      .select("id, is_active, subscribed_to")
-      .eq("email", normalizedEmail)
-      .single();
+    const [existingSubscription] = await db
+      .select({
+        id: emailSubscriptions.id,
+        is_active: emailSubscriptions.isActive,
+        subscribed_to: emailSubscriptions.subscribedTo,
+      })
+      .from(emailSubscriptions)
+      .where(eq(emailSubscriptions.email, normalizedEmail))
+      .limit(1);
 
     // If email already exists and is active
     if (existingSubscription && existingSubscription.is_active) {
@@ -85,19 +93,11 @@ export async function POST(request: NextRequest) {
 
     // If email exists but was unsubscribed, reactivate it
     if (existingSubscription && !existingSubscription.is_active) {
-      const { data: updatedSubscription, error: updateError } = await supabase
-        .from("email_subscriptions")
-        .update({
-          is_active: true,
-          subscribed_to: subscriptionTypes,
-        })
-        .eq("email", normalizedEmail)
-        .select()
-        .single();
-
-      if (updateError) {
-        throw updateError;
-      }
+      const [updatedSubscription] = await db
+        .update(emailSubscriptions)
+        .set({ isActive: true, subscribedTo: subscriptionTypes })
+        .where(eq(emailSubscriptions.email, normalizedEmail))
+        .returning();
 
       await sendWelcomeEmail(normalizedEmail);
 
@@ -111,19 +111,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new subscription
-    const { data: newSubscription, error: insertError } = await supabase
-      .from("email_subscriptions")
-      .insert({
-        email: normalizedEmail,
-        subscribed_to: subscriptionTypes,
-        is_active: true,
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      // Handle unique constraint violation (23505 is PostgreSQL unique violation code)
-      if (insertError.code === "23505") {
+    let newSubscription;
+    try {
+      [newSubscription] = await db
+        .insert(emailSubscriptions)
+        .values({
+          email: normalizedEmail,
+          subscribedTo: subscriptionTypes,
+          isActive: true,
+        })
+        .returning();
+    } catch (insertError) {
+      // unique_violation on email_subscriptions_email_key — someone subscribed
+      // between the check above and this insert.
+      const e = insertError as { code?: string; message?: string };
+      if (e.code === "23505" || e.message?.includes("email_subscriptions_email_key")) {
         return NextResponse.json(
           { error: "This email is already subscribed" },
           { status: 409 }
@@ -168,13 +170,19 @@ export async function GET(request: NextRequest) {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    const { data: subscription, error } = await supabase
-      .from("email_subscriptions")
-      .select("id, email, subscribed_to, is_active, created_at")
-      .eq("email", normalizedEmail)
-      .single();
+    const [subscription] = await getSiteDb()
+      .select({
+        id: emailSubscriptions.id,
+        email: emailSubscriptions.email,
+        subscribed_to: emailSubscriptions.subscribedTo,
+        is_active: emailSubscriptions.isActive,
+        created_at: emailSubscriptions.createdAt,
+      })
+      .from(emailSubscriptions)
+      .where(eq(emailSubscriptions.email, normalizedEmail))
+      .limit(1);
 
-    if (error || !subscription) {
+    if (!subscription) {
       return NextResponse.json(
         { subscribed: false, message: "Email not found" },
         { status: 404 }

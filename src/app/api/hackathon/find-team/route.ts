@@ -1,22 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSiteDb } from "@/db/site";
+import { innovationHackathonSignups } from "@/db/site/schema";
+import { badRequest, handleApiError } from "@/lib/api/respond";
 
 const MIN_FREEFORM = 20;
 const MAX_FREEFORM = 600;
 const MAX_NAME = 80;
 
+/** Open, like the other event forms — matches the table's permissive policy. */
 export async function POST(request: NextRequest) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
+  try {
+    return await findTeam(request);
+  } catch (err) {
+    return handleApiError(err, "api/hackathon/find-team");
   }
+}
 
+async function findTeam(request: NextRequest) {
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return badRequest("Invalid JSON");
   }
 
   const { name, email, background, looking_for } = (body ?? {}) as {
@@ -31,7 +36,7 @@ export async function POST(request: NextRequest) {
     name.trim().length === 0 ||
     name.trim().length > MAX_NAME
   ) {
-    return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    return badRequest("Name is required");
   }
 
   if (
@@ -39,7 +44,7 @@ export async function POST(request: NextRequest) {
     email.trim().length === 0 ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
   ) {
-    return NextResponse.json({ error: "A valid email is required" }, { status: 400 });
+    return badRequest("A valid email is required");
   }
 
   if (
@@ -47,10 +52,7 @@ export async function POST(request: NextRequest) {
     background.trim().length < MIN_FREEFORM ||
     background.trim().length > MAX_FREEFORM
   ) {
-    return NextResponse.json(
-      { error: `Background must be at least ${MIN_FREEFORM} characters` },
-      { status: 400 }
-    );
+    return badRequest(`Background must be at least ${MIN_FREEFORM} characters`);
   }
 
   if (
@@ -58,23 +60,15 @@ export async function POST(request: NextRequest) {
     looking_for.trim().length < MIN_FREEFORM ||
     looking_for.trim().length > MAX_FREEFORM
   ) {
-    return NextResponse.json(
-      { error: `Tell us who you're looking for (at least ${MIN_FREEFORM} characters)` },
-      { status: 400 }
-    );
+    return badRequest(`Tell us who you're looking for (at least ${MIN_FREEFORM} characters)`);
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
-  const { error } = await supabase.from("innovation_hackathon_signups").insert({
+  await getSiteDb().insert(innovationHackathonSignups).values({
     name: name.trim(),
     email: email.trim(),
     background: background.trim(),
-    looking_for: looking_for.trim(),
+    lookingFor: looking_for.trim(),
   });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
 
   return NextResponse.json({ ok: true });
 }

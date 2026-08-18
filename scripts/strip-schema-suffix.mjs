@@ -70,6 +70,40 @@ for (const { from, to, header } of jobs) {
     console.log(`  repaired ${repaired} empty-string default(s)`);
   }
 
+  // drizzle-kit also mis-parses Postgres array defaults, and these fail quietly
+  // rather than loudly — an empty array default becomes a one-element array
+  // containing an empty string, which is a different value, not a syntax error.
+  //
+  //   '{}'::text[]                             -> [""]   should be []
+  //   ARRAY[]::text[]                          -> ["RAY"] should be []
+  //   ARRAY['events'::text, 'podcasts'::text]  -> ["RAY['events'::text", "'podcasts'::tex"]
+  //
+  // Only matters when generating DDL from this schema (inserts omit defaulted
+  // columns and let Postgres apply its own), but a wrong default here would be
+  // baked into the next `drizzle-kit generate` migration.
+  const arrayFixes = [
+    [/\.array\(\)\.default\(\[""\]\)/g, ".array().default([])"],
+    [/\.array\(\)\.default\(\["RAY"\]\)/g, ".array().default([])"],
+    [
+      /\.array\(\)\.default\(\["RAY\['events'::text", "'podcasts'::tex"\]\)/g,
+      `.array().default(["events", "podcasts"])`,
+    ],
+  ];
+  let arrayRepaired = 0;
+  for (const [pattern, replacement] of arrayFixes) {
+    arrayRepaired += (body.match(pattern) || []).length;
+    body = body.replace(pattern, replacement);
+  }
+  if (arrayRepaired) console.log(`  repaired ${arrayRepaired} array default(s)`);
+
+  // Fail loudly if a shape we don't know about slips through, rather than
+  // committing a silently wrong default.
+  const suspicious = body.match(/\.default\(\[[^\]]*RAY[^\]]*\]\)/g);
+  if (suspicious) {
+    console.error(`  UNRECOGNISED mangled array default(s): ${suspicious.join(", ")}`);
+    process.exitCode = 1;
+  }
+
   writeFileSync(to, header + body);
   console.log(`wrote ${to}`);
 }
