@@ -490,22 +490,9 @@ function AuthContent() {
       return;
     }
 
-    // A gated page (e.g. a talk) parked its path here before sending the user
-    // over; honour it ahead of the matcher and the default feed.
-    const next = takePostAuthRedirect();
-    if (next) {
-      router.push(next);
-      return;
-    }
-
-    const pendingQuery = searchParams.get("q") || localStorage.getItem("pendingMatcherQuery");
-
-    if (pendingQuery) {
-      localStorage.removeItem("pendingMatcherQuery");
-      router.push(`/matcher?q=${encodeURIComponent(pendingQuery)}`);
-    } else {
-      router.push("/home");
-    }
+    takePostAuthRedirect();
+    localStorage.removeItem("pendingMatcherQuery");
+    router.push("/home");
   };
 
   useEffect(() => {
