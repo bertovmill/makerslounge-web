@@ -18,6 +18,12 @@ const eslintConfig = defineConfig([
     "workshop-helper/**",
     ".eve/**",
   ]),
+  {
+    rules: {
+      "no-shadow": "off",
+      "@typescript-eslint/no-shadow": ["warn", { builtinGlobals: false, hoist: "all" }],
+    },
+  },
 ]);
 
 export default eslintConfig;

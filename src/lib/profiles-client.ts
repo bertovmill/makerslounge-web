@@ -154,3 +154,33 @@ export async function updateMyProfile(
     return { success: false, error: "update_failed" };
   }
 }
+
+/**
+ * Edit another member's profile. Admin only.
+ *
+ * The meetup matcher's inline editor used to write to `profiles` by id directly, which
+ * the row-owner policy silently refused for anyone but yourself.
+ */
+export async function updateProfileAsAdmin(
+  id: string,
+  updates: Record<string, unknown>,
+): Promise<UpdateProfileResult> {
+  try {
+    const res = await fetch(`/api/profiles/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(updates),
+    });
+    const body = (await res.json().catch(() => ({}))) as {
+      data?: PublicProfile;
+      error?: string;
+      detail?: string;
+    };
+    if (!res.ok) return { success: false, error: body.detail || body.error || "update_failed" };
+    return { success: true, data: body.data };
+  } catch (err) {
+    console.error("[profiles] admin update unreachable:", err);
+    return { success: false, error: "update_failed" };
+  }
+}
