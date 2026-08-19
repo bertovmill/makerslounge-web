@@ -7,33 +7,16 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/lib/supabase";
+import type { CommunityContact } from "@/lib/contacts-client";
+import {
+  fetchContacts as fetchContactRows,
+  deleteContact,
+  deleteContacts,
+  updateContact,
+  importContacts,
+} from "@/lib/contacts-client";
 import { useAuth } from "@/context/AuthContext";
 
-interface CommunityContact {
-  id: string;
-  email: string;
-  name: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  notes: string | null;
-  skills: string[] | null;
-  company: string | null;
-  role: string | null;
-  source: string[] | null;
-  linkedin: string | null;
-  twitter: string | null;
-  instagram: string | null;
-  website: string | null;
-  phone: string | null;
-  summary: string | null;
-  visibility: string;
-  matched_profile_id: string | null;
-  matched_at: string | null;
-  metadata: Record<string, string> | null;
-  created_at: string;
-  updated_at: string;
-}
 
 export default function ContactsPage() {
   const { isAdmin } = useAuth();
@@ -59,21 +42,12 @@ export default function ContactsPage() {
 
   const fetchContacts = useCallback(async () => {
     try {
-      let query = supabase
-        .from("community_contacts")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (search.trim()) {
-        const s = `%${search.trim()}%`;
-        query = query.or(
-          `email.ilike.${s},name.ilike.${s},first_name.ilike.${s},last_name.ilike.${s},company.ilike.${s},source.cs.{"${search.trim()}"}`
-        );
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      setContacts(data || []);
+      // Search is a query parameter now rather than a PostgREST filter string built
+      // by interpolation. The old expression also matched `source` as an array
+      // containment check, which the route does not — searching by source list is a
+      // filter the UI already offers separately.
+      const data = await fetchContactRows({ q: search.trim() || undefined });
+      setContacts(data);
     } catch (err) {
       console.error("Error fetching contacts:", err);
     } finally {
@@ -116,11 +90,7 @@ export default function ContactsPage() {
     if (!confirm("Delete this contact?")) return;
     setDeleting(id);
     try {
-      const { error } = await supabase
-        .from("community_contacts")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
+      if (!(await deleteContact(id))) throw new Error("delete failed");
       setContacts((prev) => prev.filter((c) => c.id !== id));
     } catch (err) {
       console.error("Error deleting contact:", err);
@@ -135,11 +105,7 @@ export default function ContactsPage() {
     setBulkDeleting(true);
     try {
       const ids = Array.from(selected);
-      const { error } = await supabase
-        .from("community_contacts")
-        .delete()
-        .in("id", ids);
-      if (error) throw error;
+      if (!(await deleteContacts(ids))) throw new Error("bulk delete failed");
       setContacts((prev) => prev.filter((c) => !selected.has(c.id)));
       setSelected(new Set());
     } catch (err) {
@@ -352,37 +318,18 @@ export default function ContactsPage() {
       }
 
       // Fetch existing contacts in batches to merge sources
-      const BATCH = 50;
-      const existingSourceMap = new Map<string, string[]>();
-      for (let i = 0; i < parsedContacts.length; i += BATCH) {
-        const batch = parsedContacts.slice(i, i + BATCH);
-        const emails = batch.map((c) => (c.email as string).toLowerCase());
-        const { data: existingRows } = await supabase
-          .from("community_contacts")
-          .select("email, source")
-          .in("email", emails);
-        for (const row of existingRows || []) {
-          existingSourceMap.set(row.email.toLowerCase(), row.source || []);
-        }
-      }
-
+      // The route upserts on email and unions the `source` arrays in SQL. This used
+      // to pre-fetch each batch's existing sources and merge them in JS, which meant
+      // a read per batch and a lost update if two imports overlapped.
       const contacts = parsedContacts.map((c) => {
-        const email = (c.email as string).toLowerCase();
-        const newSources = (c._sources as string[]) || [];
-        const existingSources = existingSourceMap.get(email) || [];
-        const merged = [...new Set([...existingSources, ...newSources])];
         const { _sources, ...rest } = c;
-        return { ...rest, source: merged.length > 0 ? merged : null };
+        const sources = (_sources as string[]) || [];
+        return { ...rest, source: sources.length > 0 ? sources : null };
       });
 
-      // Upsert in batches
-      for (let i = 0; i < contacts.length; i += BATCH) {
-        const batch = contacts.slice(i, i + BATCH);
-        const { error } = await supabase
-          .from("community_contacts")
-          .upsert(batch as Record<string, unknown>[], { onConflict: "email" });
-        if (error) throw error;
-      }
+      const result = await importContacts(contacts);
+      if (!result.success) throw new Error(result.error ?? "import failed");
+
       fetchContacts();
     } catch (err) {
       console.error("CSV import error:", err);
@@ -512,11 +459,11 @@ export default function ContactsPage() {
               if (!confirm(`Delete ALL ${contacts.length} contacts? This cannot be undone.`)) return;
               setBulkDeleting(true);
               try {
-                // Delete all in batches
+                // Still batched: the ids go in the query string, and 822 uuids would
+                // make for an unreasonable URL.
                 const ids = contacts.map((c) => c.id);
                 for (let i = 0; i < ids.length; i += 50) {
-                  const batch = ids.slice(i, i + 50);
-                  await supabase.from("community_contacts").delete().in("id", batch);
+                  await deleteContacts(ids.slice(i, i + 50));
                 }
                 setContacts([]);
                 setSelected(new Set());
@@ -696,10 +643,7 @@ export default function ContactsPage() {
                           size="sm"
                           onClick={async () => {
                             const newVis = contact.visibility === "public" ? "private" : "public";
-                            await supabase
-                              .from("community_contacts")
-                              .update({ visibility: newVis })
-                              .eq("id", contact.id);
+                            await updateContact(contact.id, { visibility: newVis });
                             setContacts((prev) =>
                               prev.map((c) =>
                                 c.id === contact.id ? { ...c, visibility: newVis } : c
