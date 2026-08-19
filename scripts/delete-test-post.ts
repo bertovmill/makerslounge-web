@@ -2,33 +2,20 @@
  * Delete the test markdown post
  */
 
-import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
 import * as path from 'path'
 
+import { upsertPostBySlug, deletePostBySlug } from './lib/blog-post-db'
+
+// Only Next.js loads .env.local automatically; a script has to ask.
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') })
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
-  auth: { autoRefreshToken: false, persistSession: false }
-})
 
 async function deleteTestPost() {
   console.log('Deleting test markdown post...\n')
 
-  const { error } = await supabase
-    .from('blog_posts')
-    .delete()
-    .eq('slug', 'test-markdown-post')
+  const removed = await deletePostBySlug('test-markdown-post')
 
-  if (error) {
-    console.error('❌ Failed:', error.message)
-    process.exit(1)
-  }
-
-  console.log('✅ Test post deleted!\n')
+  console.log(removed > 0 ? '✅ Test post deleted!\n' : 'ℹ️  No test post to delete.\n')
 }
 
 deleteTestPost()

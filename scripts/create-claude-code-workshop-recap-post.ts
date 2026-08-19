@@ -2,19 +2,14 @@
  * Create the MakersLounge #10 Claude Code Workshop recap blog post.
  */
 
-import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
 import * as path from 'path'
 import * as fs from 'fs'
 
+import { upsertPostBySlug } from './lib/blog-post-db'
+
+// Only Next.js loads .env.local automatically; a script has to ask.
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') })
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
-  auth: { autoRefreshToken: false, persistSession: false }
-})
 
 const content = fs.readFileSync('/tmp/blog-makerslounge-10.md', 'utf-8')
 
@@ -36,36 +31,17 @@ const newPost = {
 async function createPost() {
   console.log('Creating MakersLounge #10 recap blog post...\n')
 
-  const { data: existing } = await supabase
-    .from('blog_posts')
-    .select('slug')
-    .eq('slug', newPost.slug)
-    .single()
-
-  if (existing) {
-    console.log('⚠️  Post already exists. Deleting...')
-    await supabase.from('blog_posts').delete().eq('slug', newPost.slug)
-  }
-
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .insert(newPost)
-    .select()
-    .single()
-
-  if (error) {
-    console.error('❌ Failed:', error.message)
-    process.exit(1)
-  }
+  // Replaces any post already at this slug, so the script is re-runnable.
+  await upsertPostBySlug(newPost)
 
   console.log('✅ Blog post published!')
-  console.log(`   Title: ${data.title}`)
-  console.log(`   Slug: ${data.slug}`)
-  console.log(`   Featured: ${data.is_featured}`)
-  console.log(`   Tags: ${data.tags.join(', ')}`)
-  console.log(`   Read time: ${data.read_time_minutes} minutes`)
-  console.log(`\n   Live at: https://makerslounge.ca/blog/${data.slug}`)
-  console.log(`   Edit at: https://makerslounge.ca/admin/blog/${data.id}\n`)
+  console.log(`   Title: ${newPost.title}`)
+  console.log(`   Slug: ${newPost.slug}`)
+  console.log(`   Featured: ${newPost.is_featured}`)
+  console.log(`   Tags: ${(newPost.tags ?? []).join(', ')}`)
+  console.log(`   Read time: ${newPost.read_time_minutes} minutes`)
+  console.log(`\n   Live at: https://makerslounge.ca/blog/${newPost.slug}`)
+  console.log(`   Edit at: https://makerslounge.ca/admin/blog (find it in the list)\n`)
 }
 
 createPost()

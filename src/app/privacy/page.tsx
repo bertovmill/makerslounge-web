@@ -37,8 +37,9 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-2">Data Storage</h2>
             <p>
-              Your data is stored securely using Supabase, a trusted cloud database provider.
-              We use industry-standard security measures to protect your information.
+              Your data is stored in a Neon Postgres database, with uploaded files in
+              Vercel Blob storage. We use industry-standard security measures to protect
+              your information.
             </p>
           </section>
 
@@ -46,8 +47,9 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-foreground mb-2">Third-Party Services</h2>
             <p>We use the following third-party services:</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong>Supabase:</strong> Authentication and data storage.</li>
-              <li><strong>Vercel:</strong> Hosting and deployment.</li>
+              <li><strong>Clerk:</strong> Authentication and account management.</li>
+              <li><strong>Neon:</strong> Database hosting.</li>
+              <li><strong>Vercel:</strong> Hosting, deployment, and file storage.</li>
               <li><strong>Anthropic:</strong> AI-powered matching features.</li>
             </ul>
           </section>

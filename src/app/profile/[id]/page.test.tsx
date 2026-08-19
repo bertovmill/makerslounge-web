@@ -25,16 +25,13 @@ vi.mock("@/components/ProfileView", () => ({
 
 // Mock supabase
 const mockSingle = vi.fn();
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: () => mockSingle(),
-    })),
-    auth: {
-      getUser: vi.fn(),
-    },
+// The page fetches through `@/lib/profiles-client` now, not Supabase. `mockSingle`
+// keeps its `{ data, error }` shape so the existing cases read unchanged; the adapter
+// below maps it onto what `fetchProfile` returns (the row, or null).
+vi.mock("@/lib/profiles-client", () => ({
+  fetchProfile: async () => {
+    const { data, error } = await mockSingle();
+    return error ? null : data;
   },
 }));
 

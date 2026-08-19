@@ -131,7 +131,7 @@ export default function AgentSecurityPage() {
                 </span>
               </td>
               <td className="py-3 px-4 font-medium">API Authentication</td>
-              <td className="py-3 px-4 text-muted-foreground">Session-based auth via Supabase. Only authenticated users can trigger agents.</td>
+              <td className="py-3 px-4 text-muted-foreground">Session-based auth via Clerk. Only the admin can trigger agents.</td>
             </tr>
             <tr className="border-b border-border">
               <td className="py-3 px-4">
@@ -269,9 +269,9 @@ export default function AgentSecurityPage() {
                                │
                                ▼
                         ┌─────────────────┐
-                        │  Supabase Auth  │
-                        │  verifies token │
-                        │  + checks email │
+                        │   Clerk session │
+                        │  verifies caller│
+                        │  + checks admin │
                         └─────────────────┘`}
       </pre>
 

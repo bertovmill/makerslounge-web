@@ -33,13 +33,39 @@ vi.mock("@/context/AuthContext", () => ({
 
 // Mock supabase
 const mockSupabaseFrom = vi.fn();
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    from: (table: string) => mockSupabaseFrom(table),
-    auth: {
-      getUser: vi.fn(),
-    },
+// ProfileView reads through the client modules now. `mockSupabaseFrom` is still called
+// with a table name so the existing per-table cases keep working, and its result is
+// adapted to each module's return shape.
+vi.mock("@/lib/feed-client", () => ({
+  fetchFeed: async () => {
+    const res = await mockSupabaseFrom("projects").select().eq().order().limit();
+    return (res?.data ?? []).map((r: Record<string, unknown>) => ({
+      ...r,
+      media_urls: r.media_urls ?? null,
+      like_count: 0,
+      comment_count: 0,
+      liked_by_me: false,
+      comments: [],
+    }));
   },
+}));
+
+vi.mock("@/lib/profile-notes-client", () => ({
+  fetchProfileNotes: async () => [],
+}));
+
+vi.mock("@/lib/messages-client", () => ({
+  startConversation: vi.fn(async () => null),
+  moderateUser: vi.fn(async () => true),
+}));
+
+vi.mock("@/lib/profiles-client", () => ({
+  updateMyProfile: vi.fn(async () => ({ success: true })),
+}));
+
+vi.mock("@/lib/upload-client", () => ({
+  uploadToBlob: vi.fn(async () => ({ url: "https://blob.test/x.png", pathname: "x.png" })),
+  profilePhotoPath: () => "media/profiles/x/x.png",
 }));
 
 const baseProfile = {
