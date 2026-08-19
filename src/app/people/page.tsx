@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { fetchProfiles } from "@/lib/profiles-client";
+import { fetchContacts, createContact } from "@/lib/contacts-client";
 import { useAuth } from "@/context/AuthContext";
 import { Search, X, UserPlus } from "lucide-react";
 
@@ -39,35 +40,38 @@ export default function PeoplePage() {
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
-  async function fetchProfiles() {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, username, name, bio, skills, photo_url, currently_building")
-      .order("name", { ascending: true });
+  // Named `loadPeople`: `fetchProfiles` and `fetchContacts` are imported.
+  async function loadPeople() {
+    const rows = await fetchProfiles({ sort: "name" });
 
-    const allProfiles: Profile[] = (data || []).map((p) => ({ ...p, _type: "profile" as const }));
+    const allProfiles: Profile[] = rows.map((p) => ({
+      id: p.id,
+      username: p.username,
+      name: p.name,
+      bio: p.bio,
+      skills: p.skills,
+      photo_url: p.photo_url,
+      currently_building: p.currently_building,
+      _type: "profile" as const,
+    }));
 
+    // Still gated on `isAdmin` for the request, but the route is the boundary now:
+    // a non-admin gets only contacts marked public regardless of what the UI asks for.
     if (isAdmin) {
-      const { data: contacts } = await supabase
-        .from("community_contacts")
-        .select("id, name, first_name, last_name, summary, skills")
-        .order("name", { ascending: true });
-
-      if (contacts) {
-        for (const c of contacts) {
-          const displayName = c.name || [c.first_name, c.last_name].filter(Boolean).join(" ");
-          if (!displayName) continue;
-          allProfiles.push({
-            id: c.id,
-            username: null,
-            name: displayName,
-            bio: c.summary,
-            skills: c.skills,
-            photo_url: null,
-            currently_building: null,
-            _type: "community",
-          });
-        }
+      const contacts = await fetchContacts();
+      for (const c of contacts) {
+        const displayName = c.name || [c.first_name, c.last_name].filter(Boolean).join(" ");
+        if (!displayName) continue;
+        allProfiles.push({
+          id: c.id,
+          username: null,
+          name: displayName,
+          bio: c.summary,
+          skills: c.skills,
+          photo_url: null,
+          currently_building: null,
+          _type: "community",
+        });
       }
     }
 
@@ -76,7 +80,7 @@ export default function PeoplePage() {
   }
 
   useEffect(() => {
-    fetchProfiles();
+    loadPeople();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
@@ -91,7 +95,7 @@ export default function PeoplePage() {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const { error } = await supabase.from("community_contacts").insert({
+    const result = await createContact({
       name: addForm.name.trim(),
       email: addForm.email.trim() || null,
       summary: addForm.bio.trim() || null,
@@ -100,8 +104,8 @@ export default function PeoplePage() {
       role: addForm.role.trim() || null,
     });
 
-    if (error) {
-      setAddError(error.message);
+    if (!result.success) {
+      setAddError(result.error ?? "Could not add this person.");
       setAddLoading(false);
       return;
     }
@@ -109,7 +113,7 @@ export default function PeoplePage() {
     setAddLoading(false);
     setShowAddModal(false);
     setAddForm(EMPTY_FORM);
-    await fetchProfiles();
+    await loadPeople();
   }
 
   // All unique skills sorted by frequency

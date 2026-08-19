@@ -5,20 +5,9 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/lib/supabase";
+import { fetchEvents, deleteEvent, type EventRow as Event } from "@/lib/events-client";
 import EventForm from "@/components/EventForm";
 
-interface Event {
-  id: string;
-  title: string;
-  description: string | null;
-  start_time: string;
-  end_time: string;
-  location: string | null;
-  image_url: string | null;
-  event_url: string | null;
-  is_all_day: boolean;
-}
 
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -26,22 +15,14 @@ export default function AdminEventsPage() {
   const [showForm, setShowForm] = useState(false);
   const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
 
-  const fetchEvents = async () => {
-    const { data, error } = await supabase
-      .from("events")
-      .select("*")
-      .order("start_time", { ascending: false });
-
-    if (error) {
-      console.error("Error fetching events:", error);
-    } else {
-      setEvents(data || []);
-    }
+  // Named `loadEvents`: `fetchEvents` is imported.
+  const loadEvents = async () => {
+    setEvents(await fetchEvents());
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchEvents();
+    loadEvents();
   }, []);
 
   const handleDelete = async (eventId: string, eventTitle: string) => {
@@ -49,12 +30,10 @@ export default function AdminEventsPage() {
       return;
     }
 
-    const { error } = await supabase.from("events").delete().eq("id", eventId);
-    if (error) {
-      console.error("Error deleting event:", error);
-      alert("Failed to delete event. Please try again.");
+    if (await deleteEvent(eventId)) {
+      loadEvents();
     } else {
-      fetchEvents();
+      alert("Failed to delete event. Please try again.");
     }
   };
 
