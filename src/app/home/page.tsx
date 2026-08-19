@@ -12,16 +12,16 @@ import { Thread } from "@/components/assistant-ui/thread";
 import { DeepgramDictationAdapter } from "@/lib/deepgram-dictation-adapter";
 
 function HomeContent() {
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
+  // No `body` here any more. It used to send `{ userId, isAdmin }`, which the
+  // route trusted — so `isAdmin: true` from any client unlocked search over the
+  // private community_contacts table, and `userId` decided who a message was sent
+  // as. Both now come from the Clerk session server-side.
   const transport = useMemo(
-    () =>
-      new AssistantChatTransport({
-        api: "/api/matcher-chat",
-        body: { userId: user?.id, isAdmin },
-      }),
-    [user?.id, isAdmin],
+    () => new AssistantChatTransport({ api: "/api/matcher-chat" }),
+    [],
   );
 
   const adapters = useMemo(

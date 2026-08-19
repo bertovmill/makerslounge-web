@@ -2,19 +2,14 @@
  * Create LLM Architecture blog post
  */
 
-import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
 import * as path from 'path'
 import * as fs from 'fs'
 
+import { upsertPostBySlug } from './lib/blog-post-db'
+
+// Only Next.js loads .env.local automatically; a script has to ask.
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') })
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
-  auth: { autoRefreshToken: false, persistSession: false }
-})
 
 const content = fs.readFileSync('/tmp/blog-llm-architecture.md', 'utf-8')
 
@@ -34,37 +29,16 @@ const newPost = {
 async function createPost() {
   console.log('Creating LLM Architecture blog post...\n')
 
-  // Check if post exists
-  const { data: existing } = await supabase
-    .from('blog_posts')
-    .select('slug')
-    .eq('slug', newPost.slug)
-    .single()
-
-  if (existing) {
-    console.log('⚠️  Post already exists. Deleting...')
-    await supabase.from('blog_posts').delete().eq('slug', newPost.slug)
-  }
-
-  // Insert the post
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .insert(newPost)
-    .select()
-    .single()
-
-  if (error) {
-    console.error('❌ Failed:', error.message)
-    process.exit(1)
-  }
+  // Replaces any post already at this slug, so the script is re-runnable.
+  await upsertPostBySlug(newPost)
 
   console.log('✅ Blog post created as draft!')
-  console.log(`   Title: ${data.title}`)
-  console.log(`   Slug: ${data.slug}`)
-  console.log(`   Tags: ${data.tags.join(', ')}`)
-  console.log(`   Read time: ${data.read_time_minutes} minutes`)
-  console.log(`\n   Edit at: http://localhost:3000/admin/blog/${data.id}`)
-  console.log(`   Preview at: http://localhost:3000/blog/${data.slug} (after publishing)\n`)
+  console.log(`   Title: ${newPost.title}`)
+  console.log(`   Slug: ${newPost.slug}`)
+  console.log(`   Tags: ${(newPost.tags ?? []).join(', ')}`)
+  console.log(`   Read time: ${newPost.read_time_minutes} minutes`)
+  console.log(`\n   Edit at: http://localhost:3000/admin/blog (find it in the list)`)
+  console.log(`   Preview at: http://localhost:3000/blog/${newPost.slug} (after publishing)\n`)
 }
 
 createPost()

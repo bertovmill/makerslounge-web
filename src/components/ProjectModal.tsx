@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import { createPost, updatePost, deletePost } from "@/lib/feed-client";
+import { uploadToBlob, projectMediaPath } from "@/lib/upload-client";
 import { LiquidGlassCard } from "./LiquidGlass";
 
 interface Project {
@@ -48,22 +49,13 @@ export default function ProjectModal({
       const newUrls: string[] = [];
 
       for (const file of Array.from(files)) {
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-        const projectId = project?.id || "new";
-        const filePath = `projects/${userId}/${projectId}/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("media")
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from("media")
-          .getPublicUrl(filePath);
-
-        newUrls.push(publicUrl);
+        // The per-upload random suffix is added server-side now, so the
+        // hand-rolled Date.now()+Math.random() name is gone. The project id is no
+        // longer part of the path either: it was "new" for an unsaved project and
+        // never rewritten once the project got a real id, so it never identified
+        // anything.
+        const { url } = await uploadToBlob(projectMediaPath(userId, file), file);
+        newUrls.push(url);
       }
 
       setMediaUrls([...mediaUrls, ...newUrls]);
@@ -91,17 +83,13 @@ export default function ProjectModal({
     try {
       if (isEditing && project) {
         // Update existing project
-        const { error: updateError } = await supabase
-          .from("projects")
-          .update({
-            title: title.trim(),
-            description: description.trim() || null,
-            media_urls: mediaUrls.length > 0 ? mediaUrls : null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", project.id);
+        const ok = await updatePost(project.id, {
+          title: title.trim(),
+          description: description.trim() || null,
+          media_urls: mediaUrls.length > 0 ? mediaUrls : null,
+        });
 
-        if (updateError) throw updateError;
+        if (!ok) throw new Error("update failed");
 
         onSave({
           ...project,
@@ -111,20 +99,23 @@ export default function ProjectModal({
         });
       } else {
         // Create new project
-        const { data, error: insertError } = await supabase
-          .from("projects")
-          .insert({
-            user_id: userId,
-            title: title.trim(),
-            description: description.trim() || null,
-            media_urls: mediaUrls.length > 0 ? mediaUrls : null,
-          })
-          .select()
-          .single();
+        const result = await createPost({
+          title: title.trim(),
+          description: description.trim() || null,
+          media_urls: mediaUrls.length > 0 ? mediaUrls : null,
+        });
 
-        if (insertError) throw insertError;
+        if (!result.success || !result.id) throw new Error(result.error ?? "create failed");
 
-        onSave(data);
+        // The route returns the id; `user_id` is the session's, which is what the
+        // `userId` prop was being used for.
+        onSave({
+          id: result.id,
+          user_id: userId,
+          title: title.trim(),
+          description: description.trim() || null,
+          media_urls: mediaUrls.length > 0 ? mediaUrls : null,
+        });
       }
     } catch (err) {
       console.error("Save error:", err);
@@ -141,12 +132,7 @@ export default function ProjectModal({
     setSaving(true);
 
     try {
-      const { error: deleteError } = await supabase
-        .from("projects")
-        .delete()
-        .eq("id", project.id);
-
-      if (deleteError) throw deleteError;
+      if (!(await deletePost(project.id))) throw new Error("delete failed");
 
       onDelete?.();
     } catch (err) {

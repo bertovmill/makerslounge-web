@@ -6,7 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/lib/supabase";
+import { fetchContact, createContact, updateContact } from "@/lib/contacts-client";
+import { fetchProfile } from "@/lib/profiles-client";
 import { useAuth } from "@/context/AuthContext";
 
 interface ContactForm {
@@ -67,14 +68,12 @@ export default function ContactEditPage() {
   useEffect(() => {
     if (isNew || !isAdmin) return;
 
-    const fetchContact = async () => {
-      const { data, error } = await supabase
-        .from("community_contacts")
-        .select("*")
-        .eq("id", id)
-        .single();
+    // Named `load`, not `fetchContact`: that name is now imported and a local of the
+    // same name would shadow it and recurse.
+    const load = async () => {
+      const data = await fetchContact(id);
 
-      if (error || !data) {
+      if (!data) {
         setError("Contact not found");
         setLoading(false);
         return;
@@ -102,18 +101,14 @@ export default function ContactEditPage() {
       }
 
       if (data.matched_profile_id) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id, name, username, bio")
-          .eq("id", data.matched_profile_id)
-          .single();
+        const profile = await fetchProfile(data.matched_profile_id);
         if (profile) setMatchedProfile(profile);
       }
 
       setLoading(false);
     };
 
-    fetchContact();
+    load();
   }, [id, isNew, isAdmin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -144,26 +139,20 @@ export default function ContactEditPage() {
       twitter: form.twitter.trim() || null,
       instagram: form.instagram.trim() || null,
       website: form.website.trim() || null,
-      updated_at: new Date().toISOString(),
+      // No `updated_at`: the route stamps it, so it cannot be backdated from a
+      // client with a wrong clock.
     };
 
     try {
-      if (isNew) {
-        const { error } = await supabase
-          .from("community_contacts")
-          .insert(payload);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("community_contacts")
-          .update(payload)
-          .eq("id", id);
-        if (error) throw error;
-      }
+      const result = isNew
+        ? await createContact(payload)
+        : await updateContact(id, payload);
+      if (!result.success) throw new Error(result.error ?? "Save failed");
       router.push("/admin/contacts");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Save failed";
-      if (msg.includes("duplicate key") || msg.includes("community_contacts_email_idx")) {
+      // The route returns 409 with this message for the unique email index.
+      if (msg.includes("already exists") || msg.includes("community_contacts_email_idx")) {
         setError("A contact with this email already exists");
       } else {
         setError(msg);

@@ -1,39 +1,31 @@
 /**
  * Migration Script: Move existing blog post from code to Supabase
  *
+ * Historical: this moved the first blog post out of hardcoded data and into the
+ * database. It has already been run — the post exists — and is kept because it documents
+ * where that content came from.
+ *
  * Prerequisites:
- * 1. Run supabase-migration-blog-posts.sql first
- * 2. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local
- * 3. Update AUTHOR_ID below with your user ID
+ * 1. DATABASE_URL in .env.local (Neon)
+ * 2. AUTHOR_ID below must be a real profiles.id
  *
  * Usage: npx tsx scripts/migrate-blog-post.ts
  */
 
-import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
 import * as path from 'path'
 
-// Load environment variables
+import { findPostBySlug, insertPost } from './lib/blog-post-db'
+
+// Only Next.js loads .env.local automatically; a script has to ask.
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') })
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  console.error('Error: Missing Supabase credentials in .env.local')
-  console.error('Make sure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set')
+if (!process.env.DATABASE_URL) {
+  console.error('Error: DATABASE_URL is not set in .env.local')
   process.exit(1)
 }
 
-// Use service role key to bypass RLS for migration
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-})
-
-// Author ID from Supabase profiles table
+// Author ID — a profiles.id
 const AUTHOR_ID = '4bf42cee-a293-4cb8-a979-d80e0f81644e'
 
 // Existing blog post data (from /src/lib/blog.ts)
@@ -142,11 +134,7 @@ async function migratePost() {
   console.log('Starting blog post migration...\n')
 
   // Check if post already exists
-  const { data: existing } = await supabase
-    .from('blog_posts')
-    .select('slug')
-    .eq('slug', existingPost.slug)
-    .single()
+  const existing = await findPostBySlug(existingPost.slug)
 
   if (existing) {
     console.log(`⚠️  Post "${existingPost.slug}" already exists in database`)
@@ -160,20 +148,11 @@ async function migratePost() {
   console.log(`   Tags: ${existingPost.tags.join(', ')}`)
   console.log(`   Published: ${existingPost.published_at}\n`)
 
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .insert(existingPost)
-    .select()
-    .single()
-
-  if (error) {
-    console.error('❌ Migration failed:', error.message)
-    process.exit(1)
-  }
+  const created = await insertPost(existingPost)
 
   console.log('✅ Migration successful!')
-  console.log(`   Post ID: ${data.id}`)
-  console.log(`   View at: /blog/${data.slug}\n`)
+  console.log(`   Post ID: ${created.id}`)
+  console.log(`   View at: /blog/${created.slug}\n`)
 }
 
 migratePost()

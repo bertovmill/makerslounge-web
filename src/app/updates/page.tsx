@@ -3,7 +3,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { fetchFeed as fetchFeedPosts, createPost } from "@/lib/feed-client";
+import { uploadToBlob, projectMediaPath } from "@/lib/upload-client";
 import FeedCard from "@/components/FeedCard";
 import { ImagePlus, X, Loader2 } from "lucide-react";
 import { containsObjectionableContent } from "@/lib/content-filter";
@@ -44,7 +45,6 @@ export default function UpdatesPage() {
   const router = useRouter();
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [feedLoading, setFeedLoading] = useState(true);
-  const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set());
 
   // Compose state
   const [title, setTitle] = useState("");
@@ -63,96 +63,30 @@ export default function UpdatesPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (user) fetchFeed();
+    if (user) loadFeed();
   }, [user]);
 
-  async function fetchFeed() {
+  async function loadFeed() {
     setFeedLoading(true);
 
-    // Fetch blocked users
-    const { data: blocks } = await supabase
-      .from("blocked_users")
-      .select("blocked_id")
-      .eq("blocker_id", user!.id);
+    // One request. This used to be five: the viewer's blocks, the posts, the like
+    // counts, the viewer's own likes, and the comments — then a client-side join of
+    // all of it. Blocked authors are filtered in the query now.
+    const posts = await fetchFeedPosts({ limit: 50, withComments: true });
 
-    const blockedIds = new Set((blocks || []).map((b) => b.blocked_id));
-    setBlockedUserIds(blockedIds);
-
-    const { data: projects } = await supabase
-      .from("projects")
-      .select(`
-        id, title, description, media_urls, created_at,
-        profiles ( id, name, photo_url )
-      `)
-      .order("created_at", { ascending: false })
-      .limit(50);
-
-    if (!projects) {
-      setFeedLoading(false);
-      return;
-    }
-
-    const projectIds = projects.map((p) => p.id);
-
-    // Fetch like counts
-    const { data: likeCounts } = await supabase
-      .from("likes")
-      .select("project_id")
-      .in("project_id", projectIds);
-
-    // Fetch user's likes
-    const { data: userLikes } = user
-      ? await supabase
-          .from("likes")
-          .select("project_id")
-          .eq("user_id", user.id)
-          .in("project_id", projectIds)
-      : { data: [] };
-
-    // Fetch comments
-    const { data: comments } = await supabase
-      .from("comments")
-      .select(`
-        id, content, created_at, project_id,
-        profiles ( id, name, photo_url )
-      `)
-      .in("project_id", projectIds)
-      .order("created_at", { ascending: false });
-
-    const likeCountMap: Record<string, number> = {};
-    likeCounts?.forEach((l) => {
-      likeCountMap[l.project_id] = (likeCountMap[l.project_id] || 0) + 1;
-    });
-
-    const userLikeSet = new Set(userLikes?.map((l) => l.project_id));
-
-    const commentMap: Record<string, Comment[]> = {};
-    comments?.forEach((c) => {
-      const pid = (c as Record<string, unknown>).project_id as string;
-      if (!commentMap[pid]) commentMap[pid] = [];
-      commentMap[pid].push({
-        id: c.id,
-        content: c.content,
-        created_at: c.created_at,
-        profiles: Array.isArray(c.profiles) ? c.profiles[0] || null : c.profiles,
-      });
-    });
-
-    const items: FeedItem[] = projects
-      .filter((p) => {
-        const prof = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
-        const profileId = (prof as { id?: string } | null)?.id;
-        return !profileId || !blockedIds.has(profileId);
-      })
-      .map((p) => ({
-        project: {
-          ...p,
-          profiles: Array.isArray(p.profiles) ? p.profiles[0] || null : p.profiles,
-        } as FeedProject,
-        likeCount: likeCountMap[p.id] || 0,
-        hasLiked: userLikeSet.has(p.id),
-        comments: commentMap[p.id] || [],
-      }));
+    const items: FeedItem[] = posts.map((p) => ({
+      project: {
+        id: p.id,
+        title: p.title,
+        description: p.description,
+        media_urls: p.media_urls,
+        created_at: p.created_at ?? "",
+        profiles: p.profiles,
+      },
+      likeCount: p.like_count,
+      hasLiked: p.liked_by_me,
+      comments: p.comments,
+    }));
 
     setFeed(items);
     setFeedLoading(false);
@@ -166,21 +100,8 @@ export default function UpdatesPage() {
     try {
       const newUrls: string[] = [];
       for (const file of Array.from(files)) {
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-        const filePath = `projects/${user.id}/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("media")
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("media").getPublicUrl(filePath);
-
-        newUrls.push(publicUrl);
+        const { url } = await uploadToBlob(projectMediaPath(user.id, file), file);
+        newUrls.push(url);
       }
       setMediaUrls((prev) => [...prev, ...newUrls]);
     } catch (err) {
@@ -210,21 +131,10 @@ export default function UpdatesPage() {
     try {
       const newUrls: string[] = [];
       for (const file of imageFiles) {
-        const ext = file.type.split("/")[1] || "png";
-        const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
-        const filePath = `projects/${user.id}/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("media")
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("media").getPublicUrl(filePath);
-
-        newUrls.push(publicUrl);
+        // A pasted image has no filename; `projectMediaPath` falls back to
+        // "media" and the extension comes from the content type via Blob.
+        const { url } = await uploadToBlob(projectMediaPath(user.id, file), file);
+        newUrls.push(url);
       }
       setMediaUrls((prev) => [...prev, ...newUrls]);
     } catch (err) {
@@ -245,26 +155,29 @@ export default function UpdatesPage() {
     }
 
     setPosting(true);
-    const { data, error } = await supabase
-      .from("projects")
-      .insert({
-        user_id: user.id,
-        title: title.trim(),
-        description: description.trim() || null,
-        media_urls: mediaUrls.length > 0 ? mediaUrls : null,
-      })
-      .select(`
-        id, title, description, media_urls, created_at,
-        profiles ( id, name, photo_url )
-      `)
-      .single();
+    const result = await createPost({
+      title: title.trim(),
+      description: description.trim() || null,
+      media_urls: mediaUrls.length > 0 ? mediaUrls : null,
+    });
 
-    if (!error && data) {
+    if (result.success && result.id) {
+      // The route returns the id; the author is the signed-in user, so the card can
+      // be built locally rather than asking the server to echo the row back with its
+      // profile joined.
       const newItem: FeedItem = {
         project: {
-          ...data,
-          profiles: Array.isArray(data.profiles) ? data.profiles[0] || null : data.profiles,
-        } as FeedProject,
+          id: result.id,
+          title: title.trim(),
+          description: description.trim() || null,
+          media_urls: mediaUrls.length > 0 ? mediaUrls : null,
+          created_at: new Date().toISOString(),
+          profiles: {
+            id: user.id,
+            name: user.fullName ?? null,
+            photo_url: user.imageUrl ?? null,
+          },
+        },
         likeCount: 0,
         hasLiked: false,
         comments: [],
@@ -283,7 +196,9 @@ export default function UpdatesPage() {
   }
 
   function handleBlock(blockedUserId: string) {
-    setBlockedUserIds((prev) => new Set([...prev, blockedUserId]));
+    // Dropped the `blockedUserIds` set that used to be maintained alongside this:
+    // nothing read it. Removing the cards is the whole effect, and the next load
+    // filters blocked authors in the query.
     setFeed((prev) => prev.filter((item) => item.project.profiles?.id !== blockedUserId));
   }
 

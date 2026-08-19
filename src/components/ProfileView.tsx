@@ -27,7 +27,11 @@ import {
 } from "lucide-react";
 import PodcastPlayer from "@/components/PodcastPlayer";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { fetchFeed } from "@/lib/feed-client";
+import { fetchProfileNotes } from "@/lib/profile-notes-client";
+import { startConversation, moderateUser } from "@/lib/messages-client";
+import { updateMyProfile } from "@/lib/profiles-client";
+import { uploadToBlob, profilePhotoPath } from "@/lib/upload-client";
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import {
   PodcastWithGuests,
@@ -312,38 +316,39 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
   const isOwner = !!(user && user.id === profile.id);
 
   useEffect(() => {
-    async function fetchPosts() {
-      const { data } = await supabase
-        .from("projects")
-        .select("id, title, description, media_urls, created_at")
-        .eq("user_id", profile.id)
-        .order("created_at", { ascending: false })
-        .limit(10);
-      if (data) setPosts(data);
+    async function loadPosts() {
+      const rows = await fetchFeed({ userId: profile.id, limit: 10 });
+      setPosts(
+        rows.map((r) => ({
+          id: r.id,
+          title: r.title,
+          description: r.description,
+          media_urls: r.media_urls,
+          created_at: r.created_at ?? "",
+        })),
+      );
     }
-    fetchPosts();
+    loadPosts();
     fetchPodcastsByGuest(profile.id).then(setPodcasts);
   }, [profile.id]);
 
   useEffect(() => {
     if (!isAdmin) return;
-    supabase
-      .from("profile_event_notes")
-      .select("id, meetup_name, notes, created_at")
-      .eq("profile_id", profile.id)
-      .order("created_at", { ascending: false })
-      .then(({ data }) => setEventNotes(data || []));
+    // These are the *viewer's* own notes about this person, not notes attached to the
+    // profile — all four policies keyed on `created_by`. The route scopes by the
+    // session, so the `isAdmin` guard above is now a UI choice rather than the
+    // boundary.
+    fetchProfileNotes(profile.id).then(setEventNotes);
   }, [isAdmin, profile.id]);
 
   // Save a field to the database
   const saveField = async (field: string, value: unknown) => {
     if (!isOwner) return;
     setSaveStatus("saving");
-    const { error } = await supabase
-      .from("profiles")
-      .update({ [field]: value, updated_at: new Date().toISOString() })
-      .eq("id", user!.id);
-    if (!error) {
+    // Only whitelisted columns are writable, and the row is chosen by the session —
+    // so this can no longer write to another profile even if `isOwner` were wrong.
+    const result = await updateMyProfile({ [field]: value });
+    if (result.success) {
       setProfile((prev) => ({ ...prev, [field]: value }));
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 1500);
@@ -357,20 +362,9 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
     if (!file || !user) return;
     setUploading(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const filePath = `profiles/${user.id}/avatar.${fileExt}`;
-      const { error: uploadError } = await supabase.storage
-        .from("media")
-        .upload(filePath, file, { upsert: true });
-      if (uploadError) throw uploadError;
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("media").getPublicUrl(filePath);
-      setProfile((prev) => ({ ...prev, photo_url: publicUrl }));
-      await supabase
-        .from("profiles")
-        .update({ photo_url: publicUrl })
-        .eq("id", user.id);
+      const { url } = await uploadToBlob(profilePhotoPath(user.id, file), file);
+      setProfile((prev) => ({ ...prev, photo_url: url }));
+      await updateMyProfile({ photo_url: url });
     } catch (error) {
       console.error("Upload error:", error);
     } finally {
@@ -385,35 +379,21 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
     }
     if (startingChat) return;
     setStartingChat(true);
-    const [p1, p2] = [user.id, profile.id].sort();
-    const { data: existing } = await supabase
-      .from("conversations")
-      .select("id")
-      .eq("participant_1", p1)
-      .eq("participant_2", p2)
-      .single();
-    if (existing) {
-      router.push(`/messages/${existing.id}`);
-      return;
-    }
-    const { data: newConvo, error } = await supabase
-      .from("conversations")
-      .insert({ participant_1: p1, participant_2: p2 })
-      .select("id")
-      .single();
+    // Find-or-create in one upsert. The previous select-then-insert also forgot to
+    // clear `startingChat` on the hit path, so opening an existing conversation left
+    // the button disabled until the page changed.
+    const conversationId = await startConversation(profile.id);
     setStartingChat(false);
-    if (newConvo) {
-      router.push(`/messages/${newConvo.id}`);
-    } else if (error) {
-      console.error("Failed to create conversation:", error);
+    if (conversationId) {
+      router.push(`/messages/${conversationId}`);
+    } else {
+      console.error("Failed to open conversation with", profile.id);
     }
   }
 
   async function handleReport() {
     if (!user || !reportReason) return;
-    await supabase.from("reports").insert({
-      reporter_id: user.id,
-      reported_user_id: profile.id,
+    await moderateUser("report", profile.id, {
       reason: reportReason,
       details: reportDetails || null,
     });
@@ -453,10 +433,7 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
 
   async function handleBlock() {
     if (!user) return;
-    await supabase.from("blocked_users").insert({
-      blocker_id: user.id,
-      blocked_id: profile.id,
-    });
+    await moderateUser("block", profile.id);
     setBlocked(true);
     setShowMenu(false);
   }

@@ -1,20 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { createEvent, updateEvent, type EventRow as Event } from "@/lib/events-client";
 import { Plus, X } from "lucide-react";
 
-interface Event {
-  id: string;
-  title: string;
-  description: string | null;
-  start_time: string;
-  end_time: string;
-  location: string | null;
-  image_url: string | null;
-  event_url: string | null;
-  is_all_day: boolean;
-}
 
 interface EventFormProps {
   onEventCreated: () => void;
@@ -43,7 +32,10 @@ export default function EventForm({ onEventCreated, eventToEdit, onCancelEdit, e
   useEffect(() => {
     if (eventToEdit) {
       setIsOpen(true);
-      setIsAllDay(eventToEdit.is_all_day);
+      // `is_all_day` is nullable in the database (default false); PostgREST's typing
+      // let this pass as a plain boolean.
+      const allDay = eventToEdit.is_all_day ?? false;
+      setIsAllDay(allDay);
 
       // Format datetime for input fields
       const formatForInput = (dateStr: string, isAllDay: boolean) => {
@@ -63,8 +55,8 @@ export default function EventForm({ onEventCreated, eventToEdit, onCancelEdit, e
       setFormData({
         title: eventToEdit.title,
         description: eventToEdit.description || "",
-        start_time: formatForInput(eventToEdit.start_time, eventToEdit.is_all_day),
-        end_time: formatForInput(eventToEdit.end_time, eventToEdit.is_all_day),
+        start_time: formatForInput(eventToEdit.start_time, allDay),
+        end_time: formatForInput(eventToEdit.end_time, allDay),
         location: eventToEdit.location || "",
         image_url: eventToEdit.image_url || "",
         event_url: eventToEdit.event_url || "",
@@ -120,16 +112,10 @@ export default function EventForm({ onEventCreated, eventToEdit, onCancelEdit, e
         is_all_day: isAllDay,
       };
 
-      if (isEditing && eventToEdit) {
-        const { error } = await supabase
-          .from("events")
-          .update(eventData)
-          .eq("id", eventToEdit.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("events").insert(eventData);
-        if (error) throw error;
-      }
+      const result = isEditing && eventToEdit
+        ? await updateEvent(eventToEdit.id, eventData)
+        : await createEvent(eventData);
+      if (!result.success) throw new Error(result.error ?? "save failed");
 
       resetForm();
       setIsOpen(false);

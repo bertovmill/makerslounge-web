@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import {
+  fetchMeetups,
+  createMeetup,
+  updateMeetup,
+  deleteMeetup,
+} from "@/lib/meetups-client";
+import { syncProfileNotes } from "@/lib/profile-notes-client";
+import { fetchProfiles, updateProfileAsAdmin } from "@/lib/profiles-client";
+import { fetchContacts, createContact, updateContact } from "@/lib/contacts-client";
 import { useAuth } from "@/context/AuthContext";
 import {
   Search, X, Sparkles, RotateCcw, MessageSquareQuote,
@@ -149,37 +157,42 @@ export default function MeetupMatcherPage() {
 
   // Load saved meetups
   useEffect(() => {
-    fetchMeetups();
+    loadMeetups();
   }, []);
 
-  async function fetchMeetups() {
-    const { data } = await supabase
-      .from("meetups")
-      .select("*")
-      .order("updated_at", { ascending: false });
-    setMeetups((data as SavedMeetup[]) || []);
+  // Named `loadMeetups`: `fetchMeetups` is imported.
+  async function loadMeetups() {
+    const rows = await fetchMeetups();
+    setMeetups(rows as unknown as SavedMeetup[]);
     setLoadingMeetups(false);
   }
 
   // Load people pool
   useEffect(() => {
     async function fetchPeople() {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, username, name, bio, skills, photo_url, currently_building, looking_for_help")
-        .not("name", "is", null)
-        .order("name", { ascending: true });
+      // Contacts come back only for an admin, or marked public — the route decides,
+      // where before this relied on RLS returning nothing for a non-admin.
+      const [profiles, contacts] = await Promise.all([
+        fetchProfiles({ named: true, sort: "name" }),
+        fetchContacts(),
+      ]);
 
-      const { data: contacts } = await supabase
-        .from("community_contacts")
-        .select("id, name, first_name, last_name, summary, skills")
-        .order("name", { ascending: true });
-
-      const people: Participant[] = (profiles || [])
+      const people: Participant[] = profiles
         .filter((p) => p.name?.trim())
-        .map((p) => ({ ...p, _source: "profile" as const }));
+        .map((p) => ({
+          id: p.id,
+          username: p.username,
+          // Non-null by the filter above; `Participant.name` is required.
+          name: p.name as string,
+          bio: p.bio,
+          skills: p.skills,
+          photo_url: p.photo_url,
+          currently_building: p.currently_building,
+          looking_for_help: p.looking_for_help,
+          _source: "profile" as const,
+        }));
 
-      for (const c of contacts || []) {
+      for (const c of contacts) {
         const displayName = c.name || [c.first_name, c.last_name].filter(Boolean).join(" ");
         if (!displayName) continue;
         people.push({ id: c.id, name: displayName, bio: c.summary, skills: c.skills, photo_url: null, _source: "community" });
@@ -195,15 +208,16 @@ export default function MeetupMatcherPage() {
   async function syncProfileEventNotes(meetupId: string, meetupName: string, participants: Participant[], userId: string) {
     const toSync = participants.filter((p) => p._source === "profile" && p.notes?.trim());
     if (toSync.length === 0) return;
-    await supabase.from("profile_event_notes").upsert(
+    // `created_by` is the session's now; `userId` is kept in the signature because the
+    // callers still have it and removing it would touch four call sites for nothing.
+    void userId;
+    await syncProfileNotes(
       toSync.map((p) => ({
-        profile_id: p.id,
-        meetup_id: meetupId,
-        meetup_name: meetupName,
-        notes: p.notes,
-        created_by: userId,
+        profileId: p.id,
+        meetupId,
+        meetupName,
+        notes: p.notes ?? null,
       })),
-      { onConflict: "profile_id,meetup_id" }
     );
   }
 
@@ -214,12 +228,11 @@ export default function MeetupMatcherPage() {
     autoSaveTimer.current = setTimeout(async () => {
       const user = authUser;
       if (!user) return;
-      const { data } = await supabase
-        .from("meetups")
-        .update({ name: meetupName.trim() || activeMeetup.name, participants: selected, custom_field_names: customFieldNames })
-        .eq("id", activeMeetup.id)
-        .select()
-        .single();
+      const data = await updateMeetup(activeMeetup.id, {
+        name: meetupName.trim() || activeMeetup.name,
+        participants: selected,
+        customFieldNames,
+      });
       if (data) {
         setActiveMeetup(data as SavedMeetup);
         setMeetups((prev) => prev.map((m) => (m.id === data.id ? (data as SavedMeetup) : m)));
@@ -263,26 +276,22 @@ export default function MeetupMatcherPage() {
     const user = authUser;
     if (!user) { setSaving(false); return; }
 
-    const payload = { name: meetupName.trim(), participants: selected, custom_field_names: customFieldNames, created_by: user.id };
+    // No `created_by`: the route sets it from the session.
+    const payload = {
+      name: meetupName.trim(),
+      participants: selected,
+      customFieldNames,
+    };
 
     if (activeMeetup) {
-      const { data } = await supabase
-        .from("meetups")
-        .update(payload)
-        .eq("id", activeMeetup.id)
-        .select()
-        .single();
+      const data = await updateMeetup(activeMeetup.id, payload);
       if (data) {
         setActiveMeetup(data as SavedMeetup);
         setMeetups((prev) => prev.map((m) => (m.id === data.id ? (data as SavedMeetup) : m)));
         await syncProfileEventNotes(activeMeetup.id, meetupName.trim(), selected, user.id);
       }
     } else {
-      const { data } = await supabase
-        .from("meetups")
-        .insert(payload)
-        .select()
-        .single();
+      const data = await createMeetup(payload);
       if (data) {
         setActiveMeetup(data as SavedMeetup);
         setMeetups((prev) => [data as SavedMeetup, ...prev]);
@@ -295,8 +304,10 @@ export default function MeetupMatcherPage() {
     setTimeout(() => setSaved(false), 2000);
   }
 
-  async function deleteMeetup(id: string) {
-    await supabase.from("meetups").delete().eq("id", id);
+  // Named `removeMeetup`: a local `deleteMeetup` beside the import of the same name
+  // shadowed it and called itself — infinite recursion, not a silent no-op.
+  async function removeMeetup(id: string) {
+    await deleteMeetup(id);
     setMeetups((prev) => prev.filter((m) => m.id !== id));
     if (activeMeetup?.id === id) { setActiveMeetup(null); setIsEditing(false); }
   }
@@ -363,9 +374,7 @@ export default function MeetupMatcherPage() {
     setAddError(null);
 
     const skillsArray = addSkills.split(",").map((s) => s.trim()).filter(Boolean);
-    const { data, error: insertError } = await supabase
-      .from("community_contacts")
-      .insert({
+    const createResult = await createContact({
         name: addName.trim(),
         summary: addBio.trim() || null,
         skills: skillsArray.length ? skillsArray : null,
@@ -376,14 +385,16 @@ export default function MeetupMatcherPage() {
         linkedin: addLinkedin.trim() || null,
         twitter: addTwitter.trim() || null,
         website: addWebsite.trim() || null,
-      })
-      .select("id")
-      .single();
+    });
 
-    if (insertError) { setAddError(insertError.message); setAddLoading(false); return; }
+    if (!createResult.success || !createResult.data) {
+      setAddError(createResult.error ?? "Could not add this person.");
+      setAddLoading(false);
+      return;
+    }
 
     const newPerson: Participant = {
-      id: data.id,
+      id: createResult.data.id,
       name: addName.trim(),
       bio: addBio.trim() || null,
       skills: skillsArray.length ? skillsArray : null,
@@ -444,9 +455,20 @@ export default function MeetupMatcherPage() {
       };
     }
 
-    const table = editingPerson._source === "profile" ? "profiles" : "community_contacts";
-    const { error: updateError } = await supabase.from(table).update(updates).eq("id", editingPerson.id);
-    if (updateError) { setEditError(updateError.message); setEditLoading(false); return; }
+    // Two different resources behind one editor. Editing a registered member's profile
+    // is the admin path — the old code wrote to `profiles` by id, which the row-owner
+    // policy silently refused for anyone but yourself, so this never worked for other
+    // members.
+    const editResult =
+      editingPerson._source === "profile"
+        ? await updateProfileAsAdmin(editingPerson.id, updates)
+        : await updateContact(editingPerson.id, updates);
+
+    if (!editResult.success) {
+      setEditError(editResult.error ?? "Could not save changes.");
+      setEditLoading(false);
+      return;
+    }
 
     const updated: Participant = {
       ...editingPerson,
@@ -647,7 +669,7 @@ export default function MeetupMatcherPage() {
                   )}
                 </div>
                 <button
-                  onClick={(e) => { e.stopPropagation(); deleteMeetup(meetup.id); }}
+                  onClick={(e) => { e.stopPropagation(); removeMeetup(meetup.id); }}
                   className="p-1.5 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100 shrink-0"
                 >
                   <Trash2 className="w-4 h-4" />

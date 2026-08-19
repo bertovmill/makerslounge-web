@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { fetchFeedbackQueue, setFeedbackCompleted } from "@/lib/admin-lists-client";
 import { useAuth, type AuthUser } from "@/context/AuthContext";
 import { LiquidGlassCard } from "@/components/LiquidGlass";
 
@@ -26,12 +26,10 @@ export default function FeedbackPage() {
       const user = authUser;
       setUser(user);
 
+      // The route is admin-only, so this check is now which UI to show rather than
+      // what the caller is allowed to read.
       if (user?.email === "bertmill19@gmail.com") {
-        const { data } = await supabase
-          .from("feedback")
-          .select("*")
-          .order("created_at", { ascending: false });
-        setFeedback(data || []);
+        setFeedback(await fetchFeedbackQueue<Feedback>());
       }
       setLoading(false);
     };
@@ -39,10 +37,7 @@ export default function FeedbackPage() {
   }, []);
 
   const toggleCompleted = async (id: string, completed: boolean) => {
-    await supabase
-      .from("feedback")
-      .update({ completed: !completed })
-      .eq("id", id);
+    if (!(await setFeedbackCompleted(id, !completed))) return;
 
     setFeedback(feedback.map(f =>
       f.id === id ? { ...f, completed: !completed } : f

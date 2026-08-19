@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/lib/supabase";
+import { fetchAllPostsAdmin } from "@/lib/blog-list-client";
+import { deletePost } from "@/lib/blog-client";
 
 interface BlogPost {
   id: string;
@@ -27,18 +28,14 @@ export default function BlogPostsSection() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchPosts();
+    loadPosts();
   }, []);
 
-  const fetchPosts = async () => {
+  // Named `loadPosts`: `fetchAllPostsAdmin` is the import, and a local `fetchPosts`
+  // beside it invited the same shadowing trap as elsewhere in this migration.
+  const loadPosts = async () => {
     try {
-      const { data, error } = await supabase
-        .from("blog_posts")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setPosts(data || []);
+      setPosts(await fetchAllPostsAdmin());
     } catch (err) {
       console.error("Error fetching blog posts:", err);
     } finally {
@@ -52,15 +49,10 @@ export default function BlogPostsSection() {
     }
 
     try {
-      const { error } = await supabase
-        .from("blog_posts")
-        .delete()
-        .eq("id", postId);
-
-      if (error) throw error;
+      if (!(await deletePost(postId))) throw new Error("delete failed");
 
       // Refresh the list
-      fetchPosts();
+      loadPosts();
     } catch (err) {
       console.error("Error deleting post:", err);
       alert("Failed to delete post");

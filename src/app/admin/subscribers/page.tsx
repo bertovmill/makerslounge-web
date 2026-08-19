@@ -3,31 +3,20 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/lib/supabase";
+import { fetchSubscribers, type Subscriber } from "@/lib/subscribers-client";
 
-interface EmailSubscription {
-  id: string;
-  email: string;
-  subscribed_to: string[];
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
 
 export default function SubscribersPage() {
-  const [subscribers, setSubscribers] = useState<EmailSubscription[]>([]);
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSubscribers = async () => {
+    // Named `load`: `fetchSubscribers` is now imported and a local of that name would
+    // shadow it and recurse.
+    const load = async () => {
       try {
-        const { data, error } = await supabase
-          .from("email_subscriptions")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        setSubscribers(data || []);
+        const { data } = await fetchSubscribers();
+        setSubscribers(data);
       } catch (err) {
         console.error("Error fetching subscribers:", err);
       } finally {
@@ -35,7 +24,7 @@ export default function SubscribersPage() {
       }
     };
 
-    fetchSubscribers();
+    load();
   }, []);
 
   const activeCount = subscribers.filter((s) => s.is_active).length;
@@ -93,7 +82,7 @@ export default function SubscribersPage() {
                     <td className="py-3 px-4 font-mono text-sm">{sub.email}</td>
                     <td className="py-3 px-4">
                       <div className="flex gap-1 flex-wrap">
-                        {sub.subscribed_to.map((type) => (
+                        {(sub.subscribed_to ?? []).map((type) => (
                           <Badge key={type} variant="outline" className="text-xs">
                             {type}
                           </Badge>
@@ -106,11 +95,14 @@ export default function SubscribersPage() {
                       </Badge>
                     </td>
                     <td className="py-3 px-4 text-sm text-muted-foreground">
-                      {new Date(sub.created_at).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
+                      {/* Nullable in the database, so guard rather than render "Invalid Date". */}
+                      {sub.created_at
+                        ? new Date(sub.created_at).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })
+                        : "—"}
                     </td>
                   </tr>
                 ))}

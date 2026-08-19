@@ -4,7 +4,15 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
+import {
+  likeTarget,
+  unlikeTarget,
+  addComment,
+  deleteComment,
+  deletePost,
+  updatePost,
+} from "@/lib/feed-client";
+import { moderateUser } from "@/lib/messages-client";
 import { containsObjectionableContent } from "@/lib/content-filter";
 
 // Helper function to convert URLs in text to clickable links
@@ -185,13 +193,9 @@ export default function FeedCard({
       setHasLiked(false);
       setLikeCount((c) => c - 1);
 
-      const { error } = await supabase
-        .from("likes")
-        .delete()
-        .eq("user_id", currentUserId)
-        .eq("project_id", project.id);
+      const ok = await unlikeTarget({ type: "project", id: project.id });
 
-      if (error) {
+      if (!ok) {
         // Revert on error
         setHasLiked(true);
         setLikeCount((c) => c + 1);
@@ -203,11 +207,9 @@ export default function FeedCard({
       setShowParticles(true);
       setTimeout(() => setShowParticles(false), 700);
 
-      const { error } = await supabase
-        .from("likes")
-        .insert({ user_id: currentUserId, project_id: project.id });
+      const ok = await likeTarget({ type: "project", id: project.id });
 
-      if (error) {
+      if (!ok) {
         // Revert on error
         setHasLiked(false);
         setLikeCount((c) => c - 1);
@@ -235,31 +237,12 @@ export default function FeedCard({
 
     setIsSubmitting(true);
 
-    const { data, error } = await supabase
-      .from("comments")
-      .insert({
-        user_id: currentUserId,
-        project_id: project.id,
-        content: commentText.trim(),
-      })
-      .select(`
-        id,
-        content,
-        created_at,
-        profiles (
-          id,
-          name,
-          photo_url
-        )
-      `)
-      .single();
+    const created = await addComment({ type: "project", id: project.id }, commentText.trim());
 
-    if (!error && data) {
-      const newComment = {
-        ...data,
-        profiles: Array.isArray(data.profiles) ? data.profiles[0] || null : data.profiles,
-      } as Comment;
-      setComments([newComment, ...comments]);
+    if (created) {
+      // The route returns the author alongside the new comment, so there is no
+      // follow-up request and no display name to thread through as a prop.
+      setComments([created as Comment, ...comments]);
       setCommentText("");
     }
 
@@ -267,12 +250,7 @@ export default function FeedCard({
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    const { error } = await supabase
-      .from("comments")
-      .delete()
-      .eq("id", commentId);
-
-    if (!error) {
+    if (await deleteComment(commentId)) {
       setComments(comments.filter((c) => c.id !== commentId));
     }
   };
@@ -284,12 +262,7 @@ export default function FeedCard({
 
   const handleConfirmDelete = async () => {
     setIsDeleting(true);
-    const { error } = await supabase
-      .from("projects")
-      .delete()
-      .eq("id", project.id);
-
-    if (!error) {
+    if (await deletePost(project.id)) {
       setIsDeleted(true);
       onDelete?.(project.id);
     }
@@ -301,15 +274,12 @@ export default function FeedCard({
     if (!editTitle.trim()) return;
 
     setIsSaving(true);
-    const { error } = await supabase
-      .from("projects")
-      .update({
-        title: editTitle.trim(),
-        description: editDescription.trim() || null,
-      })
-      .eq("id", project.id);
+    const ok = await updatePost(project.id, {
+      title: editTitle.trim(),
+      description: editDescription.trim() || null,
+    });
 
-    if (!error) {
+    if (ok) {
       onUpdate?.(project.id, editTitle.trim(), editDescription.trim() || null);
       setIsEditing(false);
     }
@@ -325,13 +295,13 @@ export default function FeedCard({
   const handleReport = async () => {
     if (!currentUserId || !reportReason) return;
     setIsReporting(true);
-    await supabase.from("reports").insert({
-      reporter_id: currentUserId,
-      reported_user_id: project.profiles?.id,
-      project_id: project.id,
-      reason: reportReason,
-      details: reportDetails.trim() || null,
-    });
+    if (project.profiles?.id) {
+      await moderateUser("report", project.profiles.id, {
+        reason: reportReason,
+        details: reportDetails.trim() || null,
+        projectId: project.id,
+      });
+    }
     setIsReporting(false);
     setReportSubmitted(true);
     setTimeout(() => {
@@ -345,10 +315,7 @@ export default function FeedCard({
   const handleBlock = async () => {
     if (!currentUserId || !project.profiles?.id) return;
     setIsBlocking(true);
-    await supabase.from("blocked_users").insert({
-      blocker_id: currentUserId,
-      blocked_id: project.profiles.id,
-    });
+    await moderateUser("block", project.profiles.id);
     setIsBlocking(false);
     setShowMenu(false);
     onBlock?.(project.profiles.id);

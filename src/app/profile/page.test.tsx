@@ -30,6 +30,7 @@ vi.mock("@/components/SkillsInput", () => ({
 
 // Mock supabase
 const mockGetUser = vi.fn();
+const mockUseAuth = vi.fn();
 const mockSelect = vi.fn();
 const mockEq = vi.fn();
 const mockSingle = vi.fn();
@@ -46,19 +47,36 @@ const createChain = () => ({
   insert: mockInsert,
 });
 
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    auth: {
-      getUser: () => mockGetUser(),
-    },
-    from: vi.fn(() => createChain()),
-    storage: {
-      from: vi.fn(() => ({
-        upload: mockUpload,
-        getPublicUrl: mockGetPublicUrl,
-      })),
-    },
+// The page reads and writes through the client modules now. `mockSingle` keeps its
+// `{ data, error }` shape so the existing cases read unchanged; the adapters map it onto
+// what each module returns.
+vi.mock("@/lib/profiles-client", () => ({
+  fetchMyProfile: async () => {
+    const { data, error } = await mockSingle();
+    return error ? null : data;
   },
+  updateMyProfile: async (updates: Record<string, unknown>) => {
+    const res = await mockUpdate(updates);
+    // `mockUpdate.mockReturnThis()` in the setup returns the chain object, not a
+    // result — treat anything without an explicit error as success.
+    return res?.error ? { success: false, error: "update_failed" } : { success: true };
+  },
+}));
+
+vi.mock("@/lib/upload-client", () => ({
+  uploadToBlob: async () => {
+    const res = await mockUpload();
+    if (res?.error) throw new Error("upload failed");
+    return { url: "https://blob.test/avatar.png", pathname: "avatar.png" };
+  },
+  profilePhotoPath: () => "media/profiles/test/avatar.png",
+}));
+
+// The page reads the session from AuthContext, which has had no mock here since the
+// Clerk cutover — every test in this file was failing with "useAuth must be used within
+// an AuthProvider" regardless of what else it asserted.
+vi.mock("@/context/AuthContext", () => ({
+  useAuth: () => mockUseAuth(),
 }));
 
 const mockUser = {
@@ -85,12 +103,21 @@ const mockProfile = {
 };
 
 function setupAuthenticatedMocks(profile = mockProfile) {
+  mockUseAuth.mockReturnValue({
+    user: { id: mockUser.id, email: mockUser.email, fullName: "Test User", imageUrl: null },
+    loading: false,
+    isAdmin: false,
+    onboardingComplete: true,
+    refreshOnboarding: vi.fn(),
+    signOut: vi.fn(),
+  });
   mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null });
   mockSelect.mockReturnThis();
   mockEq.mockReturnThis();
   mockSingle.mockResolvedValue({ data: profile, error: null });
-  mockUpdate.mockReturnThis();
+  mockUpdate.mockResolvedValue({ data: profile, error: null });
   mockInsert.mockResolvedValue({ data: null, error: null });
+  mockUpload.mockResolvedValue({ data: null, error: null });
 }
 
 describe("ProfilePage (/profile)", () => {
@@ -100,7 +127,15 @@ describe("ProfilePage (/profile)", () => {
 
   describe("loading state", () => {
     it("should show loading indicator initially", () => {
-      mockGetUser.mockReturnValue(new Promise(() => {})); // never resolves
+      // Loading comes from AuthContext now, not from a pending Supabase getUser call.
+      mockUseAuth.mockReturnValue({
+        user: null,
+        loading: true,
+        isAdmin: false,
+        onboardingComplete: true,
+        refreshOnboarding: vi.fn(),
+        signOut: vi.fn(),
+      });
       render(<ProfilePage />);
       expect(screen.getByText("Loading...")).toBeInTheDocument();
     });
@@ -108,7 +143,14 @@ describe("ProfilePage (/profile)", () => {
 
   describe("unauthenticated user", () => {
     it("should redirect to / when no user is authenticated", async () => {
-      mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
+      mockUseAuth.mockReturnValue({
+        user: null,
+        loading: false,
+        isAdmin: false,
+        onboardingComplete: true,
+        refreshOnboarding: vi.fn(),
+        signOut: vi.fn(),
+      });
       render(<ProfilePage />);
       await waitFor(() => {
         expect(mockPush).toHaveBeenCalledWith("/");
@@ -266,20 +308,25 @@ describe("ProfilePage (/profile)", () => {
     });
   });
 
-  describe("new user with no existing profile", () => {
-    it("should create a new profile from user metadata when no existing profile found", async () => {
-      mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null });
-      mockSelect.mockReturnThis();
-      mockEq.mockReturnThis();
-      mockSingle.mockResolvedValue({ data: null, error: { code: "PGRST116" } });
-      mockInsert.mockResolvedValue({ data: null, error: null });
+  describe("missing profile row", () => {
+    it("should not attempt to create one — that is GET /api/me's job", async () => {
+      // The page used to insert a profile when the select came back empty. It no longer
+      // does: the row is created server-side the first time a Clerk user is seen, and a
+      // second creation path here was a race between two tabs both finding nothing.
+      // A missing row is now a fault to report, not a state to repair.
+      setupAuthenticatedMocks();
+      mockSingle.mockResolvedValue({ data: null, error: null });
 
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
       render(<ProfilePage />);
+
       await waitFor(() => {
-        expect(screen.getByText("Edit profile")).toBeInTheDocument();
+        expect(consoleError).toHaveBeenCalledWith(
+          "[profile] no profile row for",
+          mockUser.id,
+        );
       });
-      // Should show name from user metadata
-      expect(screen.getByDisplayValue("Test User")).toBeInTheDocument();
+      consoleError.mockRestore();
     });
   });
 });

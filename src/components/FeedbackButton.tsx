@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { toPng } from "html-to-image";
 import { usePathname } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { uploadToBlob, feedbackScreenshotPath } from "@/lib/upload-client";
 import ScreenshotEditor from "./ScreenshotEditor";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -68,19 +68,10 @@ export default function FeedbackButton() {
       const res = await fetch(dataUrl);
       const blob = await res.blob();
 
-      const fileName = `feedback/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.png`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("media")
-        .upload(fileName, blob, { contentType: "image/png" });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("media")
-        .getPublicUrl(fileName);
-
-      return publicUrl;
+      // Blob returns the URL from the upload itself, so there is no second
+      // getPublicUrl step that could disagree with where the bytes actually went.
+      const { url } = await uploadToBlob(feedbackScreenshotPath(), blob);
+      return url;
     } catch (err) {
       console.error("Screenshot upload failed:", err);
       return null;
@@ -101,11 +92,13 @@ export default function FeedbackButton() {
       screenshotUrl = await uploadScreenshot(screenshot);
     }
 
-    await supabase.from("feedback").insert({
-      message,
-      email: user.email || null,
-      user_id: user.id,
-      screenshot_url: screenshotUrl,
+    await fetch("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      // No user_id or email: the route reads both from the session, so feedback
+      // cannot be filed under someone else's address.
+      body: JSON.stringify({ message, screenshotUrl }),
     });
 
     // Send email notification (fire-and-forget)

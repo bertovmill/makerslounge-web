@@ -3,12 +3,10 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSignIn, useSignUp, useUser } from "@clerk/nextjs";
-import { supabase } from "@/lib/supabase";
 import { resolveProfileId } from "@/lib/clerk-profile";
 import Link from "next/link";
 import { rememberPostAuthRedirect, takePostAuthRedirect } from "@/lib/post-auth-redirect";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
-import { Capacitor } from "@capacitor/core";
 import { DottedGlowBackground } from "@/components/ui/dotted-glow-background";
 
 /**
@@ -435,49 +433,23 @@ function AuthContent() {
   const searchParams = useSearchParams();
   const { isLoaded, isSignedIn, user: clerkUser } = useUser();
   const clerkUserId = clerkUser?.id ?? null;
-  const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress ?? null;
-  const clerkFirstName = clerkUser?.firstName ?? null;
-  const clerkLastName = clerkUser?.lastName ?? null;
   const mode = searchParams.get("mode");
   const [isSigningUp, setIsSigningUp] = useState(mode === "signup");
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  const mergeContactIfExists = async (userId: string, email: string) => {
-    const { data: contact } = await supabase
-      .from("community_contacts")
-      .select("id, skills, summary, linkedin, twitter, instagram, website")
-      .eq("email", email.toLowerCase())
-      .is("matched_profile_id", null)
-      .maybeSingle();
-
-    if (!contact) return;
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("skills, bio, linkedin, twitter, instagram, website")
-      .eq("id", userId)
-      .single();
-
-    const updates: Record<string, unknown> = {};
-    if (!profile?.skills?.length && contact.skills?.length) updates.skills = contact.skills;
-    if (!profile?.bio && contact.summary) updates.bio = contact.summary;
-    if (!profile?.linkedin && contact.linkedin) updates.linkedin = contact.linkedin;
-    if (!profile?.twitter && contact.twitter) updates.twitter = contact.twitter;
-    if (!profile?.instagram && contact.instagram) updates.instagram = contact.instagram;
-    if (!profile?.website && contact.website) updates.website = contact.website;
-
-    if (Object.keys(updates).length > 0) {
-      await supabase.from("profiles").update(updates).eq("id", userId);
+  const redirectAfterAuth = async () => {
+    // Claim any community-contact record matching this account's email. Runs
+    // server-side now (POST /api/me/merge-contact) because the database is Neon
+    // and, more importantly, because the email must come from the session rather
+    // than from the browser.
+    //
+    // Deliberately not awaited-and-blocking on failure: enrichment is a nicety,
+    // and nobody should be held on a spinner because it errored.
+    try {
+      await fetch("/api/me/merge-contact", { method: "POST", credentials: "include" });
+    } catch (err) {
+      console.error("[auth] contact merge failed:", err);
     }
-
-    await supabase
-      .from("community_contacts")
-      .update({ matched_profile_id: userId, matched_at: new Date().toISOString() })
-      .eq("id", contact.id);
-  };
-
-  const redirectAfterAuth = async (userId: string, email?: string) => {
-    if (email) await mergeContactIfExists(userId, email);
 
     // Everyone who authenticates goes to /home, including brand-new signups.
     // Onboarding is a page they can fill in later, not a gate in front of the
@@ -509,15 +481,12 @@ function AuthContent() {
 
     let cancelled = false;
     (async () => {
-      const profileId = await resolveProfileId(clerkUserId, {
-        firstName: clerkFirstName,
-        lastName: clerkLastName,
-      });
+      const profileId = await resolveProfileId();
       if (cancelled || !profileId) {
         if (!cancelled) setCheckingAuth(false);
         return;
       }
-      await redirectAfterAuth(profileId, clerkEmail ?? undefined);
+      await redirectAfterAuth();
     })();
 
     return () => {

@@ -1,4 +1,24 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { and, desc, eq } from "drizzle-orm";
+import { getSiteDb } from "@/db/site";
+import { talkContent, talks } from "@/db/site/schema";
+
+/**
+ * Recorded guest talks, gated behind an account.
+ *
+ * Two tables, split along the line the gate draws: `talks` holds the public
+ * teaser, `talk_content` holds the video id and transcript that signing up buys.
+ *
+ * The gate used to be RLS — `talk_content` was readable only by the
+ * `authenticated` role, so a signed-out request silently came back empty and the
+ * page rendered the signup prompt. Neon has no equivalent, so `fetchTalkContent`
+ * now takes the caller's identity and refuses without one. That check is the gate;
+ * there is no longer a second line of defence in the database behind it, which is
+ * why it lives in this module rather than in each page.
+ *
+ * Both tables are new to the database: `supabase-migration-talks.sql` was written
+ * but never applied, so `/talks` had been rendering "No talks yet" in production
+ * the whole time. See neon-migrations/0001_talks.sql.
+ */
 
 export interface Talk {
   id: string;
@@ -19,7 +39,7 @@ export interface Talk {
   created_by: string | null;
 }
 
-// The gated half of a talk: everything a signed-out visitor must not see.
+/** The gated half of a talk: everything a signed-out visitor must not see. */
 export interface TalkContent {
   talk_id: string;
   provider: string;
@@ -27,44 +47,76 @@ export interface TalkContent {
   transcript: string | null;
 }
 
-// Metadata only — safe to call for signed-out visitors, who see the teaser.
-export async function fetchPublishedTalks(client: SupabaseClient): Promise<Talk[]> {
-  const { data } = await client
-    .from("talks")
-    .select("*")
-    .eq("is_published", true)
-    .order("published_at", { ascending: false });
+// Snake-cased to match the shape the components already render.
+const talkColumns = {
+  id: talks.id,
+  title: talks.title,
+  slug: talks.slug,
+  description: talks.description,
+  speaker_name: talks.speakerName,
+  speaker_title: talks.speakerTitle,
+  speaker_company: talks.speakerCompany,
+  speaker_photo_url: talks.speakerPhotoUrl,
+  thumbnail_url: talks.thumbnailUrl,
+  duration_seconds: talks.durationSeconds,
+  recorded_at: talks.recordedAt,
+  is_published: talks.isPublished,
+  published_at: talks.publishedAt,
+  created_at: talks.createdAt,
+  updated_at: talks.updatedAt,
+  created_by: talks.createdBy,
+};
 
-  return data ?? [];
+/** Metadata only — safe for signed-out visitors, who see the teaser. */
+export async function fetchPublishedTalks(): Promise<Talk[]> {
+  const rows = await getSiteDb()
+    .select(talkColumns)
+    .from(talks)
+    .where(eq(talks.isPublished, true))
+    .orderBy(desc(talks.publishedAt));
+
+  return rows as Talk[];
 }
 
-export async function fetchTalkBySlug(
-  client: SupabaseClient,
-  slug: string
-): Promise<Talk | null> {
-  const { data } = await client
-    .from("talks")
-    .select("*")
-    .eq("slug", slug)
-    .eq("is_published", true)
-    .maybeSingle();
+export async function fetchTalkBySlug(slug: string): Promise<Talk | null> {
+  const [row] = await getSiteDb()
+    .select(talkColumns)
+    .from(talks)
+    .where(and(eq(talks.slug, slug), eq(talks.isPublished, true)))
+    .limit(1);
 
-  return data ?? null;
+  return (row as Talk) ?? null;
 }
 
-// Returns null for signed-out visitors: RLS on `talk_content` withholds the row
-// rather than erroring, so the caller just renders the sign-up prompt instead.
+/**
+ * The gate. Returns null for signed-out visitors so the caller renders the
+ * signup prompt.
+ *
+ * `viewerId` is required rather than optional on purpose: an optional parameter
+ * that defaults to "allowed" is exactly the mistake that leaks the video id, and
+ * a missing argument should be a type error, not an open door. The published check
+ * is kept too — an unpublished talk's content stays unreachable even for a
+ * signed-in member, as the original policy specified.
+ */
 export async function fetchTalkContent(
-  client: SupabaseClient,
-  talkId: string
+  talkId: string,
+  viewerId: string | null,
 ): Promise<TalkContent | null> {
-  const { data } = await client
-    .from("talk_content")
-    .select("talk_id, provider, video_id, transcript")
-    .eq("talk_id", talkId)
-    .maybeSingle();
+  if (!viewerId) return null;
 
-  return data ?? null;
+  const [row] = await getSiteDb()
+    .select({
+      talk_id: talkContent.talkId,
+      provider: talkContent.provider,
+      video_id: talkContent.videoId,
+      transcript: talkContent.transcript,
+    })
+    .from(talkContent)
+    .innerJoin(talks, eq(talks.id, talkContent.talkId))
+    .where(and(eq(talkContent.talkId, talkId), eq(talks.isPublished, true)))
+    .limit(1);
+
+  return row ?? null;
 }
 
 export function formatTalkDuration(seconds: number | null): string | null {

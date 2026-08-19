@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
-import { getPostById } from "@/lib/blog";
+import { getPostById } from "@/lib/blog-client";
 import { Badge } from "@/components/ui/badge";
 import BlogPostForm from "../BlogPostForm";
-import type { BlogPostRow } from "@/lib/blog";
+import type { BlogPostRow } from "@/lib/blog-types";
 
 export default function EditBlogPostPage() {
   const { user: authUser, loading: authLoading } = useAuth();

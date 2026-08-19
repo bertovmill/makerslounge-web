@@ -2,18 +2,13 @@
  * Create a test blog post with simple markdown
  */
 
-import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
 import * as path from 'path'
 
+import { upsertPostBySlug, deletePostBySlug } from './lib/blog-post-db'
+
+// Only Next.js loads .env.local automatically; a script has to ask.
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') })
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
-  auth: { autoRefreshToken: false, persistSession: false }
-})
 
 const testPost = {
   slug: "test-markdown-post",
@@ -86,32 +81,11 @@ That's the end of the test post!
 async function createTestPost() {
   console.log('Creating test blog post...\n')
 
-  // Check if post exists
-  const { data: existing } = await supabase
-    .from('blog_posts')
-    .select('slug')
-    .eq('slug', testPost.slug)
-    .single()
-
-  if (existing) {
-    console.log('⚠️  Test post already exists. Deleting...')
-    await supabase.from('blog_posts').delete().eq('slug', testPost.slug)
-  }
-
-  // Insert the post
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .insert(testPost)
-    .select()
-    .single()
-
-  if (error) {
-    console.error('❌ Failed:', error.message)
-    process.exit(1)
-  }
+  // Replaces any post already at this slug, so the script is re-runnable.
+  const created = await upsertPostBySlug(testPost)
 
   console.log('✅ Test post created!')
-  console.log(`   View at: http://localhost:3000/blog/${data.slug}\n`)
+  console.log(`   View at: http://localhost:3000/blog/${created.slug}\n`)
 }
 
 createTestPost()

@@ -1,59 +1,76 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { and, eq } from "drizzle-orm";
+import { getSiteDb } from "@/db/site";
+import { hackathonVoterNotes } from "@/db/site/schema";
+import { requireJudge } from "@/lib/api/judge-auth";
+import { badRequest, handleApiError } from "@/lib/api/respond";
 
-const ADMIN_PASSWORD = "makers2026";
-
-function serviceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } },
-  );
-}
-
-function authorized(req: NextRequest) {
-  return req.headers.get("x-admin-password") === ADMIN_PASSWORD;
-}
-
-// GET /api/admin/hackathon-notes?submission_id=...&judge_name=...
+/**
+ * GET /api/admin/hackathon-notes?submission_id=...&judge_name=...
+ *
+ * `hackathon_voter_notes` had RLS enabled with zero policies, which in Postgres
+ * denies everything rather than allowing it — only the service-role key reached
+ * it. That is why this route exists at all, and why the judging screens cannot
+ * query the table directly.
+ */
 export async function GET(req: NextRequest) {
-  if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    requireJudge(req);
 
-  const { searchParams } = new URL(req.url);
-  const submissionId = searchParams.get("submission_id");
-  const judgeName = searchParams.get("judge_name");
-  if (!submissionId || !judgeName) {
-    return NextResponse.json({ error: "submission_id and judge_name required" }, { status: 400 });
+    const { searchParams } = new URL(req.url);
+    const submissionId = searchParams.get("submission_id");
+    const judgeName = searchParams.get("judge_name");
+    if (!submissionId || !judgeName) {
+      return badRequest("submission_id and judge_name required");
+    }
+
+    const [row] = await getSiteDb()
+      .select({ notes: hackathonVoterNotes.notes })
+      .from(hackathonVoterNotes)
+      .where(
+        and(
+          eq(hackathonVoterNotes.submissionId, submissionId),
+          eq(hackathonVoterNotes.judgeName, judgeName),
+        ),
+      )
+      .limit(1);
+
+    return NextResponse.json({ notes: row?.notes ?? "" });
+  } catch (err) {
+    return handleApiError(err, "api/admin/hackathon-notes GET");
   }
-
-  const { data, error } = await serviceClient()
-    .from("hackathon_voter_notes")
-    .select("notes")
-    .eq("submission_id", submissionId)
-    .eq("judge_name", judgeName)
-    .maybeSingle();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ notes: data?.notes ?? "" });
 }
 
-// POST /api/admin/hackathon-notes  { judge_name, submission_id, notes }
+/** POST /api/admin/hackathon-notes  { judge_name, submission_id, notes } */
 export async function POST(req: NextRequest) {
-  if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    requireJudge(req);
 
-  const { judge_name, submission_id, notes } = (await req.json()) as {
-    judge_name: string;
-    submission_id: string;
-    notes: string;
-  };
+    const { judge_name, submission_id, notes } = (await req.json()) as {
+      judge_name?: string;
+      submission_id?: string;
+      notes?: string;
+    };
 
-  const { error } = await serviceClient()
-    .from("hackathon_voter_notes")
-    .upsert(
-      { judge_name, submission_id, notes, updated_at: new Date().toISOString() },
-      { onConflict: "judge_name,submission_id" },
-    );
+    if (!judge_name || !submission_id) {
+      return badRequest("judge_name and submission_id are required");
+    }
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+    const text = notes ?? "";
+    const updatedAt = new Date().toISOString();
+
+    await getSiteDb()
+      .insert(hackathonVoterNotes)
+      .values({ judgeName: judge_name, submissionId: submission_id, notes: text, updatedAt })
+      // The table's primary key is (judge_name, submission_id), which is what the
+      // previous upsert conflicted on.
+      .onConflictDoUpdate({
+        target: [hackathonVoterNotes.judgeName, hackathonVoterNotes.submissionId],
+        set: { notes: text, updatedAt },
+      });
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return handleApiError(err, "api/admin/hackathon-notes POST");
+  }
 }

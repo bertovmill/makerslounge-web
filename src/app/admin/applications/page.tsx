@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { fetchApplications, setApplicationStatus } from "@/lib/admin-lists-client";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { Check, X, Clock, ExternalLink, ArrowLeft, Mail } from "lucide-react";
@@ -53,32 +53,19 @@ export default function ApplicationsAdmin() {
 
   const loadApplications = async () => {
     setLoading(true);
-    let query = supabase
-      .from("applications")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (filter !== "all") {
-      query = query.eq("status", filter);
-    }
-
-    const { data } = await query;
-    setApplications((data as Application[]) || []);
+    // Filtering moved client-side: there are a few dozen rows, and one endpoint that
+    // always returns the list is simpler than a status parameter used by one screen.
+    const rows = await fetchApplications<Application>();
+    setApplications(filter === "all" ? rows : rows.filter((a) => a.status === filter));
     setLoading(false);
   };
 
   const updateStatus = async (id: string, status: "pending" | "approved" | "rejected") => {
-    const user = authUser;
-    const { error } = await supabase
-      .from("applications")
-      .update({
-        status,
-        reviewed_at: new Date().toISOString(),
-        reviewed_by: user?.id || null,
-      })
-      .eq("id", id);
+    // `reviewed_by` and `reviewed_at` are stamped by the route — who decided is not
+    // something the browser should author.
+    const ok = await setApplicationStatus(id, status);
 
-    if (!error) {
+    if (ok) {
       setApplications((prev) =>
         prev.map((a) => (a.id === id ? { ...a, status } : a))
       );

@@ -1,8 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Check, Loader2, Paperclip, X } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { useState } from "react";
+import { Check, Loader2 } from "lucide-react";
 
 const CHALLENGE_TRACKS = [
   "Validating a Business Idea",
@@ -10,8 +9,6 @@ const CHALLENGE_TRACKS = [
   "Synthetic Customers",
 ];
 
-const MAX_FILE_BYTES = 100 * 1024 * 1024;
-const MAX_FILES = 10;
 
 type Status = "idle" | "uploading" | "submitting" | "done" | "error";
 
@@ -37,36 +34,15 @@ const initialState: FormState = {
 
 export default function SubmissionForm() {
   const [form, setForm] = useState<FormState>(initialState);
-  const [files, setFiles] = useState<File[]>([]);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
-  const [dragOver, setDragOver] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function addFiles(newFiles: FileList | File[]) {
-    const incoming = Array.from(newFiles);
-    const total = files.length + incoming.length;
-    if (total > MAX_FILES) {
-      setError(`Up to ${MAX_FILES} files. Remove some first.`);
-      return;
-    }
-    const oversize = incoming.find((f) => f.size > MAX_FILE_BYTES);
-    if (oversize) {
-      setError(`${oversize.name} is over 100 MB. Link a hosted file instead.`);
-      return;
-    }
-    setError(null);
-    setFiles((prev) => [...prev, ...incoming]);
-  }
 
-  function removeFile(index: number) {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-  }
 
   function validate(): string | null {
     const link = form.projectLink.trim();
@@ -96,23 +72,13 @@ export default function SubmissionForm() {
     }
     setError(null);
 
-    const tempId = crypto.randomUUID();
-    let uploadedPaths: string[] = [];
-
+    // File attachment is gone. It wrote to the private `hackathon-submissions`
+    // bucket, which no longer exists: Vercel Blob's access level is per-store, a
+    // second store cannot be connected alongside the first, and the 2026 hackathon
+    // closed on 24 May — so the 45 existing files were archived outside the app
+    // rather than migrated. The rest of the form still works; `file_urls` is simply
+    // empty for anything submitted from now on.
     try {
-      if (files.length > 0) {
-        setStatus("uploading");
-        for (const file of files) {
-          const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-          const path = `pending/${tempId}/${safeName}`;
-          const { error: uploadErr } = await supabase.storage
-            .from("hackathon-submissions")
-            .upload(path, file, { upsert: false, contentType: file.type || undefined });
-          if (uploadErr) throw new Error(`Upload failed: ${uploadErr.message}`);
-          uploadedPaths.push(path);
-        }
-      }
-
       setStatus("submitting");
       const builderEmails = form.builderEmails
         .split(/[\s,]+/)
@@ -127,7 +93,7 @@ export default function SubmissionForm() {
           title: form.title.trim() || null,
           description: form.description.trim() || null,
           video_url: form.videoUrl.trim() || null,
-          file_urls: uploadedPaths,
+          file_urls: [],
           team_name: form.teamName.trim() || null,
           builder_emails: builderEmails,
           challenge_track: form.challengeTrack || null,
@@ -227,69 +193,6 @@ export default function SubmissionForm() {
         />
       </Field>
 
-      <Field
-        label="Files"
-        hint={`Optional. Up to ${MAX_FILES} files, 100 MB each. Decks, screenshots, demo clips.`}
-      >
-        <div
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragOver(true);
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragOver(false);
-            if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
-          }}
-          onClick={() => fileInputRef.current?.click()}
-          className={
-            "flex cursor-pointer flex-col items-start gap-3 rounded-md border border-dashed px-5 py-6 transition-colors " +
-            (dragOver
-              ? "border-primary bg-primary/5"
-              : "border-border hover:border-foreground/40")
-          }
-        >
-          <div className="flex items-center gap-2 font-mono text-sm text-foreground">
-            <Paperclip className="size-4" />
-            <span>{dragOver ? "Drop to attach" : "Click or drop files here"}</span>
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files?.length) addFiles(e.target.files);
-              e.target.value = "";
-            }}
-          />
-        </div>
-        {files.length > 0 && (
-          <ul className="mt-3 flex flex-col gap-1.5 font-mono text-xs">
-            {files.map((f, i) => (
-              <li
-                key={`${f.name}-${i}`}
-                className="flex items-center justify-between gap-3 border-b border-border/60 pb-1.5"
-              >
-                <span className="truncate text-foreground">{f.name}</span>
-                <div className="flex items-center gap-3 text-muted-foreground">
-                  <span>{formatBytes(f.size)}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeFile(i)}
-                    className="rounded text-muted-foreground hover:text-foreground"
-                    aria-label={`Remove ${f.name}`}
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Field>
-
       <Field label="Team name" hint="Optional.">
         <input
           type="text"
@@ -378,9 +281,3 @@ function Field({
 const fieldInput =
   "w-full bg-transparent border-b border-border px-0 py-2 text-base text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none transition-colors";
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
-}

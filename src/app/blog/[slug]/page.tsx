@@ -7,7 +7,9 @@ import BlogCard from "@/components/BlogCard";
 import BlogPostContent from "@/components/BlogPostContent";
 import BlogEngagement from "@/components/BlogEngagement";
 import { getPostBySlug, getAllPosts } from "@/lib/blog";
-import { supabase } from "@/lib/supabase";
+import { and, desc, eq, sql } from "drizzle-orm";
+import { getSiteDb } from "@/db/site";
+import { comments, likes, profiles } from "@/db/site/schema";
 
 interface BlogPostPageProps {
   params: Promise<{
@@ -23,37 +25,39 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound();
   }
 
-  // Fetch engagement data server-side
-  const { count: likesCount } = await supabase
-    .from("likes")
-    .select("*", { count: "exact", head: true })
-    .eq("target_type", "blog_post")
-    .eq("target_id", post.slug);
+  // Engagement, server-side. Blog likes and comments are keyed by
+  // (target_type, target_id) with the post *slug* as the id — these tables were
+  // built for projects and generalised later.
+  const db = getSiteDb();
 
-  const { data: rawCommentsData } = await supabase
-    .from("comments")
-    .select(
-      `
-      id,
-      content,
-      created_at,
-      profiles (
-        id,
-        name,
-        photo_url
-      )
-    `
-    )
-    .eq("target_type", "blog_post")
-    .eq("target_id", post.slug)
-    .order("created_at", { ascending: false });
+  const [{ likesCount }] = await db
+    .select({ likesCount: sql<number>`count(*)::int` })
+    .from(likes)
+    .where(and(eq(likes.targetType, "blog_post"), eq(likes.targetId, post.slug)));
 
-  // Transform comments to ensure profiles is an object, not an array
-  const commentsData = rawCommentsData?.map((comment) => ({
-    ...comment,
-    profiles: Array.isArray(comment.profiles)
-      ? comment.profiles[0] || null
-      : comment.profiles,
+  // A left join, not inner: a comment whose author has since been deleted should
+  // still render, with the fallback name, rather than vanishing from the thread.
+  const commentRows = await db
+    .select({
+      id: comments.id,
+      content: comments.content,
+      created_at: comments.createdAt,
+      authorId: profiles.id,
+      authorName: profiles.name,
+      authorPhoto: profiles.photoUrl,
+    })
+    .from(comments)
+    .leftJoin(profiles, eq(profiles.id, comments.userId))
+    .where(and(eq(comments.targetType, "blog_post"), eq(comments.targetId, post.slug)))
+    .orderBy(desc(comments.createdAt));
+
+  const commentsData = commentRows.map((c) => ({
+    id: c.id,
+    content: c.content,
+    created_at: c.created_at,
+    profiles: c.authorId
+      ? { id: c.authorId, name: c.authorName, photo_url: c.authorPhoto }
+      : null,
   }));
 
   // Get current user (server-side)
@@ -62,13 +66,17 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   // Check if user has liked this post
   let hasLiked = false;
   if (user) {
-    const { data: userLike } = await supabase
-      .from("likes")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("target_type", "blog_post")
-      .eq("target_id", post.slug)
-      .maybeSingle();
+    const [userLike] = await db
+      .select({ id: likes.id })
+      .from(likes)
+      .where(
+        and(
+          eq(likes.userId, user.id),
+          eq(likes.targetType, "blog_post"),
+          eq(likes.targetId, post.slug),
+        ),
+      )
+      .limit(1);
 
     hasLiked = !!userLike;
   }

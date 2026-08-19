@@ -40,7 +40,12 @@ MakersLounge is a Next.js 16 app for connecting makers/builders. It uses the App
 
 ### Auth & Onboarding
 - OAuth (Google, Apple) redirects back to `/auth`, which checks `profiles.name` to determine if the user needs onboarding
-- **Do NOT use the `onboarding_completed` column** — it was never migrated to production
+- **Two onboarding flags exist**, and this file used to claim `onboarding_completed`
+  "was never migrated to production". It was: it is true for 42 of 140 profiles and
+  it is the flag the `/onboarding/*` pages read to decide whether to redirect.
+  `has_completed_onboarding` is the vestigial one — true for exactly one profile,
+  read by nothing. `AuthContext` uses neither; it treats a non-null `profiles.name`
+  as "onboarding done", because a member can skip the form and still have a name.
 - New users (no `profiles.name`) are sent to `/onboarding` — a single page asking for name and project(s)
 - Users can skip onboarding and go straight to `/home`
 - Production domain is `makerslounge.ca` (not `.com`)

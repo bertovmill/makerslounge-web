@@ -1,71 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { asc, eq } from "drizzle-orm";
+import { getSiteDb } from "@/db/site";
+import { mulerunSignups } from "@/db/site/schema";
+import { requireAdmin } from "@/lib/api/auth";
+import { badRequest, handleApiError } from "@/lib/api/respond";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-function readClient() {
-  if (!SUPABASE_URL || !ANON_KEY) return null;
-  return createClient(SUPABASE_URL, ANON_KEY);
-}
-
-function adminClient() {
-  if (!SUPABASE_URL || !SERVICE_KEY) return null;
-  return createClient(SUPABASE_URL, SERVICE_KEY);
-}
-
+/** List signups. Public, as the event's own screens display this openly. */
 export async function GET() {
-  const supabase = readClient();
-  if (!supabase) {
-    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
+  try {
+    const db = getSiteDb();
+    const signups = await db
+      .select({
+        id: mulerunSignups.id,
+        name: mulerunSignups.name,
+        categories: mulerunSignups.categories,
+        created_at: mulerunSignups.createdAt,
+      })
+      .from(mulerunSignups)
+      .orderBy(asc(mulerunSignups.createdAt));
+
+    return NextResponse.json({ signups });
+  } catch (err) {
+    return handleApiError(err, "api/mulerun/signups GET");
   }
-  const { data, error } = await supabase
-    .from("mulerun_signups")
-    .select("id, name, categories, created_at")
-    .order("created_at", { ascending: true });
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-  return NextResponse.json({ signups: data ?? [] });
 }
 
+/**
+ * Delete one signup, or all of them.
+ *
+ * SECURITY: this required no authentication whatsoever — it reached straight for
+ * the Supabase service-role key, so `DELETE ?all=1` from anyone on the internet
+ * would wipe the table. It is now admin-only.
+ */
 export async function DELETE(request: NextRequest) {
-  const supabase = adminClient();
-  if (!supabase) {
-    return NextResponse.json(
-      { error: "SUPABASE_SERVICE_ROLE_KEY is not configured on the server" },
-      { status: 500 }
-    );
-  }
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
-  const all = searchParams.get("all");
+  try {
+    await requireAdmin();
 
-  if (id) {
-    const { error } = await supabase
-      .from("mulerun_signups")
-      .delete()
-      .eq("id", id);
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    const all = searchParams.get("all");
+    const db = getSiteDb();
+
+    if (id) {
+      await db.delete(mulerunSignups).where(eq(mulerunSignups.id, id));
+      return NextResponse.json({ ok: true });
     }
-    return NextResponse.json({ ok: true });
-  }
 
-  if (all === "1") {
-    const { error } = await supabase
-      .from("mulerun_signups")
-      .delete()
-      .not("id", "is", null);
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (all === "1") {
+      await db.delete(mulerunSignups);
+      return NextResponse.json({ ok: true });
     }
-    return NextResponse.json({ ok: true });
-  }
 
-  return NextResponse.json(
-    { error: "Provide ?id=<uuid> or ?all=1" },
-    { status: 400 }
-  );
+    return badRequest("Provide ?id=<uuid> or ?all=1");
+  } catch (err) {
+    return handleApiError(err, "api/mulerun/signups DELETE");
+  }
 }

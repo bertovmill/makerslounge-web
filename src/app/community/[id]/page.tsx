@@ -7,32 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/lib/supabase";
+import {
+  fetchContact,
+  updateContact,
+  type CommunityContact,
+} from "@/lib/contacts-client";
 import { useAuth } from "@/context/AuthContext";
 import { Linkedin, Globe, Pencil, X, Check } from "lucide-react";
 
-interface CommunityContact {
-  id: string;
-  email: string;
-  name: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  summary: string | null;
-  skills: string[] | null;
-  company: string | null;
-  role: string | null;
-  source: string[] | null;
-  linkedin: string | null;
-  twitter: string | null;
-  instagram: string | null;
-  website: string | null;
-  phone: string | null;
-  visibility: string;
-  metadata: Record<string, string> | null;
-  notes: string | null;
-  matched_profile_id: string | null;
-  updated_at: string | null;
-}
 
 export default function CommunityProfilePage() {
   const params = useParams();
@@ -52,14 +34,14 @@ export default function CommunityProfilePage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const fetch = async () => {
-      const { data, error } = await supabase
-        .from("community_contacts")
-        .select("*")
-        .eq("id", id)
-        .single();
+    const load = async () => {
+      // The route already restricts non-admins to `visibility = 'public'`, so a
+      // private contact simply is not returned. The client-side check below is kept
+      // as a belt-and-braces guard, but it is no longer the thing enforcing it — it
+      // used to be, with RLS behind it.
+      const data = await fetchContact(id);
 
-      if (error || !data) {
+      if (!data) {
         setNotFound(true);
       } else if (data.visibility === "private" && !isAdmin) {
         setNotFound(true);
@@ -74,7 +56,7 @@ export default function CommunityProfilePage() {
       }
       setLoading(false);
     };
-    fetch();
+    load();
   }, [id, isAdmin]);
 
   if (loading) {
@@ -233,10 +215,7 @@ export default function CommunityProfilePage() {
               size="sm"
               onClick={async () => {
                 const newVisibility = contact.visibility === "public" ? "private" : "public";
-                await supabase
-                  .from("community_contacts")
-                  .update({ visibility: newVisibility })
-                  .eq("id", contact.id);
+                await updateContact(contact.id, { visibility: newVisibility });
                 setContact({ ...contact, visibility: newVisibility });
               }}
             >
@@ -398,13 +377,10 @@ export default function CommunityProfilePage() {
                     skills: editForm.skills.split(",").map((s) => s.trim()).filter(Boolean),
                     source: editForm.source.split(",").map((s) => s.trim()).filter(Boolean),
                     notes: editForm.notes.trim() || null,
-                    updated_at: now,
+                    // `updated_at` is stamped by the route.
                   };
-                  const { error } = await supabase
-                    .from("community_contacts")
-                    .update(payload)
-                    .eq("id", contact.id);
-                  if (!error) {
+                  const result = await updateContact(contact.id, payload);
+                  if (result.success) {
                     setContact({ ...contact, ...payload, updated_at: now });
                     setEditing(false);
                   }

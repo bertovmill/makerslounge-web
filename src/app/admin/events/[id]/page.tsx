@@ -6,19 +6,8 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/lib/supabase";
+import { fetchEvent, type EventRow as Event } from "@/lib/events-client";
 
-interface Event {
-  id: string;
-  title: string;
-  description: string | null;
-  start_time: string;
-  end_time: string;
-  location: string | null;
-  image_url: string | null;
-  event_url: string | null;
-  is_all_day: boolean;
-}
 
 interface Message {
   id: string;
@@ -57,15 +46,12 @@ export default function EventPlanningPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const fetchEvent = async () => {
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .eq("id", eventId)
-        .single();
+    // Named `load`: `fetchEvent` is imported.
+    const load = async () => {
+      const data = await fetchEvent(eventId);
 
-      if (error || !data) {
-        console.error("Error fetching event:", error);
+      if (!data) {
+        console.error("Event not found:", eventId);
         router.push("/admin/events");
         return;
       }
@@ -84,7 +70,7 @@ export default function EventPlanningPage() {
       ]);
     };
 
-    fetchEvent();
+    load();
   }, [eventId, router]);
 
   useEffect(() => {

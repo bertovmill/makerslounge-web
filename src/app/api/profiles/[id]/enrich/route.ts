@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAppUser } from "@/lib/clerk-server";
-import { createClient } from "@/lib/supabase-server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { eq } from "drizzle-orm";
+import { getSiteDb } from "@/db/site";
+import { profiles } from "@/db/site/schema";
 import { generateObject } from "ai";
 import { z } from "zod";
 
@@ -58,7 +59,6 @@ export async function POST(
 ) {
   const { id: profileId } = await params;
 
-  const supabase = await createClient();
   const user = await getServerAppUser();
 
   if (!user) {
@@ -96,40 +96,38 @@ export async function POST(
     );
   }
 
-  const supabaseAdmin = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const db = getSiteDb();
 
-  const { data: existing } = await supabaseAdmin
-    .from("profiles")
-    .select("bio, skills")
-    .eq("id", profileId)
-    .single();
+  // Admin-only, checked above, and the target is a route param rather than the
+  // caller — so this deliberately writes to someone else's profile. That is what
+  // the service-role key was doing here.
+  const [existing] = await db
+    .select({ bio: profiles.bio, skills: profiles.skills })
+    .from(profiles)
+    .where(eq(profiles.id, profileId))
+    .limit(1);
 
-  const updates: Record<string, unknown> = {
-    linkedin_data: parsed,
-    linkedin_data_updated_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+  if (!existing) {
+    return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+  }
+
+  const now = new Date().toISOString();
+  const updates: Partial<typeof profiles.$inferInsert> = {
+    linkedinData: parsed,
+    linkedinDataUpdatedAt: now,
+    updatedAt: now,
   };
 
-  if (!existing?.bio && parsed.summary) {
+  // Only fill gaps — anything the member wrote about themselves wins.
+  if (!existing.bio && parsed.summary) {
     updates.bio = parsed.summary;
   }
 
-  if ((!existing?.skills || existing.skills.length === 0) && parsed.skills.length > 0) {
+  if ((!existing.skills || existing.skills.length === 0) && parsed.skills.length > 0) {
     updates.skills = parsed.skills.slice(0, 12);
   }
 
-  const { error: updateError } = await supabaseAdmin
-    .from("profiles")
-    .update(updates)
-    .eq("id", profileId);
-
-  if (updateError) {
-    console.error("Failed to save linkedin_data:", updateError);
-    return NextResponse.json({ error: "Failed to save profile." }, { status: 500 });
-  }
+  await db.update(profiles).set(updates).where(eq(profiles.id, profileId));
 
   return NextResponse.json({ data: parsed });
 }

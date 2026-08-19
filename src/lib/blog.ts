@@ -1,281 +1,131 @@
-import { supabase } from "./supabase";
+import { and, arrayContains, desc, eq, isNotNull, lte, sql } from "drizzle-orm";
+import { getSiteDb } from "@/db/site";
+import { blogPosts, profiles } from "@/db/site/schema";
+import { type BlogPost, type BlogPostRow, dbRowToBlogPost } from "./blog-types";
 
-export interface BlogAuthor {
-  name: string;
-  photo?: string;
-  role?: string;
-}
+/**
+ * Blog reads, server-side only.
+ *
+ * SERVER ONLY — this imports Drizzle, which cannot be bundled into a client
+ * component. Client components take the types from `./blog-types` and the
+ * mutations from `./blog-client`, which go through `/api/blog`.
+ *
+ * The `profiles` join replaces PostgREST's embedded `profiles ( ... )` syntax.
+ * Note it is a LEFT join: `blog_posts.author_id` is nullable, and an inner join
+ * would silently drop any post without an author — the sort of difference that
+ * shows up as a missing article rather than as an error.
+ */
 
-export interface BlogPost {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string;
-  content: string; // markdown
-  coverImage?: string;
-  publishDate: string; // ISO date string
-  author: BlogAuthor;
-  tags: string[];
-  readTimeMinutes: number;
-  isFeatured: boolean;
-}
+export type { BlogPost, BlogPostRow, BlogAuthor } from "./blog-types";
 
-// Database types (matches Supabase schema)
-export interface BlogPostRow {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string;
-  content: string;
-  cover_image: string | null;
-  author_id: string;
-  tags: string[];
-  read_time_minutes: number;
-  is_published: boolean;
-  is_featured: boolean;
-  published_at: string | null;
-  newsletter_sent_at: string | null;
-  created_at: string;
-  updated_at: string;
-  profiles?: {
-    id: string;
-    name: string | null;
-    photo_url: string | null;
-  };
-}
+const postColumns = {
+  id: blogPosts.id,
+  slug: blogPosts.slug,
+  title: blogPosts.title,
+  excerpt: blogPosts.excerpt,
+  content: blogPosts.content,
+  cover_image: blogPosts.coverImage,
+  author_id: blogPosts.authorId,
+  tags: blogPosts.tags,
+  read_time_minutes: blogPosts.readTimeMinutes,
+  is_published: blogPosts.isPublished,
+  is_featured: blogPosts.isFeatured,
+  published_at: blogPosts.publishedAt,
+  newsletter_sent_at: blogPosts.newsletterSentAt,
+  created_at: blogPosts.createdAt,
+  updated_at: blogPosts.updatedAt,
+  authorName: profiles.name,
+  authorPhoto: profiles.photoUrl,
+};
 
-// Convert database row to BlogPost format
-function dbRowToBlogPost(row: BlogPostRow): BlogPost {
+type RawRow = {
+  [K in keyof typeof postColumns]: K extends "authorName" | "authorPhoto"
+    ? string | null
+    : unknown;
+};
+
+/** Fold the flat join result back into the nested shape callers expect. */
+function toRow(r: Record<string, unknown>): BlogPostRow {
+  const { authorName, authorPhoto, ...rest } = r as RawRow & Record<string, unknown>;
   return {
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    excerpt: row.excerpt,
-    content: row.content,
-    coverImage: row.cover_image || undefined,
-    publishDate: row.published_at || row.created_at,
-    author: {
-      name: row.profiles?.name || "MakersLounge",
-      photo: row.profiles?.photo_url || undefined,
-      role: "Founder, MakersLounge",
-    },
-    tags: row.tags || [],
-    readTimeMinutes: row.read_time_minutes || 5,
-    isFeatured: row.is_featured || false,
+    ...(rest as unknown as Omit<BlogPostRow, "profiles">),
+    profiles:
+      rest.author_id != null
+        ? {
+            id: rest.author_id as string,
+            name: (authorName as string | null) ?? null,
+            photo_url: (authorPhoto as string | null) ?? null,
+          }
+        : null,
   };
 }
 
-// Get all published posts sorted by date (only those published in the past)
+function baseQuery() {
+  return getSiteDb()
+    .select(postColumns)
+    .from(blogPosts)
+    .leftJoin(profiles, eq(profiles.id, blogPosts.authorId));
+}
+
+/**
+ * Only posts published in the past.
+ *
+ * `published_at <= now()` is what lets a post be scheduled: it can be marked
+ * published with a future date and stay hidden until then. `isNotNull` is added
+ * explicitly because a NULL `published_at` makes the comparison NULL, which
+ * excludes the row anyway — stating it keeps the intent readable.
+ */
+function isLive() {
+  return and(
+    eq(blogPosts.isPublished, true),
+    isNotNull(blogPosts.publishedAt),
+    lte(blogPosts.publishedAt, sql`now()`),
+  );
+}
+
 export async function getAllPosts(): Promise<BlogPost[]> {
-  const { data, error } = await supabase
-    .from("blog_posts")
-    .select(`
-      *,
-      profiles (
-        id,
-        name,
-        photo_url
-      )
-    `)
-    .eq("is_published", true)
-    .lte("published_at", new Date().toISOString())
-    .order("published_at", { ascending: false });
-
-  if (error) {
-    console.error("Error fetching blog posts:", error);
-    return [];
-  }
-
-  return (data || []).map(dbRowToBlogPost);
+  const rows = await baseQuery().where(isLive()).orderBy(desc(blogPosts.publishedAt));
+  return rows.map((r) => dbRowToBlogPost(toRow(r as Record<string, unknown>)));
 }
 
-// Get featured posts (only those published in the past)
 export async function getFeaturedPosts(): Promise<BlogPost[]> {
-  const { data, error } = await supabase
-    .from("blog_posts")
-    .select(`
-      *,
-      profiles (
-        id,
-        name,
-        photo_url
-      )
-    `)
-    .eq("is_published", true)
-    .eq("is_featured", true)
-    .lte("published_at", new Date().toISOString())
-    .order("published_at", { ascending: false });
-
-  if (error) {
-    console.error("Error fetching featured posts:", error);
-    return [];
-  }
-
-  return (data || []).map(dbRowToBlogPost);
+  const rows = await baseQuery()
+    .where(and(isLive(), eq(blogPosts.isFeatured, true)))
+    .orderBy(desc(blogPosts.publishedAt));
+  return rows.map((r) => dbRowToBlogPost(toRow(r as Record<string, unknown>)));
 }
 
-// Get a single post by slug (only if published in the past)
 export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
-  const { data, error } = await supabase
-    .from("blog_posts")
-    .select(`
-      *,
-      profiles (
-        id,
-        name,
-        photo_url
-      )
-    `)
-    .eq("slug", slug)
-    .eq("is_published", true)
-    .lte("published_at", new Date().toISOString())
-    .single();
-
-  if (error) {
-    console.error("Error fetching post by slug:", error);
-    return null;
-  }
-
-  return data ? dbRowToBlogPost(data) : null;
+  const [row] = await baseQuery().where(and(isLive(), eq(blogPosts.slug, slug))).limit(1);
+  return row ? dbRowToBlogPost(toRow(row as Record<string, unknown>)) : null;
 }
 
-// Get posts by tag (only those published in the past)
 export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
-  const { data, error } = await supabase
-    .from("blog_posts")
-    .select(`
-      *,
-      profiles (
-        id,
-        name,
-        photo_url
-      )
-    `)
-    .eq("is_published", true)
-    .lte("published_at", new Date().toISOString())
-    .contains("tags", [tag])
-    .order("published_at", { ascending: false });
-
-  if (error) {
-    console.error("Error fetching posts by tag:", error);
-    return [];
-  }
-
-  return (data || []).map(dbRowToBlogPost);
+  const rows = await baseQuery()
+    .where(and(isLive(), arrayContains(blogPosts.tags, [tag])))
+    .orderBy(desc(blogPosts.publishedAt));
+  return rows.map((r) => dbRowToBlogPost(toRow(r as Record<string, unknown>)));
 }
 
-// Get all unique tags (only from posts published in the past)
 export async function getAllTags(): Promise<string[]> {
-  const { data, error } = await supabase
-    .from("blog_posts")
-    .select("tags")
-    .eq("is_published", true)
-    .lte("published_at", new Date().toISOString());
-
-  if (error) {
-    console.error("Error fetching tags:", error);
-    return [];
-  }
+  const rows = await getSiteDb()
+    .select({ tags: blogPosts.tags })
+    .from(blogPosts)
+    .where(isLive());
 
   const tagSet = new Set<string>();
-  data?.forEach((post) => {
-    post.tags?.forEach((tag: string) => tagSet.add(tag));
-  });
-
+  for (const row of rows) for (const tag of row.tags ?? []) tagSet.add(tag);
   return Array.from(tagSet).sort();
 }
 
-// Admin functions
-
-// Get ALL posts (including drafts) for admin
+/** ALL posts, drafts included. Callers must authorise first. */
 export async function getAllPostsAdmin(): Promise<BlogPostRow[]> {
-  const { data, error } = await supabase
-    .from("blog_posts")
-    .select(`
-      *,
-      profiles (
-        id,
-        name,
-        photo_url
-      )
-    `)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Error fetching all posts:", error);
-    return [];
-  }
-
-  return data || [];
+  const rows = await baseQuery().orderBy(desc(blogPosts.createdAt));
+  return rows.map((r) => toRow(r as Record<string, unknown>));
 }
 
-// Get a single post by ID (for editing)
+/** One post by id, draft or not. Callers must authorise first. */
 export async function getPostById(id: string): Promise<BlogPostRow | null> {
-  const { data, error } = await supabase
-    .from("blog_posts")
-    .select(`
-      *,
-      profiles (
-        id,
-        name,
-        photo_url
-      )
-    `)
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    console.error("Error fetching post by ID:", error);
-    return null;
-  }
-
-  return data;
-}
-
-// Create a new blog post
-export async function createPost(post: Partial<BlogPostRow>): Promise<{ success: boolean; data?: BlogPostRow; error?: string }> {
-  const { data, error } = await supabase
-    .from("blog_posts")
-    .insert(post)
-    .select()
-    .single();
-
-  if (error) {
-    console.error("Error creating post:", error);
-    return { success: false, error: error.message };
-  }
-
-  return { success: true, data };
-}
-
-// Update an existing blog post
-export async function updatePost(id: string, updates: Partial<BlogPostRow>): Promise<{ success: boolean; data?: BlogPostRow; error?: string }> {
-  const { data, error } = await supabase
-    .from("blog_posts")
-    .update(updates)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
-    console.error("Error updating post:", error);
-    return { success: false, error: error.message };
-  }
-
-  return { success: true, data };
-}
-
-// Delete a blog post
-export async function deletePost(id: string): Promise<{ success: boolean; error?: string }> {
-  const { error } = await supabase
-    .from("blog_posts")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error("Error deleting post:", error);
-    return { success: false, error: error.message };
-  }
-
-  return { success: true };
+  const [row] = await baseQuery().where(eq(blogPosts.id, id)).limit(1);
+  return row ? toRow(row as Record<string, unknown>) : null;
 }

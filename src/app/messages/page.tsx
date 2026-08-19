@@ -3,7 +3,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
+import {
+  fetchConversations,
+  startConversation as startConversationApi,
+  POLL_INTERVAL_MS,
+} from "@/lib/messages-client";
+import { fetchProfiles } from "@/lib/profiles-client";
 import { formatDistanceToNow } from "@/lib/timeUtils";
 import { PenSquare, Search, X } from "lucide-react";
 
@@ -47,79 +52,22 @@ export default function MessagesPage() {
     }
     loadConversations();
 
-    // Subscribe to new messages for real-time inbox updates
-    const channel = supabase
-      .channel("inbox")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages" },
-        () => loadConversations()
-      )
-      .subscribe();
+    // Polling replaces the Realtime channel this used to hold on `messages`. Only
+    // while the tab is visible: a background inbox does not need refreshing, and
+    // this keeps an idle tab from polling forever.
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") loadConversations();
+    }, POLL_INTERVAL_MS);
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => clearInterval(timer);
   }, [user, authLoading]);
 
   async function loadConversations() {
     if (!user) return;
-
-    const { data: convos, error } = await supabase
-      .from("conversations")
-      .select(`
-        id,
-        participant_1,
-        participant_2,
-        last_message_at
-      `)
-      .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`)
-      .order("last_message_at", { ascending: false });
-
-    if (error || !convos) {
-      setLoading(false);
-      return;
-    }
-
-    const previews: ConversationPreview[] = [];
-
-    for (const convo of convos) {
-      const otherId = convo.participant_1 === user.id ? convo.participant_2 : convo.participant_1;
-
-      // Get other user's profile
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, name, photo_url")
-        .eq("id", otherId)
-        .single();
-
-      // Get last message
-      const { data: lastMsg } = await supabase
-        .from("messages")
-        .select("content, created_at")
-        .eq("conversation_id", convo.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      // Get unread count
-      const { count } = await supabase
-        .from("messages")
-        .select("*", { count: "exact", head: true })
-        .eq("conversation_id", convo.id)
-        .neq("sender_id", user.id)
-        .is("read_at", null);
-
-      previews.push({
-        id: convo.id,
-        otherUser: profile || { id: otherId, name: null, photo_url: null },
-        lastMessage: lastMsg?.content || null,
-        lastMessageAt: lastMsg?.created_at || convo.last_message_at,
-        unreadCount: count || 0,
-      });
-    }
-
-    setConversations(previews);
+    // One request. This used to fetch the conversation list and then, per
+    // conversation, the other participant's profile, the last message and an unread
+    // count — so a fifteen-thread inbox was forty-six round trips from the browser.
+    setConversations(await fetchConversations());
     setLoading(false);
   }
 
@@ -134,13 +82,10 @@ export default function MessagesPage() {
     }
     setSearching(true);
     searchTimeoutRef.current = setTimeout(async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, name, username, photo_url")
-        .neq("id", user!.id)
-        .or(`name.ilike.%${query}%,username.ilike.%${query}%`)
-        .limit(10);
-      setSearchResults(data || []);
+      const results = await fetchProfiles({ q: query, limit: 10 });
+      // The route has no "exclude me" filter; one comparison here is simpler than
+      // a parameter only this caller would use.
+      setSearchResults(results.filter((r) => r.id !== user!.id));
       setSearching(false);
     }, 300);
   }
@@ -150,35 +95,16 @@ export default function MessagesPage() {
     if (!user || startingChat) return;
     setStartingChat(true);
 
-    const [p1, p2] = [user.id, otherId].sort();
-
-    // Check if conversation already exists
-    const { data: existing } = await supabase
-      .from("conversations")
-      .select("id")
-      .eq("participant_1", p1)
-      .eq("participant_2", p2)
-      .single();
-
-    if (existing) {
-      setStartingChat(false);
-      setShowNewMessage(false);
-      router.push(`/messages/${existing.id}`);
-      return;
-    }
-
-    // Create new conversation
-    const { data: newConvo } = await supabase
-      .from("conversations")
-      .insert({ participant_1: p1, participant_2: p2 })
-      .select("id")
-      .single();
+    // Find-or-create is one upsert server-side now. The previous
+    // select-then-insert lost the race when two clients opened the same thread at
+    // once: both missed the select, and the second insert hit `unique_conversation`.
+    const conversationId = await startConversationApi(otherId);
 
     setStartingChat(false);
     setShowNewMessage(false);
 
-    if (newConvo) {
-      router.push(`/messages/${newConvo.id}`);
+    if (conversationId) {
+      router.push(`/messages/${conversationId}`);
     }
   }
 

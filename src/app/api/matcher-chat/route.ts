@@ -1,16 +1,67 @@
 import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from "ai";
-import { createClient } from "@supabase/supabase-js";
+import { and, arrayOverlaps, desc, eq, ilike, inArray, isNotNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSiteDb } from "@/db/site";
+import {
+  communityContacts,
+  conversations,
+  messages as messagesTable,
+  podcastGuests,
+  podcasts,
+  profiles,
+  projects,
+} from "@/db/site/schema";
+import { isAdmin as callerIsAdmin, optionalUser } from "@/lib/api/auth";
 
 export const maxDuration = 60;
 
+// Column shapes reused by the tools below. Snake-cased to match what
+// `formatProfile` / `formatCommunityContact` already expect.
+const profileCols = {
+  id: profiles.id,
+  name: profiles.name,
+  username: profiles.username,
+  bio: profiles.bio,
+  skills: profiles.skills,
+  looking_for_skills: profiles.lookingForSkills,
+  currently_building: profiles.currentlyBuilding,
+  photo_url: profiles.photoUrl,
+};
+
+const contactCols = {
+  id: communityContacts.id,
+  name: communityContacts.name,
+  first_name: communityContacts.firstName,
+  last_name: communityContacts.lastName,
+  summary: communityContacts.summary,
+  skills: communityContacts.skills,
+  company: communityContacts.company,
+  role: communityContacts.role,
+  source: communityContacts.source,
+  linkedin: communityContacts.linkedin,
+  metadata: communityContacts.metadata,
+};
+
+type ContactRow = { [K in keyof typeof contactCols]: unknown } & {
+  id: string;
+  name: string | null;
+};
+
+/**
+ * `community_contacts.metadata` is jsonb, which Drizzle types as `unknown`.
+ * `formatCommunityContact` reads it as a flat string map, which is what the
+ * importers write, so the narrowing happens here in one place rather than at each
+ * call site.
+ */
+function toContact(c: ContactRow) {
+  return formatCommunityContact({
+    ...(c as unknown as Parameters<typeof formatCommunityContact>[0]),
+    metadata: (c.metadata ?? null) as Record<string, string> | null,
+  });
+}
+
 export async function POST(req: Request) {
-  const { messages, userId, isAdmin }: { messages: UIMessage[]; userId?: string; isAdmin?: boolean } = await req.json();
+  const { messages }: { messages: UIMessage[] } = await req.json();
 
   if (!messages || messages.length === 0) {
     return new Response(JSON.stringify({ error: "No messages provided" }), {
@@ -19,22 +70,50 @@ export async function POST(req: Request) {
     });
   }
 
+  // SECURITY: `userId` and `isAdmin` used to be read straight out of the request
+  // body, which the client filled in from its own auth state. Both were trivially
+  // forgeable:
+  //
+  //   isAdmin: true  unlocked search over `community_contacts` — 822 private
+  //                  records with emails, phone numbers and LinkedIn URLs, a table
+  //                  whose RLS policies were admin-only and which this route
+  //                  reached with the service-role key.
+  //   userId: <uuid> made `send_message` send as that person. Profile uuids are
+  //                  public, so anyone could forge a message from anyone.
+  //
+  // Both now come from the Clerk session and the body values are ignored.
+  const db = getSiteDb();
+  const userId = await optionalUser();
+  const isAdmin = await callerIsAdmin();
+
   // Fetch the current user's profile for context
-  let userProfile: Record<string, unknown> | null = null;
+  let userProfile: {
+    name: string | null;
+    bio: string | null;
+    skills: string[] | null;
+    looking_for_skills: string[] | null;
+    currently_building: string | null;
+  } | null = null;
   if (userId) {
-    const { data } = await supabaseAdmin
-      .from("profiles")
-      .select("name, bio, skills, looking_for_skills, currently_building")
-      .eq("id", userId)
-      .single();
-    userProfile = data;
+    const [row] = await db
+      .select({
+        name: profiles.name,
+        bio: profiles.bio,
+        skills: profiles.skills,
+        looking_for_skills: profiles.lookingForSkills,
+        currently_building: profiles.currentlyBuilding,
+      })
+      .from(profiles)
+      .where(eq(profiles.id, userId))
+      .limit(1);
+    userProfile = row ?? null;
   }
 
   const userContext = userProfile
     ? `\n\nCURRENT USER'S PROFILE:
 - Name: ${userProfile.name || "Unknown"}
-- Skills: ${(userProfile.skills as string[])?.join(", ") || "None listed"}
-- Looking for: ${(userProfile.looking_for_skills as string[])?.join(", ") || "Not specified"}
+- Skills: ${userProfile.skills?.join(", ") || "None listed"}
+- Looking for: ${userProfile.looking_for_skills?.join(", ") || "Not specified"}
 - Building: ${userProfile.currently_building || "Not specified"}
 - Bio: ${userProfile.bio || "No bio"}
 
@@ -87,35 +166,43 @@ ADMIN MODE: You have access to the full community database including community c
           query: z.string().describe("Search keyword — name, topic, technology, or interest"),
         }),
         execute: async ({ query }: { query: string }) => {
+          // Parameterised: the search term is bound, not interpolated into a
+          // filter string the way PostgREST's `.or()` required.
           const searchTerm = `%${query}%`;
-          const { data, error } = await supabaseAdmin
-            .from("profiles")
-            .select(
-              "id, name, username, bio, skills, looking_for_skills, currently_building, photo_url"
-            )
-            .not("name", "is", null)
-            .or(
-              `name.ilike.${searchTerm},bio.ilike.${searchTerm},currently_building.ilike.${searchTerm}`
+          const rows = await db
+            .select(profileCols)
+            .from(profiles)
+            .where(
+              and(
+                isNotNull(profiles.name),
+                or(
+                  ilike(profiles.name, searchTerm),
+                  ilike(profiles.bio, searchTerm),
+                  ilike(profiles.currentlyBuilding, searchTerm),
+                ),
+              ),
             )
             .limit(15);
 
-          if (error) return { error: "Search failed" };
-
-          const results = (data || []).map(formatProfile);
+          const results = rows.map(formatProfile);
 
           // Admin: also search community contacts
           if (isAdmin) {
-            const { data: contacts } = await supabaseAdmin
-              .from("community_contacts")
-              .select("id, name, first_name, last_name, summary, skills, company, role, source, linkedin, metadata")
-              .or(
-                `name.ilike.${searchTerm},first_name.ilike.${searchTerm},last_name.ilike.${searchTerm},summary.ilike.${searchTerm},company.ilike.${searchTerm}`
+            const contacts = await db
+              .select(contactCols)
+              .from(communityContacts)
+              .where(
+                or(
+                  ilike(communityContacts.name, searchTerm),
+                  ilike(communityContacts.firstName, searchTerm),
+                  ilike(communityContacts.lastName, searchTerm),
+                  ilike(communityContacts.summary, searchTerm),
+                  ilike(communityContacts.company, searchTerm),
+                ),
               )
               .limit(15);
 
-            if (contacts) {
-              results.push(...contacts.map(formatCommunityContact));
-            }
+            results.push(...contacts.map(toContact));
           }
 
           if (results.length === 0)
@@ -138,16 +225,12 @@ ADMIN MODE: You have access to the full community database including community c
             .describe("If true, person must have ALL listed skills. Default false (any match)."),
         }),
         execute: async ({ skills, match_all }: { skills: string[]; match_all?: boolean }) => {
-          const { data, error } = await supabaseAdmin
-            .from("profiles")
-            .select(
-              "id, name, username, bio, skills, looking_for_skills, currently_building, photo_url"
-            )
-            .not("name", "is", null)
-            .overlaps("skills", skills);
+          const data = await db
+            .select(profileCols)
+            .from(profiles)
+            .where(and(isNotNull(profiles.name), arrayOverlaps(profiles.skills, skills)));
 
-          if (error) return { error: "Filter failed" };
-          if (!data || data.length === 0)
+          if (data.length === 0)
             return {
               results: [],
               message: `No makers found with skills: ${skills.join(", ")}`,
@@ -170,26 +253,24 @@ ADMIN MODE: You have access to the full community database including community c
 
           // Admin: also search community contacts by skills
           if (isAdmin) {
-            const { data: contacts } = await supabaseAdmin
-              .from("community_contacts")
-              .select("id, name, first_name, last_name, summary, skills, company, role, source, linkedin, metadata")
-              .overlaps("skills", skills);
+            const contacts = await db
+              .select(contactCols)
+              .from(communityContacts)
+              .where(arrayOverlaps(communityContacts.skills, skills));
 
-            if (contacts) {
-              let filteredContacts = contacts;
-              if (match_all) {
-                filteredContacts = contacts.filter((c) =>
-                  skills.every((skill) =>
-                    c.skills?.some(
-                      (s: string) =>
-                        s.toLowerCase().includes(skill.toLowerCase()) ||
-                        skill.toLowerCase().includes(s.toLowerCase())
-                    )
+            let filteredContacts = contacts;
+            if (match_all) {
+              filteredContacts = contacts.filter((c) =>
+                skills.every((skill) =>
+                  c.skills?.some(
+                    (s: string) =>
+                      s.toLowerCase().includes(skill.toLowerCase()) ||
+                      skill.toLowerCase().includes(s.toLowerCase())
                   )
-                );
-              }
-              results.push(...filteredContacts.map(formatCommunityContact));
+                )
+              );
             }
+            results.push(...filteredContacts.map(toContact));
           }
 
           return { results, count: results.length };
@@ -205,16 +286,14 @@ ADMIN MODE: You have access to the full community database including community c
             .describe("Skills/roles to search for in looking_for fields"),
         }),
         execute: async ({ skills }: { skills: string[] }) => {
-          const { data, error } = await supabaseAdmin
-            .from("profiles")
-            .select(
-              "id, name, username, bio, skills, looking_for_skills, currently_building, photo_url"
-            )
-            .not("name", "is", null)
-            .overlaps("looking_for_skills", skills);
+          const data = await db
+            .select(profileCols)
+            .from(profiles)
+            .where(
+              and(isNotNull(profiles.name), arrayOverlaps(profiles.lookingForSkills, skills)),
+            );
 
-          if (error) return { error: "Search failed" };
-          if (!data || data.length === 0)
+          if (data.length === 0)
             return {
               results: [],
               message: `No one currently looking for: ${skills.join(", ")}`,
@@ -235,16 +314,18 @@ ADMIN MODE: You have access to the full community database including community c
         }),
         execute: async ({ name_or_username }: { name_or_username: string }) => {
           const term = `%${name_or_username}%`;
-          const { data, error } = await supabaseAdmin
-            .from("profiles")
-            .select(
-              "id, name, username, bio, skills, looking_for_skills, currently_building, photo_url, linkedin, twitter, website"
-            )
-            .or(`name.ilike.${term},username.ilike.${term}`)
+          const data = await db
+            .select({
+              ...profileCols,
+              linkedin: profiles.linkedin,
+              twitter: profiles.twitter,
+              website: profiles.website,
+            })
+            .from(profiles)
+            .where(or(ilike(profiles.name, term), ilike(profiles.username, term)))
             .limit(3);
 
-          if (error) return { error: "Lookup failed" };
-          if (!data || data.length === 0)
+          if (data.length === 0)
             return { error: `No profile found for "${name_or_username}"` };
 
           return {
@@ -264,18 +345,17 @@ ADMIN MODE: You have access to the full community database including community c
           "Get a community overview — total members, common skills, and sample members. Use when the user wants to explore who's in the community.",
         inputSchema: z.object({}),
         execute: async () => {
-          const { data, error, count } = await supabaseAdmin
-            .from("profiles")
-            .select(
-              "id, name, username, bio, skills, looking_for_skills, currently_building, photo_url",
-              { count: "exact" }
-            )
-            .not("name", "is", null);
+          const data = await db
+            .select(profileCols)
+            .from(profiles)
+            .where(isNotNull(profiles.name));
 
-          if (error) return { error: "Failed to load community data" };
+          // PostgREST returned the total alongside the rows; here the rows *are*
+          // the whole filtered set, so the count is just its length.
+          const count = data.length;
 
           const allSkills: Record<string, number> = {};
-          data?.forEach((p) => {
+          data.forEach((p) => {
             p.skills?.forEach((s: string) => {
               allSkills[s] = (allSkills[s] || 0) + 1;
             });
@@ -283,16 +363,14 @@ ADMIN MODE: You have access to the full community database including community c
 
           let communityCount = 0;
           if (isAdmin) {
-            const { count: cc } = await supabaseAdmin
-              .from("community_contacts")
-              .select("id", { count: "exact", head: true });
-            communityCount = cc || 0;
+            // One query instead of two: the skills are needed anyway, and the
+            // count comes off the same rows.
+            const contacts = await db
+              .select({ skills: communityContacts.skills })
+              .from(communityContacts);
+            communityCount = contacts.length;
 
-            // Include community contact skills in the tally
-            const { data: contacts } = await supabaseAdmin
-              .from("community_contacts")
-              .select("skills");
-            contacts?.forEach((c) => {
+            contacts.forEach((c) => {
               c.skills?.forEach((s: string) => {
                 allSkills[s] = (allSkills[s] || 0) + 1;
               });
@@ -305,11 +383,11 @@ ADMIN MODE: You have access to the full community database including community c
             .map(([skill, cnt]) => ({ skill, count: cnt }));
 
           return {
-            total_members: (count || 0) + communityCount,
-            registered_members: count || 0,
+            total_members: count + communityCount,
+            registered_members: count,
             community_contacts: communityCount,
             top_skills: topSkills,
-            sample_members: (data || []).slice(0, 10).map(formatProfile),
+            sample_members: data.slice(0, 10).map(formatProfile),
           };
         },
       },
@@ -322,39 +400,64 @@ ADMIN MODE: You have access to the full community database including community c
         }),
         execute: async ({ query }: { query: string }) => {
           const searchTerm = `%${query}%`;
-          const { data, error } = await supabaseAdmin
-            .from("podcasts")
-            .select("id, title, slug, description, transcript, audio_url, cover_image_url, duration_seconds, episode_number, published_at")
-            .eq("is_published", true)
-            .or(
-              `title.ilike.${searchTerm},description.ilike.${searchTerm},transcript.ilike.${searchTerm}`
+          const data = await db
+            .select({
+              id: podcasts.id,
+              title: podcasts.title,
+              slug: podcasts.slug,
+              description: podcasts.description,
+              audio_url: podcasts.audioUrl,
+              duration_seconds: podcasts.durationSeconds,
+              episode_number: podcasts.episodeNumber,
+              published_at: podcasts.publishedAt,
+            })
+            .from(podcasts)
+            .where(
+              and(
+                eq(podcasts.isPublished, true),
+                or(
+                  ilike(podcasts.title, searchTerm),
+                  ilike(podcasts.description, searchTerm),
+                  ilike(podcasts.transcript, searchTerm),
+                ),
+              ),
             )
-            .order("published_at", { ascending: false })
+            .orderBy(desc(podcasts.publishedAt))
             .limit(10);
 
-          if (error) return { error: "Podcast search failed" };
-          if (!data || data.length === 0)
+          if (data.length === 0)
             return { results: [], message: "No podcast episodes found matching that query" };
 
-          // Fetch guests for each podcast
-          const results = await Promise.all(
-            data.map(async (podcast) => {
-              const { data: guestRows } = await supabaseAdmin
-                .from("podcast_guests")
-                .select("profile_id")
-                .eq("podcast_id", podcast.id);
+          // Guests for all episodes in one join, rather than the previous two
+          // queries per episode.
+          const guestRows = await db
+            .select({
+              podcastId: podcastGuests.podcastId,
+              id: profiles.id,
+              name: profiles.name,
+              username: profiles.username,
+              bio: profiles.bio,
+              skills: profiles.skills,
+              photo_url: profiles.photoUrl,
+            })
+            .from(podcastGuests)
+            .innerJoin(profiles, eq(profiles.id, podcastGuests.profileId))
+            .where(
+              inArray(
+                podcastGuests.podcastId,
+                data.map((d) => d.id),
+              ),
+            );
 
-              let guests: ReturnType<typeof formatProfile>[] = [];
-              if (guestRows && guestRows.length > 0) {
-                const { data: profiles } = await supabaseAdmin
-                  .from("profiles")
-                  .select("id, name, username, bio, skills, photo_url")
-                  .in("id", guestRows.map((r) => r.profile_id));
+          const guestsByPodcast = new Map<string, ReturnType<typeof formatProfile>[]>();
+          for (const g of guestRows) {
+            const list = guestsByPodcast.get(g.podcastId) ?? [];
+            list.push(formatProfile(g));
+            guestsByPodcast.set(g.podcastId, list);
+          }
 
-                if (profiles) {
-                  guests = profiles.map(formatProfile);
-                }
-              }
+          const results = data.map((podcast) => {
+              const guests = guestsByPodcast.get(podcast.id) ?? [];
 
               return {
                 title: podcast.title,
@@ -366,8 +469,7 @@ ADMIN MODE: You have access to the full community database including community c
                 duration_seconds: podcast.duration_seconds,
                 guests,
               };
-            })
-          );
+          });
 
           return { results, count: results.length };
         },
@@ -381,42 +483,44 @@ ADMIN MODE: You have access to the full community database including community c
         }),
         execute: async ({ query }: { query: string }) => {
           const searchTerm = `%${query}%`;
-          const { data, error } = await supabaseAdmin
-            .from("projects")
-            .select(
-              "id, title, description, created_at, user_id, profiles!inner(id, name, username, bio, skills, photo_url)"
+          // An inner join, matching PostgREST's `profiles!inner`: a post whose
+          // author is missing is dropped rather than rendered authorless.
+          const data = await db
+            .select({
+              title: projects.title,
+              description: projects.description,
+              created_at: projects.createdAt,
+              authorId: profiles.id,
+              authorName: profiles.name,
+              authorUsername: profiles.username,
+              authorBio: profiles.bio,
+              authorSkills: profiles.skills,
+              authorPhoto: profiles.photoUrl,
+            })
+            .from(projects)
+            .innerJoin(profiles, eq(profiles.id, projects.userId))
+            .where(
+              or(ilike(projects.title, searchTerm), ilike(projects.description, searchTerm)),
             )
-            .or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`)
-            .order("created_at", { ascending: false })
+            .orderBy(desc(projects.createdAt))
             .limit(15);
 
-          if (error) return { error: "Search failed" };
-          if (!data || data.length === 0)
+          if (data.length === 0)
             return { results: [], message: "No posts found matching that query" };
 
-          const results = data.map((post) => {
-            const p = post.profiles as unknown as {
-              id: string;
-              name: string | null;
-              username: string | null;
-              bio: string | null;
-              skills: string[] | null;
-              photo_url: string | null;
-            };
-            return {
-              post_title: post.title,
-              post_description: post.description?.slice(0, 200) || null,
-              posted_at: post.created_at,
-              author: formatProfile({
-                id: p.id,
-                name: p.name,
-                username: p.username,
-                bio: p.bio,
-                skills: p.skills,
-                photo_url: p.photo_url,
-              }),
-            };
-          });
+          const results = data.map((post) => ({
+            post_title: post.title,
+            post_description: post.description?.slice(0, 200) || null,
+            posted_at: post.created_at,
+            author: formatProfile({
+              id: post.authorId,
+              name: post.authorName,
+              username: post.authorUsername,
+              bio: post.authorBio,
+              skills: post.authorSkills,
+              photo_url: post.authorPhoto,
+            }),
+          }));
 
           return { results, count: results.length };
         },
@@ -496,13 +600,13 @@ ADMIN MODE: You have access to the full community database including community c
 
           // Find recipient
           const term = `%${recipient_name}%`;
-          const { data: recipients } = await supabaseAdmin
-            .from("profiles")
-            .select("id, name")
-            .or(`name.ilike.${term},username.ilike.${term}`)
+          const recipients = await db
+            .select({ id: profiles.id, name: profiles.name })
+            .from(profiles)
+            .where(or(ilike(profiles.name, term), ilike(profiles.username, term)))
             .limit(1);
 
-          if (!recipients || recipients.length === 0) {
+          if (recipients.length === 0) {
             return { error: `Could not find "${recipient_name}" in the community.` };
           }
 
@@ -517,46 +621,39 @@ ADMIN MODE: You have access to the full community database including community c
           const [p1, p2] =
             userId < recipientId ? [userId, recipientId] : [recipientId, userId];
 
-          let conversationId: string;
+          // Upsert on the `unique_conversation` constraint rather than
+          // select-then-insert: two messages sent at once would otherwise both miss
+          // the select and the second insert would fail on the unique index.
+          const [convo] = await db
+            .insert(conversations)
+            .values({ participant1: p1, participant2: p2 })
+            .onConflictDoUpdate({
+              target: [conversations.participant1, conversations.participant2],
+              set: { lastMessageAt: sql`now()` },
+            })
+            .returning({ id: conversations.id });
 
-          const { data: existing } = await supabaseAdmin
-            .from("conversations")
-            .select("id")
-            .eq("participant_1", p1)
-            .eq("participant_2", p2)
-            .single();
-
-          if (existing) {
-            conversationId = existing.id;
-          } else {
-            const { data: newConvo, error: convoError } = await supabaseAdmin
-              .from("conversations")
-              .insert({ participant_1: p1, participant_2: p2 })
-              .select("id")
-              .single();
-
-            if (convoError || !newConvo) {
-              return { error: "Failed to create conversation." };
-            }
-            conversationId = newConvo.id;
+          if (!convo) {
+            return { error: "Failed to create conversation." };
           }
+          const conversationId = convo.id;
 
-          // Send the message
-          const { error: msgError } = await supabaseAdmin.from("messages").insert({
-            conversation_id: conversationId,
-            sender_id: userId,
-            content: message,
-          });
-
-          // Update last_message_at
-          await supabaseAdmin
-            .from("conversations")
-            .update({ last_message_at: new Date().toISOString() })
-            .eq("id", conversationId);
-
-          if (msgError) {
+          try {
+            await db.insert(messagesTable).values({
+              conversationId,
+              // From the session, never the request — see the note in POST.
+              senderId: userId,
+              content: message,
+            });
+          } catch (err) {
+            console.error("[matcher-chat] failed to send message:", err);
             return { error: "Failed to send message." };
           }
+
+          await db
+            .update(conversations)
+            .set({ lastMessageAt: sql`now()` })
+            .where(eq(conversations.id, conversationId));
 
           return {
             success: true,

@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BlogPostRow, createPost, updatePost } from "@/lib/blog";
+import type { BlogPostRow } from "@/lib/blog-types";
+import { createPost, updatePost } from "@/lib/blog-client";
 import BlogPostContent from "@/components/BlogPostContent";
 
 interface BlogPostFormProps {

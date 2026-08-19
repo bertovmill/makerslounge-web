@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { updateMyProfile } from "@/lib/profiles-client";
 import SkillsInput from "@/components/SkillsInput";
 import { ArrowLeft, Check, Pencil } from "lucide-react";
 
@@ -33,8 +33,7 @@ export default function ProfilePreview({ data, userId, onBack }: ProfilePreviewP
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase.from("profiles").upsert({
-        id: userId,
+      const result = await updateMyProfile({
         first_name: profile.firstName.trim(),
         last_name: profile.lastName.trim(),
         name: `${profile.firstName.trim()} ${profile.lastName.trim()}`,
@@ -47,7 +46,7 @@ export default function ProfilePreview({ data, userId, onBack }: ProfilePreviewP
         website: profile.website.trim() ? (profile.website.startsWith("http") ? profile.website.trim() : `https://${profile.website.trim()}`) : null,
         onboarding_completed: true,
       });
-      if (error) throw error;
+      if (!result.success) throw new Error(result.error ?? "save_failed");
       router.push("/people");
     } catch (error) {
       console.error("Error saving profile:", error);

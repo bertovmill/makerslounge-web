@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { asc } from "drizzle-orm";
 import { generateText } from "ai";
+import { getSiteDb } from "@/db/site";
+import { mulerunSignups } from "@/db/site/schema";
+import { handleApiError } from "@/lib/api/respond";
 import { CATEGORIES } from "@/app/hackathons/mulerun/categories";
 import { buildTeams, type Signup, type Team } from "@/app/hackathons/mulerun/teamBuilder";
 
@@ -56,37 +59,33 @@ ${JSON.stringify(teamsForPrompt, null, 2)}`,
 }
 
 export async function GET() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
-  }
+  try {
+    const db = getSiteDb();
+    const signups: Signup[] = await db
+      .select({
+        id: mulerunSignups.id,
+        name: mulerunSignups.name,
+        categories: mulerunSignups.categories,
+      })
+      .from(mulerunSignups)
+      .orderBy(asc(mulerunSignups.createdAt));
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
-  const { data, error } = await supabase
-    .from("mulerun_signups")
-    .select("id, name, categories")
-    .order("created_at", { ascending: true });
+    if (signups.length < 2) {
+      return NextResponse.json({
+        total: signups.length,
+        teams: [],
+        message: "Need at least 2 signups before matching.",
+      });
+    }
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+    const raw = buildTeams(signups);
+    const polished = await polishWhyWithClaude(raw);
 
-  const signups = (data ?? []) as Signup[];
-
-  if (signups.length < 2) {
     return NextResponse.json({
       total: signups.length,
-      teams: [],
-      message: "Need at least 2 signups before matching.",
+      teams: polished,
     });
+  } catch (err) {
+    return handleApiError(err, "api/mulerun/match");
   }
-
-  const raw = buildTeams(signups);
-  const polished = await polishWhyWithClaude(raw);
-
-  return NextResponse.json({
-    total: signups.length,
-    teams: polished,
-  });
 }

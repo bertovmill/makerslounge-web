@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { BlogPost } from "@/lib/blog";
+import type { BlogPost } from "@/lib/blog-types";
 import Link from "next/link";
 
 interface BlogCardProps {

@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import UserMenu from "./UserMenu";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { useFeedback } from "@/context/FeedbackContext";
 import { Menu, X } from "lucide-react";
 
@@ -49,53 +49,14 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { collapsed, toggleCollapsed } = useSidebar();
   const { openFeedback } = useFeedback();
-  const [unreadCount, setUnreadCount] = useState(0);
+  // Polled, shared with Navbar — Realtime has no Neon equivalent.
+  const unreadCount = useUnreadCount(!!user);
   const [logoHovered, setLogoHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // `/eve-workshop` ships its own sidebar (see `components/eve-workshop/left-sidebar.tsx`).
   const isHidden = pathname === "/" || pathname === "/auth" || pathname === "/onboarding" || pathname.startsWith("/hackathons") || pathname.startsWith("/podcasts") || pathname.startsWith("/eve-workshop");
 
-  useEffect(() => {
-    if (!user) return;
-
-    async function fetchUnread() {
-      const { data: convos } = await supabase
-        .from("conversations")
-        .select("id")
-        .or(`participant_1.eq.${user!.id},participant_2.eq.${user!.id}`);
-
-      if (!convos || convos.length === 0) {
-        setUnreadCount(0);
-        return;
-      }
-
-      const convoIds = convos.map((c) => c.id);
-      const { count } = await supabase
-        .from("messages")
-        .select("*", { count: "exact", head: true })
-        .in("conversation_id", convoIds)
-        .neq("sender_id", user!.id)
-        .is("read_at", null);
-
-      setUnreadCount(count || 0);
-    }
-
-    fetchUnread();
-
-    const channel = supabase
-      .channel("sidebar-unread")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "messages" },
-        () => fetchUnread()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
 
   // Close mobile drawer on navigation
   useEffect(() => { setMobileOpen(false); }, [pathname]);

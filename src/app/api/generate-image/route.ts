@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAppUser } from "@/lib/clerk-server";
-import { createClient } from "@/lib/supabase-server";
 
 export const maxDuration = 120; // Allow up to 2 minutes for image generation
 
@@ -18,7 +17,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user is authenticated
-    const supabase = await createClient();
     const user = await getServerAppUser();
 
     if (!user) {

@@ -1,21 +1,9 @@
 import { NextResponse } from "next/server";
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import type { Options, AgentDefinition, SDKMessage } from "@anthropic-ai/claude-agent-sdk";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
-
-
-// Lazy initialization of Supabase client
-let supabase: SupabaseClient | null = null;
-
-function getSupabase() {
-  if (!supabase) {
-    supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-  }
-  return supabase;
-}
+import { getSiteDb } from "@/db/site";
+import { projects } from "@/db/site/schema";
+import { isAdmin } from "@/lib/api/auth";
 
 interface NewsItem {
   title: string;
@@ -37,26 +25,33 @@ async function postToFeed(item: NewsItem, userId: string) {
     fullDescription += `\n\nSource: ${item.source_name}`;
   }
 
-  const { data, error } = await getSupabase()
-    .from("projects")
-    .insert({
-      user_id: userId,
-      title: item.title,
-      description: fullDescription,
-      media_urls: [],
-      metadata: item.source_url
-        ? { source_url: item.source_url, source_name: item.source_name, category: item.category, posted_by_agent: true }
-        : { posted_by_agent: true },
-    })
-    .select()
-    .single();
+  // Runs from a cron trigger as well as a signed-in request, so `userId` is passed
+  // in by the caller rather than read from a session — that is what the
+  // service-role key was for here.
+  try {
+    const [created] = await getSiteDb()
+      .insert(projects)
+      .values({
+        userId,
+        title: item.title,
+        description: fullDescription,
+        mediaUrls: [],
+        metadata: item.source_url
+          ? {
+              source_url: item.source_url,
+              source_name: item.source_name,
+              category: item.category,
+              posted_by_agent: true,
+            }
+          : { posted_by_agent: true },
+      })
+      .returning({ id: projects.id });
 
-  if (error) {
+    return { success: true, post_id: created.id };
+  } catch (error) {
     console.error("Error posting to feed:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : "insert failed" };
   }
-
-  return { success: true, post_id: data.id };
 }
 
 // =============================================================================
@@ -272,7 +267,6 @@ const NEWS_AGENTS: Record<string, AgentDefinition> = {
 // =============================================================================
 
 // Admin email allowed to run the agent
-const ADMIN_EMAIL = "bertmill19@gmail.com";
 
 export async function POST(request: Request) {
   try {
@@ -285,18 +279,15 @@ export async function POST(request: Request) {
     const isCronRequest = cronSecret && token === cronSecret;
 
     if (!isCronRequest) {
-      // Verify Supabase JWT and check if user is admin
-      if (!token) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-
-      const { data: { user }, error } = await getSupabase().auth.getUser(token);
-
-      if (error || !user) {
-        return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-      }
-
-      if (user.email !== ADMIN_EMAIL) {
+      // This used to call `supabase.auth.getUser(token)` on the bearer token. The
+      // client had already been switched to send a *Clerk* token — with a comment
+      // claiming the route verified it "the same way" — but Supabase Auth cannot
+      // validate a Clerk JWT, so every non-cron request failed with "Invalid
+      // token". The agent has only been reachable via CRON_SECRET.
+      //
+      // Clerk reads its session from the request cookies, so the bearer header is
+      // no longer needed at all; the client can keep sending it harmlessly.
+      if (!(await isAdmin())) {
         return NextResponse.json({ error: "Forbidden - admin only" }, { status: 403 });
       }
     }
