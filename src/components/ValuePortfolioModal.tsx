@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import {
+  createPortfolioItem,
+  updatePortfolioItem,
+  deletePortfolioItem,
+} from "@/lib/value-portfolio-client";
 import { uploadToBlob, valuePortfolioPath } from "@/lib/upload-client";
 import { Button } from "./ui/button";
 
@@ -103,38 +107,25 @@ export default function ValuePortfolioModal({
     setSaving(true);
 
     try {
+      // No `user_id` or `updated_at` — both are the route's to set, and the whitelist
+      // would ignore them anyway. `userId` is still used for the upload path above and
+      // for the object handed back to `onSave`.
       const portfolioData = {
-        user_id: userId,
         title: title.trim(),
         category,
         value_description: valueDescription.trim() || null,
         media_urls: mediaUrls,
         links: links.filter((l) => l.url.trim()),
-        updated_at: new Date().toISOString(),
       };
 
-      if (item) {
-        // Update existing
-        const { data, error } = await supabase
-          .from("value_portfolio")
-          .update(portfolioData)
-          .eq("id", item.id)
-          .select()
-          .single();
+      const result = item
+        ? await updatePortfolioItem(item.id, portfolioData)
+        : await createPortfolioItem(portfolioData);
 
-        if (error) throw error;
-        onSave(data);
-      } else {
-        // Create new
-        const { data, error } = await supabase
-          .from("value_portfolio")
-          .insert(portfolioData)
-          .select()
-          .single();
+      if (!result.success) throw new Error(result.error ?? "save failed");
 
-        if (error) throw error;
-        onSave(data);
-      }
+      // The route returns the id; the rest of the row is what was just submitted.
+      onSave({ ...portfolioData, id: item?.id ?? result.id!, user_id: userId });
     } catch (error) {
       console.error("Save error:", error);
     } finally {
@@ -146,8 +137,7 @@ export default function ValuePortfolioModal({
     if (!item || !confirm("Are you sure you want to delete this portfolio item?")) return;
 
     try {
-      const { error } = await supabase.from("value_portfolio").delete().eq("id", item.id);
-      if (error) throw error;
+      if (!(await deletePortfolioItem(item.id))) throw new Error("delete failed");
       onDelete?.();
     } catch (error) {
       console.error("Delete error:", error);

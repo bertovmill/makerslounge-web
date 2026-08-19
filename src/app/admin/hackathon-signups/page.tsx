@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Download, FileJson, FileSpreadsheet, Trophy } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { fetchHackathonSignups, setSignupFinalist } from "@/lib/admin-lists-client";
 import { useAuth } from "@/context/AuthContext";
 
 const MIN_FINALISTS = 6;
@@ -90,16 +90,9 @@ export default function HackathonSignupsAdmin() {
     if (!isAdmin) return;
     const load = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("innovation_hackathon_signups")
-        .select("id, name, background, looking_for, matched_team, is_finalist, created_at")
-        .order("created_at", { ascending: false });
-
-      if (!error) {
-        const rows = (data ?? []) as Signup[];
-        setSignups(rows);
-        setSelectedIds(new Set(rows.filter((r) => r.is_finalist).map((r) => r.id)));
-      }
+      const rows = await fetchHackathonSignups<Signup>();
+      setSignups(rows);
+      setSelectedIds(new Set(rows.filter((r) => r.is_finalist).map((r) => r.id)));
       setLoading(false);
     };
     load();
@@ -114,11 +107,9 @@ export default function HackathonSignupsAdmin() {
       } else {
         next.add(id);
       }
-      supabase
-        .from("innovation_hackathon_signups")
-        .update({ is_finalist: !wasSelected })
-        .eq("id", id)
-        .then(() => {});
+      // Fire-and-forget, as before: the checkbox is optimistic and a failed write is
+      // corrected on the next load.
+      void setSignupFinalist(id, !wasSelected);
       return next;
     });
   };
