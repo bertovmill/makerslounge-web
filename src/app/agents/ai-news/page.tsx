@@ -5,7 +5,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DitherShader } from "@/components/ui/dither-shader";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import {
+  fetchFeed,
+  likeTarget,
+  unlikeTarget,
+  addComment,
+  deleteComment,
+} from "@/lib/feed-client";
 import { useAuth } from "@/context/AuthContext";
 import { useAuth as useClerkAuth } from "@clerk/nextjs";
 import { AnimatePresence, motion } from "motion/react";
@@ -21,17 +27,20 @@ interface Comment {
   } | null;
 }
 
+/** The shape the agent writes into `projects.metadata`. */
+interface AgentPostMetadata {
+  source_url?: string;
+  source_name?: string;
+  category?: string;
+  posted_by_agent?: boolean;
+}
+
 interface AgentPost {
   id: string;
   title: string;
   description: string | null;
   created_at: string;
-  metadata?: {
-    source_url?: string;
-    source_name?: string;
-    category?: string;
-    posted_by_agent?: boolean;
-  };
+  metadata?: AgentPostMetadata;
   likeCount?: number;
   hasLiked?: boolean;
   comments?: Comment[];
@@ -224,13 +233,7 @@ function PostCard({
       setHasLiked(false);
       setLikeCount((c) => c - 1);
 
-      const { error } = await supabase
-        .from("likes")
-        .delete()
-        .eq("user_id", currentUserId)
-        .eq("project_id", post.id);
-
-      if (error) {
+      if (!(await unlikeTarget({ type: "project", id: post.id }))) {
         // Revert on error
         setHasLiked(true);
         setLikeCount((c) => c + 1);
@@ -242,11 +245,7 @@ function PostCard({
       setShowParticles(true);
       setTimeout(() => setShowParticles(false), 700);
 
-      const { error } = await supabase
-        .from("likes")
-        .insert({ user_id: currentUserId, project_id: post.id });
-
-      if (error) {
+      if (!(await likeTarget({ type: "project", id: post.id }))) {
         // Revert on error
         setHasLiked(false);
         setLikeCount((c) => c - 1);
@@ -268,31 +267,10 @@ function PostCard({
 
     setIsSubmitting(true);
 
-    const { data, error } = await supabase
-      .from("comments")
-      .insert({
-        user_id: currentUserId,
-        project_id: post.id,
-        content: commentText.trim(),
-      })
-      .select(`
-        id,
-        content,
-        created_at,
-        profiles (
-          id,
-          name,
-          photo_url
-        )
-      `)
-      .single();
+    const created = await addComment({ type: "project", id: post.id }, commentText.trim());
 
-    if (!error && data) {
-      const newComment = {
-        ...data,
-        profiles: Array.isArray(data.profiles) ? data.profiles[0] || null : data.profiles,
-      } as Comment;
-      setComments([newComment, ...comments]);
+    if (created) {
+      setComments([created as unknown as Comment, ...comments]);
       setCommentText("");
     }
 
@@ -300,12 +278,7 @@ function PostCard({
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    const { error } = await supabase
-      .from("comments")
-      .delete()
-      .eq("id", commentId);
-
-    if (!error) {
+    if (await deleteComment(commentId)) {
       setComments(comments.filter((c) => c.id !== commentId));
     }
   };
@@ -528,75 +501,33 @@ export default function AINewsAgentPage() {
 
   // Fetch agent posts (posts with posted_by_agent metadata)
   useEffect(() => {
-    const fetchPosts = async () => {
-      const { data, error } = await supabase
-        .from("projects")
-        .select("id, title, description, created_at, metadata")
-        .not("metadata", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(50);
+    const loadPosts = async () => {
+      // One request. This was the worst N+1 in the codebase: 50 posts fetched, then for
+      // each of the first 20 a like count, the viewer's own like, and its comments —
+      // 61 round trips from the browser for one screen.
+      const rows = await fetchFeed({ limit: 50, withComments: true });
 
-      if (!error && data) {
-        // Filter to only agent-posted items
-        const agentPosts = data.filter(
-          (post) => post.metadata?.posted_by_agent === true
-        );
+      const agentPosts = rows.filter(
+        (post) =>
+          (post.metadata as { posted_by_agent?: boolean } | null)?.posted_by_agent === true,
+      );
 
-        // Fetch like counts and user's likes for each post
-        const postsWithInteractions = await Promise.all(
-          agentPosts.slice(0, 20).map(async (post) => {
-            // Get like count
-            const { count: likeCount } = await supabase
-              .from("likes")
-              .select("*", { count: "exact", head: true })
-              .eq("project_id", post.id);
-
-            // Check if current user has liked
-            let hasLiked = false;
-            if (currentUserId) {
-              const { data: userLike } = await supabase
-                .from("likes")
-                .select("id")
-                .eq("project_id", post.id)
-                .eq("user_id", currentUserId)
-                .single();
-              hasLiked = !!userLike;
-            }
-
-            // Get comments
-            const { data: comments } = await supabase
-              .from("comments")
-              .select(`
-                id,
-                content,
-                created_at,
-                profiles (
-                  id,
-                  name,
-                  photo_url
-                )
-              `)
-              .eq("project_id", post.id)
-              .order("created_at", { ascending: false });
-
-            return {
-              ...post,
-              likeCount: likeCount || 0,
-              hasLiked,
-              comments: (comments || []).map((c) => ({
-                ...c,
-                profiles: Array.isArray(c.profiles) ? c.profiles[0] || null : c.profiles,
-              })) as Comment[],
-            };
-          })
-        );
-
-        setPosts(postsWithInteractions);
-      }
+      setPosts(
+        agentPosts.slice(0, 20).map((post) => ({
+          id: post.id,
+          title: post.title,
+          description: post.description,
+          created_at: post.created_at ?? "",
+          metadata: post.metadata as AgentPostMetadata,
+          likeCount: post.like_count,
+          hasLiked: post.liked_by_me,
+          comments: post.comments as unknown as Comment[],
+        })),
+      );
       setLoading(false);
     };
 
-    fetchPosts();
+    loadPosts();
   }, [currentUserId]);
 
   const handleRunAgent = async () => {
@@ -669,18 +600,24 @@ export default function AINewsAgentPage() {
                     stats: data.stats,
                   });
                   // Refresh posts
-                  const { data: newPosts } = await supabase
-                    .from("projects")
-                    .select("id, title, description, created_at, metadata")
-                    .not("metadata", "is", null)
-                    .order("created_at", { ascending: false })
-                    .limit(50);
-                  if (newPosts) {
-                    const agentPosts = newPosts.filter(
-                      (post) => post.metadata?.posted_by_agent === true
-                    );
-                    setPosts(agentPosts.slice(0, 20));
-                  }
+                  const newPosts = await fetchFeed({ limit: 50, withComments: true });
+                  const agentPosts = newPosts.filter(
+                    (post) =>
+                      (post.metadata as { posted_by_agent?: boolean } | null)
+                        ?.posted_by_agent === true,
+                  );
+                  setPosts(
+                    agentPosts.slice(0, 20).map((post) => ({
+                      id: post.id,
+                      title: post.title,
+                      description: post.description,
+                      created_at: post.created_at ?? "",
+                      metadata: post.metadata as AgentPostMetadata,
+                      likeCount: post.like_count,
+                      hasLiked: post.liked_by_me,
+                      comments: post.comments as unknown as Comment[],
+                    })),
+                  );
                   break;
                 case "error":
                   setRunResult({

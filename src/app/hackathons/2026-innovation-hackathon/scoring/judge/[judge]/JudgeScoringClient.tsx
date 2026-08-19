@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Trophy, UserRound } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { fetchFinalists, fetchScores, saveScore } from "@/lib/scoring-client";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -179,25 +179,17 @@ export default function JudgeScoringClient() {
     const load = async () => {
       setLoading(true);
 
-      const { data: finalistData } = await supabase
-        .from("hackathon_submissions")
-        .select("id, title, team_name, challenge_track")
-        .eq("is_finalist", true)
-        .order("challenge_track");
-
-      const fs = (finalistData ?? []) as Finalist[];
+      // Two requests instead of a submissions select plus a scores select scoped by
+      // the ids it returned.
+      const fs = (await fetchFinalists(PASSWORD)) as Finalist[];
       setFinalists(fs);
       if (fs.length > 0) setSelectedId(fs[0].id);
 
       if (fs.length > 0) {
-        const { data: scoreData } = await supabase
-          .from("hackathon_scores")
-          .select("submission_id, criterion_key, score")
-          .eq("judge_name", judgeName)
-          .in("submission_id", fs.map((f) => f.id));
+        const scoreData = await fetchScores(PASSWORD, { judgeName });
 
         const parsed: Record<string, Record<string, number>> = {};
-        for (const row of scoreData ?? []) {
+        for (const row of scoreData) {
           if (!parsed[row.submission_id]) parsed[row.submission_id] = {};
           parsed[row.submission_id][row.criterion_key] = row.score;
         }
@@ -219,10 +211,7 @@ export default function JudgeScoringClient() {
       const k = `${submissionId}:${criterionKey}`;
       setSaving((p) => new Set(p).add(k));
 
-      await supabase.from("hackathon_scores").upsert(
-        { judge_name: judgeName, submission_id: submissionId, criterion_key: criterionKey, score },
-        { onConflict: "judge_name,submission_id,criterion_key" },
-      );
+      await saveScore(PASSWORD, { judgeName, submissionId, criterionKey, score });
 
       setSaving((p) => { const s = new Set(p); s.delete(k); return s; });
       setSaved((p) => new Set(p).add(k));

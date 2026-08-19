@@ -4,7 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Linkedin, Info, X } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { fetchFinalists } from "@/lib/scoring-client";
+
+// The shared judging password, same value the scoring screens use. It ships in the
+// client bundle here as it does there — see src/lib/api/judge-auth.ts.
+const JUDGE_PASSWORD = "makers2026";
 import { cn } from "@/lib/utils";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -141,12 +145,11 @@ export default function DemoNightDeck() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const { data } = await supabase
-        .from("hackathon_submissions")
-        .select("id, title, team_name, challenge_track, description")
-        .eq("is_finalist", true)
-        .order("title");
-      if (!cancelled && data) {
+      // The deck runs on a screen at the event and polls every 8s. It authenticates
+      // with the judging password, same as the scoring views.
+      const data = await fetchFinalists(JUDGE_PASSWORD);
+
+      if (!cancelled && data.length > 0) {
         const text = (f: Finalist) => `${f.title ?? ""} ${f.team_name ?? ""}`.toLowerCase();
         const sorted = [...(data as Finalist[])].sort((a, b) => {
           const ai = DEMO_ORDER.findIndex((k) => text(a).includes(k));

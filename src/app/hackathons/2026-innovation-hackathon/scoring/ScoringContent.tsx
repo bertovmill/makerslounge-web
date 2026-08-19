@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Check, Info, Menu, RotateCcw, Trophy, UserRound, X } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import {
+  fetchFinalists,
+  fetchScores,
+  saveScore,
+  resetJudgeScores,
+} from "@/lib/scoring-client";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -161,7 +166,7 @@ export default function ScoringContent({ judgeSlug }: { judgeSlug?: string }) {
 
   const handleResetConfirm = async () => {
     if (!judgeName) return;
-    await supabase.from("hackathon_scores").delete().eq("judge_name", judgeName);
+    await resetJudgeScores(PASSWORD, judgeName);
     setResetKey((k) => k + 1);
     setOverlay(null);
   };
@@ -429,37 +434,25 @@ function ScoringView({ judgeName, mobileNavOpen, onMobileNavClose }: {
     const load = async () => {
       setLoading(true);
 
-      const { data: finalistData } = await supabase
-        .from("hackathon_submissions")
-        .select("id, title, team_name, challenge_track")
-        .eq("is_finalist", true)
-        .order("challenge_track");
-
-      const fs = (finalistData ?? []) as Finalist[];
+      const fs = (await fetchFinalists(PASSWORD)) as Finalist[];
       setFinalists(fs);
 
       if (fs.length > 0) {
-        const ids = fs.map((f) => f.id);
-
-        const { data: myScoreData } = await supabase
-          .from("hackathon_scores")
-          .select("submission_id, criterion_key, score")
-          .eq("judge_name", judgeName)
-          .in("submission_id", ids);
+        // Two requests where there were three, and neither selects the whole scores
+        // table from the browser. `?all=1` is the tally across every judge.
+        const [myScoreData, allScoreData] = await Promise.all([
+          fetchScores(PASSWORD, { judgeName }),
+          fetchScores(PASSWORD, { all: true }),
+        ]);
 
         const parsed: Record<string, Record<string, number>> = {};
-        for (const row of myScoreData ?? []) {
+        for (const row of myScoreData) {
           if (!parsed[row.submission_id]) parsed[row.submission_id] = {};
           parsed[row.submission_id][row.criterion_key] = row.score;
         }
         setMyScores(parsed);
 
-        const { data: allScoreData } = await supabase
-          .from("hackathon_scores")
-          .select("submission_id, judge_name, criterion_key, score")
-          .in("submission_id", ids);
-
-        setAllScores((allScoreData ?? []) as ScoreRow[]);
+        setAllScores(allScoreData as ScoreRow[]);
       }
 
       setLoading(false);
@@ -485,10 +478,7 @@ function ScoringView({ judgeName, mobileNavOpen, onMobileNavClose }: {
 
       setSaving((prev) => new Set(prev).add(k));
 
-      await supabase.from("hackathon_scores").upsert(
-        { judge_name: judgeName, submission_id: submissionId, criterion_key: criterionKey, score },
-        { onConflict: "judge_name,submission_id,criterion_key" },
-      );
+      await saveScore(PASSWORD, { judgeName, submissionId, criterionKey, score });
 
       setSaving((prev) => { const s = new Set(prev); s.delete(k); return s; });
       setSaved((prev) => new Set(prev).add(k));

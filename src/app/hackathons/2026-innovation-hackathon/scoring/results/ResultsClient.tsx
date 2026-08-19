@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, RefreshCw, Trophy } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { fetchFinalists, fetchScores } from "@/lib/scoring-client";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -169,18 +169,12 @@ export default function ResultsClient() {
   useEffect(() => {
     if (!isAuthed) return;
     const load = async () => {
-      const [{ data: finalistData }, { data: scoreData }] = await Promise.all([
-        supabase
-          .from("hackathon_submissions")
-          .select("id, title, team_name, challenge_track")
-          .eq("is_finalist", true)
-          .order("challenge_track"),
-        supabase
-          .from("hackathon_scores")
-          .select("submission_id, judge_name, criterion_key, score"),
+      const [finalistData, scoreData] = await Promise.all([
+        fetchFinalists(PASSWORD),
+        fetchScores(PASSWORD, { all: true }),
       ]);
-      setFinalists((finalistData ?? []) as Finalist[]);
-      setAllScores((scoreData ?? []) as ScoreRow[]);
+      setFinalists(finalistData as Finalist[]);
+      setAllScores(scoreData as ScoreRow[]);
       setLastUpdated(new Date());
       setLoading(false);
     };
@@ -189,18 +183,12 @@ export default function ResultsClient() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    const [{ data: finalistData }, { data: scoreData }] = await Promise.all([
-      supabase
-        .from("hackathon_submissions")
-        .select("id, title, team_name, challenge_track")
-        .eq("is_finalist", true)
-        .order("challenge_track"),
-      supabase
-        .from("hackathon_scores")
-        .select("submission_id, judge_name, criterion_key, score"),
+    const [finalistData, scoreData] = await Promise.all([
+      fetchFinalists(PASSWORD),
+      fetchScores(PASSWORD, { all: true }),
     ]);
-    setFinalists((finalistData ?? []) as Finalist[]);
-    setAllScores((scoreData ?? []) as ScoreRow[]);
+    setFinalists(finalistData as Finalist[]);
+    setAllScores(scoreData as ScoreRow[]);
     setLastUpdated(new Date());
     setRefreshing(false);
   };

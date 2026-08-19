@@ -5,7 +5,16 @@ import { hackathonScores } from "@/db/site/schema";
 import { requireJudge } from "@/lib/api/judge-auth";
 import { badRequest, handleApiError } from "@/lib/api/respond";
 
-/** GET /api/admin/hackathon-scores?submission_id=...&judge_name=... */
+/**
+ * Read scores.
+ *
+ *   ?submission_id=&judge_name=   one judge's scores for one submission
+ *   ?judge_name=                  all of that judge's scores
+ *   ?all=1                        every score, for the results tally
+ *
+ * The scoring screens used to fetch these per submission, or select the whole table
+ * from the browser.
+ */
 export async function GET(req: NextRequest) {
   try {
     requireJudge(req);
@@ -13,23 +22,48 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const submissionId = searchParams.get("submission_id");
     const judgeName = searchParams.get("judge_name");
-    if (!submissionId || !judgeName) {
-      return badRequest("submission_id and judge_name required");
+    const all = searchParams.get("all") === "1";
+
+    if (!all && !judgeName) {
+      return badRequest("judge_name required (or all=1)");
     }
 
+    const conditions = [];
+    if (judgeName) conditions.push(eq(hackathonScores.judgeName, judgeName));
+    if (submissionId) conditions.push(eq(hackathonScores.submissionId, submissionId));
+
     const rows = await getSiteDb()
-      .select({ criterion_key: hackathonScores.criterionKey, score: hackathonScores.score })
+      .select({
+        submission_id: hackathonScores.submissionId,
+        judge_name: hackathonScores.judgeName,
+        criterion_key: hackathonScores.criterionKey,
+        score: hackathonScores.score,
+      })
       .from(hackathonScores)
-      .where(
-        and(
-          eq(hackathonScores.submissionId, submissionId),
-          eq(hackathonScores.judgeName, judgeName),
-        ),
-      );
+      .where(conditions.length ? and(...conditions) : undefined);
 
     return NextResponse.json(rows);
   } catch (err) {
     return handleApiError(err, "api/admin/hackathon-scores GET");
+  }
+}
+
+/** Clear every score a judge has entered. Used by the reset button. */
+export async function DELETE(req: NextRequest) {
+  try {
+    requireJudge(req);
+
+    const judgeName = new URL(req.url).searchParams.get("judge_name");
+    if (!judgeName) return badRequest("judge_name required");
+
+    const done = await getSiteDb()
+      .delete(hackathonScores)
+      .where(eq(hackathonScores.judgeName, judgeName))
+      .returning({ id: hackathonScores.id });
+
+    return NextResponse.json({ ok: true, deleted: done.length });
+  } catch (err) {
+    return handleApiError(err, "api/admin/hackathon-scores DELETE");
   }
 }
 
