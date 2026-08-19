@@ -37,6 +37,12 @@ export const publicProfileColumns = {
   theme_config: profiles.themeConfig,
   whiteboard_data: profiles.whiteboardData,
   show_whiteboard: profiles.showWhiteboard,
+  // Two onboarding flags exist and they are not interchangeable.
+  // `onboarding_completed` is the one the onboarding pages read and write, and it is
+  // true for 42 profiles. `has_completed_onboarding` is vestigial — true for exactly
+  // one — and nothing reads it. Both are exposed rather than quietly picking one,
+  // because a caller reading the wrong flag gets a plausible answer.
+  onboarding_completed: profiles.onboardingCompleted,
   has_completed_onboarding: profiles.hasCompletedOnboarding,
   application_status: profiles.applicationStatus,
   linkedin_data: profiles.linkedinData,
@@ -77,6 +83,7 @@ const WRITABLE = {
   theme_config: "themeConfig",
   whiteboard_data: "whiteboardData",
   show_whiteboard: "showWhiteboard",
+  onboarding_completed: "onboardingCompleted",
   has_completed_onboarding: "hasCompletedOnboarding",
 } as const;
 

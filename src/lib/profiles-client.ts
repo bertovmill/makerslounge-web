@@ -33,6 +33,8 @@ export interface PublicProfile {
   theme_config: unknown;
   whiteboard_data: unknown;
   show_whiteboard: boolean | null;
+  /** The flag the onboarding flow uses. See profile-fields.ts on the two of them. */
+  onboarding_completed: boolean | null;
   has_completed_onboarding: boolean | null;
   application_status: string | null;
   linkedin_data: unknown;

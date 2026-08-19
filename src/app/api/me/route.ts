@@ -35,9 +35,14 @@ export interface MeResponse {
   fullName: string | null;
   imageUrl: string | null;
   /**
-   * Whether `profiles.name` is set. That column is what marks onboarding as
-   * done — there is no `onboarding_completed` column in production. Returned
-   * here so the client needs one round trip rather than a follow-up query.
+   * Whether `profiles.name` is set, which is what AuthContext treats as "onboarding
+   * done" and what gates nothing (see the note in AuthContext).
+   *
+   * Deliberately not `profiles.onboarding_completed`. That column does exist — the
+   * project notes claiming otherwise are wrong, it is true for 42 profiles — and the
+   * onboarding *pages* read it to decide whether to redirect. But a member can skip
+   * onboarding and still have a name, so `name` is the better signal for "is this
+   * profile usable", which is the question this field answers.
    */
   onboardingComplete: boolean;
 }

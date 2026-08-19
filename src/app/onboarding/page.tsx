@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { fetchMyProfile, updateMyProfile } from "@/lib/profiles-client";
 import { takePostAuthRedirect } from "@/lib/post-auth-redirect";
 import { ArrowRight, ArrowLeft, Loader2, Linkedin, Instagram, Globe } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -48,11 +48,7 @@ export default function OnboardingPage() {
         if (!user) { router.push("/auth"); return; }
         setUser(user);
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("name, first_name, last_name, currently_building")
-          .eq("id", user.id)
-          .single();
+        const profile = await fetchMyProfile();
 
         // Already onboarded — has a name
         if (profile?.name?.trim()) {
@@ -125,9 +121,12 @@ export default function OnboardingPage() {
     else setSaving(true);
 
     try {
-      const { error } = await supabase.from("profiles").upsert(buildProfile(partial));
+      // An upsert becomes a PATCH: the row already exists, created by GET /api/me the
+      // first time this Clerk user was seen. `buildProfile` still returns an `id`,
+      // which the route's whitelist ignores — identity comes from the session.
+      const result = await updateMyProfile(buildProfile(partial));
 
-      if (error) throw error;
+      if (!result.success) throw new Error(result.error ?? "save_failed");
       await refreshOnboarding();
       // A gated page may have sent this user to sign up; deliver them to it.
       router.push(takePostAuthRedirect() || "/home");

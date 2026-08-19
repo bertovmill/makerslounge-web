@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { fetchMyProfile } from "@/lib/profiles-client";
 import { useAuth, type AuthUser } from "@/context/AuthContext";
 import GitHubImport from "@/components/onboarding/GitHubImport";
 import ProfilePreview, { type ProfileData } from "@/components/onboarding/ProfilePreview";
@@ -20,11 +20,7 @@ export default function GitHubOnboardingPage() {
       if (!user) { router.push("/auth"); return; }
       setUser(user);
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("onboarding_completed")
-        .eq("id", user.id)
-        .single();
+      const profile = await fetchMyProfile();
 
       if (profile?.onboarding_completed) { router.push("/people"); return; }
       setLoading(false);

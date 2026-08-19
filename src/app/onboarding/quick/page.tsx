@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { fetchMyProfile } from "@/lib/profiles-client";
 import { useAuth, type AuthUser } from "@/context/AuthContext";
 import QuickForm from "@/components/onboarding/QuickForm";
 import ProfilePreview, { type ProfileData } from "@/components/onboarding/ProfilePreview";
@@ -21,11 +21,7 @@ export default function QuickOnboardingPage() {
       if (!user) { router.push("/auth"); return; }
       setUser(user);
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("onboarding_completed, name, first_name, last_name")
-        .eq("id", user.id)
-        .single();
+      const profile = await fetchMyProfile();
 
       if (profile?.onboarding_completed) { router.push("/people"); return; }
 
