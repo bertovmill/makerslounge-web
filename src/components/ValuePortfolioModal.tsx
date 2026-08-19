@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { uploadToBlob, valuePortfolioPath } from "@/lib/upload-client";
 import { Button } from "./ui/button";
 
 const VALUE_CATEGORIES = [
@@ -77,21 +78,8 @@ export default function ValuePortfolioModal({
 
     try {
       for (const file of Array.from(files)) {
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `value-portfolio/${userId}/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("media")
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from("media")
-          .getPublicUrl(filePath);
-
-        newUrls.push(publicUrl);
+        const { url } = await uploadToBlob(valuePortfolioPath(userId, file), file);
+        newUrls.push(url);
       }
 
       setMediaUrls([...mediaUrls, ...newUrls]);

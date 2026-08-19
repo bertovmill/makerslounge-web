@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { fetchMyProfile, updateMyProfile } from "@/lib/profiles-client";
+import { uploadToBlob, profilePhotoPath } from "@/lib/upload-client";
 import { useAuth, type AuthUser } from "@/context/AuthContext";
 import SkillsInput from "@/components/SkillsInput";
 import Link from "next/link";
@@ -43,6 +44,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
   const [profile, setProfile] = useState<Profile>({
@@ -72,39 +74,18 @@ export default function ProfilePage() {
       }
       setUser(user);
 
-      const { data: existingProfile } = await supabase
-        .from("profiles")
-        .select(
-          "id, username, name, first_name, last_name, photo_url, bio, skills, looking_for_skills, looking_for_help, currently_building, linkedin, twitter, instagram, website"
-        )
-        .eq("id", user.id)
-        .single();
+      // The row is guaranteed to exist: GET /api/me creates it the first time a
+      // Clerk user is seen, which is what AuthContext calls before this page can
+      // render. The "insert it if missing" branch this replaces was a second, racy
+      // creation path — two tabs opening /profile could both miss the select and
+      // both insert.
+      const existingProfile = await fetchMyProfile();
 
       if (existingProfile) {
         setProfile(existingProfile);
       } else {
-        const newProfile = {
-          id: user.id,
-          username: null,
-          name:
-            user.fullName ||
-            user.email?.split("@")[0] ||
-            "",
-          first_name: null,
-          last_name: null,
-          photo_url: user.imageUrl || null,
-          bio: "",
-          skills: [],
-          looking_for_skills: [],
-          looking_for_help: null,
-          currently_building: null,
-          linkedin: "",
-          twitter: "",
-          instagram: "",
-          website: "",
-        };
-        await supabase.from("profiles").insert(newProfile);
-        setProfile(newProfile);
+        // Authenticated but no profile row is a real fault, not a new user.
+        console.error("[profile] no profile row for", user.id);
       }
 
       setLoading(false);
@@ -115,33 +96,44 @@ export default function ProfilePage() {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
+    setSaveError(null);
 
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          username: profile.username,
-          name: profile.name,
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          bio: profile.bio,
-          skills: profile.skills,
-          looking_for_skills: profile.looking_for_skills,
-          looking_for_help: profile.looking_for_help,
-          currently_building: profile.currently_building,
-          linkedin: profile.linkedin,
-          twitter: profile.twitter,
-          instagram: profile.instagram,
-          website: profile.website,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
+      const result = await updateMyProfile({
+        username: profile.username,
+        name: profile.name,
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        bio: profile.bio,
+        skills: profile.skills,
+        looking_for_skills: profile.looking_for_skills,
+        looking_for_help: profile.looking_for_help,
+        currently_building: profile.currently_building,
+        linkedin: profile.linkedin,
+        twitter: profile.twitter,
+        instagram: profile.instagram,
+        website: profile.website,
+      });
 
-      if (error) throw error;
+      if (!result.success) {
+        // The route validates the username and rejects one already taken, which
+        // nothing checked before — two members could pick names differing only in
+        // case and collide on /p/[username]. Surfaced rather than logged, because
+        // otherwise the button just goes quiet and the change appears to save.
+        setSaveError(
+          result.error === "username_taken"
+            ? "That username is already taken."
+            : result.error === "bad_request"
+              ? "Please check the fields and try again."
+              : (result.error ?? "Could not save. Please try again."),
+        );
+        return;
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (error) {
       console.error("Save error:", error);
+      setSaveError("Could not save. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -155,23 +147,10 @@ export default function ProfilePage() {
 
     setUploading(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const filePath = `profiles/${user.id}/avatar.${fileExt}`;
+      const { url } = await uploadToBlob(profilePhotoPath(user.id, file), file);
+      setProfile({ ...profile, photo_url: url });
 
-      const { error: uploadError } = await supabase.storage
-        .from("media")
-        .upload(filePath, file, { upsert: true });
-      if (uploadError) throw uploadError;
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("media").getPublicUrl(filePath);
-      setProfile({ ...profile, photo_url: publicUrl });
-
-      await supabase
-        .from("profiles")
-        .update({ photo_url: publicUrl })
-        .eq("id", user.id);
+      await updateMyProfile({ photo_url: url });
     } catch (error) {
       console.error("Upload error:", error);
     } finally {
@@ -507,6 +486,12 @@ export default function ProfilePage() {
             })}
           </div>
         </div>
+
+        {saveError && (
+          <p className="mb-2 text-sm text-destructive" role="alert">
+            {saveError}
+          </p>
+        )}
 
         {/* Save button */}
         <button

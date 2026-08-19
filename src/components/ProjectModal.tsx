@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { uploadToBlob, projectMediaPath } from "@/lib/upload-client";
 import { LiquidGlassCard } from "./LiquidGlass";
 
 interface Project {
@@ -48,22 +49,13 @@ export default function ProjectModal({
       const newUrls: string[] = [];
 
       for (const file of Array.from(files)) {
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-        const projectId = project?.id || "new";
-        const filePath = `projects/${userId}/${projectId}/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("media")
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from("media")
-          .getPublicUrl(filePath);
-
-        newUrls.push(publicUrl);
+        // The per-upload random suffix is added server-side now, so the
+        // hand-rolled Date.now()+Math.random() name is gone. The project id is no
+        // longer part of the path either: it was "new" for an unsaved project and
+        // never rewritten once the project got a real id, so it never identified
+        // anything.
+        const { url } = await uploadToBlob(projectMediaPath(userId, file), file);
+        newUrls.push(url);
       }
 
       setMediaUrls([...mediaUrls, ...newUrls]);

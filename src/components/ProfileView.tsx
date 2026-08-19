@@ -28,6 +28,8 @@ import {
 import PodcastPlayer from "@/components/PodcastPlayer";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { updateMyProfile } from "@/lib/profiles-client";
+import { uploadToBlob, profilePhotoPath } from "@/lib/upload-client";
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import {
   PodcastWithGuests,
@@ -357,20 +359,9 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
     if (!file || !user) return;
     setUploading(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const filePath = `profiles/${user.id}/avatar.${fileExt}`;
-      const { error: uploadError } = await supabase.storage
-        .from("media")
-        .upload(filePath, file, { upsert: true });
-      if (uploadError) throw uploadError;
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("media").getPublicUrl(filePath);
-      setProfile((prev) => ({ ...prev, photo_url: publicUrl }));
-      await supabase
-        .from("profiles")
-        .update({ photo_url: publicUrl })
-        .eq("id", user.id);
+      const { url } = await uploadToBlob(profilePhotoPath(user.id, file), file);
+      setProfile((prev) => ({ ...prev, photo_url: url }));
+      await updateMyProfile({ photo_url: url });
     } catch (error) {
       console.error("Upload error:", error);
     } finally {

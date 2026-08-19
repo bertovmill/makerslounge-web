@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { uploadToBlob, projectMediaPath } from "@/lib/upload-client";
 import FeedCard from "@/components/FeedCard";
 import { ImagePlus, X, Loader2 } from "lucide-react";
 import { containsObjectionableContent } from "@/lib/content-filter";
@@ -166,21 +167,8 @@ export default function UpdatesPage() {
     try {
       const newUrls: string[] = [];
       for (const file of Array.from(files)) {
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-        const filePath = `projects/${user.id}/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("media")
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("media").getPublicUrl(filePath);
-
-        newUrls.push(publicUrl);
+        const { url } = await uploadToBlob(projectMediaPath(user.id, file), file);
+        newUrls.push(url);
       }
       setMediaUrls((prev) => [...prev, ...newUrls]);
     } catch (err) {
@@ -210,21 +198,10 @@ export default function UpdatesPage() {
     try {
       const newUrls: string[] = [];
       for (const file of imageFiles) {
-        const ext = file.type.split("/")[1] || "png";
-        const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
-        const filePath = `projects/${user.id}/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("media")
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("media").getPublicUrl(filePath);
-
-        newUrls.push(publicUrl);
+        // A pasted image has no filename; `projectMediaPath` falls back to
+        // "media" and the extension comes from the content type via Blob.
+        const { url } = await uploadToBlob(projectMediaPath(user.id, file), file);
+        newUrls.push(url);
       }
       setMediaUrls((prev) => [...prev, ...newUrls]);
     } catch (err) {
