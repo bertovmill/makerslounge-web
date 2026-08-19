@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { supabase } from "@/lib/supabase";
+import { fetchPosts } from "@/lib/blog-list-client";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, Instagram, Linkedin, Menu, X, Mic, Play, ExternalLink, BookOpen } from "lucide-react";
@@ -186,16 +186,15 @@ export default function Home() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    supabase
-      .from("blog_posts")
-      .select("slug,title,excerpt")
-      .eq("is_published", true)
-      .lte("published_at", new Date().toISOString())
-      .order("published_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) setLatestPost(data);
+    fetchPosts()
+      .then((posts) => {
+        // `/api/blog` already returns only posts published in the past, newest first.
+        const latest = posts[0];
+        if (latest) setLatestPost({
+          slug: latest.slug,
+          title: latest.title,
+          excerpt: latest.excerpt,
+        });
       });
   }, []);
 

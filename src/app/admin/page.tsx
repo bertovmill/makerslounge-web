@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/lib/supabase";
+import { fetchAllPostsAdmin } from "@/lib/blog-list-client";
+import { fetchSubscribers } from "@/lib/subscribers-client";
 
 interface Stats {
   blogPosts: number;
@@ -25,29 +26,19 @@ export default function AdminPage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch blog posts count
-        const { count: blogCount } = await supabase
-          .from("blog_posts")
-          .select("*", { count: "exact", head: true });
-
-        const { count: publishedCount } = await supabase
-          .from("blog_posts")
-          .select("*", { count: "exact", head: true })
-          .eq("is_published", true);
-
-        // Fetch subscribers count
-        const { data: subscribersData } = await supabase
-          .from("email_subscriptions")
-          .select("is_active");
-
-        const subscribers = subscribersData || [];
-        const activeSubscribers = subscribers.filter((s) => s.is_active).length;
+        // Both admin-only endpoints. This dashboard was previously counting rows the
+        // browser read directly — including every subscriber's email address, to
+        // arrive at a number.
+        const [posts, subs] = await Promise.all([
+          fetchAllPostsAdmin(),
+          fetchSubscribers(),
+        ]);
 
         setStats({
-          blogPosts: blogCount || 0,
-          publishedPosts: publishedCount || 0,
-          subscribers: subscribers.length,
-          activeSubscribers,
+          blogPosts: posts.length,
+          publishedPosts: posts.filter((p) => p.is_published).length,
+          subscribers: subs.data.length,
+          activeSubscribers: subs.activeCount,
         });
       } catch (err) {
         console.error("Error fetching stats:", err);
