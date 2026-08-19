@@ -23,6 +23,8 @@ export async function POST(request: Request) {
       targetUserId?: string;
       reason?: string;
       details?: string;
+      /** Optional: the post being reported, when the report is about content. */
+      projectId?: string;
     };
 
     const { action, targetUserId } = body;
@@ -38,6 +40,7 @@ export async function POST(request: Request) {
       await db.insert(reports).values({
         reporterId: me,
         reportedUserId: targetUserId,
+        projectId: body.projectId || null,
         reason: body.reason,
         details: body.details || null,
       });

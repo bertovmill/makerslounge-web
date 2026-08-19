@@ -149,7 +149,17 @@ export async function POST(request: Request) {
         .values({ userId: me, content, ...targetValues(target) })
         .returning({ id: comments.id, created_at: comments.createdAt });
 
-      return NextResponse.json({ data: created });
+      // Return the author too, so the caller can render the new comment without
+      // either a follow-up request or the display name plumbed in as a prop.
+      const [author] = await db
+        .select({ id: profiles.id, name: profiles.name, photo_url: profiles.photoUrl })
+        .from(profiles)
+        .where(eq(profiles.id, me))
+        .limit(1);
+
+      return NextResponse.json({
+        data: { ...created, content, user_id: me, profiles: author ?? null },
+      });
     }
 
     return badRequest("action must be like, unlike or comment");

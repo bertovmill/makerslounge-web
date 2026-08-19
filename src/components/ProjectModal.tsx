@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import { createPost, updatePost, deletePost } from "@/lib/feed-client";
 import { uploadToBlob, projectMediaPath } from "@/lib/upload-client";
 import { LiquidGlassCard } from "./LiquidGlass";
 
@@ -83,17 +83,13 @@ export default function ProjectModal({
     try {
       if (isEditing && project) {
         // Update existing project
-        const { error: updateError } = await supabase
-          .from("projects")
-          .update({
-            title: title.trim(),
-            description: description.trim() || null,
-            media_urls: mediaUrls.length > 0 ? mediaUrls : null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", project.id);
+        const ok = await updatePost(project.id, {
+          title: title.trim(),
+          description: description.trim() || null,
+          media_urls: mediaUrls.length > 0 ? mediaUrls : null,
+        });
 
-        if (updateError) throw updateError;
+        if (!ok) throw new Error("update failed");
 
         onSave({
           ...project,
@@ -103,20 +99,23 @@ export default function ProjectModal({
         });
       } else {
         // Create new project
-        const { data, error: insertError } = await supabase
-          .from("projects")
-          .insert({
-            user_id: userId,
-            title: title.trim(),
-            description: description.trim() || null,
-            media_urls: mediaUrls.length > 0 ? mediaUrls : null,
-          })
-          .select()
-          .single();
+        const result = await createPost({
+          title: title.trim(),
+          description: description.trim() || null,
+          media_urls: mediaUrls.length > 0 ? mediaUrls : null,
+        });
 
-        if (insertError) throw insertError;
+        if (!result.success || !result.id) throw new Error(result.error ?? "create failed");
 
-        onSave(data);
+        // The route returns the id; `user_id` is the session's, which is what the
+        // `userId` prop was being used for.
+        onSave({
+          id: result.id,
+          user_id: userId,
+          title: title.trim(),
+          description: description.trim() || null,
+          media_urls: mediaUrls.length > 0 ? mediaUrls : null,
+        });
       }
     } catch (err) {
       console.error("Save error:", err);
@@ -133,12 +132,7 @@ export default function ProjectModal({
     setSaving(true);
 
     try {
-      const { error: deleteError } = await supabase
-        .from("projects")
-        .delete()
-        .eq("id", project.id);
-
-      if (deleteError) throw deleteError;
+      if (!(await deletePost(project.id))) throw new Error("delete failed");
 
       onDelete?.();
     } catch (err) {

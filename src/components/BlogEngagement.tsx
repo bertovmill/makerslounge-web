@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
+import { likeTarget, unlikeTarget, addComment, deleteComment } from "@/lib/feed-client";
 
 function LikeParticles({
   buttonRef,
@@ -120,14 +120,9 @@ export default function BlogEngagement({
       setHasLiked(false);
       setLikeCount((c) => c - 1);
 
-      const { error } = await supabase
-        .from("likes")
-        .delete()
-        .eq("user_id", currentUserId)
-        .eq("target_type", "blog_post")
-        .eq("target_id", postId);
+      const ok = await unlikeTarget({ type: "blog_post", id: postId });
 
-      if (error) {
+      if (!ok) {
         // Revert on error
         setHasLiked(true);
         setLikeCount((c) => c + 1);
@@ -139,13 +134,9 @@ export default function BlogEngagement({
       setShowParticles(true);
       setTimeout(() => setShowParticles(false), 700);
 
-      const { error } = await supabase.from("likes").insert({
-        user_id: currentUserId,
-        target_type: "blog_post",
-        target_id: postId,
-      });
+      const ok = await likeTarget({ type: "blog_post", id: postId });
 
-      if (error) {
+      if (!ok) {
         // Revert on error
         setHasLiked(false);
         setLikeCount((c) => c - 1);
@@ -167,36 +158,10 @@ export default function BlogEngagement({
 
     setIsSubmitting(true);
 
-    const { data, error } = await supabase
-      .from("comments")
-      .insert({
-        user_id: currentUserId,
-        target_type: "blog_post",
-        target_id: postId,
-        content: commentText.trim(),
-      })
-      .select(
-        `
-        id,
-        content,
-        created_at,
-        profiles (
-          id,
-          name,
-          photo_url
-        )
-      `
-      )
-      .single();
+    const created = await addComment({ type: "blog_post", id: postId }, commentText.trim());
 
-    if (!error && data) {
-      const newComment = {
-        ...data,
-        profiles: Array.isArray(data.profiles)
-          ? data.profiles[0] || null
-          : data.profiles,
-      } as Comment;
-      setComments([newComment, ...comments]);
+    if (created) {
+      setComments([created as Comment, ...comments]);
       setCommentText("");
     }
 
@@ -204,12 +169,7 @@ export default function BlogEngagement({
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    const { error } = await supabase
-      .from("comments")
-      .delete()
-      .eq("id", commentId);
-
-    if (!error) {
+    if (await deleteComment(commentId)) {
       setComments(comments.filter((c) => c.id !== commentId));
     }
   };

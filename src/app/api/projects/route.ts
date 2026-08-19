@@ -17,8 +17,9 @@ import { badRequest, handleApiError } from "@/lib/api/respond";
  * four separate browser round trips that had to be stitched together client-side.
  *
  * Query parameters:
- *   ?userId=<uuid>  only that member's posts (their profile page)
- *   ?limit=n        capped at 100
+ *   ?userId=<uuid>      only that member's posts (their profile page)
+ *   ?limit=n            capped at 100
+ *   ?withComments=1     include each post's comments inline
  */
 export async function GET(request: NextRequest) {
   try {
@@ -40,6 +41,8 @@ export async function GET(request: NextRequest) {
         .where(eq(blockedUsers.blockerId, me));
       conditions.push(notInArray(projects.userId, blocked));
     }
+
+    const withComments = searchParams.get("withComments") === "1";
 
     const limitParam = Number(searchParams.get("limit"));
     const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 100) : 50;
@@ -74,6 +77,26 @@ export async function GET(request: NextRequest) {
                 and l.user_id = ${me}
             )`
           : sql<boolean>`false`,
+        // The feed renders comments inline. Aggregated in the same statement rather
+        // than fetched as a second bulk query and grouped client-side.
+        // `coalesce` because json_agg over no rows yields NULL, not an empty array.
+        comments: withComments
+          ? sql<
+              { id: string; content: string; created_at: string; profiles: unknown }[]
+            >`coalesce((
+              select json_agg(json_build_object(
+                'id', c.id,
+                'content', c.content,
+                'created_at', c.created_at,
+                'profiles', case when p2.id is null then null else json_build_object(
+                  'id', p2.id, 'name', p2.name, 'photo_url', p2.photo_url
+                ) end
+              ) order by c.created_at desc)
+              from ${comments} c
+              left join ${profiles} p2 on p2.id = c.user_id
+              where c.target_type = 'project' and c.project_id = ${projects.id}
+            ), '[]'::json)`
+          : sql<never[]>`'[]'::json`,
       })
       .from(projects)
       .innerJoin(profiles, eq(profiles.id, projects.userId))
@@ -99,6 +122,7 @@ export async function GET(request: NextRequest) {
       like_count: r.like_count,
       comment_count: r.comment_count,
       liked_by_me: r.liked_by_me,
+      comments: r.comments,
     }));
 
     return NextResponse.json({ data });

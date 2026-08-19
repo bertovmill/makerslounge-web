@@ -27,6 +27,8 @@ export interface FeedPost {
   like_count: number;
   comment_count: number;
   liked_by_me: boolean;
+  /** Populated only when `withComments` is requested; otherwise empty. */
+  comments: EngagementComment[];
 }
 
 export interface EngagementComment {
@@ -46,10 +48,13 @@ export interface Engagement {
 export type EngagementTarget = { type: "project" | "blog_post"; id: string };
 
 /** Posts, newest first. `userId` narrows to one member's posts. */
-export async function fetchFeed(opts: { userId?: string; limit?: number } = {}): Promise<FeedPost[]> {
+export async function fetchFeed(
+  opts: { userId?: string; limit?: number; withComments?: boolean } = {},
+): Promise<FeedPost[]> {
   const params = new URLSearchParams();
   if (opts.userId) params.set("userId", opts.userId);
   if (opts.limit) params.set("limit", String(opts.limit));
+  if (opts.withComments) params.set("withComments", "1");
   const qs = params.toString();
 
   try {
@@ -165,7 +170,7 @@ export function unlikeTarget(target: EngagementTarget) {
 export async function addComment(
   target: EngagementTarget,
   content: string,
-): Promise<{ id: string; created_at: string } | null> {
+): Promise<EngagementComment | null> {
   try {
     const res = await fetch("/api/engagement", {
       method: "POST",
@@ -174,7 +179,7 @@ export async function addComment(
       body: JSON.stringify({ action: "comment", ...target, content }),
     });
     if (!res.ok) return null;
-    const body = (await res.json()) as { data: { id: string; created_at: string } };
+    const body = (await res.json()) as { data: EngagementComment };
     return body.data;
   } catch (err) {
     console.error("[engagement] comment failed:", err);

@@ -141,7 +141,7 @@ export async function fetchUnreadCount(): Promise<number> {
 export async function moderateUser(
   action: "report" | "block",
   targetUserId: string,
-  extra: { reason?: string; details?: string | null } = {},
+  extra: { reason?: string; details?: string | null; projectId?: string } = {},
 ): Promise<boolean> {
   try {
     const res = await fetch("/api/moderation", {
