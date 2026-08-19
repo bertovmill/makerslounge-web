@@ -3,7 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import {
+  fetchConnections as fetchConnectionRows,
+  respondToConnection,
+  removeConnection as removeConnectionRow,
+} from "@/lib/connections-client";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,7 +28,8 @@ interface Connection {
   requester_id: string;
   recipient_id: string;
   status: string;
-  created_at: string;
+  // Nullable in the database; PostgREST's typing let this pass as `string`.
+  created_at: string | null;
   requester?: Profile;
   recipient?: Profile;
 }
@@ -49,56 +54,37 @@ export default function ConnectionsPage() {
 
       setCurrentUserId(user.id);
 
-      // Fetch all connections involving this user
-      const { data: allConnections } = await supabase
-        .from("connections")
-        .select("*")
-        .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
-        .order("created_at", { ascending: false });
+      // One request. This used to fetch the connections, collect every participant
+      // id, fetch those profiles, build a Map, and attach them — the route joins the
+      // counterparty in directly.
+      const rows = await fetchConnectionRows();
 
-      if (!allConnections) {
-        setLoading(false);
-        return;
-      }
-
-      // Get all unique user IDs we need to fetch profiles for
-      const userIds = new Set<string>();
-      allConnections.forEach((conn) => {
-        userIds.add(conn.requester_id);
-        userIds.add(conn.recipient_id);
+      const withProfiles = rows.map((conn) => {
+        const other = conn.otherId
+          ? {
+              id: conn.otherId,
+              name: conn.otherName,
+              photo_url: conn.otherPhoto,
+              avatar_style: conn.otherAvatarStyle,
+              bio: conn.otherBio,
+            }
+          : undefined;
+        // The page reads `requester` / `recipient`; only the counterparty is ever
+        // rendered, so the caller's own side is left undefined.
+        return {
+          ...conn,
+          requester: conn.requester_id === user.id ? undefined : other,
+          recipient: conn.recipient_id === user.id ? undefined : other,
+        };
       });
-      userIds.delete(user.id);
 
-      // Fetch profiles
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, name, photo_url, avatar_style, bio")
-        .in("id", Array.from(userIds));
-
-      const profileMap = new Map<string, Profile>();
-      profiles?.forEach((p) => profileMap.set(p.id, p));
-
-      // Attach profiles to connections
-      const connectionsWithProfiles = allConnections.map((conn) => ({
-        ...conn,
-        requester: profileMap.get(conn.requester_id),
-        recipient: profileMap.get(conn.recipient_id),
-      }));
-
-      // Split into categories
-      const received = connectionsWithProfiles.filter(
-        (c) => c.status === "pending" && c.recipient_id === user.id
+      setPendingReceived(
+        withProfiles.filter((c) => c.status === "pending" && c.recipient_id === user.id),
       );
-      const sent = connectionsWithProfiles.filter(
-        (c) => c.status === "pending" && c.requester_id === user.id
+      setPendingSent(
+        withProfiles.filter((c) => c.status === "pending" && c.requester_id === user.id),
       );
-      const accepted = connectionsWithProfiles.filter(
-        (c) => c.status === "accepted"
-      );
-
-      setPendingReceived(received);
-      setPendingSent(sent);
-      setConnections(accepted);
+      setConnections(withProfiles.filter((c) => c.status === "accepted"));
       setLoading(false);
     };
 
@@ -106,10 +92,9 @@ export default function ConnectionsPage() {
   }, [router]);
 
   const acceptRequest = async (connectionId: string) => {
-    await supabase
-      .from("connections")
-      .update({ status: "accepted" })
-      .eq("id", connectionId);
+    // Only the recipient may accept; the route scopes the update by recipient_id, so
+    // a sender can no longer accept their own request.
+    await respondToConnection(connectionId, "accepted");
 
     const accepted = pendingReceived.find((c) => c.id === connectionId);
     if (accepted) {
@@ -119,22 +104,19 @@ export default function ConnectionsPage() {
   };
 
   const declineRequest = async (connectionId: string) => {
-    await supabase
-      .from("connections")
-      .update({ status: "declined" })
-      .eq("id", connectionId);
+    await respondToConnection(connectionId, "declined");
 
     setPendingReceived((prev) => prev.filter((c) => c.id !== connectionId));
   };
 
   const cancelRequest = async (connectionId: string) => {
-    await supabase.from("connections").delete().eq("id", connectionId);
+    await removeConnectionRow(connectionId);
 
     setPendingSent((prev) => prev.filter((c) => c.id !== connectionId));
   };
 
   const removeConnection = async (connectionId: string) => {
-    await supabase.from("connections").delete().eq("id", connectionId);
+    await removeConnectionRow(connectionId);
 
     setConnections((prev) => prev.filter((c) => c.id !== connectionId));
   };

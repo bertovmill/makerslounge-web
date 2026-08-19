@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import {
+  fetchConnections,
+  requestConnection,
+  respondToConnection,
+  removeConnection,
+} from "@/lib/connections-client";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Clock, UserCheck, X, Check } from "lucide-react";
@@ -41,13 +46,10 @@ export function ConnectButton({ profileId, className }: ConnectButtonProps) {
         return;
       }
 
-      // Check for existing connection (in either direction)
-      const { data: connections } = await supabase
-        .from("connections")
-        .select("*")
-        .or(`and(requester_id.eq.${user.id},recipient_id.eq.${profileId}),and(requester_id.eq.${profileId},recipient_id.eq.${user.id})`);
+      // Either direction — `?with=` scopes to connections involving both of us.
+      const connections = await fetchConnections(profileId);
 
-      if (connections && connections.length > 0) {
+      if (connections.length > 0) {
         const connection = connections[0];
         setConnectionId(connection.id);
 
@@ -76,18 +78,13 @@ export function ConnectButton({ profileId, className }: ConnectButtonProps) {
     if (!currentUserId) return;
 
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from("connections")
-      .insert({
-        requester_id: currentUserId,
-        recipient_id: profileId,
-        status: "pending"
-      })
-      .select()
-      .single();
+    // `requester_id` is the session's. The route also returns the existing
+    // connection if there already is one in either direction, rather than creating a
+    // duplicate — nothing prevented that before.
+    const created = await requestConnection(profileId);
 
-    if (!error && data) {
-      setConnectionId(data.id);
+    if (created) {
+      setConnectionId(created.id);
       setStatus("pending_sent");
     }
     setIsLoading(false);
@@ -97,10 +94,7 @@ export function ConnectButton({ profileId, className }: ConnectButtonProps) {
     if (!connectionId) return;
 
     setIsLoading(true);
-    await supabase
-      .from("connections")
-      .delete()
-      .eq("id", connectionId);
+    await removeConnection(connectionId);
 
     setConnectionId(null);
     setStatus("none");
@@ -111,10 +105,7 @@ export function ConnectButton({ profileId, className }: ConnectButtonProps) {
     if (!connectionId) return;
 
     setIsLoading(true);
-    await supabase
-      .from("connections")
-      .update({ status: "accepted" })
-      .eq("id", connectionId);
+    await respondToConnection(connectionId, "accepted");
 
     setStatus("connected");
     setIsLoading(false);
@@ -124,10 +115,7 @@ export function ConnectButton({ profileId, className }: ConnectButtonProps) {
     if (!connectionId) return;
 
     setIsLoading(true);
-    await supabase
-      .from("connections")
-      .update({ status: "declined" })
-      .eq("id", connectionId);
+    await respondToConnection(connectionId, "declined");
 
     setConnectionId(null);
     setStatus("none");
