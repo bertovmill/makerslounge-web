@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
 import { useAuth, type AuthUser } from "@/context/AuthContext";
 
 interface Message {

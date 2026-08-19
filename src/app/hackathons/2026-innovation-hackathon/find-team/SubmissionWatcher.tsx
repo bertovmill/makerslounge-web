@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 const POLL_INTERVAL_MS = 3000;
 
@@ -16,11 +15,16 @@ export default function SubmissionWatcher() {
     let cancelled = false;
 
     const check = async () => {
-      const { data, error } = await supabase.rpc("innovation_signups_count");
-      if (cancelled || error) return;
-      const count =
-        typeof data === "number" ? data : data == null ? null : Number(data);
-      if (count == null || Number.isNaN(count)) return;
+      let count: number | null = null;
+      try {
+        const res = await fetch("/api/hackathon/signups-count", { cache: "no-store" });
+        if (!res.ok) return;
+        count = ((await res.json()) as { count: number }).count;
+      } catch {
+        // A failed poll is not worth reporting; the next tick tries again.
+        return;
+      }
+      if (cancelled || count == null || Number.isNaN(count)) return;
 
       if (baselineRef.current == null) {
         baselineRef.current = count;

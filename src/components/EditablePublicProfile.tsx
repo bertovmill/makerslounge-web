@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { supabase } from "@/lib/supabase";
 import { ThemedProfile } from "./ThemedProfile";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
