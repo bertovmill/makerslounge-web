@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "@/context/ThemeContext";
 import { Users, Calendar, User, Settings, Sun, Moon, MessageCircle, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useUnreadCount } from "@/hooks/useUnreadCount";
 
 const NAV_ITEMS = [
   { href: "/people", label: "People", icon: Users },
@@ -22,51 +22,11 @@ export default function Navbar() {
   const { user } = useAuth();
   const pathname = usePathname();
   const { resolved, setTheme } = useTheme();
-  const [unreadCount, setUnreadCount] = useState(0);
+  // One polled count instead of two queries plus a Realtime channel on the whole
+  // `messages` table. See src/hooks/useUnreadCount.ts.
+  const unreadCount = useUnreadCount(!!user);
 
   const toggleTheme = () => setTheme(resolved === "dark" ? "light" : "dark");
-
-  useEffect(() => {
-    if (!user) return;
-
-    async function fetchUnread() {
-      // Get all conversations where user is a participant
-      const { data: convos } = await supabase
-        .from("conversations")
-        .select("id")
-        .or(`participant_1.eq.${user!.id},participant_2.eq.${user!.id}`);
-
-      if (!convos || convos.length === 0) {
-        setUnreadCount(0);
-        return;
-      }
-
-      const convoIds = convos.map((c) => c.id);
-      const { count } = await supabase
-        .from("messages")
-        .select("*", { count: "exact", head: true })
-        .in("conversation_id", convoIds)
-        .neq("sender_id", user!.id)
-        .is("read_at", null);
-
-      setUnreadCount(count || 0);
-    }
-
-    fetchUnread();
-
-    const channel = supabase
-      .channel("navbar-unread")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "messages" },
-        () => fetchUnread()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
 
   const isLanding = pathname === "/";
   if (isLanding && !user) return null;

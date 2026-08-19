@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
+import {
+  fetchThread,
+  sendMessage,
+  moderateUser,
+  THREAD_POLL_INTERVAL_MS,
+} from "@/lib/messages-client";
 import { ArrowLeft, Send, MoreHorizontal, Flag, Ban } from "lucide-react";
 import Link from "next/link";
 import { containsObjectionableContent } from "@/lib/content-filter";
@@ -64,98 +69,43 @@ export default function ConversationPage() {
     }
 
     async function load() {
-      // Get conversation
-      const { data: convo, error } = await supabase
-        .from("conversations")
-        .select("*")
-        .eq("id", conversationId)
-        .single();
+      // One request: membership check, the other participant, the messages, and
+      // marking them read all happen server-side. A non-participant gets a 404, so
+      // this also replaces the client-side participant check — which was only ever
+      // a redirect, never a boundary.
+      const thread = await fetchThread(conversationId);
 
-      if (error || !convo) {
+      if (!thread) {
         router.push("/messages");
         return;
       }
 
-      // Verify user is a participant
-      if (convo.participant_1 !== user!.id && convo.participant_2 !== user!.id) {
-        router.push("/messages");
-        return;
-      }
-
-      const otherId = convo.participant_1 === user!.id ? convo.participant_2 : convo.participant_1;
-
-      // Get other user profile
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, name, photo_url, username")
-        .eq("id", otherId)
-        .single();
-
-      setOtherUser(profile || { id: otherId, name: null, photo_url: null, username: null });
-
-      // Load messages
-      const { data: msgs } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true });
-
-      setMessages(msgs || []);
+      setOtherUser(thread.otherUser ?? { id: "", name: null, photo_url: null, username: null });
+      setMessages(thread.messages);
       setLoading(false);
-
-      // Mark unread messages as read
-      if (msgs && msgs.length > 0) {
-        const unread = msgs.filter((m) => m.sender_id !== user!.id && !m.read_at);
-        if (unread.length > 0) {
-          await supabase
-            .from("messages")
-            .update({ read_at: new Date().toISOString() })
-            .eq("conversation_id", conversationId)
-            .neq("sender_id", user!.id)
-            .is("read_at", null);
-        }
-      }
     }
 
     load();
   }, [user, authLoading, conversationId]);
 
-  // Subscribe to new messages
+  // Poll for new messages. Realtime has no Neon equivalent; an open thread is
+  // being read right now, so it refreshes faster than the inbox does.
   useEffect(() => {
     if (!user || !conversationId) return;
 
-    const channel = supabase
-      .channel(`conversation:${conversationId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          const newMsg = payload.new as Message;
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === newMsg.id)) return prev;
-            return [...prev, newMsg];
-          });
+    const timer = setInterval(async () => {
+      if (document.visibilityState !== "visible") return;
+      const thread = await fetchThread(conversationId);
+      if (!thread) return;
+      setMessages((prev) => {
+        // Keep any optimistic message still in flight — it has a `temp-` id and no
+        // server row yet, so a refresh would otherwise make it vanish and reappear.
+        const pending = prev.filter((m) => m.id.startsWith("temp-"));
+        return [...thread.messages, ...pending];
+      });
+    }, THREAD_POLL_INTERVAL_MS);
 
-          // Mark as read if from other user
-          if (newMsg.sender_id !== user.id) {
-            supabase
-              .from("messages")
-              .update({ read_at: new Date().toISOString() })
-              .eq("id", newMsg.id)
-              .then();
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => clearInterval(timer);
   }, [user, conversationId]);
 
   // Scroll to bottom on new messages
@@ -165,9 +115,7 @@ export default function ConversationPage() {
 
   async function handleReport() {
     if (!user || !otherUser || !reportReason) return;
-    await supabase.from("reports").insert({
-      reporter_id: user.id,
-      reported_user_id: otherUser.id,
+    await moderateUser("report", otherUser.id, {
       reason: reportReason,
       details: reportDetails || null,
     });
@@ -182,10 +130,7 @@ export default function ConversationPage() {
 
   async function handleBlock() {
     if (!user || !otherUser) return;
-    await supabase.from("blocked_users").insert({
-      blocker_id: user.id,
-      blocked_id: otherUser.id,
-    });
+    await moderateUser("block", otherUser.id);
     setBlocked(true);
     setShowMenu(false);
   }
@@ -217,31 +162,15 @@ export default function ConversationPage() {
     };
     setMessages((prev) => [...prev, optimisticMsg]);
 
-    const { data, error } = await supabase
-      .from("messages")
-      .insert({
-        conversation_id: conversationId,
-        sender_id: user.id,
-        content,
-      })
-      .select()
-      .single();
+    // The route also bumps `conversations.last_message_at`, so that is no longer a
+    // second call the client has to remember to make.
+    const saved = await sendMessage(conversationId, content);
 
-    if (error) {
-      // Remove optimistic message on error
+    if (!saved) {
       setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
-    } else if (data) {
-      // Replace optimistic with real message
-      setMessages((prev) =>
-        prev.map((m) => (m.id === optimisticMsg.id ? data : m))
-      );
+    } else {
+      setMessages((prev) => prev.map((m) => (m.id === optimisticMsg.id ? saved : m)));
     }
-
-    // Update conversation last_message_at
-    await supabase
-      .from("conversations")
-      .update({ last_message_at: new Date().toISOString() })
-      .eq("id", conversationId);
 
     setSending(false);
     inputRef.current?.focus();
