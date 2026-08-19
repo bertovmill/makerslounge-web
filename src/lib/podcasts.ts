@@ -1,4 +1,15 @@
-import { supabase } from "./supabase";
+import { uploadToBlob } from "@/lib/upload-client";
+import { fetchProfiles } from "@/lib/profiles-client";
+
+/**
+ * Podcast reads and writes from the browser, via `/api/podcasts`.
+ *
+ * Every consumer of this module is a client component, so this stays a fetch layer
+ * rather than becoming a Drizzle one — the queries live in the routes.
+ *
+ * The signatures and result shapes are unchanged, so the admin form, the episode
+ * pages and ProfileView keep working as they were.
+ */
 
 export interface PodcastRow {
   id: string;
@@ -29,116 +40,59 @@ export interface PodcastWithGuests extends PodcastRow {
   guests: PodcastGuest[];
 }
 
-// Fetch all published podcasts with guests
+async function getJson<T>(url: string, init?: RequestInit): Promise<T | null> {
+  try {
+    const res = await fetch(url, { credentials: "include", cache: "no-store", ...init });
+    if (!res.ok) {
+      if (res.status !== 404) console.error(`[podcasts] ${url} → ${res.status}`);
+      return null;
+    }
+    return (await res.json()) as T;
+  } catch (err) {
+    console.error(`[podcasts] ${url} unreachable:`, err);
+    return null;
+  }
+}
+
+/**
+ * Published episodes, guests included.
+ *
+ * The guests come back with the episodes in a single response. This used to be two
+ * queries per episode from the browser — the join rows, then the profiles — so a page
+ * of ten episodes was twenty-one round trips.
+ */
 export async function fetchPublishedPodcasts(): Promise<PodcastWithGuests[]> {
-  const { data: podcasts } = await supabase
-    .from("podcasts")
-    .select("*")
-    .eq("is_published", true)
-    .order("published_at", { ascending: false });
-
-  if (!podcasts) return [];
-
-  // Fetch guests for each podcast
-  const results: PodcastWithGuests[] = [];
-  for (const podcast of podcasts) {
-    const guests = await fetchGuestsForPodcast(podcast.id);
-    results.push({ ...podcast, guests });
-  }
-  return results;
+  const body = await getJson<{ data: PodcastWithGuests[] }>("/api/podcasts");
+  return body?.data ?? [];
 }
 
-// Fetch all podcasts (admin - includes drafts)
+/** All episodes including drafts. Admin only; returns [] for anyone else. */
 export async function fetchAllPodcasts(): Promise<PodcastWithGuests[]> {
-  const { data: podcasts } = await supabase
-    .from("podcasts")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (!podcasts) return [];
-
-  const results: PodcastWithGuests[] = [];
-  for (const podcast of podcasts) {
-    const guests = await fetchGuestsForPodcast(podcast.id);
-    results.push({ ...podcast, guests });
-  }
-  return results;
+  const body = await getJson<{ data: PodcastWithGuests[] }>("/api/podcasts?all=1");
+  return body?.data ?? [];
 }
 
-// Fetch single podcast by slug
 export async function fetchPodcastBySlug(slug: string): Promise<PodcastWithGuests | null> {
-  const { data: podcast } = await supabase
-    .from("podcasts")
-    .select("*")
-    .eq("slug", slug)
-    .single();
-
-  if (!podcast) return null;
-
-  const guests = await fetchGuestsForPodcast(podcast.id);
-  return { ...podcast, guests };
+  const body = await getJson<{ data: PodcastWithGuests[] }>(
+    `/api/podcasts?slug=${encodeURIComponent(slug)}`,
+  );
+  return body?.data?.[0] ?? null;
 }
 
-// Fetch single podcast by ID (admin)
+/** One episode by id, drafts included. Admin only. */
 export async function fetchPodcastById(id: string): Promise<PodcastWithGuests | null> {
-  const { data: podcast } = await supabase
-    .from("podcasts")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (!podcast) return null;
-
-  const guests = await fetchGuestsForPodcast(podcast.id);
-  return { ...podcast, guests };
+  const body = await getJson<{ data: PodcastWithGuests }>(`/api/podcasts/${id}`);
+  return body?.data ?? null;
 }
 
-// Fetch podcasts where a user is a guest
+/** Published episodes a profile is credited on. */
 export async function fetchPodcastsByGuest(profileId: string): Promise<PodcastWithGuests[]> {
-  const { data: guestRows } = await supabase
-    .from("podcast_guests")
-    .select("podcast_id")
-    .eq("profile_id", profileId);
-
-  if (!guestRows || guestRows.length === 0) return [];
-
-  const podcastIds = guestRows.map((r) => r.podcast_id);
-  const { data: podcasts } = await supabase
-    .from("podcasts")
-    .select("*")
-    .in("id", podcastIds)
-    .eq("is_published", true)
-    .order("published_at", { ascending: false });
-
-  if (!podcasts) return [];
-
-  const results: PodcastWithGuests[] = [];
-  for (const podcast of podcasts) {
-    const guests = await fetchGuestsForPodcast(podcast.id);
-    results.push({ ...podcast, guests });
-  }
-  return results;
+  const body = await getJson<{ data: PodcastWithGuests[] }>(
+    `/api/podcasts?guest=${encodeURIComponent(profileId)}`,
+  );
+  return body?.data ?? [];
 }
 
-// Fetch guests for a podcast
-async function fetchGuestsForPodcast(podcastId: string): Promise<PodcastGuest[]> {
-  const { data } = await supabase
-    .from("podcast_guests")
-    .select("profile_id")
-    .eq("podcast_id", podcastId);
-
-  if (!data || data.length === 0) return [];
-
-  const profileIds = data.map((r) => r.profile_id);
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, name, username, photo_url")
-    .in("id", profileIds);
-
-  return (profiles || []) as PodcastGuest[];
-}
-
-// Create podcast
 export async function createPodcast(data: {
   title: string;
   slug: string;
@@ -151,121 +105,129 @@ export async function createPodcast(data: {
   episode_number?: number;
   is_published: boolean;
   published_at?: string | null;
-  created_by: string;
+  // Accepted for call-site compatibility and ignored: the route sets created_by from
+  // the session, so an episode cannot be attributed to someone else.
+  created_by?: string;
 }): Promise<{ success: boolean; id?: string; error?: string }> {
-  const { data: result, error } = await supabase
-    .from("podcasts")
-    .insert(data)
-    .select("id")
-    .single();
-
-  if (error) return { success: false, error: error.message };
-  return { success: true, id: result.id };
+  try {
+    const res = await fetch("/api/podcasts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+    const body = (await res.json().catch(() => ({}))) as {
+      data?: PodcastRow;
+      error?: string;
+      detail?: string;
+    };
+    if (!res.ok) return { success: false, error: body.detail || body.error || "create_failed" };
+    return { success: true, id: body.data?.id };
+  } catch (err) {
+    console.error("[podcasts] create failed:", err);
+    return { success: false, error: "create_failed" };
+  }
 }
 
-// Update podcast
 export async function updatePodcast(
   id: string,
-  data: Partial<PodcastRow>
+  data: Partial<PodcastRow>,
 ): Promise<{ success: boolean; error?: string }> {
-  const { error } = await supabase
-    .from("podcasts")
-    .update({ ...data, updated_at: new Date().toISOString() })
-    .eq("id", id);
-
-  if (error) return { success: false, error: error.message };
-  return { success: true };
+  try {
+    const res = await fetch(`/api/podcasts/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+    const body = (await res.json().catch(() => ({}))) as { error?: string; detail?: string };
+    if (!res.ok) return { success: false, error: body.detail || body.error || "update_failed" };
+    return { success: true };
+  } catch (err) {
+    console.error("[podcasts] update failed:", err);
+    return { success: false, error: "update_failed" };
+  }
 }
 
-// Delete podcast
 export async function deletePodcast(id: string): Promise<{ success: boolean; error?: string }> {
-  const { error } = await supabase.from("podcasts").delete().eq("id", id);
-  if (error) return { success: false, error: error.message };
-  return { success: true };
+  try {
+    const res = await fetch(`/api/podcasts/${id}`, { method: "DELETE", credentials: "include" });
+    if (!res.ok) return { success: false, error: "delete_failed" };
+    return { success: true };
+  } catch (err) {
+    console.error("[podcasts] delete failed:", err);
+    return { success: false, error: "delete_failed" };
+  }
 }
 
-// Add guest to podcast
+async function guestAction(podcastId: string, action: "add" | "remove", profileId: string) {
+  const res = await fetch(`/api/podcasts/${podcastId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ action, profileId }),
+  });
+  return { error: res.ok ? null : { message: `HTTP ${res.status}` } };
+}
+
 export async function addGuest(podcastId: string, profileId: string) {
-  return supabase.from("podcast_guests").insert({ podcast_id: podcastId, profile_id: profileId });
+  return guestAction(podcastId, "add", profileId);
 }
 
-// Remove guest from podcast
 export async function removeGuest(podcastId: string, profileId: string) {
-  return supabase
-    .from("podcast_guests")
-    .delete()
-    .eq("podcast_id", podcastId)
-    .eq("profile_id", profileId);
+  return guestAction(podcastId, "remove", profileId);
 }
 
-// Search profiles for guest tagging
+/** Profile search for guest tagging. */
 export async function searchProfiles(query: string): Promise<PodcastGuest[]> {
   if (!query || query.length < 2) return [];
-
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, name, username, photo_url")
-    .or(`name.ilike.%${query}%,username.ilike.%${query}%`)
-    .limit(5);
-
-  return (data || []) as PodcastGuest[];
+  const rows = await fetchProfiles({ q: query, limit: 5 });
+  return rows.map((p) => ({
+    id: p.id,
+    name: p.name,
+    username: p.username,
+    photo_url: p.photo_url,
+  }));
 }
 
-// Upload audio file
-export async function uploadPodcastAudio(
+/**
+ * Episode asset uploads.
+ *
+ * Keyed by episode rather than by uploader, so the Blob path is derived from the
+ * podcast id. The upload route's whitelist is `podcasts/{callerProfileId}/`, so the
+ * caller's id is what scopes the write; the episode id is part of the filename.
+ */
+async function uploadPodcastAsset(
   podcastId: string,
-  file: File
+  file: File,
+  kind: "audio" | "video" | "cover",
+  uploaderProfileId: string,
 ): Promise<{ url: string | null; error?: string }> {
-  const ext = file.name.split(".").pop();
-  const path = `${podcastId}/audio.${ext}`;
-
-  const { error } = await supabase.storage
-    .from("podcasts")
-    .upload(path, file, { upsert: true });
-
-  if (error) return { url: null, error: error.message };
-
-  const { data } = supabase.storage.from("podcasts").getPublicUrl(path);
-  return { url: data.publicUrl };
+  try {
+    const ext = file.name.split(".").pop() ?? kind;
+    const { url } = await uploadToBlob(
+      `podcasts/${uploaderProfileId}/${podcastId}-${kind}.${ext}`,
+      file,
+    );
+    return { url };
+  } catch (err) {
+    console.error(`[podcasts] ${kind} upload failed:`, err);
+    return { url: null, error: err instanceof Error ? err.message : "upload failed" };
+  }
 }
 
-// Upload video file
-export async function uploadPodcastVideo(
-  podcastId: string,
-  file: File
-): Promise<{ url: string | null; error?: string }> {
-  const ext = file.name.split(".").pop();
-  const path = `${podcastId}/video.${ext}`;
-
-  const { error } = await supabase.storage
-    .from("podcasts")
-    .upload(path, file, { upsert: true });
-
-  if (error) return { url: null, error: error.message };
-
-  const { data } = supabase.storage.from("podcasts").getPublicUrl(path);
-  return { url: data.publicUrl };
+export function uploadPodcastAudio(podcastId: string, file: File, uploaderProfileId: string) {
+  return uploadPodcastAsset(podcastId, file, "audio", uploaderProfileId);
 }
 
-// Upload cover image
-export async function uploadPodcastCover(
-  podcastId: string,
-  file: File
-): Promise<{ url: string | null; error?: string }> {
-  const ext = file.name.split(".").pop();
-  const path = `${podcastId}/cover.${ext}`;
-
-  const { error } = await supabase.storage
-    .from("podcasts")
-    .upload(path, file, { upsert: true });
-
-  if (error) return { url: null, error: error.message };
-
-  const { data } = supabase.storage.from("podcasts").getPublicUrl(path);
-  return { url: data.publicUrl };
+export function uploadPodcastVideo(podcastId: string, file: File, uploaderProfileId: string) {
+  return uploadPodcastAsset(podcastId, file, "video", uploaderProfileId);
 }
 
-// Format duration
+export function uploadPodcastCover(podcastId: string, file: File, uploaderProfileId: string) {
+  return uploadPodcastAsset(podcastId, file, "cover", uploaderProfileId);
+}
+
 export function formatDuration(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;

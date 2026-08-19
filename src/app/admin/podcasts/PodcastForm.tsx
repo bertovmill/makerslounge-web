@@ -17,7 +17,7 @@ import {
   uploadPodcastAudio,
   uploadPodcastCover,
 } from "@/lib/podcasts";
-import { supabase } from "@/lib/supabase";
+import { createPost } from "@/lib/feed-client";
 
 interface PodcastFormProps {
   userId: string;
@@ -90,7 +90,7 @@ export default function PodcastForm({ userId, podcast }: PodcastFormProps) {
     // If editing, use existing ID; otherwise we need to create first
     // For now, use a temp ID and re-upload after create
     const tempId = podcast?.id || crypto.randomUUID();
-    const { url, error } = await uploadPodcastAudio(tempId, file);
+    const { url, error } = await uploadPodcastAudio(tempId, file, userId);
     if (url) {
       setAudioUrl(url);
       // Try to get duration from file
@@ -113,7 +113,7 @@ export default function PodcastForm({ userId, podcast }: PodcastFormProps) {
     if (!file) return;
     setUploadingCover(true);
     const tempId = podcast?.id || crypto.randomUUID();
-    const { url, error } = await uploadPodcastCover(tempId, file);
+    const { url, error } = await uploadPodcastCover(tempId, file, userId);
     if (url) setCoverUrl(url);
     else alert(`Upload failed: ${error}`);
     setUploadingCover(false);
@@ -198,8 +198,9 @@ export default function PodcastForm({ userId, podcast }: PodcastFormProps) {
 
       // Include audio URL as a hidden marker for inline playback in the feed
       const audioMarker = audioUrl ? `\n\n[podcast-audio:${audioUrl}]` : "";
-      await supabase.from("projects").insert({
-        user_id: userId,
+      // `user_id` is set by the route from the session; the `userId` prop is still
+      // used for the upload paths above.
+      await createPost({
         title: `New Podcast: ${title.trim()}`,
         description: `${description.trim() || `Check out our latest episode — ${title.trim()}`}${guestLine}${audioMarker}`,
         media_urls: coverUrl ? [coverUrl] : null,
