@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, CheckCircle2, Download, FileJson, FileSpreadsheet, Paperclip, Pencil, X, ExternalLink, Trophy } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 const VOTER_NAME_KEY = "hackathon-voter-name";
 
@@ -408,29 +407,6 @@ function DetailPanel({
   onToggleRound2: () => void;
   onClose: () => void;
 }) {
-  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
-  const [loadingFiles, setLoadingFiles] = useState(false);
-
-  useEffect(() => {
-    const paths = submission.file_urls ?? [];
-    if (paths.length === 0) return;
-    setLoadingFiles(true);
-    Promise.all(
-      paths.map(async (path) => {
-        const { data } = await supabase.storage
-          .from("hackathon-submissions")
-          .createSignedUrl(path, 3600);
-        return { path, url: data?.signedUrl ?? null };
-      }),
-    ).then((results) => {
-      const map: Record<string, string> = {};
-      for (const r of results) {
-        if (r.url) map[r.path] = r.url;
-      }
-      setSignedUrls(map);
-      setLoadingFiles(false);
-    });
-  }, [submission]);
 
   return (
     <>
@@ -569,31 +545,36 @@ function DetailPanel({
           <Row label={`Files (${(submission.file_urls ?? []).length})`}>
             {(submission.file_urls ?? []).length === 0 ? (
               <span className="text-xs italic text-muted-foreground/50">None uploaded</span>
-            ) : loadingFiles ? (
-              <span className="font-mono text-xs text-muted-foreground">Generating links…</span>
             ) : (
-              <ul className="flex flex-col gap-2">
-                {(submission.file_urls ?? []).map((path) => (
-                  <li key={path} className="flex items-center gap-2">
-                    <Paperclip className="size-3 shrink-0 text-muted-foreground" />
-                    {signedUrls[path] ? (
-                      <a
-                        href={signedUrls[path]}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="truncate font-mono text-xs text-primary hover:underline"
-                        title={fileName(path)}
+              <>
+                <ul className="flex flex-col gap-2">
+                  {(submission.file_urls ?? []).map((path) => (
+                    <li key={path} className="flex items-center gap-2">
+                      <Paperclip className="size-3 shrink-0 text-muted-foreground" />
+                      <span
+                        className="truncate font-mono text-xs text-muted-foreground"
+                        title={path}
                       >
                         {fileName(path)}
-                      </a>
-                    ) : (
-                      <span className="truncate font-mono text-xs text-muted-foreground" title={path}>
-                        {fileName(path)}
                       </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
+                    </li>
+                  ))}
+                </ul>
+                {/*
+                  Names only. These files lived in the private `hackathon-submissions`
+                  bucket and were archived out of the app when Supabase Storage was
+                  retired — Vercel Blob's access level is per-store and a second store
+                  cannot be connected alongside the first. The paths below still match
+                  the archive layout under ~/makerslounge-archives/.
+                */}
+                <p className="mt-2 text-[11px] text-muted-foreground/70">
+                  Archived locally under{" "}
+                  <code className="font-mono">
+                    makerslounge-archives/hackathon-submissions-2026/
+                  </code>{" "}
+                  — no longer served from the app.
+                </p>
+              </>
             )}
           </Row>
 

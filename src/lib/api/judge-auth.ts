@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { ApiAuthError } from "./auth";
+import { ApiAuthError, isAdmin } from "./auth";
 
 /**
  * Shared-password gate for the hackathon judging endpoints.
@@ -26,4 +26,18 @@ export function requireJudge(req: NextRequest): void {
   if (req.headers.get("x-admin-password") !== JUDGE_PASSWORD) {
     throw new ApiAuthError(401, "unauthorized");
   }
+}
+
+/**
+ * Accept either the judging password or a signed-in site admin.
+ *
+ * The submission screens come in two flavours: the judging views authenticate with
+ * the shared password, while `/hackathons/2026-innovation-hackathon/admin` is a
+ * Clerk-gated admin page whose client has no password to send. Both need to write
+ * the same rows, so both are allowed rather than duplicating the route.
+ */
+export async function requireJudgeOrAdmin(req: NextRequest): Promise<void> {
+  if (req.headers.get("x-admin-password") === JUDGE_PASSWORD) return;
+  if (await isAdmin()) return;
+  throw new ApiAuthError(401, "unauthorized");
 }

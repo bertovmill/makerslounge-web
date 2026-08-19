@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { ChevronDown, ExternalLink, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 export interface Submission {
   id: string;
@@ -42,13 +41,17 @@ export default function SubmissionsTable({
 
   async function updateStatus(id: string, status: Submission["status"]) {
     setUpdatingId(id);
-    const { error } = await supabase
-      .from("hackathon_submissions")
-      .update({ status, reviewed_at: new Date().toISOString() })
-      .eq("id", id);
+    // `reviewed_at` is stamped by the route, not sent from here — an audit
+    // timestamp taken from the reviewer's clock is not worth much.
+    const res = await fetch("/api/admin/hackathon-submissions", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ id, status }),
+    });
     setUpdatingId(null);
-    if (error) {
-      alert(`Update failed: ${error.message}`);
+    if (!res.ok) {
+      alert("Update failed. Please try again.");
       return;
     }
     setRows((prev) =>
@@ -256,39 +259,27 @@ function Detail({
 }
 
 function FileList({ paths }: { paths: string[] }) {
-  const [busy, setBusy] = useState<string | null>(null);
-
-  async function open(path: string) {
-    setBusy(path);
-    const { data, error } = await supabase.storage
-      .from("hackathon-submissions")
-      .createSignedUrl(path, 600);
-    setBusy(null);
-    if (error || !data?.signedUrl) {
-      alert(`Could not generate link: ${error?.message ?? "unknown error"}`);
-      return;
-    }
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-  }
-
+  // Names only, no links. These files were in the private `hackathon-submissions`
+  // bucket, which was archived out of the app when Supabase Storage was retired:
+  // Vercel Blob's access level is a property of the store, and a second store cannot
+  // be connected alongside the first. The paths still match the archive layout.
   return (
     <ul className="flex flex-col gap-1.5">
       {paths.map((path) => {
         const name = path.split("/").pop() ?? path;
         return (
           <li key={path} className="flex items-center gap-2">
-            <button
-              onClick={() => open(path)}
-              disabled={busy === path}
-              className="inline-flex items-center gap-1 text-primary hover:underline disabled:opacity-50"
-            >
-              {busy === path && <Loader2 className="size-3.5 animate-spin" />}
+            <span className="truncate font-mono text-xs text-muted-foreground" title={path}>
               {name}
-              <ExternalLink className="size-3.5" />
-            </button>
+            </span>
           </li>
         );
       })}
+      {paths.length > 0 && (
+        <li className="text-[11px] text-muted-foreground/70">
+          Archived under <code className="font-mono">makerslounge-archives/</code>
+        </li>
+      )}
     </ul>
   );
 }
