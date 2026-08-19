@@ -1,9 +1,53 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
+import { desc, eq } from "drizzle-orm";
 import { getSiteDb } from "@/db/site";
 import { feedback } from "@/db/site/schema";
-import { requireUser } from "@/lib/api/auth";
+import { requireAdmin, requireUser } from "@/lib/api/auth";
 import { badRequest, handleApiError } from "@/lib/api/respond";
+
+/**
+ * Read the feedback queue, and mark items done. Admin only, matching
+ * `"Admin can view feedback"` / `"Admin can update feedback"`.
+ *
+ * Submitting is separate and open to any signed-in member — see POST below.
+ */
+export async function GET() {
+  try {
+    await requireAdmin();
+
+    const rows = await getSiteDb()
+      .select()
+      .from(feedback)
+      .orderBy(desc(feedback.createdAt));
+
+    return NextResponse.json({ data: rows });
+  } catch (err) {
+    return handleApiError(err, "api/feedback GET");
+  }
+}
+
+/** Toggle an item's completed flag. Admin only. */
+export async function PATCH(request: Request) {
+  try {
+    await requireAdmin();
+    const { id, completed } = (await request.json()) as { id?: string; completed?: boolean };
+
+    if (!id) return badRequest("id is required");
+    if (typeof completed !== "boolean") return badRequest("completed must be a boolean");
+
+    const [updated] = await getSiteDb()
+      .update(feedback)
+      .set({ completed })
+      .where(eq(feedback.id, id))
+      .returning({ id: feedback.id });
+
+    if (!updated) return NextResponse.json({ error: "not_found" }, { status: 404 });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    return handleApiError(err, "api/feedback PATCH");
+  }
+}
 
 /**
  * Submit feedback.

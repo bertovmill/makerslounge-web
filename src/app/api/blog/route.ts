@@ -1,8 +1,51 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSiteDb } from "@/db/site";
 import { blogPosts } from "@/db/site/schema";
-import { requireUser } from "@/lib/api/auth";
+import { requireUser, isAdmin } from "@/lib/api/auth";
 import { badRequest, handleApiError } from "@/lib/api/respond";
+import {
+  getAllPosts,
+  getAllPostsAdmin,
+  getFeaturedPosts,
+  getPostsByTag,
+} from "@/lib/blog";
+
+/**
+ * List posts.
+ *
+ * Public reads return only posts published in the past, matching
+ * `"Anyone can read published posts"`. `?all=1` returns drafts too and is admin-only —
+ * the underlying policy was "any authenticated user can read all posts", which is
+ * looser than the admin UI implies; narrowed here because a draft is not something
+ * every member should be able to list, and nothing but /admin/blog asks for them.
+ *
+ *   ?featured=1   featured posts only
+ *   ?tag=foo      posts carrying that tag
+ *   ?all=1        include drafts (admin)
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+
+    if (searchParams.get("all") === "1") {
+      if (!(await isAdmin())) {
+        return NextResponse.json({ error: "forbidden" }, { status: 403 });
+      }
+      return NextResponse.json({ data: await getAllPostsAdmin() });
+    }
+
+    const tag = searchParams.get("tag");
+    if (tag) return NextResponse.json({ data: await getPostsByTag(tag) });
+
+    if (searchParams.get("featured") === "1") {
+      return NextResponse.json({ data: await getFeaturedPosts() });
+    }
+
+    return NextResponse.json({ data: await getAllPosts() });
+  } catch (err) {
+    return handleApiError(err, "api/blog GET");
+  }
+}
 
 /**
  * Create a blog post.
