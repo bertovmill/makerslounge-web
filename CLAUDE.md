@@ -101,6 +101,12 @@ Required in `.env.local`:
 - `DATABASE_URL` (Neon, Eve workshop)
 - `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/eve-workshop/sign-in`,
   `NEXT_PUBLIC_CLERK_SIGN_UP_URL=/eve-workshop/sign-up`
+- `SLACK_WEBHOOK_URL` (optional) — Slack Incoming Webhook for the MakersLounge
+  workspace. `/api/subscribe` pings it on every new or reactivated newsletter
+  signup (`src/lib/slack.ts`). The channel is baked into the webhook, not chosen
+  in code. Unset = silent no-op, so local dev and previews stay quiet. Never
+  give it a `NEXT_PUBLIC_` prefix — that would inline the webhook into a client
+  chunk and let anyone post to the channel.
 - `WORKSHOP_WIFI_PASSWORD` (optional) — the venue Wi-Fi password for the next
   workshop. Deliberately not committed; when unset both the hero slide and
   `/eve-workshop/wifi` show "Ask a host". Server-side only — never give it a

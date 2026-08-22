@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getSiteDb } from "@/db/site";
 import { emailSubscriptions } from "@/db/site/schema";
+import { notifyNewSubscriber } from "@/lib/slack";
 
 async function sendWelcomeEmail(email: string) {
   if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM_EMAIL) {
@@ -36,6 +37,19 @@ async function sendWelcomeEmail(email: string) {
 
   if (error) {
     console.error("Resend welcome email error:", error);
+  }
+}
+
+async function countActiveSubscribers(db: ReturnType<typeof getSiteDb>) {
+  try {
+    const [{ active }] = await db
+      .select({ active: sql<number>`count(*)::int` })
+      .from(emailSubscriptions)
+      .where(eq(emailSubscriptions.isActive, true));
+    return active;
+  } catch {
+    // The count is decoration on a Slack ping — never fail a signup over it.
+    return undefined;
   }
 }
 
@@ -100,6 +114,12 @@ export async function POST(request: NextRequest) {
         .returning();
 
       await sendWelcomeEmail(normalizedEmail);
+      await notifyNewSubscriber({
+        email: normalizedEmail,
+        subscribedTo: subscriptionTypes,
+        total: await countActiveSubscribers(db),
+        returning: true,
+      });
 
       return NextResponse.json(
         {
@@ -135,6 +155,11 @@ export async function POST(request: NextRequest) {
     }
 
     await sendWelcomeEmail(normalizedEmail);
+    await notifyNewSubscriber({
+      email: normalizedEmail,
+      subscribedTo: subscriptionTypes,
+      total: await countActiveSubscribers(db),
+    });
 
     return NextResponse.json(
       {
