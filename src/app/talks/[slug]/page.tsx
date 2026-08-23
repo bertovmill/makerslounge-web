@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import MarketingShell from "@/components/MarketingShell";
 import TalkPlayer from "@/components/TalkPlayer";
-import TalkSignupGate from "@/components/TalkSignupGate";
+import TalkEmailGate from "@/components/TalkEmailGate";
 import { getServerAppUser } from "@/lib/clerk-server";
+import { getTalkViewerEmail } from "@/lib/talk-access";
 import { fetchTalkBySlug, fetchTalkContent, formatTalkDuration, formatSpeaker } from "@/lib/talks";
 
 interface TalkPageProps {
@@ -40,12 +41,20 @@ export default async function TalkPage({ params }: TalkPageProps) {
   const talk = await fetchTalkBySlug(slug);
   if (!talk) notFound();
 
-  const user = await getServerAppUser();
+  // Two ways in: an existing member, or a visitor who traded an email for the
+  // signed cookie. Members are still let through so the ones who already made an
+  // account aren't asked to pay twice.
+  const [user, viewerEmail] = await Promise.all([
+    getServerAppUser(),
+    getTalkViewerEmail(),
+  ]);
+  const hasAccess = Boolean(user) || Boolean(viewerEmail);
 
-  // The gate is `fetchTalkContent` itself: it takes the viewer id and returns null
-  // without one. RLS used to be the backstop behind this call; now this call *is*
-  // the gate, which is why the id is passed rather than checked here.
-  const content = await fetchTalkContent(talk.id, user?.id ?? null);
+  // The gate is `fetchTalkContent` itself: it takes the access decision and
+  // returns null without it. RLS used to be the backstop behind this call; now
+  // this call *is* the gate, which is why the answer is passed rather than
+  // recomputed there.
+  const content = await fetchTalkContent(talk.id, hasAccess);
 
   const speaker = formatSpeaker(talk);
   const duration = formatTalkDuration(talk.duration_seconds);
@@ -84,11 +93,7 @@ export default async function TalkPage({ params }: TalkPageProps) {
           {content ? (
             <TalkPlayer videoId={content.video_id} title={talk.title} />
           ) : (
-            <TalkSignupGate
-              slug={talk.slug}
-              thumbnailUrl={talk.thumbnail_url}
-              title={talk.title}
-            />
+            <TalkEmailGate thumbnailUrl={talk.thumbnail_url} title={talk.title} />
           )}
         </div>
 

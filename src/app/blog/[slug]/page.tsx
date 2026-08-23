@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getServerAppUser } from "@/lib/clerk-server";
+import { isAdmin } from "@/lib/api/auth";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -272,6 +273,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <BlogEngagement
             postId={post.slug}
             currentUserId={user?.id || null}
+            canComment={await isAdmin()}
             initialLikeCount={likesCount || 0}
             initialHasLiked={hasLiked}
             initialComments={commentsData || []}

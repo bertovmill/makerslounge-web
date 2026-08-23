@@ -1,6 +1,10 @@
 Matias Gonzalez Fernandez builds the interactive bits of Vercel's public websites — the shader work, the 3D scenes, the things that make a launch page feel alive. At our agent-building workshop he gave a talk about none of that. He talked about the pipeline he built to *do* that work, and about the framework Vercel shipped so that nobody has to build that pipeline again.
 
-The talk was called "Building durable agents with Eve." Here's the argument.
+The talk was called "Building durable agents with Eve." Here's the argument — and if you'd rather hear it from him, the full 18 minutes are on the talk page:
+
+[![Watch: Building durable agents with Eve](/talks/building-durable-agents-with-eve.jpg)](/talks/building-durable-agents-with-eve)
+
+*[▶ Watch the full talk](/talks/building-durable-agents-with-eve) — free, no account needed.*
 
 ## The setup: he ships agents to ship the site
 
@@ -147,4 +151,4 @@ Eighteen minutes, one idea, held all the way through. Thanks for coming, Matias.
 
 ---
 
-*Matias Gonzalez Fernandez is a design engineer at Vercel. The full talk and transcript are on the [talks page](/talks/building-durable-agents-with-eve) — free, you just need a Makerslounge account.*
+*Matias Gonzalez Fernandez is a design engineer at Vercel. The full talk and transcript are on the [talks page](/talks/building-durable-agents-with-eve) — free, just drop an email.*

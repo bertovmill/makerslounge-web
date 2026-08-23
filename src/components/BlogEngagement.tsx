@@ -67,6 +67,9 @@ interface Comment {
 interface BlogEngagementProps {
   postId: string;
   currentUserId?: string | null;
+  /** Commenting is admin-only; members can still like. Mirrors the server check
+   *  in POST /api/engagement, which is what actually enforces it. */
+  canComment?: boolean;
   initialLikeCount?: number;
   initialHasLiked?: boolean;
   initialComments?: Comment[];
@@ -75,6 +78,7 @@ interface BlogEngagementProps {
 export default function BlogEngagement({
   postId,
   currentUserId,
+  canComment = false,
   initialLikeCount = 0,
   initialHasLiked = false,
   initialComments = [],
@@ -239,8 +243,8 @@ export default function BlogEngagement({
       {/* Comments Section */}
       {showComments && (
         <div className="border-t border-border pt-6">
-          {/* Comment Form */}
-          {currentUserId ? (
+          {/* Comment Form — admins only. Everyone else reads. */}
+          {canComment ? (
             <form onSubmit={handleComment} className="flex gap-3 mb-6">
               <input
                 type="text"
@@ -259,12 +263,9 @@ export default function BlogEngagement({
               </Button>
             </form>
           ) : (
-            <button
-              onClick={handleAuthRequired}
-              className="w-full mb-6 py-3 text-sm text-muted-foreground hover:text-foreground bg-muted rounded-lg transition-colors"
-            >
-              Sign in to comment
-            </button>
+            <p className="w-full mb-6 py-3 text-center text-sm text-muted-foreground bg-muted rounded-lg">
+              Comments are closed on this post.
+            </p>
           )}
 
           {/* Comments List */}

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { getSiteDb } from "@/db/site";
 import { comments, likes, profiles } from "@/db/site/schema";
-import { optionalUser, requireUser } from "@/lib/api/auth";
+import { ApiAuthError, isAdmin, optionalUser, requireUser } from "@/lib/api/auth";
 import { badRequest, handleApiError } from "@/lib/api/respond";
 
 /**
@@ -141,6 +141,12 @@ export async function POST(request: Request) {
     }
 
     if (body.action === "comment") {
+      // Commenting is admin-only. Likes stay open to any member — the intent is
+      // that the site talks and members react, not that engagement is switched
+      // off. Enforced here rather than only in the UI: hiding the compose box
+      // stops the form, not a curl.
+      if (!(await isAdmin())) throw new ApiAuthError(403, "comments_closed");
+
       const content = typeof body.content === "string" ? body.content.trim() : "";
       if (!content) return badRequest("content is required");
 

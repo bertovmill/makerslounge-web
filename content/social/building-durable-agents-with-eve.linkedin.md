@@ -41,7 +41,7 @@ Matias uses evals backwards. Instead of iterating on the agent until it passes, 
 
 If you ship developer tooling, your docs have a second audience now. That's how you test against it.
 
-Full talk + transcript is up. Free, you just need an account.
+Full talk + transcript is up. Free — just drop an email.
 
 TALK_URL
 
@@ -82,7 +82,7 @@ Matias Gonzalez Fernandez on building durable agents with Eve:
 • Why Eve reduces all of that to a folder full of files
 • Using evals on your own library instead of on the agent
 
-Full talk and transcript are up — free with an account.
+Full talk and transcript are up — free, just drop an email.
 
 TALK_URL
 

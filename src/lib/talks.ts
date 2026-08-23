@@ -89,20 +89,25 @@ export async function fetchTalkBySlug(slug: string): Promise<Talk | null> {
 }
 
 /**
- * The gate. Returns null for signed-out visitors so the caller renders the
- * signup prompt.
+ * The gate. Returns null for visitors who haven't paid the price of entry, so the
+ * caller renders the email prompt.
  *
- * `viewerId` is required rather than optional on purpose: an optional parameter
+ * `hasAccess` is required rather than optional on purpose: an optional parameter
  * that defaults to "allowed" is exactly the mistake that leaks the video id, and
  * a missing argument should be a type error, not an open door. The published check
- * is kept too — an unpublished talk's content stays unreachable even for a
- * signed-in member, as the original policy specified.
+ * is kept too — an unpublished talk's content stays unreachable even for a viewer
+ * with access, as the original policy specified.
+ *
+ * The caller decides what earns access, and there are two ways in now: a
+ * signed-in member, or a visitor who handed over an email (see
+ * `@/lib/talk-access`). Taking a boolean rather than an id keeps this function
+ * out of that policy question — it only enforces the answer.
  */
 export async function fetchTalkContent(
   talkId: string,
-  viewerId: string | null,
+  hasAccess: boolean,
 ): Promise<TalkContent | null> {
-  if (!viewerId) return null;
+  if (!hasAccess) return null;
 
   const [row] = await getSiteDb()
     .select({
