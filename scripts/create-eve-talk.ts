@@ -69,8 +69,14 @@ const talk = {
   // The circular avatar Zoom composites onto the slide, cropped out of the
   // recording — see scripts/gen-eve-talk-assets.mjs.
   speaker_photo_url: "/talks/matias-gonzalez.jpg",
-  // Free and needs no API key. Swap for a branded image if you make one.
-  thumbnail_url: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+  // Self-hosted on purpose. `img.youtube.com/vi/<id>/maxresdefault.jpg` is the
+  // obvious choice — free, no API key — but the URL *contains the video id*, and
+  // `talks.thumbnail_url` is the world-readable half of the schema. Using it
+  // publishes the id to exactly the signed-out visitors the gate exists to stop,
+  // who can then watch the whole thing on YouTube without an account. Downloaded
+  // from that URL once and committed instead; see the note in
+  // docs/publishing-a-gated-talk.md.
+  thumbnail_url: `/talks/${SLUG}.jpg`,
   duration_seconds: 1061, // 17:41
   recorded_at: "2026-08-10T18:18:00-04:00",
   is_published: !isDraft,

@@ -122,8 +122,26 @@ INSERT INTO talk_content (talk_id, provider, video_id, transcript)
 SELECT id, 'youtube', 'VIDEO_ID', NULL FROM new_talk;
 ```
 
-`img.youtube.com/vi/<id>/maxresdefault.jpg` is a free thumbnail that works
-without an API key. Swap in a custom image if you'd rather brand it.
+**Do not use `img.youtube.com/vi/<id>/maxresdefault.jpg` as the thumbnail.** It
+is free and needs no API key, which is why this doc recommended it for months —
+but the URL *contains the video id*, and `thumbnail_url` lives in `talks`, the
+world-readable half of the schema. Pointing at it publishes the id to exactly
+the signed-out visitors the gate exists to stop, and they can watch the whole
+talk on YouTube without ever making an account. The gate holds perfectly and the
+thumbnail walks the id out the front door.
+
+This is easy to miss when you check the gate: the page has no iframe, no
+transcript, and no `youtube-nocookie` in the HTML, so it looks sealed. Grep the
+signed-out HTML for the id itself, not for the player.
+
+Download the image once and self-host it instead:
+
+```bash
+curl -o public/talks/<slug>.jpg https://img.youtube.com/vi/<id>/maxresdefault.jpg
+```
+
+then set `thumbnail_url` to `/talks/<slug>.jpg`. YouTube's auto-pick is usually a
+decent slide; swap in a branded image if you'd rather.
 
 To unpublish a talk, set `is_published = false` — that hides the teaser *and*
 closes the gate, since `fetchTalkContent` checks it too.
@@ -131,5 +149,15 @@ closes the gate, since `fetchTalkContent` checks it too.
 ## 4. Check it
 
 Open `/talks/<slug>` in a private window. You should see the teaser and the
-sign-up button, and no video id anywhere in the page source. Sign in and the
-player replaces the gate.
+sign-up button, and the player should replace the gate once you sign in.
+
+Then check for the leak explicitly, because "no player in the HTML" is not the
+same as "no video id in the HTML":
+
+```bash
+curl -s https://www.makerslounge.ca/talks/<slug> | grep -o '[^"]*<VIDEO_ID>[^"]*'
+```
+
+Anything it prints is a URL handing the id to signed-out visitors. It should
+print nothing. Check `/talks` and any OG image tags the same way — the listing
+page and the social card both render `thumbnail_url`.
