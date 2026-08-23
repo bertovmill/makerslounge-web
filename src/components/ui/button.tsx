@@ -9,7 +9,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-[image:var(--primary-gradient)] text-primary-foreground shadow-[var(--shadow-subtle)] hover:brightness-110 active:brightness-95",
+        // A background-COLOR, not a background-image. This used to feed
+        // --primary-gradient to a `bg-[image:...]` utility; the flat
+        // redesign turned that token into a solid colour, and
+        // `background-image: #1A6FD4` is invalid CSS — browsers drop it, so the
+        // button lost its background entirely and rendered
+        // `text-primary-foreground` against whatever was behind it. Near-white on
+        // a white card in light mode, near-black on a dark card in dark mode:
+        // invisible both ways.
+        default: "bg-primary text-primary-foreground shadow-[var(--shadow-subtle)] hover:brightness-110 active:brightness-95",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:

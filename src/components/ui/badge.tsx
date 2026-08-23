@@ -9,8 +9,12 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
+        // A background-COLOR here for the same reason as the default Button:
+        // --primary-gradient is a solid colour since the flat redesign, and
+        // feeding a colour to `background-image` is invalid CSS, so the badge
+        // rendered with no fill at all.
         default:
-          "border-transparent bg-[image:var(--primary-gradient)] text-primary-foreground shadow-[var(--shadow-subtle)] [a&]:hover:brightness-110",
+          "border-transparent bg-primary text-primary-foreground shadow-[var(--shadow-subtle)] [a&]:hover:brightness-110",
         secondary:
           "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
         destructive:
