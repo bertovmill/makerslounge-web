@@ -76,8 +76,19 @@ const nextConfig: NextConfig = {
   ],
 };
 
-// Mounts the Eve Agent Workshop's helper agent at `/eve/*`. The agent itself
-// is a separate package with its own dependencies — see `workshop-helper/`.
+// Two eve agents ship with this app, each its own package with its own
+// dependencies:
+//
+//   workshop-helper  the Eve Agent Workshop's assistant  -> `/eve-workshop`
+//   community        May, the maker connector            -> `/home`
+//
+// Naming them (rather than the single-agent `eveRoot` shorthand) is what allows
+// the second one, and it moves each mount from `/eve/v1/*` to
+// `/eve/agents/<name>/eve/v1/*`. `useEveAgent({ agent })` picks the matching one
+// — see `workshop-helper-widget.tsx` and `src/app/home/page.tsx`.
 export default withEve(nextConfig, {
-  eveRoot: "./workshop-helper",
+  agents: {
+    "workshop-helper": "./workshop-helper",
+    community: "./community-agent",
+  },
 });

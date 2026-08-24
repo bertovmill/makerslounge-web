@@ -92,6 +92,8 @@ export function WorkshopHelperWidget({ contextId, stacked }: WorkshopHelperWidge
   const slideIdRef = useRef(contextId ?? "hero");
 
   const agent = useEveAgent({
+    // Named because this app mounts two eve agents; see `next.config.ts`.
+    agent: "workshop-helper",
     // Tell the agent which slide the attendee is looking at, every turn.
     prepareSend: (input) => ({
       ...input,
