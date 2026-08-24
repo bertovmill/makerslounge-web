@@ -1,0 +1,25 @@
+{
+  "name": "community-agent",
+  "version": "0.0.0",
+  "type": "module",
+  "//": "drizzle-orm and @neondatabase/serverless are deliberately NOT dependencies here. agent/lib/db.ts imports the app's generated schema from ../../src/db/site/schema, which binds to the ROOT install's drizzle-orm; a second copy under this package would make those table objects a structurally different type from this package's query builder, which fails to typecheck and mismatches at runtime. Node resolution walks up to the root install, so both sides share one instance. Keep it that way.",
+  "imports": {
+    "#*": "./agent/*"
+  },
+  "scripts": {
+    "build": "eve build",
+    "dev": "eve dev",
+    "start": "eve start",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@clerk/backend": "^3.16.1",
+    "eve": "^0.31.3",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.x",
+    "microsandbox": "^0.5.10",
+    "typescript": "5.9.3"
+  }
+}

@@ -54,7 +54,7 @@ MakersLounge is a Next.js 16 app for connecting makers/builders. It uses the App
 - `/` - Landing page (redirects authenticated users to `/home`)
 - `/auth` - Login/signup (Google, Apple, email)
 - `/onboarding` - Simple onboarding (name + projects)
-- `/home` - Main feed (authenticated)
+- `/home` - May, the community matcher agent (authenticated) — see below
 - `/profile` - Edit own profile (authenticated)
 - `/profile/[id]` - View user profile by ID
 - `/p/[username]` - Public profile by username
@@ -62,6 +62,44 @@ MakersLounge is a Next.js 16 app for connecting makers/builders. It uses the App
 - `/matcher` - Contact matching tool
 - `/feedback` - User feedback submission
 - `/eve-workshop` - Eve Agent Workshop (see below)
+
+### The community agent — May (`/home`)
+
+`/home` is an [eve](https://eve.dev) agent, not an API route. It lives in
+`community-agent/`, its own npm package with its own lockfile, mounted by
+`withEve()` in `next.config.ts` and deployed as a separate Vercel service.
+
+- **Two agents now ship with this app**, so `next.config.ts` uses the *named*
+  `agents:` map rather than the single-agent `eveRoot` shorthand. That puts each
+  agent at `/eve/agents/<name>/eve/v1/*`, and the browser picks one with
+  `useEveAgent({ agent: "community" | "workshop-helper" })`. There is no longer
+  an agent at bare `/eve/v1/*`.
+- **Identity is resolved once, server-side**, in
+  `community-agent/agent/channels/eve.ts`: the Clerk cookie gives a Clerk user
+  id, which is turned into a `profiles.id` and an admin flag and put on the
+  session's auth attributes. Tools read it via `agent/lib/caller.ts` and never
+  from their input. This replaced `/api/matcher-chat`, which read `userId` and
+  `isAdmin` **out of the request body** — forging `isAdmin: true` exposed the 822
+  private `community_contacts` rows, and forging `userId` sent messages as
+  anyone.
+- **`send_intro_message` is gated on `approval: always()`.** It writes to another
+  member's inbox, and eve replays interrupted steps — so without the gate a
+  re-run could deliver a second copy. The UI renders the prompt with
+  ai-elements' `Confirmation`.
+- **Web search is provider-managed.** `agent/tools/web_search.ts` is one line —
+  `webSearch({ provider: "exa" })` — resolved through the AI Gateway, so there is
+  no Exa key to hold. The old `web_search_person` tool never searched: it fetched
+  URLs the *model guessed* and stripped the HTML, so LinkedIn and X always failed.
+- **Shell and file tools are disabled** (`agent/tools/{bash,read_file,write_file,glob,grep}.ts`
+  export `disableTool()`). This agent reads Postgres and the public web; it has no
+  business with a filesystem.
+- **The schema is copied, not imported.** `agent/lib/site-schema.ts` is generated
+  from `src/db/site/schema.ts` by `scripts/sync-agent-schema.mjs`, which runs on
+  `predev`, `prebuild`, and `postinstall`. Do not edit it, and do not switch it
+  back to a relative `../../../src/...` import: `eve build` resolves that but
+  `eve dev` does not, so it breaks local development while still deploying.
+- **The chat UI is [ai-elements](https://ai-sdk.dev/elements)**, in
+  `src/components/home/`. `@assistant-ui/*` was removed entirely.
 
 ### Eve Agent Workshop (`/eve-workshop`)
 
@@ -83,10 +121,12 @@ site's conventions — treat it as a walled garden:
   bail out on `/eve-workshop`. Styling is scoped in `globals.css` on
   `body:has(.eve-workshop)` — body-level, so Radix portals inherit it — which
   also disables the site's grain overlay and blur-neutraliser there.
-- **`workshop-helper/`** is the Eve agent, mounted at `/eve/*` by `withEve()` in
-  `next.config.ts`. It is its **own npm package** with its own lockfile and
-  builds as a separate Vercel service — run `npm install` inside it to work on
-  it, and do not hoist its dependencies to the root.
+- **`workshop-helper/`** is the Eve agent, mounted at
+  `/eve/agents/workshop-helper/*` by `withEve()` in `next.config.ts` (it moved
+  off bare `/eve/*` when the community agent was added — see above). It is its
+  **own npm package** with its own lockfile and builds as a separate Vercel
+  service — run `npm install` inside it to work on it, and do not hoist its
+  dependencies to the root.
 - **`eve.makerslounge.ca`** is rewritten route-by-route onto `/eve-workshop` in
   `next.config.ts`. Not a catch-all, on purpose — see the comment there.
 

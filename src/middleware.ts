@@ -11,12 +11,13 @@ import { type NextRequest } from "next/server";
  * decides its own access in the page, as it always has.
  */
 
-// Workshop routes that must stay reachable while signed out.
+// Routes that must stay reachable while signed out.
 //
-// `/eve/*` is the workshop agent's own HTTP surface. It authenticates itself
-// in `workshop-helper/agent/channels/eve.ts` (Clerk session, then Vercel
-// OIDC) and fails closed, so it must not be redirect-protected here — a 307 to
-// the sign-in page would break non-browser callers like the eve TUI.
+// `/eve/*` is the HTTP surface of the app's eve agents —
+// `/eve/agents/workshop-helper/*` and `/eve/agents/community/*`. Each
+// authenticates itself in its own `agent/channels/eve.ts` (Clerk session, then
+// Vercel OIDC) and fails closed, so they must not be redirect-protected here —
+// a 307 to the sign-in page would break non-browser callers like the eve TUI.
 // Note the `/eve` patterns are written as `/eve` + `/eve/(.*)` rather than
 // `/eve(.*)`: the latter also matches `/eve-workshop/...`, which would quietly
 // make every workshop page public.
