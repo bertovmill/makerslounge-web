@@ -33,6 +33,10 @@ export function HeroField({ className }: { className?: string }) {
       .then((h) => {
         if (cancelled) return h.stop();
         handle = h;
+        // The theme class can land while init() is still pending, in which
+        // case the observer below fired with no handle to update. Re-read now
+        // so the first visible frame is already in the right palette.
+        h.setColors(readColors());
         setMode("gpu");
       })
       .catch(() => {
