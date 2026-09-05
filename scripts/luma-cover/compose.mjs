@@ -109,12 +109,12 @@ const LAYOUTS = {
   card: (v) => `<div class="layer">
     <div class="abs" style="left:190px;top:270px;right:190px;bottom:270px;display:flex;flex-direction:column;justify-content:space-between">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        ${`<div class="mark" style="position:static">${logo(v.fg)}<span>makerslounge</span></div>`}
-        <div class="eyebrow">Meetup</div>
+        ${`<div class="mark" style="position:static;gap:18px">${logo(v.fg).replace("<svg", '<svg style="height:78px"')}<span style="font-size:60px">makerslounge</span></div>`}
+        <div class="eyebrow" style="font-size:26px">Meetup</div>
       </div>
       <div class="num" style="font-size:380px;text-align:center"><span style="font-size:0.55em;font-weight:700;vertical-align:0.32em;margin-right:0.04em;opacity:0.85">#</span>${NUMBER}</div>
       <div style="display:flex;justify-content:space-between;align-items:flex-end">
-        <div><div class="tag">Build. Connect. Create.</div>${dateLine("")}</div>
+        <div><div class="tag" style="font-size:52px">Build. Connect. Create.</div>${dateLine("")}</div>
       </div>
     </div>
   </div>`,
