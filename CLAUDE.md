@@ -139,7 +139,23 @@ Rebuilt in Sep 2026 around the flat editorial motif. Sections have stable ids
   back to a relative `../../../src/...` import: `eve build` resolves that but
   `eve dev` does not, so it breaks local development while still deploying.
 - **The chat UI is [ai-elements](https://ai-sdk.dev/elements)**, in
-  `src/components/home/`. `@assistant-ui/*` was removed entirely.
+  `src/components/home/`. `@assistant-ui/*` was removed entirely. Installed
+  components live in `src/components/ai-elements/`; add more with
+  `npx ai-elements@latest add <name>` (the CLI reads
+  `elements.ai-sdk.dev/api/registry`, not the stale `registry.ai-sdk.dev`).
+  `agent-message.tsx` folds each turn's tool calls, reasoning and
+  authorizations into one `ChainOfThought`, turns May's inline web links into
+  `InlineCitation` hover cards by matching them against `web_search` results,
+  and renders eve `file` parts with `Attachments`. `matcher-chat.tsx` drives a
+  `Persona` (Rive, variant `halo`) off the eve status, sends attachments as AI
+  SDK file parts in `UserContent`, and uses `SpeechInput` for dictation.
+- **Two local edits to installed ai-elements files, keep them on upgrade.**
+  `speech-input.tsx` gained `preferAudioRecording` (always record and send to
+  `/api/voice/transcribe`, so Deepgram transcribes on every browser instead of
+  Chrome's built-in recogniser) and `onListeningChange`. And the CLI-generated
+  `src/components/ui/carousel.tsx` imported `cn` from a bogus `cn` npm package,
+  which the CLI also installed — it is corrected to `@/lib/utils`; do not let a
+  re-add put it back.
 
 ### Eve Agent Workshop (`/eve-workshop`)
 
