@@ -83,8 +83,25 @@ Rebuilt in Sep 2026 around the flat editorial motif. Sections have stable ids
   this Mac (Dawn on Metal), and `scripts/render-hero-field.mts` renders a light
   and a dark frame to PNG headlessly. Headless Chromium also runs WebGPU with
   `--enable-unsafe-webgpu --use-angle=metal` for full-page screenshots.
-- **Value cards use `ValueArt.tsx`**, compositions of the `Motif` primitives.
-  The glossy 3D renders in `public/values/` are no longer referenced.
+- **Every canvas shares one context.** `gpu.ts` holds the shared `init()`
+  (ref-counted), `runWhileVisible` (a `frameLoop` that sleeps when the canvas
+  is off screen or the tab is hidden), theme-colour readers, and `WGSL_COMMON`
+  (hash, noise, Bayer, SDFs). `use-gpu-canvas.ts` is the lifecycle hook every
+  component uses; each one falls back to static markup.
+- **The other shaders**: `logo-dots.ts` renders the "M" as halftone dots that
+  scatter from the cursor (the mark is rasterised from `LOGO_PATH` into a
+  storage buffer, no texture upload); `may-field.ts` is the dot band behind
+  Ask May that ripples on keystrokes (`MayField` exposes `pulseFrom` /
+  `setEnergy` through a ref); `value-fields.ts` animates the four value cards
+  as SDFs over the same compositions as the CSS `ValueArt.tsx` fallback. The
+  hero's `scroll` uniform sets the sun as the page scrolls.
+- **WGSL gotchas that cost time**: `half` is a reserved word; a derivative
+  (`fwidth`, so `fill()`) after a non-uniform early `return` fails the
+  uniformity check; a backtick inside a WGSL comment ends the template string.
+- **Hover wipes are CSS** (`.halftone-wipe` in `globals.css`), a dot-pattern
+  pseudo-element revealed by an animated `clip-path`. A GPU canvas per
+  hoverable card would be the wrong tool.
+- The glossy 3D renders in `public/values/` are no longer referenced.
 
 ### The community agent — May (`/home`)
 

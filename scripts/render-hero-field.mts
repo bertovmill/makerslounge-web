@@ -2,15 +2,18 @@
 // Renders one light and one dark frame to PNG so the shader can be judged from
 // real pixels without a browser:
 //
-//   OUT=/tmp node --experimental-strip-types --no-warnings scripts/render-hero-field.mts
+//   OUT=/tmp npx -y tsx scripts/render-hero-field.mts
+//   SCROLL=0.6 ...   renders the sun part-way through setting
 //
 // Needs `npx vgpu doctor` to report healthy (Dawn on Metal here).
 import { writeFileSync } from "node:fs";
 // @ts-expect-error pngjs ships no types; this is a dev-only check script.
 import { PNG } from "pngjs";
 import { init, effect, target } from "vgpu/node";
-// @ts-expect-error Node needs the extension to run this without a bundler; tsc dislikes it.
-import { HERO_FIELD_WGSL, hexToRgb } from "../src/components/landing/hero-field.ts";
+// @ts-expect-error tsx wants the extension; tsc dislikes it.
+import { HERO_FIELD_WGSL } from "../src/components/landing/hero-field.ts";
+// @ts-expect-error same
+import { hexToRgb } from "../src/components/landing/gpu.ts";
 
 const out = process.env.OUT ?? ".";
 const W = 1440, H = 720;
@@ -24,12 +27,12 @@ const themes = {
 
 for (const [name, th] of Object.entries(themes)) {
   const fx = effect(gpu, HERO_FIELD_WGSL, {
-    set: { p: { time: 3.2, aspect: W / H, pointer: [0.62, 0.4], res: [W, H], sun: [...hexToRgb(th.sun), 1], accent: [...hexToRgb(th.accent), 1] } },
+    set: { p: { time: 3.2, aspect: W / H, scroll: Number(process.env.SCROLL ?? 0), pad: 0, pointer: [0.62, 0.4], res: [W, H], sun: [...hexToRgb(th.sun), 1], accent: [...hexToRgb(th.accent), 1] } },
   });
   fx.draw(t);
   const px = await t.read();
   // Composite over the paper colour so the PNG shows what the page will.
-  const paper = hexToRgb(th.paper).map((v) => v * 255);
+  const paper = (hexToRgb(th.paper) as number[]).map((v: number) => v * 255);
   const png = new PNG({ width: W, height: H });
   for (let i = 0; i < W * H; i++) {
     const a = px[i * 4 + 3] / 255;

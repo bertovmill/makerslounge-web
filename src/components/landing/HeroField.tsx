@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { Arc } from "@/components/Motif";
 import { cn } from "@/lib/utils";
-import { hexToRgb, startHeroField, type HeroFieldColors, type HeroFieldHandle } from "./hero-field";
-
-type Mode = "pending" | "gpu" | "fallback";
+import { startHeroField } from "./hero-field";
+import { useGpuCanvas } from "./use-gpu-canvas";
 
 /**
  * The hero's sun. Draws the WebGPU field when the browser can, and the flat
@@ -16,43 +15,20 @@ type Mode = "pending" | "gpu" | "fallback";
  * device refuses an adapter, or the visitor prefers reduced motion.
  */
 export function HeroField({ className }: { className?: string }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [mode, setMode] = useState<Mode>("pending");
+  const { canvasRef, mode, handleRef } = useGpuCanvas(startHeroField);
 
+  // Scroll progress across the hero: 0 at the top, 1 once the hero has left.
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const supported = "gpu" in navigator && !reduced;
-
-    let handle: HeroFieldHandle | undefined;
-    let cancelled = false;
-
-    (supported ? startHeroField(canvas, readColors()) : Promise.reject(new Error("no webgpu")))
-      .then((h) => {
-        if (cancelled) return h.stop();
-        handle = h;
-        // The theme class can land while init() is still pending, in which
-        // case the observer below fired with no handle to update. Re-read now
-        // so the first visible frame is already in the right palette.
-        h.setColors(readColors());
-        setMode("gpu");
-      })
-      .catch(() => {
-        if (!cancelled) setMode("fallback");
-      });
-
-    // Follow theme toggles: the colours are CSS variables on <html>.
-    const observer = new MutationObserver(() => handle?.setColors(readColors()));
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-
-    return () => {
-      cancelled = true;
-      observer.disconnect();
-      handle?.stop();
+    if (mode !== "gpu") return;
+    const section = canvasRef.current?.closest("section");
+    const onScroll = () => {
+      const span = Math.max(1, (section?.offsetHeight ?? window.innerHeight) * 0.9);
+      handleRef.current?.setScroll(Math.min(1, window.scrollY / span));
     };
-  }, []);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [mode, canvasRef, handleRef]);
 
   return (
     <div aria-hidden className={cn("pointer-events-none absolute inset-0", className)}>
@@ -72,12 +48,4 @@ export function HeroField({ className }: { className?: string }) {
       )}
     </div>
   );
-}
-
-function readColors(): HeroFieldColors {
-  const styles = getComputedStyle(document.documentElement);
-  return {
-    sun: hexToRgb(styles.getPropertyValue("--motif-sun") || "#CBE4F8"),
-    accent: hexToRgb(styles.getPropertyValue("--blue-core") || "#1A6FD4"),
-  };
 }

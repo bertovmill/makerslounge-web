@@ -448,6 +448,32 @@ html {
   transform: translate(-2px, -2px);
 }
 
+/* Halftone wipe on hover: a screen of brand-blue dots sweeps across the card
+   left to right, like ink coming down on a press. Pure CSS — a dot pattern
+   clipped by an animated inset — because a GPU canvas per hoverable card is
+   the wrong tool for a 400ms flourish. */
+.halftone-wipe {
+  position: relative;
+}
+.halftone-wipe::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: radial-gradient(circle, var(--blue-core) 0.9px, transparent 1.15px);
+  background-size: 7px 7px;
+  opacity: 0.28;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.halftone-wipe:hover::after {
+  clip-path: inset(0 0 0 0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .halftone-wipe::after { transition: none; }
+}
+
 /* Oversized arc — the "sun" behind hero content. Purely decorative. */
 .motif-arc {
   position: absolute;

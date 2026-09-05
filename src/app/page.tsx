@@ -9,11 +9,13 @@ import { useTheme } from "@/context/ThemeContext";
 import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, Instagram, Linkedin, Menu, X, Mic, Play, BookOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { AnimatedLogo } from "@/components/AnimatedLogo";
 import NewsletterPopup, { OPEN_NEWSLETTER_EVENT } from "@/components/NewsletterPopup";
 import { Constellation, Eyebrow } from "@/components/Motif";
 import { HeroField } from "@/components/landing/HeroField";
-import { ValueArt, type ValueKey } from "@/components/landing/ValueArt";
+import { LogoDots } from "@/components/landing/LogoDots";
+import { MayField, type MayFieldRef } from "@/components/landing/MayField";
+import { LiveValueArt } from "@/components/landing/LiveValueArt";
+import type { ValueKey } from "@/components/landing/ValueArt";
 
 const openNewsletterPopup = () => {
   window.dispatchEvent(new CustomEvent(OPEN_NEWSLETTER_EVENT));
@@ -192,6 +194,7 @@ export default function Home() {
     excerpt: string;
   } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const mayFieldRef = useRef<MayFieldRef>(null);
 
   useEffect(() => {
     fetchPosts()
@@ -230,6 +233,7 @@ export default function Home() {
   function selectIdea(prompt: string) {
     setQuery(prompt);
     textareaRef.current?.focus();
+    mayFieldRef.current?.pulseFrom(textareaRef.current);
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -388,7 +392,7 @@ export default function Home() {
           <HeroField className="-top-[12%] -bottom-[6%]" />
 
           <div className="relative flex flex-col items-center">
-            <AnimatedLogo className="relative mb-5 h-14 w-14 sm:mb-6 sm:h-20 sm:w-20" />
+            <LogoDots className="relative mb-5 h-14 w-14 sm:mb-6 sm:h-20 sm:w-20" />
 
             <Eyebrow className="relative mb-4">Build · Connect · Create</Eyebrow>
 
@@ -458,7 +462,8 @@ export default function Home() {
 
         {/* Ask May — the community matcher, and the site's actual product */}
         <section id="ask-may" className="relative px-4 pb-16 sm:px-6 sm:pb-24">
-          <div className="mx-auto w-full max-w-[720px]">
+          <MayField ref={mayFieldRef} className="-top-16 -bottom-8" />
+          <div className="relative mx-auto w-full max-w-[720px]">
             <div className="mb-5 flex flex-col items-center text-center sm:mb-6">
               <Eyebrow className="mb-3">May · community matcher</Eyebrow>
               <h2 className="text-2xl tracking-[-0.02em] text-foreground sm:text-3xl">
@@ -474,7 +479,11 @@ export default function Home() {
                 <textarea
                   ref={textareaRef}
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    mayFieldRef.current?.pulseFrom(e.currentTarget);
+                  }}
+                  onBlur={() => mayFieldRef.current?.setEnergy(0)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -482,6 +491,7 @@ export default function Home() {
                     }
                   }}
                   onFocus={() => {
+                    mayFieldRef.current?.setEnergy(1);
                     // On iOS, the keyboard can cover the textarea — scroll it into view (mobile only)
                     if (window.innerWidth < 768) {
                       setTimeout(() => {
@@ -596,8 +606,8 @@ export default function Home() {
 
             <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               {VALUES.map((value) => (
-                <div key={value.key} className="flat-card flex flex-col overflow-hidden">
-                  <ValueArt value={value.key} />
+                <div key={value.key} className="flat-card halftone-wipe flex flex-col overflow-hidden">
+                  <LiveValueArt value={value.key} />
                   <div className="p-4 sm:p-5">
                     <h3 className="mb-1 font-serif text-lg text-foreground sm:text-xl">{value.label}</h3>
                     <p className="text-xs leading-relaxed text-muted-foreground/90 sm:text-sm">{value.description}</p>
@@ -612,7 +622,7 @@ export default function Home() {
         <section id="listen-and-read" className="relative px-4 pb-16 sm:px-6 sm:pb-24">
           <div className="mx-auto grid w-full max-w-[1040px] gap-4 md:grid-cols-2">
             {/* Podcast */}
-            <div className="flat-card flex flex-col overflow-hidden">
+            <div className="flat-card halftone-wipe flex flex-col overflow-hidden">
               <div className="flex items-start gap-4 p-5">
                 <div className="field-blue flex h-12 w-12 flex-shrink-0 items-center justify-center">
                   <Mic className="h-6 w-6" />
@@ -645,7 +655,7 @@ export default function Home() {
             </div>
 
             {/* Blog */}
-            <div className="flat-card flex flex-col overflow-hidden">
+            <div className="flat-card halftone-wipe flex flex-col overflow-hidden">
               <div className="flex items-start gap-4 p-5">
                 <div className="field-blue flex h-12 w-12 flex-shrink-0 items-center justify-center">
                   <BookOpen className="h-6 w-6" />
