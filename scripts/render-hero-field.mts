@@ -2,21 +2,38 @@
 // Renders one light and one dark frame to PNG so the shader can be judged from
 // real pixels without a browser:
 //
-//   OUT=/tmp npx -y tsx scripts/render-hero-field.mts
+//   OUT=/tmp node --experimental-strip-types --no-warnings scripts/render-hero-field.mts
 //   SCROLL=0.6 ...   renders the sun part-way through setting
 //
 // Needs `npx vgpu doctor` to report healthy (Dawn on Metal here).
-import { writeFileSync } from "node:fs";
+//
+// The shader source is read as text rather than imported: the app modules
+// import the browser build of vgpu, and running them under Node (via tsx or
+// strip-types) either transpiles them to CommonJS, which vgpu's ESM-only
+// packages refuse, or fails to resolve extensionless imports. Reading the
+// two template literals keeps this script honest without touching the app.
+import { readFileSync, writeFileSync } from "node:fs";
 // @ts-expect-error pngjs ships no types; this is a dev-only check script.
 import { PNG } from "pngjs";
 import { init, effect, target } from "vgpu/node";
-// @ts-expect-error tsx wants the extension; tsc dislikes it.
-import { HERO_FIELD_WGSL } from "../src/components/landing/hero-field.ts";
-// @ts-expect-error same
-import { hexToRgb } from "../src/components/landing/gpu.ts";
 
 const out = process.env.OUT ?? ".";
 const W = 1440, H = 720;
+
+function template(file: string, name: string): string {
+  const src = readFileSync(new URL(`../src/components/landing/${file}`, import.meta.url), "utf8");
+  const m = src.match(new RegExp(`${name} = /\\* wgsl \\*/ \`([\\s\\S]*?)\`;`));
+  if (!m) throw new Error(`${name} not found in ${file}`);
+  return m[1];
+}
+const common = template("gpu.ts", "WGSL_COMMON");
+const HERO_FIELD_WGSL = template("hero-field.ts", "HERO_FIELD_WGSL").replace("${WGSL_COMMON}", common);
+
+function hexToRgb(hex: string): [number, number, number] {
+  const n = parseInt(hex.replace("#", ""), 16);
+  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+}
+
 const gpu = await init();
 const t = target(gpu, { size: [W, H], format: "rgba8unorm" });
 
@@ -32,7 +49,7 @@ for (const [name, th] of Object.entries(themes)) {
   fx.draw(t);
   const px = await t.read();
   // Composite over the paper colour so the PNG shows what the page will.
-  const paper = (hexToRgb(th.paper) as number[]).map((v: number) => v * 255);
+  const paper = hexToRgb(th.paper).map((v) => v * 255);
   const png = new PNG({ width: W, height: H });
   for (let i = 0; i < W * H; i++) {
     const a = px[i * 4 + 3] / 255;
