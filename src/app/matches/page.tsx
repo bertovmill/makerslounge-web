@@ -134,7 +134,7 @@ function MatchesContent() {
           &larr; Back to search
         </Link>
 
-        <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">
+        <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
           Matches for &ldquo;{name}&rdquo;
         </h1>
         <p className="text-gray-500 mb-8">

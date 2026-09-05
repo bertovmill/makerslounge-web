@@ -126,7 +126,7 @@ export default function SubmissionForm() {
             Received
           </span>
         </div>
-        <p className="font-serif text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] tracking-tight">
+        <p className="font-display text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] tracking-tight">
           Got it. See you May 26.
         </p>
         <div className="flex flex-col gap-2 font-mono text-sm text-muted-foreground">

@@ -1,7 +1,17 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { Instrument_Serif } from "next/font/google";
+import { Figtree, Instrument_Serif } from "next/font/google";
+
+// Figtree is the display face for headings across the site. Instrument Serif
+// stays only because /eve-workshop, a walled garden, still renders its
+// headings in it (see the h1–h3 rules in globals.css).
+const figtree = Figtree({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-figtree",
+  display: "swap",
+});
 
 const instrumentSerif = Instrument_Serif({
   weight: "400",
@@ -58,8 +68,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${GeistSans.variable} ${GeistMono.variable} ${instrumentSerif.variable} font-sans min-h-svh transition-colors duration-300`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${GeistSans.variable} ${GeistMono.variable} ${figtree.variable} ${instrumentSerif.variable}`}
+    >
+      <body className="font-sans min-h-svh transition-colors duration-300">
         {/* Clerk now authenticates the whole site, not just the workshop, so
             the provider sits at the root. `AuthProvider` reads the Clerk
             session and maps it to a profile uuid, so it must be nested inside

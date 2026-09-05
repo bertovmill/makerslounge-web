@@ -62,7 +62,7 @@ export default function SlideMuleRun() {
             priority
             className="h-auto w-[clamp(5rem,10vw,9rem)] flex-shrink-0 object-contain"
           />
-          <h2 className="font-serif text-[clamp(2.5rem,7vw,6rem)] leading-[0.9] tracking-tight">
+          <h2 className="font-display text-[clamp(2.5rem,7vw,6rem)] leading-[0.9] tracking-tight">
             MuleRun.
           </h2>
           <p className="max-w-[40ch] text-[clamp(1rem,1.4vw,1.35rem)] text-muted-foreground">

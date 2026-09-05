@@ -26,7 +26,7 @@ export default function FindTeamPage() {
             <span className="h-px w-8 bg-border" />
             <span>2026 Innovation Hackathon</span>
           </div>
-          <h1 className="font-serif text-4xl leading-[0.95] tracking-tight sm:text-5xl">
+          <h1 className="font-display text-4xl leading-[0.95] tracking-tight sm:text-5xl">
             Find your team.
           </h1>
           <p className="text-sm leading-relaxed text-muted-foreground">

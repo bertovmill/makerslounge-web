@@ -156,7 +156,7 @@ export default function SlideDemoLineup() {
               <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
                 Now demoing
               </span>
-              <h2 className="font-serif text-[clamp(2.75rem,10vw,9rem)] leading-[0.9] tracking-tight">
+              <h2 className="font-display text-[clamp(2.75rem,10vw,9rem)] leading-[0.9] tracking-tight">
                 {current.team_name?.trim() || current.name}
               </h2>
               {current.team_name?.trim() && (
@@ -164,7 +164,7 @@ export default function SlideDemoLineup() {
                   {current.name}
                 </p>
               )}
-              <p className="max-w-[34ch] font-serif text-[clamp(1.25rem,2.8vw,2.5rem)] leading-tight tracking-tight text-muted-foreground">
+              <p className="max-w-[34ch] font-display text-[clamp(1.25rem,2.8vw,2.5rem)] leading-tight tracking-tight text-muted-foreground">
                 {current.project}
               </p>
               {current.video_url && (
@@ -184,10 +184,10 @@ export default function SlideDemoLineup() {
               <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
                 Wrap
               </span>
-              <h2 className="font-serif text-[clamp(2.75rem,9vw,8rem)] leading-[0.9] tracking-tight">
+              <h2 className="font-display text-[clamp(2.75rem,9vw,8rem)] leading-[0.9] tracking-tight">
                 That&apos;s a wrap.
               </h2>
-              <p className="max-w-[28ch] font-serif text-[clamp(1.5rem,3vw,2.5rem)] leading-tight tracking-tight text-muted-foreground">
+              <p className="max-w-[28ch] font-display text-[clamp(1.5rem,3vw,2.5rem)] leading-tight tracking-tight text-muted-foreground">
                 Judges deliberating.
               </p>
             </>
@@ -196,7 +196,7 @@ export default function SlideDemoLineup() {
               <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
                 Waiting
               </span>
-              <h2 className="font-serif text-[clamp(2.75rem,8vw,7rem)] leading-[0.9] tracking-tight">
+              <h2 className="font-display text-[clamp(2.75rem,8vw,7rem)] leading-[0.9] tracking-tight">
                 Scan to submit your demo.
               </h2>
               <p className="max-w-[36ch] text-[clamp(0.95rem,1.3vw,1.2rem)] text-muted-foreground">
@@ -208,7 +208,7 @@ export default function SlideDemoLineup() {
               <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
                 Ready
               </span>
-              <h2 className="font-serif text-[clamp(2.75rem,8vw,7rem)] leading-[0.9] tracking-tight">
+              <h2 className="font-display text-[clamp(2.75rem,8vw,7rem)] leading-[0.9] tracking-tight">
                 Press shuffle to pick the first team.
               </h2>
               <p className="max-w-[40ch] text-[clamp(0.95rem,1.3vw,1.2rem)] text-muted-foreground">

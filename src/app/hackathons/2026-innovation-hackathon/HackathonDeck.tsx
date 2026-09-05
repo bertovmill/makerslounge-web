@@ -566,7 +566,7 @@ function SlideKickoffAgenda() {
             >
               <span className="font-mono text-xs tabular-nums text-foreground">{item.time} PM</span>
               <span className="font-mono text-xs tabular-nums text-muted-foreground">{pad2(i + 1)}</span>
-              <span className="font-serif text-[clamp(1.25rem,2.5vw,2rem)] tracking-tight">{item.label}</span>
+              <span className="font-display text-[clamp(1.25rem,2.5vw,2rem)] tracking-tight">{item.label}</span>
             </li>
           ))}
         </ol>
@@ -604,7 +604,7 @@ function SlideKickoffDebrief() {
                 <span className="font-mono text-xs uppercase tracking-[0.12em] text-foreground">
                   {row.date}
                 </span>
-                <span className="font-serif text-[clamp(1.1rem,2vw,1.75rem)] tracking-tight">
+                <span className="font-display text-[clamp(1.1rem,2vw,1.75rem)] tracking-tight">
                   {row.label}
                 </span>
               </li>
@@ -677,11 +677,11 @@ function SlideKickoffTeams() {
               <div key={s.step} className="flex flex-col gap-1 border-t border-border pt-3">
                 <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">{s.step}</span>
                 {s.href ? (
-                  <a href={s.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-serif text-[clamp(1.1rem,2vw,1.6rem)] tracking-tight hover:opacity-70 transition-opacity">
+                  <a href={s.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-display text-[clamp(1.1rem,2vw,1.6rem)] tracking-tight hover:opacity-70 transition-opacity">
                     {s.title} <ArrowUpRight className="size-4 shrink-0" />
                   </a>
                 ) : (
-                  <h3 className="font-serif text-[clamp(1.1rem,2vw,1.6rem)] tracking-tight">{s.title}</h3>
+                  <h3 className="font-display text-[clamp(1.1rem,2vw,1.6rem)] tracking-tight">{s.title}</h3>
                 )}
                 <p className="text-sm leading-relaxed text-muted-foreground">{s.body}</p>
               </div>
@@ -1161,7 +1161,7 @@ function SlideKickoffSponsors() {
                       className="max-h-12 w-auto object-contain"
                     />
                   ) : (
-                    <span className="font-serif text-lg tracking-tight text-black">{s.name}</span>
+                    <span className="font-display text-lg tracking-tight text-black">{s.name}</span>
                   )}
                 </div>
                 {s.tier && (
@@ -1183,7 +1183,7 @@ function SlideWhat() {
     <div className="grid h-full grid-rows-[auto_1fr_auto]">
       <Eyebrow n={1} label="What" />
       <div className="flex flex-col justify-center gap-[clamp(1rem,3vh,2.5rem)]">
-        <h2 className="max-w-[18ch] font-serif text-[clamp(2.5rem,8.5vw,8rem)] leading-[0.95] tracking-tight">
+        <h2 className="max-w-[18ch] font-display text-[clamp(2.5rem,8.5vw,8rem)] leading-[0.95] tracking-tight">
           Toronto's biggest innovation hackathon.
         </h2>
         <p className="max-w-[55ch] text-[clamp(1.05rem,1.6vw,1.6rem)] text-muted-foreground">
@@ -1229,7 +1229,7 @@ function SlideHow() {
     <div className="grid h-full grid-rows-[auto_1fr]">
       <Eyebrow n={2} label="How it works" />
       <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
-        <h2 className="font-serif text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] tracking-tight">
+        <h2 className="font-display text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] tracking-tight">
           Three parts.
         </h2>
         <ol className="grid gap-[clamp(1.25rem,3vh,2rem)] lg:grid-cols-3 lg:gap-[clamp(2rem,3vw,3rem)]">
@@ -1238,7 +1238,7 @@ function SlideHow() {
               <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
                 {p.tag}
               </span>
-              <h3 className="font-serif text-[clamp(1.5rem,3vw,2.75rem)] leading-tight tracking-tight">
+              <h3 className="font-display text-[clamp(1.5rem,3vw,2.75rem)] leading-tight tracking-tight">
                 {p.title}
               </h3>
               <p className="font-mono text-xs uppercase tracking-[0.12em] text-foreground">
@@ -1279,7 +1279,7 @@ function SlideSchedule() {
     <div className="grid h-full grid-rows-[auto_1fr]">
       <Eyebrow n={4} label="Demo night" />
       <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
-        <h2 className="font-serif text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] tracking-tight">
+        <h2 className="font-display text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] tracking-tight">
           Tuesday <span className="text-muted-foreground">May 26.</span>
         </h2>
         <ul className="flex flex-col">
@@ -1298,7 +1298,7 @@ function SlideSchedule() {
                 <span className="font-mono text-[clamp(0.85rem,1.4vw,1.1rem)] tabular-nums text-foreground">
                   {row.start} PM
                 </span>
-                <span className="font-serif text-[clamp(1.25rem,2.5vw,2.25rem)] tracking-tight">
+                <span className="font-display text-[clamp(1.25rem,2.5vw,2.25rem)] tracking-tight">
                   {row.label}
                 </span>
                 <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -1328,7 +1328,7 @@ function SlideTracks({ revealed }: { revealed: number }) {
     <div className="grid h-full grid-rows-[auto_1fr]">
       <Eyebrow n={5} label="Challenge tracks" />
       <div className="flex flex-col justify-center gap-[clamp(1rem,2.5vh,2rem)]">
-        <h2 className="font-serif text-[clamp(2rem,5vw,4.5rem)] leading-[0.95] tracking-tight">
+        <h2 className="font-display text-[clamp(2rem,5vw,4.5rem)] leading-[0.95] tracking-tight">
           Pick a track. Ship in a week.
         </h2>
         <div className="grid gap-4 sm:grid-cols-3">
@@ -1386,7 +1386,7 @@ function SlideJudges() {
     <div className="grid h-full grid-rows-[auto_1fr]">
       <Eyebrow n={6} label="Judges" />
       <div className="flex flex-col justify-center gap-[clamp(1.25rem,3vh,2.5rem)]">
-        <h2 className="max-w-[20ch] font-serif text-[clamp(2.5rem,7.5vw,6.5rem)] leading-[0.95] tracking-tight">
+        <h2 className="max-w-[20ch] font-display text-[clamp(2.5rem,7.5vw,6.5rem)] leading-[0.95] tracking-tight">
           People who ship, judging live.
         </h2>
         {JUDGES.length === 0 ? (
@@ -1397,7 +1397,7 @@ function SlideJudges() {
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {JUDGES.map((j) => (
               <li key={j.name} className="flex flex-col gap-1 border-t border-border pt-3">
-                <span className="font-serif text-[clamp(1.25rem,2vw,1.75rem)] tracking-tight">
+                <span className="font-display text-[clamp(1.25rem,2vw,1.75rem)] tracking-tight">
                   {j.name}
                 </span>
                 {j.role && (
@@ -1419,7 +1419,7 @@ function SlidePrizes() {
     <div className="grid h-full grid-rows-[auto_1fr]">
       <Eyebrow n={7} label="Prizes" />
       <div className="flex flex-col justify-center gap-[clamp(1.25rem,3vh,2.5rem)]">
-        <h2 className="font-serif text-[clamp(3rem,10vw,9rem)] leading-[0.9] tracking-tight">
+        <h2 className="font-display text-[clamp(3rem,10vw,9rem)] leading-[0.9] tracking-tight">
           Prizes.
         </h2>
         {PRIZES.length === 0 ? (
@@ -1436,7 +1436,7 @@ function SlidePrizes() {
                 <span className="font-mono text-xs uppercase tracking-[0.18em] text-foreground">
                   {p.place}
                 </span>
-                <span className="font-serif text-[clamp(1.25rem,2.5vw,2rem)] tracking-tight">
+                <span className="font-display text-[clamp(1.25rem,2.5vw,2rem)] tracking-tight">
                   {p.detail}
                 </span>
               </li>
@@ -1457,7 +1457,7 @@ function SlideWho() {
           <span className="font-mono text-xs uppercase tracking-[0.18em] text-foreground">
             Builders
           </span>
-          <h3 className="font-serif text-[clamp(2rem,5vw,4rem)] leading-tight tracking-tight">
+          <h3 className="font-display text-[clamp(2rem,5vw,4rem)] leading-tight tracking-tight">
             Founders, engineers, designers, makers.
           </h3>
           <p className="max-w-[42ch] text-base leading-relaxed text-muted-foreground sm:text-lg">
@@ -1468,7 +1468,7 @@ function SlideWho() {
           <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
             Judges
           </span>
-          <h3 className="font-serif text-[clamp(2rem,5vw,4rem)] leading-tight tracking-tight text-muted-foreground">
+          <h3 className="font-display text-[clamp(2rem,5vw,4rem)] leading-tight tracking-tight text-muted-foreground">
             Industry leaders and innovators.
           </h3>
           <p className="max-w-[42ch] text-base leading-relaxed text-muted-foreground sm:text-lg">
@@ -1485,7 +1485,7 @@ function SlideCommunity() {
     <div className="grid h-full grid-rows-[auto_1fr]">
       <Eyebrow n={9} label="Community" />
       <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
-        <h2 className="max-w-[20ch] font-serif text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] tracking-tight">
+        <h2 className="max-w-[20ch] font-display text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] tracking-tight">
           Find your team in the Discord.
         </h2>
         <a
@@ -1524,7 +1524,7 @@ function SlideConduct() {
     <div className="grid h-full grid-rows-[auto_1fr]">
       <Eyebrow n={10} label="Code of conduct" />
       <div className="flex flex-col justify-center gap-[clamp(1.25rem,3vh,2.5rem)]">
-        <h2 className="max-w-[22ch] font-serif text-[clamp(2.5rem,7vw,5.5rem)] leading-[0.95] tracking-tight">
+        <h2 className="max-w-[22ch] font-display text-[clamp(2.5rem,7vw,5.5rem)] leading-[0.95] tracking-tight">
           Build kindly. Ship boldly. Credit fully.
         </h2>
         <p className="max-w-[60ch] text-base leading-relaxed text-muted-foreground sm:text-lg">
@@ -1540,7 +1540,7 @@ function SlideFindTeam() {
     <div className="grid h-full grid-rows-[auto_1fr_auto]">
       <Eyebrow n={11} label="Find a team" />
       <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
-        <h2 className="max-w-[16ch] font-serif text-[clamp(3rem,10vw,9rem)] leading-[0.92] tracking-tight">
+        <h2 className="max-w-[16ch] font-display text-[clamp(3rem,10vw,9rem)] leading-[0.92] tracking-tight">
           Solo? Find a team.
         </h2>
         <p className="max-w-[55ch] text-base text-muted-foreground sm:text-lg">
@@ -1568,7 +1568,7 @@ function SlideSubmit() {
       <Eyebrow n={12} label="Submit" />
       <div className="grid items-center gap-[clamp(2rem,5vw,5rem)] lg:grid-cols-[1fr_auto]">
         <div className="flex flex-col justify-center gap-[clamp(1.25rem,3vh,2.5rem)]">
-          <h2 className="font-serif text-[clamp(2.5rem,8vw,7rem)] leading-[0.95] tracking-tight">
+          <h2 className="font-display text-[clamp(2.5rem,8vw,7rem)] leading-[0.95] tracking-tight">
             Submit your project.
           </h2>
           <p className="max-w-[55ch] text-base leading-relaxed text-muted-foreground sm:text-lg">
@@ -1614,7 +1614,7 @@ function SlideRsvp() {
     <div className="grid h-full grid-rows-[auto_1fr_auto]">
       <Eyebrow n={13} label="Join us" />
       <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
-        <h2 className="max-w-[18ch] font-serif text-[clamp(3rem,11vw,10rem)] leading-[0.92] tracking-tight">
+        <h2 className="max-w-[18ch] font-display text-[clamp(3rem,11vw,10rem)] leading-[0.92] tracking-tight">
           Lock in your spot.
         </h2>
         <p className="max-w-[55ch] text-base text-muted-foreground sm:text-lg">
@@ -1641,7 +1641,7 @@ function StatRow({ items }: { items: Array<{ value: string; label: string }> }) 
     <div className="grid grid-cols-3 border-t border-border pt-5">
       {items.map((s) => (
         <div key={s.label} className="flex flex-col gap-1.5">
-          <span className="font-serif text-[clamp(2rem,5vw,4.5rem)] leading-none tracking-tight">
+          <span className="font-display text-[clamp(2rem,5vw,4.5rem)] leading-none tracking-tight">
             {s.value}
           </span>
           <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">

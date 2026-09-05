@@ -258,7 +258,7 @@ export default function SlidePresentationTeams() {
         {/* Title + match action */}
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-col gap-2">
-            <h2 className="font-serif text-[clamp(2.25rem,6vw,5.5rem)] leading-[0.95] tracking-tight">
+            <h2 className="font-display text-[clamp(2.25rem,6vw,5.5rem)] leading-[0.95] tracking-tight">
               {matched ? "Your teams." : "Signups rolling in."}
             </h2>
             <p className="max-w-[50ch] text-[clamp(0.95rem,1.3vw,1.2rem)] text-muted-foreground">
@@ -294,7 +294,7 @@ export default function SlidePresentationTeams() {
           <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card/30 p-[clamp(0.75rem,2vh,1.5rem)]">
             <div className="mb-3 flex items-center gap-3">
               <Users className="size-4 text-foreground" strokeWidth={1.8} />
-              <h3 className="font-serif text-xl tracking-tight sm:text-2xl">
+              <h3 className="font-display text-xl tracking-tight sm:text-2xl">
                 Signups
               </h3>
               <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -313,7 +313,7 @@ export default function SlidePresentationTeams() {
                     className="grid grid-cols-[1fr_auto] items-center gap-2 border-b border-border py-2 last:border-b-0"
                   >
                     <div className="flex min-w-0 flex-col gap-0.5">
-                      <span className="truncate font-serif text-lg leading-tight tracking-tight">
+                      <span className="truncate font-display text-lg leading-tight tracking-tight">
                         {s.name}
                       </span>
                       <span className="truncate text-xs text-muted-foreground">
@@ -366,7 +366,7 @@ export default function SlidePresentationTeams() {
                         key={m.id}
                         className="flex flex-col gap-0.5 border-t border-border pt-2 first:border-t-0 first:pt-0"
                       >
-                        <span className="font-serif text-[clamp(1.1rem,1.6vw,1.5rem)] leading-tight tracking-tight">
+                        <span className="font-display text-[clamp(1.1rem,1.6vw,1.5rem)] leading-tight tracking-tight">
                           {m.name}
                         </span>
                         <span className="text-xs text-muted-foreground">

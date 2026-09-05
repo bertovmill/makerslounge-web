@@ -609,7 +609,7 @@ export default function Home() {
                 <div key={value.key} className="flat-card halftone-wipe flex flex-col overflow-hidden">
                   <LiveValueArt value={value.key} />
                   <div className="p-4 sm:p-5">
-                    <h3 className="mb-1 font-serif text-lg text-foreground sm:text-xl">{value.label}</h3>
+                    <h3 className="mb-1 font-display text-lg text-foreground sm:text-xl">{value.label}</h3>
                     <p className="text-xs leading-relaxed text-muted-foreground/90 sm:text-sm">{value.description}</p>
                   </div>
                 </div>
@@ -635,7 +635,7 @@ export default function Home() {
                       New
                     </span>
                   </div>
-                  <h3 className="font-serif text-xl text-foreground">The MakersLounge Podcast</h3>
+                  <h3 className="font-display text-xl text-foreground">The MakersLounge Podcast</h3>
                   <p className="mt-1 text-sm text-muted-foreground">Stories from builders, creators, and makers shaping the future.</p>
                 </div>
               </div>
@@ -670,7 +670,7 @@ export default function Home() {
                       </span>
                     )}
                   </div>
-                  <h3 className="font-serif text-xl text-foreground">Stories from the maker community</h3>
+                  <h3 className="font-display text-xl text-foreground">Stories from the maker community</h3>
                   <p className="mt-1 text-sm text-muted-foreground">Insights, lessons, and recaps from Toronto&apos;s makers.</p>
                 </div>
               </div>

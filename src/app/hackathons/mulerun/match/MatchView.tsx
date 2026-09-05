@@ -134,7 +134,7 @@ export default function MatchView() {
               <span className="h-px w-8 bg-border" />
               <span>Mulerun matching</span>
             </div>
-            <h1 className="font-serif text-[clamp(2.5rem,7vw,5.5rem)] leading-[0.95] tracking-tight">
+            <h1 className="font-display text-[clamp(2.5rem,7vw,5.5rem)] leading-[0.95] tracking-tight">
               Team matching.
             </h1>
           </div>
@@ -167,7 +167,7 @@ export default function MatchView() {
           <div className="mb-3 flex items-center justify-between gap-4">
             <div className="flex items-baseline gap-3">
               <Users className="size-4 text-foreground" strokeWidth={1.8} />
-              <h2 className="font-serif text-xl tracking-tight sm:text-2xl">
+              <h2 className="font-display text-xl tracking-tight sm:text-2xl">
                 Signups
               </h2>
               <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -197,7 +197,7 @@ export default function MatchView() {
                   className="grid grid-cols-[1fr_auto] items-center gap-3 border-t border-border py-2.5 first:border-t-0 first:pt-0 last:pb-0"
                 >
                   <div className="flex min-w-0 flex-col">
-                    <span className="truncate font-serif text-lg leading-tight tracking-tight">
+                    <span className="truncate font-display text-lg leading-tight tracking-tight">
                       {s.name}
                     </span>
                     <span className="truncate text-xs text-muted-foreground">
@@ -245,7 +245,7 @@ export default function MatchView() {
         {matched && matched.teams.length > 0 && (
           <section>
             <div className="mb-3 flex items-baseline gap-3">
-              <h2 className="font-serif text-xl tracking-tight sm:text-2xl">
+              <h2 className="font-display text-xl tracking-tight sm:text-2xl">
                 Teams
               </h2>
               <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -273,7 +273,7 @@ export default function MatchView() {
                         key={m.id}
                         className="flex flex-col gap-1 border-t border-border pt-2 first:border-t-0 first:pt-0"
                       >
-                        <span className="font-serif text-2xl leading-tight tracking-tight">
+                        <span className="font-display text-2xl leading-tight tracking-tight">
                           {m.name}
                         </span>
                         <span className="text-xs text-muted-foreground">

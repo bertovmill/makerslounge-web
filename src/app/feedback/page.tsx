@@ -56,7 +56,7 @@ export default function FeedbackPage() {
     return (
       <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-serif font-bold mb-2">Access Denied</h1>
+          <h1 className="text-2xl font-display font-bold mb-2">Access Denied</h1>
           <p className="text-gray-600">You don&apos;t have permission to view this page.</p>
           <a href="/" className="text-blue-600 hover:underline mt-4 inline-block">
             Go home
@@ -69,7 +69,7 @@ export default function FeedbackPage() {
   return (
     <div className="min-h-screen bg-[#FAF9F6]">
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-serif font-bold mb-8">Feedback</h1>
+        <h1 className="text-3xl font-display font-bold mb-8">Feedback</h1>
 
         {feedback.length === 0 ? (
           <p className="text-gray-500">No feedback yet.</p>

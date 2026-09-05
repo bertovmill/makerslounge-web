@@ -73,7 +73,7 @@ export default function SignupForm({ categories }: { categories: Category[] }) {
             <span className="h-px w-8 bg-border" />
             <span>Mulerun</span>
           </div>
-          <h1 className="font-serif text-5xl leading-[0.95] tracking-tight">
+          <h1 className="font-display text-5xl leading-[0.95] tracking-tight">
             You&apos;re in,
             <br />
             {status.name}.
@@ -100,7 +100,7 @@ export default function SignupForm({ categories }: { categories: Category[] }) {
             <span className="h-px w-8 bg-border" />
             <span>Mulerun Hack Night</span>
           </div>
-          <h1 className="font-serif text-4xl leading-[0.95] tracking-tight sm:text-5xl">
+          <h1 className="font-display text-4xl leading-[0.95] tracking-tight sm:text-5xl">
             Find your team.
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -176,7 +176,7 @@ export default function SignupForm({ categories }: { categories: Category[] }) {
                     {isPicked && <Check className="size-3.5" strokeWidth={3} />}
                   </span>
                   <span className="flex flex-1 flex-col">
-                    <span className="font-serif text-lg leading-tight tracking-tight text-foreground">
+                    <span className="font-display text-lg leading-tight tracking-tight text-foreground">
                       {c.name}
                     </span>
                     <span className="text-xs text-muted-foreground">

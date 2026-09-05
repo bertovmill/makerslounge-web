@@ -93,7 +93,7 @@ export default function SlideWinners() {
       <div className="flex flex-col justify-center">
         {!loaded ? null : voteCount === 0 ? (
           <div className="flex flex-col gap-3">
-            <h2 className="font-serif text-[clamp(2.5rem,8vw,7rem)] leading-[0.9] tracking-tight">
+            <h2 className="font-display text-[clamp(2.5rem,8vw,7rem)] leading-[0.9] tracking-tight">
               No votes yet.
             </h2>
             <p className="max-w-[40ch] text-[clamp(0.95rem,1.3vw,1.2rem)] text-muted-foreground">
@@ -105,7 +105,7 @@ export default function SlideWinners() {
             <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
               And the winners are…
             </span>
-            <h2 className="font-serif text-[clamp(3rem,12vw,12rem)] leading-[0.88] tracking-tight">
+            <h2 className="font-display text-[clamp(3rem,12vw,12rem)] leading-[0.88] tracking-tight">
               Drumroll please.
             </h2>
             <p className="max-w-[50ch] text-[clamp(1rem,1.6vw,1.5rem)] text-muted-foreground">
@@ -138,7 +138,7 @@ export default function SlideWinners() {
                   >
                     {revealed ? (
                       <span
-                        className={`font-serif text-[clamp(1.6rem,2.6vw,2.6rem)] font-semibold leading-none ${medalTier[i].text}`}
+                        className={`font-display text-[clamp(1.6rem,2.6vw,2.6rem)] font-semibold leading-none ${medalTier[i].text}`}
                       >
                         {3 - i}
                       </span>
@@ -162,7 +162,7 @@ export default function SlideWinners() {
                     </span>
                     {revealed && r ? (
                       <>
-                        <span className="truncate font-serif text-[clamp(1.75rem,4.5vw,4.5rem)] leading-[0.95] tracking-tight">
+                        <span className="truncate font-display text-[clamp(1.75rem,4.5vw,4.5rem)] leading-[0.95] tracking-tight">
                           {r.team_name?.trim() || r.name}
                         </span>
                         {r.team_name?.trim() && (
@@ -177,7 +177,7 @@ export default function SlideWinners() {
                           </span>
                         )}
                         <span
-                          className={`max-w-[44ch] truncate font-serif text-[clamp(1rem,1.7vw,1.5rem)] leading-tight tracking-tight ${
+                          className={`max-w-[44ch] truncate font-display text-[clamp(1rem,1.7vw,1.5rem)] leading-tight tracking-tight ${
                             isFirst
                               ? "text-background/75"
                               : "text-muted-foreground"
@@ -187,7 +187,7 @@ export default function SlideWinners() {
                         </span>
                       </>
                     ) : (
-                      <span className="font-serif text-[clamp(1.75rem,4.5vw,4.5rem)] leading-[0.95] tracking-tight text-muted-foreground/40">
+                      <span className="font-display text-[clamp(1.75rem,4.5vw,4.5rem)] leading-[0.95] tracking-tight text-muted-foreground/40">
                         ▒▒▒▒▒▒▒▒▒
                       </span>
                     )}
@@ -200,7 +200,7 @@ export default function SlideWinners() {
                     {revealed && r ? (
                       <>
                         <span
-                          className={`font-serif text-[clamp(2rem,5vw,5rem)] leading-none tracking-tight ${
+                          className={`font-display text-[clamp(2rem,5vw,5rem)] leading-none tracking-tight ${
                             isFirst ? "text-background" : "text-foreground"
                           }`}
                         >
