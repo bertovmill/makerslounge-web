@@ -26,7 +26,9 @@ for (const v of VARIANTS) {
   if (only.length && !only.includes(v.id)) continue;
   mkdirSync(`${out}/${v.id}`, { recursive: true });
   const fx = effect(gpu, v.wgsl, {
-    set: { p: { time: 0, aspect: 1, seed: v.seed ?? 0, pad: 0, res: [SIZE, SIZE], pad2: [0, 0], c0: v.colors[0], c1: v.colors[1], c2: v.colors[2], c3: v.colors[3] } },
+    // No variant sets `seed` today (the WGSL uniform exists for future use), so the
+    // inferred type from variants.mjs lacks it and `next build`'s tsc pass failed here.
+    set: { p: { time: 0, aspect: 1, seed: (v as { seed?: number }).seed ?? 0, pad: 0, res: [SIZE, SIZE], pad2: [0, 0], c0: v.colors[0], c1: v.colors[1], c2: v.colors[2], c3: v.colors[3] } },
   });
   const started = Date.now();
   for (let i = 0; i < FRAMES; i++) {

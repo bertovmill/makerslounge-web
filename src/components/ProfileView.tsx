@@ -24,11 +24,15 @@ import {
   GraduationCap,
   MapPin,
   Sparkles,
+  Tag as TagIcon,
 } from "lucide-react";
 import PodcastPlayer from "@/components/PodcastPlayer";
 import { useAuth } from "@/context/AuthContext";
 import { fetchFeed } from "@/lib/feed-client";
 import { fetchProfileNotes } from "@/lib/profile-notes-client";
+import { fetchMyAnnotations, type ProfileAnnotation } from "@/lib/profile-annotations-client";
+import { collectTags } from "@/lib/profile-annotations";
+import { PersonAnnotationDialog } from "@/components/PersonAnnotation";
 import { startConversation, moderateUser } from "@/lib/messages-client";
 import { updateMyProfile } from "@/lib/profiles-client";
 import { uploadToBlob, profilePhotoPath } from "@/lib/upload-client";
@@ -305,6 +309,11 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
   const [eventNotes, setEventNotes] = useState<
     { id: string; meetup_name: string; notes: string | null; created_at: string }[]
   >([]);
+  // The viewer's private tags + note about this person, and every tag they've used
+  // anywhere (for suggestions in the editor).
+  const [annotation, setAnnotation] = useState<ProfileAnnotation | null>(null);
+  const [myTags, setMyTags] = useState<string[]>([]);
+  const [editingAnnotation, setEditingAnnotation] = useState(false);
   const [showEnrichPanel, setShowEnrichPanel] = useState(false);
   const [enrichText, setEnrichText] = useState("");
   const [enriching, setEnriching] = useState(false);
@@ -340,6 +349,14 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
     // boundary.
     fetchProfileNotes(profile.id).then(setEventNotes);
   }, [isAdmin, profile.id]);
+
+  useEffect(() => {
+    if (!user || isOwner) return;
+    fetchMyAnnotations().then((rows) => {
+      setAnnotation(rows.find((a) => a.profile_id === profile.id) ?? null);
+      setMyTags(collectTags(rows));
+    });
+  }, [user, isOwner, profile.id]);
 
   // Save a field to the database
   const saveField = async (field: string, value: unknown) => {
@@ -574,6 +591,13 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
               <MessageCircle className="w-4 h-4" />
               Message
             </button>
+            <button
+              onClick={() => setEditingAnnotation(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+            >
+              <TagIcon className="w-3.5 h-3.5" />
+              {annotation && (annotation.tags.length > 0 || annotation.note) ? "Edit tags" : "Add tag"}
+            </button>
             <div className="relative">
               <button
                 onClick={() => setShowMenu(!showMenu)}
@@ -607,6 +631,61 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
           </>
         ) : null}
       </div>
+
+      {/* Your private tags + note about this person */}
+      {!isOwner && user && annotation && (annotation.tags.length > 0 || annotation.note) && (
+        <div id="your-tags" className="-mt-4 mb-8 rounded-xl border border-dashed border-border p-4">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+              <TagIcon className="w-3 h-3" />
+              Your tags &amp; note
+              <span className="px-1.5 py-0.5 rounded text-[10px] bg-secondary text-muted-foreground font-medium normal-case tracking-normal">
+                Only you see this
+              </span>
+            </h2>
+            <button
+              onClick={() => setEditingAnnotation(true)}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Edit
+            </button>
+          </div>
+          {annotation.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {annotation.tags.map((tag) => (
+                <Link
+                  key={tag}
+                  href={`/people?tag=${encodeURIComponent(tag)}`}
+                  className="px-2.5 py-0.5 rounded-full border border-border text-xs text-foreground hover:border-foreground/40 transition-colors"
+                  title={`See everyone you tagged "${tag}"`}
+                >
+                  {tag}
+                </Link>
+              ))}
+            </div>
+          )}
+          {annotation.note && (
+            <p className={`text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap ${annotation.tags.length ? "mt-3" : ""}`}>
+              {annotation.note}
+            </p>
+          )}
+        </div>
+      )}
+
+      {!isOwner && user && (
+        <PersonAnnotationDialog
+          open={editingAnnotation}
+          onOpenChange={setEditingAnnotation}
+          profileId={profile.id}
+          personName={profile.name || "this maker"}
+          annotation={annotation}
+          suggestedTags={myTags}
+          onSaved={(saved) => {
+            setAnnotation(saved);
+            setMyTags((prev) => collectTags([...(saved ? [saved] : []), { tags: prev }]));
+          }}
+        />
+      )}
 
       {/* Report Modal */}
       {showReportModal && (
