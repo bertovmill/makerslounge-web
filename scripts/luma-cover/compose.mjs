@@ -115,7 +115,6 @@ const LAYOUTS = {
       <div class="num" style="font-size:380px;text-align:center"><span style="font-size:0.55em;font-weight:700;vertical-align:0.32em;margin-right:0.04em;opacity:0.85">#</span>${NUMBER}</div>
       <div style="display:flex;justify-content:space-between;align-items:flex-end">
         <div><div class="tag">Build. Connect. Create.</div>${dateLine("")}</div>
-        <div class="eyebrow">Maker Mondays</div>
       </div>
     </div>
   </div>`,

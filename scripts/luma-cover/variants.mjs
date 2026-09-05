@@ -223,7 +223,9 @@ export const VARIANTS = [
     layout: "card",
     wgsl: HEADER + /* wgsl */ `
       fn fluid(uv: vec2f, t: f32, detail: f32) -> vec3f {
-        let off = loopv(t, 0.45);
+        // Small orbit: the colour should drift, not swirl. Render this one
+        // with FRAMES=60 FPS=15 for a 4 s loop.
+        let off = loopv(t, 0.2);
         let n1 = fbm(uv * 2.2 * detail + off);
         let n2 = fbm(uv * 3.1 * detail - off.yx + 5.0);
         var col = mix(p.c0.rgb, p.c1.rgb, smoothstep(0.25, 0.75, n1));
