@@ -2,7 +2,7 @@
 // See ./schema.ts for provenance and how to regenerate.
 
 import { relations } from "drizzle-orm/relations";
-import { profiles, talks, talkContent, blogPosts, connections, meetups, events, applications, blockedUsers, broadcastAccounts, broadcastChannels, projects, communityContacts, contentEvents, conversations, feedback, comments, hackathonSubmissions, hackathonScores, homeVisions, identities, matcherContacts, matcherEvents, messages, mulerunDemos, mulerunVotes, podcasts, podcastGuests, profileEventNotes, reports, scheduledPosts, socialConnections, valuePortfolio, likes } from "./schema";
+import { profiles, talks, talkContent, blogPosts, connections, meetups, events, applications, blockedUsers, broadcastAccounts, broadcastChannels, projects, communityContacts, contentEvents, conversations, feedback, comments, hackathonSubmissions, hackathonScores, homeVisions, identities, matcherContacts, matcherEvents, messages, mulerunDemos, mulerunVotes, podcasts, podcastGuests, profileEventNotes, profileAnnotations, reports, scheduledPosts, socialConnections, valuePortfolio, likes } from "./schema";
 
 export const talksRelations = relations(talks, ({one, many}) => ({
 	profiles: one(profiles, {
@@ -52,6 +52,12 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 	podcastGuestss: many(podcastGuests),
 	profileEventNotess_createdBy: many(profileEventNotes, {
 		relationName: "profileEventNotes_createdBy_profiles_id"
+	}),
+	profileAnnotations_ownerId: many(profileAnnotations, {
+		relationName: "profileAnnotations_ownerId_profiles_id"
+	}),
+	profileAnnotations_profileId: many(profileAnnotations, {
+		relationName: "profileAnnotations_profileId_profiles_id"
 	}),
 	profileEventNotess_profileId: many(profileEventNotes, {
 		relationName: "profileEventNotes_profileId_profiles_id"
@@ -314,6 +320,19 @@ export const profileEventNotesRelations = relations(profileEventNotes, ({one}) =
 		fields: [profileEventNotes.profileId],
 		references: [profiles.id],
 		relationName: "profileEventNotes_profileId_profiles_id"
+	}),
+}));
+
+export const profileAnnotationsRelations = relations(profileAnnotations, ({one}) => ({
+	profiles_ownerId: one(profiles, {
+		fields: [profileAnnotations.ownerId],
+		references: [profiles.id],
+		relationName: "profileAnnotations_ownerId_profiles_id"
+	}),
+	profiles_profileId: one(profiles, {
+		fields: [profileAnnotations.profileId],
+		references: [profiles.id],
+		relationName: "profileAnnotations_profileId_profiles_id"
 	}),
 }));
 
