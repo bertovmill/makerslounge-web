@@ -75,7 +75,7 @@ export default function Countdown() {
             {label}
           </span>
         </div>
-        <p className="font-serif text-[clamp(3rem,10vw,9rem)] leading-[0.95] tracking-tight">
+        <p className="font-display text-[clamp(3rem,10vw,9rem)] leading-[0.95] tracking-tight">
           Demos are running.
         </p>
       </div>
@@ -88,7 +88,7 @@ export default function Countdown() {
         <span className="font-mono text-sm uppercase tracking-[0.18em] text-muted-foreground">
           The week of May 26
         </span>
-        <p className="font-serif text-[clamp(3rem,10vw,9rem)] leading-[0.95] tracking-tight">
+        <p className="font-display text-[clamp(3rem,10vw,9rem)] leading-[0.95] tracking-tight">
           That's a wrap.
         </p>
       </div>

@@ -12,6 +12,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-figtree);
   --font-serif: var(--font-instrument-serif);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -240,16 +241,25 @@ body::after {
   body::after { display: none; }
 }
 
-/* Headings use Instrument Serif — larger, tighter, more editorial.
-   Reference --font-instrument-serif directly rather than the @theme-derived
-   --font-serif: the next/font variable class sits on <body>, so --font-serif
-   resolves empty at :root and silently invalidates the whole declaration. */
+/* Headings use Figtree — a warm, open grotesk set heavy and tight. The
+   next/font variable classes live on <html> (not <body>) so the @theme-derived
+   --font-display resolves at :root; keep them there, or this declaration
+   silently invalidates and headings fall back to Geist Sans. */
 h1, h2, h3 {
-  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-family: var(--font-display), system-ui, sans-serif;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+/* The Eve workshop is a walled garden and keeps the serif headings it shipped
+   with; the Figtree swap above is for the rest of the site. */
+body:has(.eve-workshop) :is(h1, h2, h3) {
+  font-family: var(--font-serif), Georgia, serif;
   letter-spacing: -0.02em;
   font-weight: 400;
   line-height: 1.1;
-  text-wrap: balance;
 }
 
 /* Small caps label — the editorial counterweight to the big serif */

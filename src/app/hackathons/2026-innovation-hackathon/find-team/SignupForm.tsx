@@ -68,7 +68,7 @@ export default function SignupForm() {
           <span className="h-px w-8 bg-border" />
           <span>2026 Innovation Hackathon</span>
         </div>
-        <h2 className="font-serif text-3xl leading-tight tracking-tight">
+        <h2 className="font-display text-3xl leading-tight tracking-tight">
           You&apos;re in, {status.name}.
         </h2>
         <p className="text-sm text-muted-foreground">

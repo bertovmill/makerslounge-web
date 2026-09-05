@@ -76,7 +76,7 @@ function StatRow({
     <div className="grid grid-cols-3 border-t border-border pt-5">
       {items.map((s) => (
         <div key={s.label} className="flex flex-col gap-1.5">
-          <span className="font-serif text-[clamp(1.75rem,4vw,4rem)] leading-none tracking-tight">
+          <span className="font-display text-[clamp(1.75rem,4vw,4rem)] leading-none tracking-tight">
             {s.value}
           </span>
           <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -126,7 +126,7 @@ function SlideTitle() {
       </div>
       <div className="my-auto grid items-center gap-[clamp(1.5rem,4vw,4rem)] lg:grid-cols-[minmax(0,1fr)_auto]">
         <div>
-          <h1 className="font-serif text-[clamp(3rem,12vw,11rem)] leading-[0.92] tracking-tight">
+          <h1 className="font-display text-[clamp(3rem,12vw,11rem)] leading-[0.92] tracking-tight">
             AI Hackathon
             <br />
             Night.
@@ -204,7 +204,7 @@ function SlideAbout() {
       <Eyebrow n={1} label="About" />
       <div className="flex flex-col justify-center gap-[clamp(1.25rem,3vh,2.5rem)]">
         <div className="flex flex-col gap-3">
-          <h2 className="max-w-[20ch] font-serif text-[clamp(2.5rem,7.5vw,7rem)] leading-[0.92] tracking-tight">
+          <h2 className="max-w-[20ch] font-display text-[clamp(2.5rem,7.5vw,7rem)] leading-[0.92] tracking-tight">
             What is Makers&apos; Lounge?
           </h2>
           <p className="max-w-[60ch] text-[clamp(1rem,1.5vw,1.4rem)] text-muted-foreground">
@@ -220,7 +220,7 @@ function SlideAbout() {
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 {c.tag}
               </span>
-              <h3 className="font-serif text-[clamp(1.15rem,1.8vw,1.6rem)] leading-tight tracking-tight">
+              <h3 className="font-display text-[clamp(1.15rem,1.8vw,1.6rem)] leading-tight tracking-tight">
                 {c.name}
               </h3>
               <p className="text-sm leading-relaxed text-muted-foreground">
@@ -244,7 +244,7 @@ function SlideSchedule() {
     <div className="grid h-full grid-rows-[auto_1fr]">
       <Eyebrow n={2} label="Schedule" />
       <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
-        <h2 className="font-serif text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] tracking-tight">
+        <h2 className="font-display text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] tracking-tight">
           Tonight at a glance.
         </h2>
         <ul className="flex flex-col">
@@ -256,7 +256,7 @@ function SlideSchedule() {
               <span className="font-mono text-[clamp(0.85rem,1.4vw,1.1rem)] tabular-nums text-foreground">
                 {row.time}
               </span>
-              <span className="font-serif text-[clamp(1.25rem,2.5vw,2.25rem)] tracking-tight">
+              <span className="font-display text-[clamp(1.25rem,2.5vw,2.25rem)] tracking-tight">
                 {row.label}
               </span>
               <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -324,7 +324,7 @@ function SlideUseCases() {
       <Eyebrow n={4} label="Good for" />
       <div className="flex flex-col justify-center gap-[clamp(1rem,2.5vh,2rem)]">
         <div className="flex flex-col gap-3">
-          <h2 className="max-w-[22ch] font-serif text-[clamp(2.25rem,6vw,5.5rem)] leading-[0.95] tracking-tight">
+          <h2 className="max-w-[22ch] font-display text-[clamp(2.25rem,6vw,5.5rem)] leading-[0.95] tracking-tight">
             What you can build.
           </h2>
           <p className="max-w-[50ch] text-[clamp(0.95rem,1.3vw,1.2rem)] text-muted-foreground">
@@ -338,7 +338,7 @@ function SlideUseCases() {
               className="flex flex-col gap-2.5 rounded-lg border border-border bg-card/30 p-3 transition-colors hover:border-foreground/40 hover:bg-card/60 sm:p-4"
             >
               <g.Icon className="size-5 text-foreground" strokeWidth={1.5} />
-              <h3 className="font-serif text-[clamp(1.15rem,1.8vw,1.6rem)] leading-tight tracking-tight">
+              <h3 className="font-display text-[clamp(1.15rem,1.8vw,1.6rem)] leading-tight tracking-tight">
                 {g.name}
               </h3>
               <div className="mt-auto flex flex-wrap gap-1.5">
@@ -374,7 +374,7 @@ function SlideTeams() {
       <div className="grid items-center gap-[clamp(1.5rem,4vw,4rem)] lg:grid-cols-[minmax(0,1fr)_auto]">
         <div className="flex flex-col gap-[clamp(1.25rem,3vh,2.5rem)]">
           <div className="flex flex-col gap-3">
-            <h2 className="max-w-[18ch] font-serif text-[clamp(2.25rem,7vw,6rem)] leading-[0.95] tracking-tight">
+            <h2 className="max-w-[18ch] font-display text-[clamp(2.25rem,7vw,6rem)] leading-[0.95] tracking-tight">
               Scan to find your team.
             </h2>
             <p className="max-w-[40ch] text-[clamp(0.95rem,1.3vw,1.2rem)] text-muted-foreground">
@@ -390,7 +390,7 @@ function SlideTeams() {
                 <span className="font-mono text-xs uppercase tracking-[0.18em] text-foreground">
                   {s.tag}
                 </span>
-                <span className="font-serif text-[clamp(1.1rem,2vw,1.6rem)] leading-tight tracking-tight">
+                <span className="font-display text-[clamp(1.1rem,2vw,1.6rem)] leading-tight tracking-tight">
                   {s.body}
                 </span>
               </li>
@@ -436,7 +436,7 @@ function SlidePrizes() {
     <div className="grid h-full grid-rows-[auto_1fr]">
       <Eyebrow n={6} label="Prizes" />
       <div className="flex flex-col justify-center gap-[clamp(1.25rem,3vh,2.5rem)]">
-        <h2 className="font-serif text-[clamp(3rem,10vw,9rem)] leading-[0.9] tracking-tight">
+        <h2 className="font-display text-[clamp(3rem,10vw,9rem)] leading-[0.9] tracking-tight">
           What you can win.
         </h2>
         <ul className="flex flex-col gap-2">
@@ -448,7 +448,7 @@ function SlidePrizes() {
               <span className="font-mono text-xs uppercase tracking-[0.18em] text-foreground">
                 {p.place}
               </span>
-              <span className="font-serif text-[clamp(1.25rem,2.5vw,2rem)] tracking-tight">
+              <span className="font-display text-[clamp(1.25rem,2.5vw,2rem)] tracking-tight">
                 {p.detail}
               </span>
             </li>
@@ -491,7 +491,7 @@ function SlideJudging() {
       <Eyebrow n={7} label="Judging" />
       <div className="flex flex-col justify-center gap-[clamp(1.25rem,3vh,2.25rem)]">
         <div className="flex flex-col gap-3">
-          <h2 className="max-w-[22ch] font-serif text-[clamp(2.25rem,6.5vw,5.5rem)] leading-[0.95] tracking-tight">
+          <h2 className="max-w-[22ch] font-display text-[clamp(2.25rem,6.5vw,5.5rem)] leading-[0.95] tracking-tight">
             Pitch a workflow.
           </h2>
           <p className="max-w-[60ch] text-[clamp(0.95rem,1.3vw,1.2rem)] text-muted-foreground">
@@ -516,7 +516,7 @@ function SlideJudging() {
               <span className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 {c.tag}
               </span>
-              <h3 className="font-serif text-[clamp(1.15rem,1.8vw,1.6rem)] leading-tight tracking-tight">
+              <h3 className="font-display text-[clamp(1.15rem,1.8vw,1.6rem)] leading-tight tracking-tight">
                 {c.title}
               </h3>
               <p className="text-sm leading-relaxed text-muted-foreground">
@@ -536,7 +536,7 @@ function SlideDemos() {
       <Eyebrow n={8} label="Demos" />
       <div className="grid min-h-0 items-center gap-[clamp(1.5rem,4vw,4rem)] lg:grid-cols-[minmax(0,1fr)_auto]">
         <div className="flex flex-col gap-[clamp(1rem,2.5vh,2rem)]">
-          <h2 className="font-serif text-[clamp(3rem,10vw,10rem)] leading-[0.9] tracking-tight">
+          <h2 className="font-display text-[clamp(3rem,10vw,10rem)] leading-[0.9] tracking-tight">
             Demo time.
           </h2>
           <p className="max-w-[40ch] text-[clamp(1.05rem,1.6vw,1.5rem)] text-muted-foreground">
@@ -602,7 +602,7 @@ function SlideLogistics() {
     <div className="grid h-full grid-rows-[auto_1fr] gap-[clamp(1rem,3vh,2rem)]">
       <Eyebrow n={3} label="House rules" />
       <div className="flex flex-col justify-center gap-[clamp(1.25rem,3.5vh,2.5rem)]">
-        <h2 className="max-w-[20ch] font-serif text-[clamp(2.25rem,6vw,5.5rem)] leading-[0.95] tracking-tight">
+        <h2 className="max-w-[20ch] font-display text-[clamp(2.25rem,6vw,5.5rem)] leading-[0.95] tracking-tight">
           A few quick house rules.
         </h2>
         <ul className="grid gap-[clamp(0.75rem,1.5vw,1.25rem)] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -658,7 +658,7 @@ function SlidePartners() {
     <div className="grid h-full grid-rows-[auto_1fr]">
       <Eyebrow n={11} label="Thank you" />
       <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
-        <h2 className="max-w-[22ch] font-serif text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] tracking-tight">
+        <h2 className="max-w-[22ch] font-display text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] tracking-tight">
           Tonight is made possible by our partners.
         </h2>
         <div className="grid gap-[clamp(1.5rem,4vh,3rem)] md:grid-cols-2">
@@ -679,7 +679,7 @@ function SlidePartners() {
                   className={p.logoClass}
                 />
               </div>
-              <h3 className="font-serif text-[clamp(1.5rem,3vw,2.25rem)] leading-tight tracking-tight">
+              <h3 className="font-display text-[clamp(1.5rem,3vw,2.25rem)] leading-tight tracking-tight">
                 {p.name}
               </h3>
             </div>
@@ -703,7 +703,7 @@ function SlideNextHackathon() {
             <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
               Toronto Tech Week
             </span>
-            <h2 className="max-w-[16ch] font-serif text-[clamp(2.5rem,8vw,7rem)] leading-[0.92] tracking-tight">
+            <h2 className="max-w-[16ch] font-display text-[clamp(2.5rem,8vw,7rem)] leading-[0.92] tracking-tight">
               See you at the next one.
             </h2>
             <p className="max-w-[42ch] text-[clamp(1rem,1.5vw,1.4rem)] text-muted-foreground">
@@ -765,7 +765,7 @@ function SlideBuild() {
     <div className="grid h-full grid-rows-[auto_1fr_auto]">
       <Eyebrow n={12} label="Go" />
       <div className="flex flex-col justify-center gap-[clamp(1.5rem,4vh,3rem)]">
-        <h2 className="max-w-[14ch] font-serif text-[clamp(3.5rem,14vw,14rem)] leading-[0.9] tracking-tight">
+        <h2 className="max-w-[14ch] font-display text-[clamp(3.5rem,14vw,14rem)] leading-[0.9] tracking-tight">
           Let&apos;s build.
         </h2>
         <p className="max-w-[55ch] text-[clamp(1rem,1.6vw,1.5rem)] text-muted-foreground">

@@ -155,7 +155,7 @@ export default function ProjectModal({
           </svg>
         </button>
 
-        <h2 className="text-2xl font-serif font-bold mb-6">
+        <h2 className="text-2xl font-display font-bold mb-6">
           {isEditing ? "Edit Project" : "New Project"}
         </h2>
 

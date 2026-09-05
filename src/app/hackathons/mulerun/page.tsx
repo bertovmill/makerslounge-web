@@ -46,7 +46,7 @@ export default function MulerunHackathonPage() {
           <span>MuleRun × MakersLounge</span>
         </div>
 
-        <h1 className="mt-[clamp(1rem,2.5vh,2rem)] font-serif text-[clamp(2.75rem,9vw,7.5rem)] leading-[0.92] tracking-tight">
+        <h1 className="mt-[clamp(1rem,2.5vh,2rem)] font-display text-[clamp(2.75rem,9vw,7.5rem)] leading-[0.92] tracking-tight">
           AI Hackathon
           <br />
           Night with
@@ -67,7 +67,7 @@ export default function MulerunHackathonPage() {
 
         <section className="mt-[clamp(3rem,7vh,5rem)] flex flex-col gap-[clamp(1.5rem,4vh,3rem)]">
           <Eyebrow n={1} label="What" />
-          <h2 className="max-w-[22ch] font-serif text-[clamp(2rem,6vw,5rem)] leading-[0.95] tracking-tight">
+          <h2 className="max-w-[22ch] font-display text-[clamp(2rem,6vw,5rem)] leading-[0.95] tracking-tight">
             Design, build, and pitch an AI agent — in one night.
           </h2>
           <p className="max-w-[60ch] text-base leading-relaxed text-muted-foreground sm:text-lg">
@@ -88,7 +88,7 @@ export default function MulerunHackathonPage() {
 
         <section className="mt-[clamp(3rem,7vh,5rem)] flex flex-col gap-[clamp(1.5rem,4vh,3rem)]">
           <Eyebrow n={2} label="Schedule" />
-          <h2 className="font-serif text-[clamp(2rem,6vw,5rem)] leading-[0.95] tracking-tight">
+          <h2 className="font-display text-[clamp(2rem,6vw,5rem)] leading-[0.95] tracking-tight">
             Thursday May 14.
           </h2>
           <ul className="flex flex-col">
@@ -104,7 +104,7 @@ export default function MulerunHackathonPage() {
                 <span className="font-mono text-[clamp(0.85rem,1.4vw,1.1rem)] tabular-nums text-foreground">
                   {row.time}
                 </span>
-                <span className="font-serif text-[clamp(1.25rem,2.5vw,2rem)] tracking-tight">
+                <span className="font-display text-[clamp(1.25rem,2.5vw,2rem)] tracking-tight">
                   {row.label}
                 </span>
                 <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -142,7 +142,7 @@ export default function MulerunHackathonPage() {
                 <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
                   {item.tag}
                 </span>
-                <h3 className="font-serif text-[clamp(1.5rem,3vw,2.25rem)] leading-tight tracking-tight">
+                <h3 className="font-display text-[clamp(1.5rem,3vw,2.25rem)] leading-tight tracking-tight">
                   {item.title}
                 </h3>
                 <p className="max-w-[36ch] text-sm leading-relaxed text-muted-foreground sm:text-base">
@@ -155,7 +155,7 @@ export default function MulerunHackathonPage() {
 
         <section className="mt-[clamp(3rem,7vh,5rem)] flex flex-col gap-[clamp(1.5rem,4vh,3rem)]">
           <Eyebrow n={4} label="Partners" />
-          <h2 className="max-w-[24ch] font-serif text-[clamp(2rem,6vw,5rem)] leading-[0.95] tracking-tight">
+          <h2 className="max-w-[24ch] font-display text-[clamp(2rem,6vw,5rem)] leading-[0.95] tracking-tight">
             Brought to you with Aucctus AI and Disruptive Edge.
           </h2>
           <p className="max-w-[60ch] text-base leading-relaxed text-muted-foreground sm:text-lg">
@@ -173,7 +173,7 @@ export default function MulerunHackathonPage() {
             ].map((row) => (
               <li
                 key={row.label}
-                className="border-t border-border py-[clamp(0.65rem,1.6vh,1rem)] font-serif text-[clamp(1.1rem,2vw,1.5rem)] tracking-tight last:border-b"
+                className="border-t border-border py-[clamp(0.65rem,1.6vh,1rem)] font-display text-[clamp(1.1rem,2vw,1.5rem)] tracking-tight last:border-b"
               >
                 {row.label}
               </li>
@@ -183,7 +183,7 @@ export default function MulerunHackathonPage() {
 
         <section className="mt-[clamp(3rem,7vh,5rem)] flex flex-col gap-[clamp(1.5rem,4vh,3rem)] border-t border-border pt-[clamp(2rem,5vh,3.5rem)]">
           <Eyebrow n={6} label="Register" />
-          <h2 className="max-w-[18ch] font-serif text-[clamp(2.5rem,8vw,7rem)] leading-[0.92] tracking-tight">
+          <h2 className="max-w-[18ch] font-display text-[clamp(2.5rem,8vw,7rem)] leading-[0.92] tracking-tight">
             See you Thursday.
           </h2>
           {LUMA_URL ? (
@@ -222,7 +222,7 @@ function Fact({ label, value }: { label: string; value: string }) {
       <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </span>
-      <span className="font-serif text-[clamp(1.1rem,1.8vw,1.5rem)] leading-tight tracking-tight">
+      <span className="font-display text-[clamp(1.1rem,1.8vw,1.5rem)] leading-tight tracking-tight">
         {value}
       </span>
     </div>

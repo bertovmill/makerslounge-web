@@ -14,7 +14,7 @@ export default function SubmitPage() {
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
             2026 Innovation Hackathon
           </p>
-          <h1 className="font-serif text-[clamp(2.5rem,8vw,5rem)] leading-[0.95] tracking-tight">
+          <h1 className="font-display text-[clamp(2.5rem,8vw,5rem)] leading-[0.95] tracking-tight">
             Submit your project.
           </h1>
           <p className="max-w-[55ch] text-base leading-relaxed text-muted-foreground sm:text-lg">

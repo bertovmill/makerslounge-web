@@ -492,7 +492,7 @@ export default function BrandPage() {
               { tagline: "Where builders connect", context: "Tertiary — short-form, ads" },
             ].map((t) => (
               <Card key={t.tagline} className="p-6 text-center">
-                <p className="font-serif text-2xl mb-2">&ldquo;{t.tagline}&rdquo;</p>
+                <p className="font-display text-2xl mb-2">&ldquo;{t.tagline}&rdquo;</p>
                 <p className="text-xs text-muted-foreground">{t.context}</p>
               </Card>
             ))}
@@ -860,12 +860,12 @@ export default function BrandPage() {
                   <p className="text-sm text-muted-foreground mt-1">
                     Used sparingly for elegant editorial headlines, hero sections, and premium moments.
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2 font-mono">var(--font-serif)</p>
+                  <p className="text-xs text-muted-foreground mt-2 font-mono">var(--font-display)</p>
                 </div>
                 <div className="md:w-2/3 space-y-3">
-                  <p className="font-serif text-5xl">The quick brown fox</p>
-                  <p className="font-serif text-3xl italic">jumps over the lazy dog</p>
-                  <p className="font-serif text-xl">We help makers in their building journey</p>
+                  <p className="font-display text-5xl">The quick brown fox</p>
+                  <p className="font-display text-3xl italic">jumps over the lazy dog</p>
+                  <p className="font-display text-xl">We help makers in their building journey</p>
                 </div>
               </div>
             </Card>

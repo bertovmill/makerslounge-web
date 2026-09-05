@@ -54,7 +54,7 @@ export default function RubricPage() {
           <span>Judging</span>
         </div>
 
-        <h1 className="mt-4 font-serif text-[clamp(2.5rem,9vw,4.5rem)] leading-[0.95] tracking-tight">
+        <h1 className="mt-4 font-display text-[clamp(2.5rem,9vw,4.5rem)] leading-[0.95] tracking-tight">
           Pitch a workflow.
         </h1>
 
@@ -82,7 +82,7 @@ export default function RubricPage() {
               <span className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 {c.tag}
               </span>
-              <h3 className="font-serif text-xl leading-tight tracking-tight">
+              <h3 className="font-display text-xl leading-tight tracking-tight">
                 {c.title}
               </h3>
               <p className="text-sm leading-relaxed text-muted-foreground">

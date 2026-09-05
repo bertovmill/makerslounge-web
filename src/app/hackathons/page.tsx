@@ -57,7 +57,7 @@ export default function HackathonsPage() {
           <span>Hackathons</span>
         </div>
 
-        <h1 className="font-serif text-[clamp(3rem,10vw,8rem)] leading-[0.92] tracking-tight">
+        <h1 className="font-display text-[clamp(3rem,10vw,8rem)] leading-[0.92] tracking-tight">
           Hackathons.
         </h1>
         <p className="mt-[clamp(1rem,2.5vh,1.75rem)] max-w-[55ch] text-[clamp(1rem,1.4vw,1.35rem)] text-muted-foreground">
@@ -114,7 +114,7 @@ function HackathonRow({ entry }: { entry: HackathonEntry }) {
       {/* Main row */}
       <div className="grid grid-cols-1 items-baseline gap-2 py-[clamp(1.25rem,3vh,2rem)] sm:grid-cols-[1fr_auto] sm:gap-8">
         <Link href={entry.href} className="group flex flex-col gap-2">
-          <h3 className="font-serif text-[clamp(1.75rem,4vw,3rem)] leading-tight tracking-tight transition-opacity group-hover:opacity-70">
+          <h3 className="font-display text-[clamp(1.75rem,4vw,3rem)] leading-tight tracking-tight transition-opacity group-hover:opacity-70">
             {entry.title}
           </h3>
           <p className="max-w-[50ch] text-sm leading-relaxed text-muted-foreground sm:text-base">

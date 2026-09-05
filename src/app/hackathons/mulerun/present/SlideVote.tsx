@@ -57,10 +57,10 @@ export default function SlideVote() {
           <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
             Vote
           </span>
-          <h2 className="font-serif text-[clamp(2.75rem,9vw,9rem)] leading-[0.9] tracking-tight">
+          <h2 className="font-display text-[clamp(2.75rem,9vw,9rem)] leading-[0.9] tracking-tight">
             Pick your top 3 demos.
           </h2>
-          <p className="max-w-[36ch] font-serif text-[clamp(1.25rem,2.4vw,2.25rem)] leading-tight tracking-tight text-muted-foreground">
+          <p className="max-w-[36ch] font-display text-[clamp(1.25rem,2.4vw,2.25rem)] leading-tight tracking-tight text-muted-foreground">
             1st choice = 3 pts. 2nd = 2 pts. 3rd = 1 pt.
           </p>
           <ul className="mt-2 flex flex-col gap-1.5 font-mono text-[clamp(0.7rem,0.9vw,0.9rem)] uppercase tracking-[0.18em] text-muted-foreground">
@@ -92,7 +92,7 @@ export default function SlideVote() {
 
       <div className="flex items-baseline justify-between border-t border-border pt-4 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
         <span>Live count</span>
-        <span className="font-serif text-[clamp(2rem,5vw,4rem)] leading-none tracking-tight text-foreground">
+        <span className="font-display text-[clamp(2rem,5vw,4rem)] leading-none tracking-tight text-foreground">
           {voteCount}
           <span className="ml-2 align-baseline font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
             in

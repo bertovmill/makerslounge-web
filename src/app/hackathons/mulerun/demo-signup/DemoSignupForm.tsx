@@ -62,7 +62,7 @@ export default function DemoSignupForm() {
             <span className="h-px w-8 bg-border" />
             <span>Mulerun</span>
           </div>
-          <h1 className="font-serif text-5xl leading-[0.95] tracking-tight">
+          <h1 className="font-display text-5xl leading-[0.95] tracking-tight">
             You&apos;re in,
             <br />
             {status.name}.
@@ -89,7 +89,7 @@ export default function DemoSignupForm() {
             <span className="h-px w-8 bg-border" />
             <span>Mulerun demo</span>
           </div>
-          <h1 className="font-serif text-4xl leading-[0.95] tracking-tight sm:text-5xl">
+          <h1 className="font-display text-4xl leading-[0.95] tracking-tight sm:text-5xl">
             Throw your hat in.
           </h1>
           <p className="text-sm text-muted-foreground">

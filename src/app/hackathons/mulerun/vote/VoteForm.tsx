@@ -134,7 +134,7 @@ export default function VoteForm() {
             <span className="h-px w-8 bg-border" />
             <span>Mulerun vote</span>
           </div>
-          <h1 className="font-serif text-5xl leading-[0.95] tracking-tight">
+          <h1 className="font-display text-5xl leading-[0.95] tracking-tight">
             Vote in.
           </h1>
           <p className="text-base text-muted-foreground">
@@ -167,7 +167,7 @@ export default function VoteForm() {
             <span className="h-px w-8 bg-border" />
             <span>Mulerun top 3</span>
           </div>
-          <h1 className="font-serif text-4xl leading-[0.95] tracking-tight sm:text-5xl">
+          <h1 className="font-display text-4xl leading-[0.95] tracking-tight sm:text-5xl">
             Pick your top 3.
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -190,7 +190,7 @@ export default function VoteForm() {
                 <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                   {label}
                 </span>
-                <span className="line-clamp-2 font-serif text-sm leading-tight tracking-tight">
+                <span className="line-clamp-2 font-display text-sm leading-tight tracking-tight">
                   {demo ? demo.team_name?.trim() || demo.name : "—"}
                 </span>
               </div>
@@ -230,7 +230,7 @@ export default function VoteForm() {
                       {picked ? rank : ""}
                     </span>
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span className="font-serif text-lg leading-tight tracking-tight">
+                      <span className="font-display text-lg leading-tight tracking-tight">
                         {d.team_name?.trim() || d.name}
                       </span>
                       {d.team_name?.trim() && (
