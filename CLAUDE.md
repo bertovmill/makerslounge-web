@@ -234,6 +234,18 @@ never reach production.
 - **Social posting**: Captions go out on LinkedIn, X, and Instagram — hype & energetic tone, include Luma RSVP link
 - **Hashtags**: #MakerMondays #Makerslounge #BuildInPublic #AI #TorontoTech #Startups #Community
 
+### Luma covers (`scripts/luma-cover/`)
+- **Generated, not drawn.** `render-frames.mts` paints a square backdrop per
+  variant with vgpu (headless, Dawn on Metal), `compose.mjs` lays Figtree type
+  and the logo over each frame in headless Chrome, then ffmpeg makes a
+  1080 PNG still and a 640 GIF loop. Variants (shader + palette + layout) live
+  in `variants.mjs`; `time` is a loop phase in [0, 1) and every animated term
+  goes through `TAU * time`, which is what makes the GIFs seamless.
+- Run: `OUT=/tmp/f FRAMES=36 node --experimental-strip-types --no-warnings scripts/luma-cover/render-frames.mts`
+  then `FRAMES_DIR=/tmp/f OUT=branding/luma-covers/meetup-N NUMBER=N DATE="..." node scripts/luma-cover/compose.mjs`.
+- Outputs are committed under `branding/luma-covers/<event>/`. Meetup 13's
+  nine variants are the first set.
+
 ### Toronto Tech Week (May 25–29, 2026)
 - **Makerslounge event**: "Build in Public - Toronto Edition" — May 28 at 6:00 PM
 - **Listed alongside**: Robinhood, Spotify, Carta, Vector Institute, Scale AI, Google Developers Group, and others
