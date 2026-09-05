@@ -6,13 +6,14 @@ import Image from "next/image";
 import { fetchPosts } from "@/lib/blog-list-client";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
-import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, Instagram, Linkedin, Menu, X, Mic, Play, ExternalLink, BookOpen } from "lucide-react";
+import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, Instagram, Linkedin, Menu, X, Mic, Play, BookOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { AnimatedLogo } from "@/components/AnimatedLogo";
-import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 import NewsletterPopup, { OPEN_NEWSLETTER_EVENT } from "@/components/NewsletterPopup";
-import { Arc, Constellation, Eyebrow } from "@/components/Motif";
+import { Constellation, Eyebrow } from "@/components/Motif";
+import { HeroField } from "@/components/landing/HeroField";
+import { ValueArt, type ValueKey } from "@/components/landing/ValueArt";
 
 const openNewsletterPopup = () => {
   window.dispatchEvent(new CustomEvent(OPEN_NEWSLETTER_EVENT));
@@ -34,6 +35,13 @@ interface ActionCategory {
   question: string;
   subs: ActionSub[];
 }
+
+const VALUES: { key: ValueKey; label: string; description: string }[] = [
+  { key: "hustle", label: "Hustle", description: "We ship fast, iterate often, and never stop building." },
+  { key: "learning", label: "Learning", description: "Every maker is a student. We grow by sharing knowledge." },
+  { key: "community", label: "Community", description: "We lift each other up. Your win is our win." },
+  { key: "fun", label: "Fun", description: "Building should be exciting. We celebrate the joy of creating." },
+];
 
 const ACTION_TREE: ActionCategory[] = [
   {
@@ -236,12 +244,6 @@ export default function Home() {
       {/* Background: flat colour blocks and arcs — no blur, no gradients.
           Grain comes from the global body overlay. */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        {/* The oversized "sun" behind the hero */}
-        <Arc
-          tone="sun"
-          size="min(44rem, 118vw)"
-          className="left-1/2 top-[-10%] -translate-x-1/2"
-        />
         <Constellation tone="core" className="opacity-35 dark:opacity-55" />
       </div>
 
@@ -380,309 +382,308 @@ export default function Home() {
       )}
 
       {/* Hero */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pb-4 sm:pb-8">
-        {/* Animated logo above title */}
-        <AnimatedLogo className="relative w-14 h-14 sm:w-20 sm:h-20 mb-5 sm:mb-6" />
+      <main className="relative z-10 flex-1 flex flex-col">
+        <section id="hero" className="relative flex min-h-[72svh] flex-col items-center justify-center px-4 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-12">
+          {/* The sun: a WebGPU field when the browser can, a flat arc when it can't. */}
+          <HeroField className="-top-[12%] -bottom-[6%]" />
 
-        <Eyebrow className="relative mb-4">Build · Connect · Create</Eyebrow>
+          <div className="relative flex flex-col items-center">
+            <AnimatedLogo className="relative mb-5 h-14 w-14 sm:mb-6 sm:h-20 sm:w-20" />
 
-        <h1 className="relative text-5xl sm:text-7xl md:text-8xl tracking-[-0.03em] mb-4 sm:mb-6 text-center text-foreground">
-          Where <span className="text-gradient-blue">makers</span> build
-          <br />
-          together
-        </h1>
+            <Eyebrow className="relative mb-4">Build · Connect · Create</Eyebrow>
 
-        <p className="relative text-base sm:text-lg text-muted-foreground text-center max-w-md mb-6 sm:mb-10 leading-relaxed">
-          Our mission is to empower makers to build, connect, and thrive in the age of AI.
-        </p>
+            <h1 className="relative mb-4 text-center text-5xl tracking-[-0.03em] text-foreground sm:mb-6 sm:text-7xl md:text-8xl">
+              Where <span className="text-gradient-blue">makers</span> build
+              <br />
+              together
+            </h1>
 
-        {/* Primary CTA */}
-        <div className="flex flex-col items-center gap-3 mb-6 sm:mb-8">
-          <Link href="/auth?mode=signup">
-            <HoverBorderGradient
-              containerClassName="rounded-full"
-              as="div"
-              className="dark:bg-black bg-white text-foreground dark:text-white flex items-center gap-2 px-6 sm:px-8 py-2 sm:py-2.5 text-sm sm:text-base font-medium"
-            >
-              Join Now
-              <ArrowRight className="w-4 h-4" />
-            </HoverBorderGradient>
-          </Link>
-        </div>
+            <p className="relative mb-8 max-w-md text-center text-base leading-relaxed text-muted-foreground sm:mb-10 sm:text-lg">
+              A Toronto community of builders who ship, learn, and back each other in the age of AI.
+            </p>
 
-        {/* Social links */}
-        <div className="flex items-center gap-1 mb-8 sm:mb-12">
-          <span className="text-xs sm:text-sm text-foreground/60 dark:text-muted-foreground/60 mr-2">Follow us</span>
-          <a
-            href="https://lu.ma/makerslounge"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs sm:text-sm text-foreground/60 dark:text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
-          >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C12 2 14 8.5 12 12C10 8.5 12 2 12 2ZM12 22C12 22 10 15.5 12 12C14 15.5 12 22 12 22ZM2 12C2 12 8.5 10 12 12C8.5 14 2 12 2 12ZM22 12C22 12 15.5 14 12 12C15.5 10 22 12 22 12Z" />
-            </svg>
-            Luma
-          </a>
-          <a
-            href="https://instagram.com/makersloungeto"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs sm:text-sm text-foreground/60 dark:text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
-          >
-            <Instagram className="w-3.5 h-3.5" />
-            Instagram
-          </a>
-          <a
-            href="https://linkedin.com/company/makerslounge"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs sm:text-sm text-foreground/60 dark:text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
-          >
-            <Linkedin className="w-3.5 h-3.5" />
-            LinkedIn
-          </a>
-        </div>
-
-        {/* Values Section */}
-        <div className="w-full max-w-[640px] mb-8 sm:mb-12">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            {[
-              { image: "/values/hustle.png", label: "Hustle", description: "We ship fast, iterate often, and never stop building." },
-              { image: "/values/learning.png", label: "Learning", description: "Every maker is a student. We grow by sharing knowledge." },
-              { image: "/values/community.png", label: "Community", description: "We lift each other up. Your win is our win." },
-              { image: "/values/fun.png", label: "Fun", description: "Building should be exciting. We celebrate the joy of creating." },
-            ].map((value) => (
-              <div
-                key={value.label}
-                className="flat-card group flex flex-col rounded-2xl overflow-hidden"
-              >
-                <div className="relative aspect-square w-full bg-gradient-blue-subtle overflow-hidden">
-                  <Image
-                    src={value.image}
-                    alt={value.label}
-                    fill
-                    sizes="(max-width: 640px) 50vw, 160px"
-                    className="object-cover group-hover:scale-105 transition-transform duration-500 dark:mix-blend-screen dark:opacity-90"
-                  />
-                </div>
-                <div className="p-3 sm:p-4 text-center">
-                  <h3 className="text-sm sm:text-base font-semibold text-foreground mb-1">{value.label}</h3>
-                  <p className="text-[11px] sm:text-xs text-muted-foreground/80 leading-relaxed">{value.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Podcast Section */}
-        <div className="w-full max-w-[640px] mb-8 sm:mb-12">
-          <div className="flat-card rounded-2xl overflow-hidden">
-            <div className="flex items-center gap-4 p-4 sm:p-5">
-              {/* Podcast icon */}
-              <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl field-blue flex items-center justify-center">
-                <Mic className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-[#3A9FF3]">Podcast</span>
-                  <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-green-500 font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                    New
-                  </span>
-                </div>
-                <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">The MakersLounge Podcast</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground/80 line-clamp-1">Stories from builders, creators, and makers shaping the future.</p>
-              </div>
-
-              {/* Listen button */}
+            <div className="flex flex-wrap items-center justify-center gap-3">
               <Link
-                href="/auth"
-                className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-foreground text-background text-xs sm:text-sm font-medium hover:opacity-80 transition-opacity"
+                href="/auth?mode=signup"
+                className="inline-flex items-center gap-2 border-[1.5px] border-[var(--ink)] bg-[var(--ink)] px-6 py-2.5 text-sm font-medium text-[var(--paper)] shadow-[var(--shadow-card)] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)] sm:px-8 sm:py-3 sm:text-base"
               >
-                <Play className="w-3 h-3 fill-current" />
-                Listen
+                Join Now
+                <ArrowRight className="h-4 w-4" />
               </Link>
+              <a
+                href="https://lu.ma/makerslounge"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] px-6 py-2.5 text-sm font-medium text-foreground shadow-[var(--shadow-card)] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)] sm:px-8 sm:py-3 sm:text-base"
+              >
+                <Calendar className="h-4 w-4" />
+                Next event
+              </a>
             </div>
 
-            {/* Latest episode preview */}
-            <Link href="/auth" className="border-t border-border px-4 sm:px-5 py-3 flex items-center gap-3 hover:bg-muted/30 transition-colors">
-              <span className="text-[10px] sm:text-xs text-muted-foreground/60 uppercase tracking-wide flex-shrink-0">Latest</span>
-              <p className="text-xs sm:text-sm text-foreground/80 truncate">A Chat with Fayaz</p>
-              <ExternalLink className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Blog Section */}
-        <div className="w-full max-w-[640px] mb-8 sm:mb-12">
-          <div className="flat-card rounded-2xl overflow-hidden">
-            <div className="flex items-center gap-4 p-4 sm:p-5">
-              {/* Blog icon */}
-              <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl field-blue flex items-center justify-center">
-                <BookOpen className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-[#3A9FF3]">Blog</span>
-                  {latestPost && (
-                    <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-green-500 font-medium">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                      New
-                    </span>
-                  )}
-                </div>
-                <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">Stories from the maker community</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground/80 line-clamp-1">Insights, lessons, and recaps from Toronto's makers.</p>
-              </div>
-
-              {/* Read button */}
-              <Link
-                href="/blog"
-                className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-foreground text-background text-xs sm:text-sm font-medium hover:opacity-80 transition-opacity"
+            <div className="mt-8 flex items-center gap-1 sm:mt-10">
+              <span className="mr-2 text-xs text-foreground/60 sm:text-sm dark:text-muted-foreground/60">Follow us</span>
+              <a
+                href="https://lu.ma/makerslounge"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs text-foreground/60 transition-colors hover:bg-secondary/50 hover:text-foreground sm:text-sm dark:text-muted-foreground"
               >
-                <BookOpen className="w-3 h-3" />
-                Read
-              </Link>
-            </div>
-
-            {/* Latest post preview */}
-            {latestPost && (
-              <Link
-                href={`/blog/${latestPost.slug}`}
-                className="border-t border-border px-4 sm:px-5 py-3 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C12 2 14 8.5 12 12C10 8.5 12 2 12 2ZM12 22C12 22 10 15.5 12 12C14 15.5 12 22 12 22ZM2 12C2 12 8.5 10 12 12C8.5 14 2 12 2 12ZM22 12C22 12 15.5 14 12 12C15.5 10 22 12 22 12Z" />
+                </svg>
+                Luma
+              </a>
+              <a
+                href="https://instagram.com/makersloungeto"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs text-foreground/60 transition-colors hover:bg-secondary/50 hover:text-foreground sm:text-sm dark:text-muted-foreground"
               >
-                <span className="text-[10px] sm:text-xs text-muted-foreground/60 uppercase tracking-wide flex-shrink-0">Latest</span>
-                <p className="text-xs sm:text-sm text-foreground/80 truncate">{latestPost.title}</p>
-                <ExternalLink className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
-              </Link>
-            )}
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="w-full max-w-[640px] flex items-center gap-3 mb-6 sm:mb-8">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-xs text-muted-foreground/60">or tell us what you need</span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
-
-        {/* Input box */}
-        <form onSubmit={handleSubmit} className="w-full max-w-[640px] mb-4 sm:mb-6">
-          <div className="relative rounded-2xl border border-border bg-card shadow-sm overflow-hidden focus-within:shadow-blue-glow focus-within:border-[var(--blue-start)]/30 transition-all duration-300">
-            <textarea
-              ref={textareaRef}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit(e);
-                }
-              }}
-              onFocus={() => {
-                // On iOS, the keyboard can cover the textarea — scroll it into view (mobile only)
-                if (window.innerWidth < 768) {
-                  setTimeout(() => {
-                    textareaRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                  }, 300);
-                }
-              }}
-              placeholder="Describe what you're looking for..."
-              rows={2}
-              className="w-full resize-none bg-transparent px-4 sm:px-5 pt-3 sm:pt-4 pb-10 sm:pb-12 text-sm sm:text-[15px] placeholder:text-muted-foreground/60 focus:outline-none"
-            />
-            <div className="absolute bottom-3 right-3">
-              <button
-                type="submit"
-                className="w-8 h-8 rounded-full bg-gradient-blue text-white flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-30"
-                disabled={!query.trim()}
+                <Instagram className="h-3.5 w-3.5" />
+                Instagram
+              </a>
+              <a
+                href="https://linkedin.com/company/makerslounge"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs text-foreground/60 transition-colors hover:bg-secondary/50 hover:text-foreground sm:text-sm dark:text-muted-foreground"
               >
-                <ArrowUp className="w-4 h-4" />
-              </button>
+                <Linkedin className="h-3.5 w-3.5" />
+                LinkedIn
+              </a>
             </div>
           </div>
-        </form>
+        </section>
 
-        {/* Drill-down quick actions */}
-        <div className="w-full max-w-[640px] space-y-3">
-          {/* Level 1: Categories */}
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            {ACTION_TREE.map((action) => {
-              const isActive = activeCategory === action.label;
-              return (
-                <button
-                  key={action.label}
-                  type="button"
-                  onClick={() => selectCategory(action.label)}
-                  className={`inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border text-xs sm:text-sm transition-colors ${
-                    isActive
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                  }`}
-                >
-                  <action.icon className="w-4 h-4" />
-                  {action.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Level 2: Sub-options */}
-          {category && (
-            <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-              <p className="text-sm font-medium text-foreground mb-2 text-center">
-                {category.question}
+        {/* Ask May — the community matcher, and the site's actual product */}
+        <section id="ask-may" className="relative px-4 pb-16 sm:px-6 sm:pb-24">
+          <div className="mx-auto w-full max-w-[720px]">
+            <div className="mb-5 flex flex-col items-center text-center sm:mb-6">
+              <Eyebrow className="mb-3">May · community matcher</Eyebrow>
+              <h2 className="text-2xl tracking-[-0.02em] text-foreground sm:text-3xl">
+                Tell May what you&apos;re building
+              </h2>
+              <p className="mt-2 max-w-md text-sm text-muted-foreground sm:text-base">
+                She knows every member, event, and project here, and points you at the right ones.
               </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="mb-4">
+              <div className="relative overflow-hidden border-[1.5px] border-[var(--ink)] bg-card shadow-[var(--shadow-card)] transition-shadow focus-within:shadow-[var(--shadow-card-hover)]">
+                <textarea
+                  ref={textareaRef}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmit(e);
+                    }
+                  }}
+                  onFocus={() => {
+                    // On iOS, the keyboard can cover the textarea — scroll it into view (mobile only)
+                    if (window.innerWidth < 768) {
+                      setTimeout(() => {
+                        textareaRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }, 300);
+                    }
+                  }}
+                  placeholder="I'm looking for a designer to help ship my app…"
+                  rows={2}
+                  className="w-full resize-none bg-transparent px-4 pb-12 pt-3.5 text-sm placeholder:text-muted-foreground/60 focus:outline-none sm:px-5 sm:pt-4 sm:text-[15px]"
+                />
+                <div className="absolute bottom-3 right-3">
+                  <button
+                    type="submit"
+                    aria-label="Ask May"
+                    className="flex h-9 w-9 items-center justify-center bg-[var(--blue-core)] text-white transition-opacity hover:opacity-85 disabled:opacity-30"
+                    disabled={!query.trim()}
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            {/* Drill-down quick actions */}
+            <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-center gap-2">
-                {category.subs.map((s) => {
-                  const isActive = activeSub === s.label;
+                {ACTION_TREE.map((action) => {
+                  const isActive = activeCategory === action.label;
                   return (
                     <button
-                      key={s.label}
+                      key={action.label}
                       type="button"
-                      onClick={() => selectSub(s.label)}
-                      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-sm transition-colors ${
+                      onClick={() => selectCategory(action.label)}
+                      className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs transition-colors sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
                         isActive
-                          ? "border-foreground/50 bg-foreground/10 text-foreground"
-                          : "border-border text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
                       }`}
                     >
-                      {s.label}
+                      <action.icon className="h-4 w-4" />
+                      {action.label}
                     </button>
                   );
                 })}
               </div>
-            </div>
-          )}
 
-          {/* Level 3: Ideas that populate the prompt */}
-          {sub && (
-            <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-              <p className="text-sm font-medium text-foreground mb-2 text-center">
-                Explore ideas
-              </p>
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                {sub.ideas.map((idea) => (
-                  <button
-                    key={idea.label}
-                    type="button"
-                    onClick={() => selectIdea(idea.prompt)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
-                  >
-                    {idea.label}
-                    <ChevronRight className="w-3 h-3 opacity-50" />
-                  </button>
-                ))}
+              {category && (
+                <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                  <p className="mb-2 text-center text-sm font-medium text-foreground">
+                    {category.question}
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    {category.subs.map((s) => {
+                      const isActive = activeSub === s.label;
+                      return (
+                        <button
+                          key={s.label}
+                          type="button"
+                          onClick={() => selectSub(s.label)}
+                          className={`inline-flex items-center gap-1.5 border px-3.5 py-1.5 text-sm transition-colors ${
+                            isActive
+                              ? "border-foreground/50 bg-foreground/10 text-foreground"
+                              : "border-border text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                          }`}
+                        >
+                          {s.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {sub && (
+                <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                  <p className="mb-2 text-center text-sm font-medium text-foreground">
+                    Explore ideas
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    {sub.ideas.map((idea) => (
+                      <button
+                        key={idea.label}
+                        type="button"
+                        onClick={() => selectIdea(idea.prompt)}
+                        className="inline-flex items-center gap-1.5 border border-border px-3.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary/50 hover:text-foreground"
+                      >
+                        {idea.label}
+                        <ChevronRight className="h-3 w-3 opacity-50" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Values */}
+        <section id="values" className="relative px-4 pb-16 sm:px-6 sm:pb-24">
+          <div className="mx-auto w-full max-w-[1040px]">
+            <div className="mb-6 flex flex-col items-start gap-2 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <Eyebrow className="mb-2">What we&apos;re about</Eyebrow>
+                <h2 className="text-2xl tracking-[-0.02em] text-foreground sm:text-3xl">Four things we hold onto</h2>
+              </div>
+              <Link href="/about" className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground">
+                About the community
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+              {VALUES.map((value) => (
+                <div key={value.key} className="flat-card flex flex-col overflow-hidden">
+                  <ValueArt value={value.key} />
+                  <div className="p-4 sm:p-5">
+                    <h3 className="mb-1 font-serif text-lg text-foreground sm:text-xl">{value.label}</h3>
+                    <p className="text-xs leading-relaxed text-muted-foreground/90 sm:text-sm">{value.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Listen and read */}
+        <section id="listen-and-read" className="relative px-4 pb-16 sm:px-6 sm:pb-24">
+          <div className="mx-auto grid w-full max-w-[1040px] gap-4 md:grid-cols-2">
+            {/* Podcast */}
+            <div className="flat-card flex flex-col overflow-hidden">
+              <div className="flex items-start gap-4 p-5">
+                <div className="field-blue flex h-12 w-12 flex-shrink-0 items-center justify-center">
+                  <Mic className="h-6 w-6" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="label-caps text-[var(--blue-core)]">Podcast</span>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-600 sm:text-xs dark:text-green-500">
+                      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                      New
+                    </span>
+                  </div>
+                  <h3 className="font-serif text-xl text-foreground">The MakersLounge Podcast</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">Stories from builders, creators, and makers shaping the future.</p>
+                </div>
+              </div>
+              <div className="mt-auto flex items-center justify-between gap-3 border-t border-border px-5 py-3">
+                <Link href="/auth" className="flex min-w-0 items-center gap-2 text-sm text-foreground/80 transition-colors hover:text-foreground">
+                  <span className="label-caps flex-shrink-0">Latest</span>
+                  <span className="truncate">A Chat with Fayaz</span>
+                </Link>
+                <Link
+                  href="/auth"
+                  className="inline-flex flex-shrink-0 items-center gap-1.5 bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 sm:text-sm"
+                >
+                  <Play className="h-3 w-3 fill-current" />
+                  Listen
+                </Link>
               </div>
             </div>
-          )}
-        </div>
 
+            {/* Blog */}
+            <div className="flat-card flex flex-col overflow-hidden">
+              <div className="flex items-start gap-4 p-5">
+                <div className="field-blue flex h-12 w-12 flex-shrink-0 items-center justify-center">
+                  <BookOpen className="h-6 w-6" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="label-caps text-[var(--blue-core)]">Blog</span>
+                    {latestPost && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-600 sm:text-xs dark:text-green-500">
+                        <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                        New
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="font-serif text-xl text-foreground">Stories from the maker community</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">Insights, lessons, and recaps from Toronto&apos;s makers.</p>
+                </div>
+              </div>
+              <div className="mt-auto flex items-center justify-between gap-3 border-t border-border px-5 py-3">
+                {latestPost ? (
+                  <Link href={`/blog/${latestPost.slug}`} className="flex min-w-0 items-center gap-2 text-sm text-foreground/80 transition-colors hover:text-foreground">
+                    <span className="label-caps flex-shrink-0">Latest</span>
+                    <span className="truncate">{latestPost.title}</span>
+                  </Link>
+                ) : (
+                  <span className="text-sm text-muted-foreground">Recaps, lessons, and interviews.</span>
+                )}
+                <Link
+                  href="/blog"
+                  className="inline-flex flex-shrink-0 items-center gap-1.5 bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 sm:text-sm"
+                >
+                  <BookOpen className="h-3 w-3" />
+                  Read
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* Footer */}

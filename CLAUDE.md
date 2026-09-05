@@ -63,6 +63,29 @@ MakersLounge is a Next.js 16 app for connecting makers/builders. It uses the App
 - `/feedback` - User feedback submission
 - `/eve-workshop` - Eve Agent Workshop (see below)
 
+### Landing page (`/`)
+
+Rebuilt in Sep 2026 around the flat editorial motif. Sections have stable ids
+(`#hero`, `#ask-may`, `#values`, `#listen-and-read`).
+
+- **The hero "sun" is a WebGPU shader**, `src/components/landing/hero-field.ts`,
+  drawn with [vgpu](https://vgpu.sh) (Vercel Labs). It is a hard-edged disc in
+  `--motif-sun` whose rim breathes on a noise field, with a sparse halftone of
+  `--blue-core` dots near the edge and a faint film grain — still no gradients,
+  no blur. The WGSL is an inline string, deliberately, so the `withEve()`-wrapped
+  `next.config.ts` needs no `.wgsl` loader. Colours are uniforms read from the
+  CSS variables on `<html>`, so theme toggles re-colour it live.
+- **`HeroField.tsx` falls back to the static `Arc`** when WebGPU is missing
+  (Firefox stable, older Safari), the adapter is refused, or the visitor prefers
+  reduced motion. The page must look composed on the fallback; the shader is an
+  upgrade, not a dependency.
+- **Validate the shader with pixels, not eyes.** `npx vgpu doctor` is healthy on
+  this Mac (Dawn on Metal), and `scripts/render-hero-field.mts` renders a light
+  and a dark frame to PNG headlessly. Headless Chromium also runs WebGPU with
+  `--enable-unsafe-webgpu --use-angle=metal` for full-page screenshots.
+- **Value cards use `ValueArt.tsx`**, compositions of the `Motif` primitives.
+  The glossy 3D renders in `public/values/` are no longer referenced.
+
 ### The community agent — May (`/home`)
 
 `/home` is an [eve](https://eve.dev) agent, not an API route. It lives in

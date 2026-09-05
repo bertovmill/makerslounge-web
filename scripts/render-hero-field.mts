@@ -1,0 +1,43 @@
+// Headless check of the landing hero shader (src/components/landing/hero-field.ts).
+// Renders one light and one dark frame to PNG so the shader can be judged from
+// real pixels without a browser:
+//
+//   OUT=/tmp node --experimental-strip-types --no-warnings scripts/render-hero-field.mts
+//
+// Needs `npx vgpu doctor` to report healthy (Dawn on Metal here).
+import { writeFileSync } from "node:fs";
+// @ts-expect-error pngjs ships no types; this is a dev-only check script.
+import { PNG } from "pngjs";
+import { init, effect, target } from "vgpu/node";
+// @ts-expect-error Node needs the extension to run this without a bundler; tsc dislikes it.
+import { HERO_FIELD_WGSL, hexToRgb } from "../src/components/landing/hero-field.ts";
+
+const out = process.env.OUT ?? ".";
+const W = 1440, H = 720;
+const gpu = await init();
+const t = target(gpu, { size: [W, H], format: "rgba8unorm" });
+
+const themes = {
+  light: { paper: "#FBF8F2", sun: "#CBE4F8", accent: "#1A6FD4" },
+  dark: { paper: "#16171F", sun: "#17304E", accent: "#4A9FE5" },
+};
+
+for (const [name, th] of Object.entries(themes)) {
+  const fx = effect(gpu, HERO_FIELD_WGSL, {
+    set: { p: { time: 3.2, aspect: W / H, pointer: [0.62, 0.4], res: [W, H], sun: [...hexToRgb(th.sun), 1], accent: [...hexToRgb(th.accent), 1] } },
+  });
+  fx.draw(t);
+  const px = await t.read();
+  // Composite over the paper colour so the PNG shows what the page will.
+  const paper = hexToRgb(th.paper).map((v) => v * 255);
+  const png = new PNG({ width: W, height: H });
+  for (let i = 0; i < W * H; i++) {
+    const a = px[i * 4 + 3] / 255;
+    for (let k = 0; k < 3; k++) png.data[i * 4 + k] = Math.round(px[i * 4 + k] + paper[k] * (1 - a));
+    png.data[i * 4 + 3] = 255;
+  }
+  writeFileSync(`${out}/hero-${name}.png`, PNG.sync.write(png));
+  const covered = Array.from({ length: W * H }, (_, i) => px[i * 4 + 3] > 128).filter(Boolean).length;
+  console.log(name, "coverage", (covered / (W * H) * 100).toFixed(1) + "%");
+}
+gpu.dispose();

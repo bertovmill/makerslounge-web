@@ -79,6 +79,7 @@
     "tailwind-merge": "^3.4.0",
     "tldraw": "^4.2.1",
     "use-stick-to-bottom": "^1.1.6",
+    "vgpu": "^0.4.0",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
