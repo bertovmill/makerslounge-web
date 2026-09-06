@@ -36,6 +36,7 @@ const contactColumns = {
   skills: communityContacts.skills,
   company: communityContacts.company,
   role: communityContacts.role,
+  location: communityContacts.location,
   source: communityContacts.source,
   linkedin: communityContacts.linkedin,
   twitter: communityContacts.twitter,
@@ -65,6 +66,7 @@ const WRITABLE = {
   skills: "skills",
   company: "company",
   role: "role",
+  location: "location",
   source: "source",
   linkedin: "linkedin",
   twitter: "twitter",
@@ -99,6 +101,7 @@ export async function GET(request: NextRequest) {
           ilike(communityContacts.firstName, term),
           ilike(communityContacts.lastName, term),
           ilike(communityContacts.company, term),
+          ilike(communityContacts.location, term),
           ilike(communityContacts.summary, term),
         )!,
       );

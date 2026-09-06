@@ -23,6 +23,7 @@ export interface PublicProfile {
   looking_for_skills: string[] | null;
   looking_for_help: string | null;
   currently_building: string | null;
+  location: string | null;
   linkedin: string | null;
   twitter: string | null;
   instagram: string | null;
