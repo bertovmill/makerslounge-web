@@ -44,6 +44,20 @@ export default function PeopleFeaturePage() {
         find exactly the type of collaborator you&apos;re looking for.
       </p>
 
+      <h2 id="tags-and-notes" className="text-2xl font-semibold mt-8 mb-4 scroll-mt-20">
+        Your Tags &amp; Notes
+      </h2>
+      <p className="text-muted-foreground mb-4">
+        Hover a card and click the tag icon (or open a profile and choose &quot;Add tag&quot;) to
+        attach your own tags and a private note to someone: &quot;met at meetup 12&quot;,
+        &quot;possible cofounder&quot;, &quot;follow up&quot;. Only you can see them.
+      </p>
+      <p className="text-muted-foreground mb-4">
+        Once you&apos;ve tagged people, a <strong>Your tags</strong> row appears above the grid.
+        Click a tag to filter People down to everyone you gave it, and share or bookmark the view
+        with its URL, e.g. <code>/people?tag=cofounder</code>.
+      </p>
+
       <h2 id="viewing-profiles" className="text-2xl font-semibold mt-8 mb-4 scroll-mt-20">
         Viewing Full Profiles
       </h2>

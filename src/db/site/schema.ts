@@ -733,6 +733,34 @@ export const profileEventNotes = makerslounge.table("profile_event_notes", {
 	unique("profile_event_notes_profile_id_meetup_id_key").on(table.profileId, table.meetupId),
 ]);
 
+/**
+ * Private tags + a note one member keeps about another. One row per (owner, subject).
+ * Owner-scoped everywhere — see neon-migrations/0005_profile_annotations.sql.
+ */
+export const profileAnnotations = makerslounge.table("profile_annotations", {
+	ownerId: uuid("owner_id").notNull(),
+	profileId: uuid("profile_id").notNull(),
+	tags: text().array().default([]).notNull(),
+	note: text(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	primaryKey({ columns: [table.ownerId, table.profileId], name: "profile_annotations_pkey" }),
+	foreignKey({
+			columns: [table.ownerId],
+			foreignColumns: [profiles.id],
+			name: "profile_annotations_owner_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.profileId],
+			foreignColumns: [profiles.id],
+			name: "profile_annotations_profile_id_fkey"
+		}).onDelete("cascade"),
+	index("profile_annotations_owner_tags_idx").using("gin", table.tags.asc().nullsLast().op("array_ops")).where(sql`(cardinality(tags) > 0)`),
+	check("profile_annotations_tags_max", sql`cardinality(tags) <= 20`),
+	check("profile_annotations_note_max", sql`(note IS NULL) OR (char_length(note) <= 2000)`),
+]);
+
 export const reports = makerslounge.table("reports", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	reporterId: uuid("reporter_id").notNull(),

@@ -5,7 +5,10 @@ import Link from "next/link";
 import { fetchProfiles, updateProfileAsAdmin } from "@/lib/profiles-client";
 import { fetchContacts, createContact, updateContact } from "@/lib/contacts-client";
 import { useAuth } from "@/context/AuthContext";
-import { Search, X, UserPlus, MapPin, Pencil } from "lucide-react";
+import { fetchMyAnnotations, type ProfileAnnotation } from "@/lib/profile-annotations-client";
+import { collectTags, tagsMatch } from "@/lib/profile-annotations";
+import { PersonAnnotationButton, PersonAnnotationDialog } from "@/components/PersonAnnotation";
+import { Search, X, UserPlus, Tag, MapPin, Pencil } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -32,11 +35,17 @@ interface AddPersonForm {
 const EMPTY_FORM: AddPersonForm = { name: "", email: "", bio: "", skills: "", company: "", role: "", location: "" };
 
 export default function PeoplePage() {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
+  // The viewer's private tags + notes about people, keyed by profile id. Loaded
+  // once the session resolves; empty for a signed-out visitor.
+  const [annotations, setAnnotations] = useState<Map<string, ProfileAnnotation>>(new Map());
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Profile | null>(null);
+  const [filtersReady, setFiltersReady] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState<AddPersonForm>(EMPTY_FORM);
   const [addLoading, setAddLoading] = useState(false);
@@ -126,6 +135,48 @@ export default function PeoplePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
+  useEffect(() => {
+    if (!user) {
+      setAnnotations(new Map());
+      return;
+    }
+    fetchMyAnnotations().then((rows) => {
+      setAnnotations(new Map(rows.map((a) => [a.profile_id, a])));
+    });
+  }, [user]);
+
+  // Filters live in the URL (`/people?tag=cofounder`, `/people?skill=AI`) so a view
+  // can be bookmarked or shared. Read once on mount, then mirror state back.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setSelectedTag(params.get("tag"));
+    setSelectedSkill(params.get("skill"));
+    setSearch(params.get("q") ?? "");
+    setFiltersReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!filtersReady) return;
+    const params = new URLSearchParams();
+    if (search) params.set("q", search);
+    if (selectedSkill) params.set("skill", selectedSkill);
+    if (selectedTag) params.set("tag", selectedTag);
+    const qs = params.toString();
+    const next = `${window.location.pathname}${qs ? `?${qs}` : ""}`;
+    if (next !== `${window.location.pathname}${window.location.search}`) {
+      window.history.replaceState(null, "", next);
+    }
+  }, [filtersReady, search, selectedSkill, selectedTag]);
+
+  function handleAnnotationSaved(profileId: string, saved: ProfileAnnotation | null) {
+    setAnnotations((prev) => {
+      const next = new Map(prev);
+      if (saved && (saved.tags.length > 0 || saved.note)) next.set(profileId, saved);
+      else next.delete(profileId);
+      return next;
+    });
+  }
+
   async function handleAddPerson(e: React.FormEvent) {
     e.preventDefault();
     if (!addForm.name.trim()) return;
@@ -173,26 +224,35 @@ export default function PeoplePage() {
       .map(([name]) => name);
   }, [profiles]);
 
+  // The viewer's own tags, most-used first. Drives the "Your tags" filter row.
+  const myTags = useMemo(() => collectTags(annotations.values()), [annotations]);
+
   const filtered = useMemo(() => {
     return profiles.filter((p) => {
       // Only show profiles that have a name
       if (!p.name?.trim()) return false;
 
       const q = search.toLowerCase();
+      const mine = p._type === "profile" ? annotations.get(p.id) : undefined;
       const matchesSearch =
         !q ||
         p.name?.toLowerCase().includes(q) ||
         p.bio?.toLowerCase().includes(q) ||
         p.currently_building?.toLowerCase().includes(q) ||
         p.location?.toLowerCase().includes(q) ||
-        p.skills?.some((s) => s.toLowerCase().includes(q));
+        p.skills?.some((s) => s.toLowerCase().includes(q)) ||
+        mine?.tags.some((t) => t.toLowerCase().includes(q)) ||
+        mine?.note?.toLowerCase().includes(q);
 
       const matchesSkill =
         !selectedSkill || p.skills?.some((s) => s.trim() === selectedSkill);
 
-      return matchesSearch && matchesSkill;
+      const matchesTag =
+        !selectedTag || !!mine?.tags.some((t) => tagsMatch(t, selectedTag));
+
+      return matchesSearch && matchesSkill && matchesTag;
     });
-  }, [profiles, search, selectedSkill]);
+  }, [profiles, search, selectedSkill, selectedTag, annotations]);
 
   if (loading) {
     return (
@@ -277,14 +337,56 @@ export default function PeoplePage() {
         )}
       </div>
 
+      {/* Your tags — private to the viewer, hidden until they've tagged someone */}
+      {user && (myTags.length > 0 || selectedTag) && (
+        <div id="your-tags" className="flex flex-wrap items-center gap-1.5 mb-6 -mt-3">
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground mr-1">
+            <Tag className="w-3 h-3" />
+            Your tags
+          </span>
+          {myTags.map((tag) => {
+            const active = !!selectedTag && tagsMatch(tag, selectedTag);
+            return (
+              <button
+                key={tag}
+                onClick={() => setSelectedTag(active ? null : tag)}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                  active
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border text-foreground hover:border-foreground/40"
+                }`}
+              >
+                {tag}
+              </button>
+            );
+          })}
+          {selectedTag && !myTags.some((t) => tagsMatch(t, selectedTag)) && (
+            <button
+              onClick={() => setSelectedTag(null)}
+              className="px-3 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground border border-primary"
+            >
+              {selectedTag}
+              <X className="inline w-3 h-3 ml-1 -mt-0.5" />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* People grid */}
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
-          <p className="text-sm">No makers found matching your search.</p>
+          <p className="text-sm">
+            {selectedTag
+              ? `Nobody is tagged "${selectedTag}" yet.`
+              : "No makers found matching your search."}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((profile) => (
+          {filtered.map((profile) => {
+            const canAnnotate = !!user && profile._type === "profile" && profile.id !== user.id;
+            const mine = canAnnotate ? annotations.get(profile.id) ?? null : null;
+            return (
             <Link
               key={`${profile._type}-${profile.id}`}
               href={
@@ -294,9 +396,18 @@ export default function PeoplePage() {
                     ? `/p/${profile.username}`
                     : `/profile/${profile.id}`
               }
-              className="group rounded-xl border border-border bg-background p-5 hover:border-foreground/20 transition-colors"
+              className="group relative rounded-xl border border-border bg-background p-5 hover:border-foreground/20 transition-colors"
             >
-              <div className="flex items-start gap-3.5 mb-3">
+              {canAnnotate && (
+                <PersonAnnotationButton
+                  annotation={mine}
+                  onClick={() => setEditing(profile)}
+                  className={`absolute top-3 right-3 ${
+                    mine ? "" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                  }`}
+                />
+              )}
+              <div className="flex items-start gap-3.5 mb-3 pr-8">
                 {profile.photo_url ? (
                   <img
                     src={profile.photo_url}
@@ -379,9 +490,48 @@ export default function PeoplePage() {
                   )}
                 </div>
               )}
+
+              {/* Your private tags + note on this person */}
+              {mine && (mine.tags.length > 0 || mine.note) && (
+                <div className="mt-3 pt-3 border-t border-dashed border-border">
+                  {mine.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {mine.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-border text-[11px] text-foreground"
+                        >
+                          <Tag className="w-2.5 h-2.5 text-muted-foreground" />
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {mine.note && (
+                    <p className={`text-[11px] text-muted-foreground italic line-clamp-2 ${mine.tags.length ? "mt-1.5" : ""}`}>
+                      {mine.note}
+                    </p>
+                  )}
+                </div>
+              )}
             </Link>
-          ))}
+            );
+          })}
         </div>
+      )}
+
+      {editing && user && (
+        <PersonAnnotationDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setEditing(null);
+          }}
+          profileId={editing.id}
+          personName={editing.name ?? "this maker"}
+          annotation={annotations.get(editing.id) ?? null}
+          suggestedTags={myTags}
+          onSaved={(saved) => handleAnnotationSaved(editing.id, saved)}
+        />
       )}
       {/* Add Person Modal */}
       {showAddModal && (
