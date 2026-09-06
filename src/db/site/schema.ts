@@ -256,6 +256,7 @@ export const profiles = makerslounge.table("profiles", {
 	linkedinData: jsonb("linkedin_data"),
 	linkedinDataUpdatedAt: timestamp("linkedin_data_updated_at", { withTimezone: true, mode: 'string' }),
 	clerkUserId: text("clerk_user_id"),
+	location: text(),
 }, (table) => [
 	index("idx_profiles_application_status").using("btree", table.applicationStatus.asc().nullsLast().op("text_ops")),
 	index("idx_profiles_onboarding").using("btree", table.hasCompletedOnboarding.asc().nullsLast().op("bool_ops")),
@@ -388,6 +389,7 @@ export const communityContacts = makerslounge.table("community_contacts", {
 	phone: text(),
 	summary: text(),
 	visibility: text().default('private'),
+	location: text(),
 }, (table) => [
 	uniqueIndex("community_contacts_email_idx").using("btree", table.email.asc().nullsLast().op("text_ops")),
 	index("community_contacts_matched_profile_id_idx").using("btree", table.matchedProfileId.asc().nullsLast().op("uuid_ops")),

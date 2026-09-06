@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { fetchProfiles } from "@/lib/profiles-client";
-import { fetchContacts, createContact } from "@/lib/contacts-client";
+import { fetchProfiles, updateProfileAsAdmin } from "@/lib/profiles-client";
+import { fetchContacts, createContact, updateContact } from "@/lib/contacts-client";
 import { useAuth } from "@/context/AuthContext";
-import { Search, X, UserPlus } from "lucide-react";
+import { Search, X, UserPlus, MapPin, Pencil } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -15,6 +15,7 @@ interface Profile {
   skills: string[] | null;
   photo_url: string | null;
   currently_building: string | null;
+  location: string | null;
   _type?: "profile" | "community";
 }
 
@@ -25,9 +26,10 @@ interface AddPersonForm {
   skills: string;
   company: string;
   role: string;
+  location: string;
 }
 
-const EMPTY_FORM: AddPersonForm = { name: "", email: "", bio: "", skills: "", company: "", role: "" };
+const EMPTY_FORM: AddPersonForm = { name: "", email: "", bio: "", skills: "", company: "", role: "", location: "" };
 
 export default function PeoplePage() {
   const { isAdmin } = useAuth();
@@ -39,6 +41,44 @@ export default function PeoplePage() {
   const [addForm, setAddForm] = useState<AddPersonForm>(EMPTY_FORM);
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+
+  // Admin-only: set a location on any card. Members edit their own elsewhere.
+  const [locationTarget, setLocationTarget] = useState<Profile | null>(null);
+  const [locationDraft, setLocationDraft] = useState("");
+  const [locationSaving, setLocationSaving] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  function openLocationEditor(e: React.MouseEvent, person: Profile) {
+    // The card is a Link; keep the click from navigating.
+    e.preventDefault();
+    e.stopPropagation();
+    setLocationTarget(person);
+    setLocationDraft(person.location ?? "");
+    setLocationError(null);
+  }
+
+  async function handleSaveLocation(e: React.FormEvent) {
+    e.preventDefault();
+    if (!locationTarget) return;
+    setLocationSaving(true);
+    setLocationError(null);
+    const location = locationDraft.trim() || null;
+    const result =
+      locationTarget._type === "community"
+        ? await updateContact(locationTarget.id, { location })
+        : await updateProfileAsAdmin(locationTarget.id, { location });
+    setLocationSaving(false);
+    if (!result.success) {
+      setLocationError(result.error ?? "Could not save location.");
+      return;
+    }
+    setProfiles((prev) =>
+      prev.map((p) =>
+        p.id === locationTarget.id && p._type === locationTarget._type ? { ...p, location } : p,
+      ),
+    );
+    setLocationTarget(null);
+  }
 
   // Named `loadPeople`: `fetchProfiles` and `fetchContacts` are imported.
   async function loadPeople() {
@@ -52,6 +92,7 @@ export default function PeoplePage() {
       skills: p.skills,
       photo_url: p.photo_url,
       currently_building: p.currently_building,
+      location: p.location,
       _type: "profile" as const,
     }));
 
@@ -70,6 +111,7 @@ export default function PeoplePage() {
           skills: c.skills,
           photo_url: null,
           currently_building: null,
+          location: c.location,
           _type: "community",
         });
       }
@@ -102,6 +144,7 @@ export default function PeoplePage() {
       skills: skillsArray.length ? skillsArray : null,
       company: addForm.company.trim() || null,
       role: addForm.role.trim() || null,
+      location: addForm.location.trim() || null,
     });
 
     if (!result.success) {
@@ -141,6 +184,7 @@ export default function PeoplePage() {
         p.name?.toLowerCase().includes(q) ||
         p.bio?.toLowerCase().includes(q) ||
         p.currently_building?.toLowerCase().includes(q) ||
+        p.location?.toLowerCase().includes(q) ||
         p.skills?.some((s) => s.toLowerCase().includes(q));
 
       const matchesSkill =
@@ -292,7 +336,24 @@ export default function PeoplePage() {
                       Building {profile.currently_building.replace(/[\[\]"]/g, '')}
                     </p>
                   )}
+                  {profile.location && (
+                    <p className="flex items-center gap-1 text-xs text-muted-foreground truncate mt-0.5">
+                      <MapPin className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{profile.location}</span>
+                    </p>
+                  )}
                 </div>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={(e) => openLocationEditor(e, profile)}
+                    title={profile.location ? "Edit location" : "Add location"}
+                    aria-label={`Set location for ${profile.name}`}
+                    className="ml-auto shrink-0 p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary transition-colors"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
               {profile.bio && (
@@ -379,6 +440,17 @@ export default function PeoplePage() {
               </div>
 
               <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Location</label>
+                <input
+                  type="text"
+                  placeholder="Toronto, ON"
+                  value={addForm.location}
+                  onChange={(e) => setAddForm((f) => ({ ...f, location: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                />
+              </div>
+
+              <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Email</label>
                 <input
                   type="email"
@@ -431,6 +503,63 @@ export default function PeoplePage() {
                   className="flex-1 px-4 py-2 rounded-lg bg-foreground text-background text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
                 >
                   {addLoading ? "Adding..." : "Add person"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Set Location Modal (admin) */}
+      {locationTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+            onClick={() => setLocationTarget(null)}
+          />
+          <div className="relative w-full max-w-sm rounded-xl border border-border bg-background shadow-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold">Location</h2>
+                <p className="text-xs text-muted-foreground truncate">{locationTarget.name}</p>
+              </div>
+              <button
+                onClick={() => setLocationTarget(null)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveLocation} className="space-y-4">
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="Toronto, ON"
+                  value={locationDraft}
+                  onChange={(e) => setLocationDraft(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                />
+              </div>
+
+              {locationError && <p className="text-xs text-destructive">{locationError}</p>}
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setLocationTarget(null)}
+                  className="flex-1 px-4 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={locationSaving}
+                  className="flex-1 px-4 py-2 rounded-lg bg-foreground text-background text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                >
+                  {locationSaving ? "Saving..." : "Save"}
                 </button>
               </div>
             </form>

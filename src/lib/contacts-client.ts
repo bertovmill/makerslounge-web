@@ -17,6 +17,7 @@ export interface CommunityContact {
   skills: string[] | null;
   company: string | null;
   role: string | null;
+  location: string | null;
   source: string[] | null;
   linkedin: string | null;
   twitter: string | null;
