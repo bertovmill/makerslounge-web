@@ -95,9 +95,36 @@ Rebuilt in Sep 2026 around the flat editorial motif. Sections have stable ids
   `setEnergy` through a ref); `value-fields.ts` animates the four value cards
   as SDFs over the same compositions as the CSS `ValueArt.tsx` fallback. The
   hero's `scroll` uniform sets the sun as the page scrolls.
-- **WGSL gotchas that cost time**: `half` is a reserved word; a derivative
+- **`glass-panel.ts` is the refractive card surface**, used by `GlassCard.tsx`
+  on the two `#listen-and-read` cards. A rounded slab with a bevelled edge over
+  a ruled, posterised field: the bevel refracts by Snell's law, once per channel
+  at slightly different indices so the corners fringe, with a Schlick Fresnel
+  rim and a specular glint. It is **not** glassmorphism — there is no blur, and
+  the interior is left flat and undistorted so text over the middle stays
+  legible. All the event is in the border.
+  - **Refraction needs something with structure to bend.** The first version
+    refracted a soft colour field and looked like nothing at all; the diagonal
+    rules are there because a straight line that visibly kinks is what the eye
+    reads as thickness.
+  - **The canvas draws the whole card face**, fill and border and corners, so
+    `flat-card` is applied only on the fallback path. A rounded canvas inside a
+    rounded bordered box leaves a halo where the two radii disagree.
+  - Radius and bevel are authored in **pixels** and divided by the canvas height
+    in `metrics()`, or a tall card gets a fatter corner than a short one beside
+    it.
+  - `scripts/render-glass-panel.mts` renders both themes headlessly and asserts
+    on pixels (corner alpha, edge vs. interior variation).
+- **WGSL gotchas that cost time**: `half` is a reserved word (Dawn accepts it,
+  so a headless render passes while Chrome rejects the shader); a derivative
   (`fwidth`, so `fill()`) after a non-uniform early `return` fails the
-  uniformity check; a backtick inside a WGSL comment ends the template string.
+  uniformity check; a backtick inside a WGSL comment ends the template string —
+  `tsc` catches this but the render scripts do not, since they read the shader
+  as text with a regex; `bayer4` casts to `u32`, which is undefined for negative
+  floats, so any coordinate that can go negative (a refracted one, say) has to
+  be pushed positive first or the corners fill with colour speckle.
+- **Compositing a shader PNG in a check script needs a clamp.** `png.data` is a
+  Buffer, so an over-255 sum wraps to near zero and reads as a shader bug that
+  isn't there.
 - **Hover wipes are CSS** (`.halftone-wipe` in `globals.css`), a dot-pattern
   pseudo-element revealed by an animated `clip-path`. A GPU canvas per
   hoverable card would be the wrong tool.

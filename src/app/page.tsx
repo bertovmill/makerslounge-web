@@ -15,6 +15,7 @@ import { HeroField } from "@/components/landing/HeroField";
 import { LogoDots } from "@/components/landing/LogoDots";
 import { MayField, type MayFieldRef } from "@/components/landing/MayField";
 import { LiveValueArt } from "@/components/landing/LiveValueArt";
+import { GlassCard } from "@/components/landing/GlassCard";
 import type { ValueKey } from "@/components/landing/ValueArt";
 
 const openNewsletterPopup = () => {
@@ -622,7 +623,7 @@ export default function Home() {
         <section id="listen-and-read" className="relative px-4 pb-16 sm:px-6 sm:pb-24">
           <div className="mx-auto grid w-full max-w-[1040px] gap-4 md:grid-cols-2">
             {/* Podcast */}
-            <div className="flat-card halftone-wipe flex flex-col overflow-hidden">
+            <GlassCard seed={[0.9, 2.3]} className="flex flex-col overflow-hidden">
               <div className="flex items-start gap-4 p-5">
                 <div className="field-blue flex h-12 w-12 flex-shrink-0 items-center justify-center">
                   <Mic className="h-6 w-6" />
@@ -652,10 +653,10 @@ export default function Home() {
                   Listen
                 </Link>
               </div>
-            </div>
+            </GlassCard>
 
             {/* Blog */}
-            <div className="flat-card halftone-wipe flex flex-col overflow-hidden">
+            <GlassCard seed={[4.1, 0.6]} className="flex flex-col overflow-hidden">
               <div className="flex items-start gap-4 p-5">
                 <div className="field-blue flex h-12 w-12 flex-shrink-0 items-center justify-center">
                   <BookOpen className="h-6 w-6" />
@@ -691,7 +692,7 @@ export default function Home() {
                   Read
                 </Link>
               </div>
-            </div>
+            </GlassCard>
           </div>
         </section>
       </main>
