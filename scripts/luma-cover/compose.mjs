@@ -23,6 +23,13 @@ const only = process.argv.slice(2);
 const logoSrc = readFileSync(new URL("../../src/components/AnimatedLogo.tsx", import.meta.url), "utf8");
 const LOGO_PATH = logoSrc.match(/LOGO_PATH =\s*"([^"]+)"/)[1];
 
+const png = (path) => "data:image/png;base64," + readFileSync(new URL(path, import.meta.url)).toString("base64");
+const PARTNER_LOGOS = [
+  { id: "v0", src: png("../../public/logos/partner-logos/v0.png"), h: 72 },
+  { id: "new-stadium", src: png("../../public/logos/partner-logos/new-stadium.png"), h: 84 },
+  { id: "nxt-labs", src: png("../../public/logos/partner-logos/nxt-labs.png"), h: 70 },
+];
+
 const page = (variant, bg) => `<!doctype html>
 <html><head><meta charset="utf-8">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800;900&family=Geist+Mono:wght@500&display=swap">
@@ -41,6 +48,10 @@ const page = (variant, bg) => `<!doctype html>
   .rsvp { font-family: "Geist Mono", ui-monospace, monospace; font-size: 22px; letter-spacing: 0.06em; }
   .date { font-weight: 600; font-size: 30px; letter-spacing: -0.01em; }
   .pill { display: inline-block; border: 3px solid currentColor; padding: 10px 22px; border-radius: 999px; }
+  .partners { display: flex; align-items: center; gap: 24px; }
+  .partners .eyebrow { font-size: 20px; opacity: 0.7; }
+  .partners .logos { display: flex; align-items: center; gap: 30px; }
+  .partners .logos img { display: block; width: auto; }
   .shadow { text-shadow: 0 2px 24px rgba(0,0,0,0.35); }
   .abs { position: absolute; }
 </style></head>
@@ -53,6 +64,10 @@ const logo = (color) => `<svg viewBox="0 0 246 258" xmlns="http://www.w3.org/200
 const mark = (v, x = 72, y = 64) => `<div class="mark" style="left:${x}px;top:${y}px">${logo(v.fg)}<span>makerslounge</span></div>`;
 const rsvp = (right = 72, bottom = 72, extra = "") => `<div class="abs rsvp ${extra}" style="right:${right}px;bottom:${bottom}px">RSVP · luma.com/makermonday3</div>`;
 const dateLine = (cls = "") => (DATE ? `<div class="date ${cls}">${DATE}</div>` : "");
+const partners = () => `<div class="partners">
+  <div class="eyebrow">Partners</div>
+  <div class="logos">${PARTNER_LOGOS.map((l) => `<img src="${l.src}" style="height:${l.h}px">`).join("")}</div>
+</div>`;
 
 const LAYOUTS = {
   // Type sits inside the sun, dark ink on cream.
@@ -113,8 +128,9 @@ const LAYOUTS = {
         <div class="eyebrow" style="font-size:26px">Meetup</div>
       </div>
       <div class="num" style="font-size:380px;text-align:center"><span style="font-size:0.55em;font-weight:700;vertical-align:0.32em;margin-right:0.04em;opacity:0.85">#</span>${NUMBER}</div>
-      <div style="display:flex;justify-content:space-between;align-items:flex-end">
-        <div><div class="tag" style="font-size:52px">Build. Connect. Create.</div>${dateLine("")}</div>
+      <div style="display:flex;flex-direction:column;gap:26px">
+        <div style="flex-shrink:0"><div class="tag" style="font-size:52px;white-space:nowrap">Connect & Create.</div>${dateLine("")}</div>
+        <div style="display:flex;justify-content:flex-end">${partners()}</div>
       </div>
     </div>
   </div>`,
