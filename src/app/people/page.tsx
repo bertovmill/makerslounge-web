@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { fetchMyAnnotations, type ProfileAnnotation } from "@/lib/profile-annotations-client";
 import { collectTags, tagsMatch } from "@/lib/profile-annotations";
 import { PersonAnnotationButton, PersonAnnotationDialog } from "@/components/PersonAnnotation";
-import { Search, X, UserPlus, Tag, MapPin, Pencil } from "lucide-react";
+import { Search, X, UserPlus, Tag, MapPin, Pencil, Lock, Globe } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -20,6 +20,8 @@ interface Profile {
   currently_building: string | null;
   location: string | null;
   _type?: "profile" | "community";
+  /** Community contacts only — "private" (default) or "public". */
+  visibility?: string | null;
 }
 
 interface AddPersonForm {
@@ -64,6 +66,24 @@ export default function PeoplePage() {
     setLocationTarget(person);
     setLocationDraft(person.location ?? "");
     setLocationError(null);
+  }
+
+  const [visibilitySaving, setVisibilitySaving] = useState<string | null>(null);
+
+  async function handleToggleVisibility(e: React.MouseEvent, person: Profile) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (person._type !== "community" || visibilitySaving) return;
+    const newVis = person.visibility === "public" ? "private" : "public";
+    setVisibilitySaving(person.id);
+    const result = await updateContact(person.id, { visibility: newVis });
+    setVisibilitySaving(null);
+    if (!result.success) return;
+    setProfiles((prev) =>
+      prev.map((p) =>
+        p.id === person.id && p._type === "community" ? { ...p, visibility: newVis } : p,
+      ),
+    );
   }
 
   async function handleSaveLocation(e: React.FormEvent) {
@@ -122,6 +142,7 @@ export default function PeoplePage() {
           currently_building: null,
           location: c.location,
           _type: "community",
+          visibility: c.visibility,
         });
       }
     }
@@ -441,6 +462,35 @@ export default function PeoplePage() {
                         Community
                       </span>
                     )}
+                    {profile._type === "community" && isAdmin && (
+                      <button
+                        type="button"
+                        onClick={(e) => handleToggleVisibility(e, profile)}
+                        disabled={visibilitySaving === profile.id}
+                        title={
+                          profile.visibility === "public"
+                            ? "Visible to everyone — click to make private"
+                            : "Only visible to admins — click to make public"
+                        }
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0 transition-colors disabled:opacity-50 ${
+                          profile.visibility === "public"
+                            ? "bg-green-500/10 text-green-600 hover:bg-green-500/20"
+                            : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                        }`}
+                      >
+                        {profile.visibility === "public" ? (
+                          <>
+                            <Globe className="w-2.5 h-2.5" />
+                            Public
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="w-2.5 h-2.5" />
+                            Private
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                   {profile.currently_building && (
                     <p className="text-xs text-muted-foreground truncate">
@@ -634,6 +684,11 @@ export default function PeoplePage() {
                   className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
+
+              <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <Lock className="w-3 h-3 shrink-0" />
+                Added as a private community contact — only admins see them until you make them public.
+              </p>
 
               {addError && (
                 <p className="text-xs text-destructive">{addError}</p>
