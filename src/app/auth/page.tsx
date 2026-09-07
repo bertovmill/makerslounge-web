@@ -111,7 +111,7 @@ function SignUpForm({ onSignIn }: { onSignIn: () => void }) {
               placeholder="123456"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              className="w-full h-10 px-4 rounded-xl border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+              className="w-full h-11 px-4 rounded-xl border border-input bg-background text-sm outline-none transition-shadow placeholder:text-muted-foreground/60 focus:border-[var(--blue-core)] focus:ring-4 focus:ring-[color-mix(in_oklab,var(--blue-core)_18%,transparent)]"
               required
             />
           </div>
@@ -119,7 +119,7 @@ function SignUpForm({ onSignIn }: { onSignIn: () => void }) {
           <button
             type="submit"
             disabled={loading || code.trim().length < 4}
-            className="w-full h-11 md:h-10 rounded-xl bg-gradient-blue text-white text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center"
+            className="w-full h-11 rounded-xl bg-gradient-blue text-white text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center"
           >
             {loading ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -153,7 +153,7 @@ function SignUpForm({ onSignIn }: { onSignIn: () => void }) {
           <img src="/logos/logo-blue.svg" alt="MakersLounge" className="w-10 h-10 mx-auto dark:hidden" />
           <img src="/logos/logo-light.svg" alt="MakersLounge" className="w-10 h-10 mx-auto hidden dark:block" />
         </Link>
-        <h1 className="text-xl font-semibold mb-0.5">Create an account</h1>
+        <h1 className="text-2xl font-semibold tracking-[-0.02em] mb-1">Create an account</h1>
         <p className="text-sm text-muted-foreground">Join a community of makers and builders</p>
       </div>
 
@@ -168,7 +168,7 @@ function SignUpForm({ onSignIn }: { onSignIn: () => void }) {
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full h-10 px-4 rounded-xl border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+            className="w-full h-11 px-4 rounded-xl border border-input bg-background text-sm outline-none transition-shadow placeholder:text-muted-foreground/60 focus:border-[var(--blue-core)] focus:ring-4 focus:ring-[color-mix(in_oklab,var(--blue-core)_18%,transparent)]"
             required
           />
         </div>
@@ -184,7 +184,7 @@ function SignUpForm({ onSignIn }: { onSignIn: () => void }) {
               placeholder="Min. 6 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-10 px-4 pr-10 rounded-xl border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+              className="w-full h-11 px-4 pr-11 rounded-xl border border-input bg-background text-sm outline-none transition-shadow placeholder:text-muted-foreground/60 focus:border-[var(--blue-core)] focus:ring-4 focus:ring-[color-mix(in_oklab,var(--blue-core)_18%,transparent)]"
               required
               minLength={6}
             />
@@ -201,7 +201,7 @@ function SignUpForm({ onSignIn }: { onSignIn: () => void }) {
         <button
           type="submit"
           disabled={loading || !email.trim() || password.length < 6}
-          className="w-full h-11 md:h-10 rounded-xl bg-gradient-blue text-white text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center"
+          className="w-full h-11 rounded-xl bg-gradient-blue text-white text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center"
         >
           {loading ? (
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -225,8 +225,11 @@ function SignUpForm({ onSignIn }: { onSignIn: () => void }) {
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground text-center mt-5">
-        By continuing, you agree to our Terms of Service and Privacy Policy
+      <p className="text-xs leading-relaxed text-muted-foreground text-center mt-5">
+        By continuing, you agree to our Terms of Service and{" "}
+        <Link href="/privacy" className="underline underline-offset-2 hover:text-foreground transition-colors">
+          Privacy Policy
+        </Link>
       </p>
     </>
   );
@@ -247,7 +250,7 @@ function SignInForm({ onSignUp }: { onSignUp: () => void }) {
   // <AuthenticateWithRedirectCallback /> and completes the handshake. The
   // native app follows the same path through an in-app browser — its custom
   // scheme is no longer involved, since Clerk owns the callback now.
-  const startOAuth = async (strategy: "oauth_google" | "oauth_apple") => {
+  const startOAuth = async (strategy: "oauth_google") => {
     if (!signIn) return;
     setLoading(true);
     setMessage("");
@@ -264,7 +267,6 @@ function SignInForm({ onSignUp }: { onSignUp: () => void }) {
     }
   };
 
-  const handleSignInWithApple = () => startOAuth("oauth_apple");
   const handleSignInWithGoogle = () => startOAuth("oauth_google");
 
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -300,22 +302,48 @@ function SignInForm({ onSignUp }: { onSignUp: () => void }) {
     <>
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-5"
       >
         <ArrowLeft className="w-4 h-4" />
         Back
       </button>
 
-      <div className="text-center mb-5">
+      <div className="text-center mb-6">
         <Link href="/" className="inline-block mb-4">
           <img src="/logos/logo-blue.svg" alt="MakersLounge" className="w-10 h-10 mx-auto dark:hidden" />
           <img src="/logos/logo-light.svg" alt="MakersLounge" className="w-10 h-10 mx-auto hidden dark:block" />
         </Link>
-        <h1 className="text-xl font-semibold mb-0.5">Welcome back</h1>
+        <h1 className="text-2xl font-semibold tracking-[-0.02em] mb-1">Welcome back</h1>
         <p className="text-sm text-muted-foreground">Sign in to your account</p>
       </div>
 
-      <form onSubmit={handleEmailAuth} className="space-y-2.5">
+      {/* Google leads. It is how most members actually get in, so it sits above
+          the form rather than stranded under the password field — the old order
+          made the primary path the least visible thing on the screen. */}
+      <button
+        onClick={handleSignInWithGoogle}
+        disabled={loading}
+        className="w-full h-11 rounded-xl border border-border bg-background text-sm font-medium flex items-center justify-center gap-2.5 transition-colors hover:bg-secondary hover:border-foreground/25 disabled:opacity-50"
+      >
+        <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden>
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div className="relative my-5">
+        <div className="absolute inset-0 flex items-center" aria-hidden>
+          <div className="w-full border-t border-border" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-card px-3 text-xs text-muted-foreground">or</span>
+        </div>
+      </div>
+
+      <form onSubmit={handleEmailAuth} className="space-y-3">
         <div>
           <label htmlFor="email" className="block text-sm font-medium mb-1.5">
             Email
@@ -323,10 +351,11 @@ function SignInForm({ onSignUp }: { onSignUp: () => void }) {
           <input
             id="email"
             type="email"
+            autoComplete="email"
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full h-10 px-4 rounded-xl border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+            className="w-full h-11 px-4 rounded-xl border border-input bg-background text-sm outline-none transition-shadow placeholder:text-muted-foreground/60 focus:border-[var(--blue-core)] focus:ring-4 focus:ring-[color-mix(in_oklab,var(--blue-core)_18%,transparent)]"
             required
           />
         </div>
@@ -339,17 +368,19 @@ function SignInForm({ onSignUp }: { onSignUp: () => void }) {
             <input
               id="password"
               type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
               placeholder="Your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-10 px-4 pr-10 rounded-xl border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+              className="w-full h-11 px-4 pr-11 rounded-xl border border-input bg-background text-sm outline-none transition-shadow placeholder:text-muted-foreground/60 focus:border-[var(--blue-core)] focus:ring-4 focus:ring-[color-mix(in_oklab,var(--blue-core)_18%,transparent)]"
               required
               minLength={6}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -359,59 +390,15 @@ function SignInForm({ onSignUp }: { onSignUp: () => void }) {
         <button
           type="submit"
           disabled={loading || !email.trim() || password.length < 6}
-          className="w-full h-11 md:h-10 rounded-xl bg-gradient-blue text-white text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center"
+          className="w-full h-11 rounded-xl bg-gradient-blue text-white text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center"
         >
           {loading ? (
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
-            "Sign In"
+            "Sign in"
           )}
         </button>
       </form>
-
-      <button
-        type="button"
-        onClick={onSignUp}
-        className="w-full text-sm text-muted-foreground mt-3 hover:text-foreground transition-colors"
-      >
-        Don&apos;t have an account? <span className="font-medium text-foreground">Sign up</span>
-      </button>
-
-      <div className="relative my-4">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-white/60 dark:bg-black/40 px-3 text-muted-foreground">or continue with</span>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <button
-          onClick={handleSignInWithGoogle}
-          disabled={loading}
-          className="w-full h-11 md:h-10 rounded-xl md:rounded-md border border-border text-sm font-medium flex items-center justify-center gap-2 hover:bg-secondary active:bg-secondary transition-colors disabled:opacity-50"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-          Continue with Google
-        </button>
-
-        <button
-          onClick={handleSignInWithApple}
-          disabled={loading}
-          className="w-full h-11 md:h-10 rounded-xl md:rounded-md border border-border text-sm font-medium flex items-center justify-center gap-2 hover:bg-secondary active:bg-secondary transition-colors disabled:opacity-50"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-          </svg>
-          Continue with Apple
-        </button>
-      </div>
 
       {message && (
         <div className="mt-3 p-2.5 rounded-xl bg-secondary text-sm text-center text-muted-foreground">
@@ -419,8 +406,19 @@ function SignInForm({ onSignUp }: { onSignUp: () => void }) {
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground text-center mt-5">
-        By continuing, you agree to our Terms of Service and Privacy Policy
+      <button
+        type="button"
+        onClick={onSignUp}
+        className="w-full text-sm text-muted-foreground mt-5 hover:text-foreground transition-colors"
+      >
+        Don&apos;t have an account? <span className="font-medium text-foreground">Sign up</span>
+      </button>
+
+      <p className="text-xs leading-relaxed text-muted-foreground text-center mt-5">
+        By continuing, you agree to our Terms of Service and{" "}
+        <Link href="/privacy" className="underline underline-offset-2 hover:text-foreground transition-colors">
+          Privacy Policy
+        </Link>
       </p>
     </>
   );
@@ -519,7 +517,11 @@ function AuthContent() {
         speedMax={1.2}
         speedScale={0.8}
       />
-      <div className="relative z-10 w-full max-w-sm max-h-[calc(100svh-4rem)] my-auto bg-white/60 dark:bg-black/40 backdrop-blur-xl rounded-2xl p-5 md:p-6 flex flex-col">
+      {/* Solid card, not a frosted one. DESIGN.md rules out glassmorphism, and
+          the translucent panel also left the "or" divider label sitting on a
+          washed-out chip that never matched the card behind it. A solid
+          --card surface lets the label use bg-card and disappear into it. */}
+      <div className="relative z-10 w-full max-w-sm max-h-[calc(100svh-4rem)] my-auto bg-card border border-border shadow-[var(--shadow-card)] rounded-2xl p-6 md:p-7 flex flex-col">
         {isSigningUp ? (
           <SignUpForm onSignIn={() => setIsSigningUp(false)} />
         ) : (
