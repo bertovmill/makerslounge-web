@@ -92,3 +92,6 @@ next-env.d.ts
 
 # Claude Code worktrees — embedded git repos, never part of a commit
 .claude/worktrees/
+
+# Real meetup data for the matcher evals: anonymized, but never committed.
+evals/matcher/data/private/

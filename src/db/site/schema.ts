@@ -17,7 +17,7 @@
 // has no JWT-aware policy layer, so authorization is per-route application code
 // instead. See docs/supabase-to-clerk-neon-migration.md.
 
-import { pgTable, pgSchema, index, foreignKey, unique, uuid, text, integer, timestamp, boolean, check, jsonb, date, uniqueIndex, primaryKey, bigint } from "drizzle-orm/pg-core"
+import { pgTable, pgSchema, index, foreignKey, unique, uuid, text, integer, timestamp, boolean, uniqueIndex, check, jsonb, date, primaryKey, bigint } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const makerslounge = pgSchema("makerslounge");
@@ -95,6 +95,58 @@ export const blogPosts = makerslounge.table("blog_posts", {
 			name: "blog_posts_author_id_fkey"
 		}).onDelete("cascade"),
 	unique("blog_posts_slug_key").on(table.slug),
+]);
+
+export const communityContacts = makerslounge.table("community_contacts", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	email: text(),
+	name: text(),
+	firstName: text("first_name"),
+	lastName: text("last_name"),
+	notes: text(),
+	skills: text().array(),
+	company: text(),
+	role: text(),
+	source: text().array(),
+	linkedin: text(),
+	twitter: text(),
+	instagram: text(),
+	website: text(),
+	matchedProfileId: uuid("matched_profile_id"),
+	matchedAt: timestamp("matched_at", { withTimezone: true, mode: 'string' }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	metadata: jsonb().default({}),
+	phone: text(),
+	summary: text(),
+	visibility: text().default('private'),
+	location: text(),
+}, (table) => [
+	uniqueIndex("community_contacts_email_idx").using("btree", table.email.asc().nullsLast().op("text_ops")),
+	index("community_contacts_matched_profile_id_idx").using("btree", table.matchedProfileId.asc().nullsLast().op("uuid_ops")),
+	foreignKey({
+			columns: [table.matchedProfileId],
+			foreignColumns: [profiles.id],
+			name: "community_contacts_matched_profile_id_fkey"
+		}),
+	check("community_contacts_visibility_check", sql`visibility = ANY (ARRAY['private'::text, 'public'::text])`),
+]);
+
+export const matcherEvalRuns = makerslounge.table("matcher_eval_runs", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	dataset: text().notNull(),
+	model: text().notNull(),
+	judgeModel: text("judge_model").notNull(),
+	gitSha: text("git_sha"),
+	passed: boolean().notNull(),
+	metrics: jsonb().notNull(),
+	thresholds: jsonb().notNull(),
+	results: jsonb().notNull(),
+	usage: jsonb(),
+	durationMs: integer("duration_ms"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("matcher_eval_runs_created_at_idx").using("btree", table.createdAt.desc().nullsFirst().op("timestamptz_ops")),
 ]);
 
 export const innovationHackathonSignups = makerslounge.table("innovation_hackathon_signups", {
@@ -225,46 +277,6 @@ export const workshops = makerslounge.table("workshops", {
 	index("idx_workshops_published").using("btree", table.isPublished.asc().nullsLast().op("bool_ops")),
 ]);
 
-export const profiles = makerslounge.table("profiles", {
-	id: uuid().primaryKey().notNull(),
-	name: text(),
-	photoUrl: text("photo_url"),
-	linkedin: text(),
-	twitter: text(),
-	website: text(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-	bio: text(),
-	skills: text().array(),
-	username: text(),
-	avatarStyle: text("avatar_style"),
-	whiteboardData: jsonb("whiteboard_data"),
-	showWhiteboard: boolean("show_whiteboard").default(false),
-	hasCompletedOnboarding: boolean("has_completed_onboarding").default(false),
-	themeConfig: jsonb("theme_config").default({"theme_id":"default"}),
-	coverImage: text("cover_image"),
-	currentlyBuilding: text("currently_building"),
-	lookingForSkills: text("looking_for_skills").array(),
-	onboardingCompleted: boolean("onboarding_completed").default(false),
-	instagram: text(),
-	youtube: text(),
-	tiktok: text(),
-	firstName: text("first_name"),
-	lastName: text("last_name"),
-	applicationStatus: text("application_status").default('pending'),
-	lookingForHelp: text("looking_for_help"),
-	linkedinData: jsonb("linkedin_data"),
-	linkedinDataUpdatedAt: timestamp("linkedin_data_updated_at", { withTimezone: true, mode: 'string' }),
-	clerkUserId: text("clerk_user_id"),
-	location: text(),
-}, (table) => [
-	index("idx_profiles_application_status").using("btree", table.applicationStatus.asc().nullsLast().op("text_ops")),
-	index("idx_profiles_onboarding").using("btree", table.hasCompletedOnboarding.asc().nullsLast().op("bool_ops")),
-	uniqueIndex("profiles_clerk_user_id_key").using("btree", table.clerkUserId.asc().nullsLast().op("text_ops")).where(sql`(clerk_user_id IS NOT NULL)`),
-	index("profiles_skills_idx").using("gin", table.skills.asc().nullsLast().op("array_ops")),
-	unique("profiles_username_key").on(table.username),
-]);
-
 export const applications = makerslounge.table("applications", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	email: text().notNull(),
@@ -366,41 +378,6 @@ export const projects = makerslounge.table("projects", {
 	check("projects_category_check", sql`category = ANY (ARRAY['project_showcase'::text, 'job_board'::text, 'question'::text, 'update'::text])`),
 ]);
 
-export const communityContacts = makerslounge.table("community_contacts", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	email: text(),
-	name: text(),
-	firstName: text("first_name"),
-	lastName: text("last_name"),
-	notes: text(),
-	skills: text().array(),
-	company: text(),
-	role: text(),
-	source: text().array(),
-	linkedin: text(),
-	twitter: text(),
-	instagram: text(),
-	website: text(),
-	matchedProfileId: uuid("matched_profile_id"),
-	matchedAt: timestamp("matched_at", { withTimezone: true, mode: 'string' }),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-	metadata: jsonb().default({}),
-	phone: text(),
-	summary: text(),
-	visibility: text().default('private'),
-	location: text(),
-}, (table) => [
-	uniqueIndex("community_contacts_email_idx").using("btree", table.email.asc().nullsLast().op("text_ops")),
-	index("community_contacts_matched_profile_id_idx").using("btree", table.matchedProfileId.asc().nullsLast().op("uuid_ops")),
-	foreignKey({
-			columns: [table.matchedProfileId],
-			foreignColumns: [profiles.id],
-			name: "community_contacts_matched_profile_id_fkey"
-		}),
-	check("community_contacts_visibility_check", sql`visibility = ANY (ARRAY['private'::text, 'public'::text])`),
-]);
-
 export const contentEvents = makerslounge.table("content_events", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	userId: uuid("user_id").notNull(),
@@ -479,6 +456,46 @@ export const comments = makerslounge.table("comments", {
 			name: "comments_user_id_fkey"
 		}).onDelete("cascade"),
 	check("comments_project_id_required_for_projects", sql`(target_type <> 'project'::text) OR (project_id IS NOT NULL)`),
+]);
+
+export const profiles = makerslounge.table("profiles", {
+	id: uuid().primaryKey().notNull(),
+	name: text(),
+	photoUrl: text("photo_url"),
+	linkedin: text(),
+	twitter: text(),
+	website: text(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	bio: text(),
+	skills: text().array(),
+	username: text(),
+	avatarStyle: text("avatar_style"),
+	whiteboardData: jsonb("whiteboard_data"),
+	showWhiteboard: boolean("show_whiteboard").default(false),
+	hasCompletedOnboarding: boolean("has_completed_onboarding").default(false),
+	themeConfig: jsonb("theme_config").default({"theme_id":"default"}),
+	coverImage: text("cover_image"),
+	currentlyBuilding: text("currently_building"),
+	lookingForSkills: text("looking_for_skills").array(),
+	onboardingCompleted: boolean("onboarding_completed").default(false),
+	instagram: text(),
+	youtube: text(),
+	tiktok: text(),
+	firstName: text("first_name"),
+	lastName: text("last_name"),
+	applicationStatus: text("application_status").default('pending'),
+	lookingForHelp: text("looking_for_help"),
+	linkedinData: jsonb("linkedin_data"),
+	linkedinDataUpdatedAt: timestamp("linkedin_data_updated_at", { withTimezone: true, mode: 'string' }),
+	clerkUserId: text("clerk_user_id"),
+	location: text(),
+}, (table) => [
+	index("idx_profiles_application_status").using("btree", table.applicationStatus.asc().nullsLast().op("text_ops")),
+	index("idx_profiles_onboarding").using("btree", table.hasCompletedOnboarding.asc().nullsLast().op("bool_ops")),
+	uniqueIndex("profiles_clerk_user_id_key").using("btree", table.clerkUserId.asc().nullsLast().op("text_ops")).where(sql`(clerk_user_id IS NOT NULL)`),
+	index("profiles_skills_idx").using("gin", table.skills.asc().nullsLast().op("array_ops")),
+	unique("profiles_username_key").on(table.username),
 ]);
 
 export const hackathonSubmissions = makerslounge.table("hackathon_submissions", {
@@ -733,34 +750,6 @@ export const profileEventNotes = makerslounge.table("profile_event_notes", {
 	unique("profile_event_notes_profile_id_meetup_id_key").on(table.profileId, table.meetupId),
 ]);
 
-/**
- * Private tags + a note one member keeps about another. One row per (owner, subject).
- * Owner-scoped everywhere — see neon-migrations/0005_profile_annotations.sql.
- */
-export const profileAnnotations = makerslounge.table("profile_annotations", {
-	ownerId: uuid("owner_id").notNull(),
-	profileId: uuid("profile_id").notNull(),
-	tags: text().array().default([]).notNull(),
-	note: text(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
-	primaryKey({ columns: [table.ownerId, table.profileId], name: "profile_annotations_pkey" }),
-	foreignKey({
-			columns: [table.ownerId],
-			foreignColumns: [profiles.id],
-			name: "profile_annotations_owner_id_fkey"
-		}).onDelete("cascade"),
-	foreignKey({
-			columns: [table.profileId],
-			foreignColumns: [profiles.id],
-			name: "profile_annotations_profile_id_fkey"
-		}).onDelete("cascade"),
-	index("profile_annotations_owner_tags_idx").using("gin", table.tags.asc().nullsLast().op("array_ops")).where(sql`(cardinality(tags) > 0)`),
-	check("profile_annotations_tags_max", sql`cardinality(tags) <= 20`),
-	check("profile_annotations_note_max", sql`(note IS NULL) OR (char_length(note) <= 2000)`),
-]);
-
 export const reports = makerslounge.table("reports", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	reporterId: uuid("reporter_id").notNull(),
@@ -898,6 +887,47 @@ export const hackathonVoterNotes = makerslounge.table("hackathon_voter_notes", {
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
 	primaryKey({ columns: [table.judgeName, table.submissionId], name: "hackathon_voter_notes_pkey"}),
+]);
+
+export const profileAnnotations = makerslounge.table("profile_annotations", {
+	ownerId: uuid("owner_id").notNull(),
+	profileId: uuid("profile_id").notNull(),
+	tags: text().array().default([]).notNull(),
+	note: text(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("profile_annotations_owner_tags_idx").using("gin", table.tags.asc().nullsLast().op("array_ops")).where(sql`(cardinality(tags) > 0)`),
+	foreignKey({
+			columns: [table.ownerId],
+			foreignColumns: [profiles.id],
+			name: "profile_annotations_owner_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.profileId],
+			foreignColumns: [profiles.id],
+			name: "profile_annotations_profile_id_fkey"
+		}).onDelete("cascade"),
+	primaryKey({ columns: [table.ownerId, table.profileId], name: "profile_annotations_pkey"}),
+	check("profile_annotations_tags_max", sql`cardinality(tags) <= 20`),
+	check("profile_annotations_note_max", sql`(note IS NULL) OR (char_length(note) <= 2000)`),
+]);
+
+export const matcherEvalLabels = makerslounge.table("matcher_eval_labels", {
+	runId: uuid("run_id").notNull(),
+	personId: text("person_id").notNull(),
+	matchedId: text("matched_id").notNull(),
+	good: boolean().notNull(),
+	note: text(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.runId],
+			foreignColumns: [matcherEvalRuns.id],
+			name: "matcher_eval_labels_run_id_fkey"
+		}).onDelete("cascade"),
+	primaryKey({ columns: [table.runId, table.personId, table.matchedId], name: "matcher_eval_labels_pkey"}),
+	check("matcher_eval_labels_note_max", sql`(note IS NULL) OR (char_length(note) <= 1000)`),
 ]);
 export const connectionCounts = makerslounge.view("connection_counts", {	profileId: uuid("profile_id"),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
