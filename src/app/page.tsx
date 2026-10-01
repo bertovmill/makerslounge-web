@@ -194,6 +194,7 @@ export default function Home() {
     title: string;
     excerpt: string;
   } | null>(null);
+  const [memberCount, setMemberCount] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mayFieldRef = useRef<MayFieldRef>(null);
 
@@ -208,6 +209,15 @@ export default function Home() {
           excerpt: latest.excerpt,
         });
       });
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/community-stats")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((stats: { members?: number } | null) => {
+        if (typeof stats?.members === "number" && stats.members > 0) setMemberCount(stats.members);
+      })
+      .catch(() => {});
   }, []);
 
   const category = ACTION_TREE.find((c) => c.label === activeCategory);
@@ -425,6 +435,20 @@ export default function Home() {
                 Next event
               </a>
             </div>
+
+            {/* Live signup count. The line keeps its height while loading so the hero doesn't jump. */}
+            <p
+              id="member-count"
+              aria-live="polite"
+              className="mt-4 flex min-h-5 items-center gap-1.5 text-sm text-foreground/70 dark:text-muted-foreground"
+            >
+              {memberCount !== null && (
+                <>
+                  <Users className="h-4 w-4" />
+                  Join <span className="font-semibold tabular-nums text-foreground">{memberCount.toLocaleString()}</span> builders in this community
+                </>
+              )}
+            </p>
 
             <div className="mt-8 flex items-center gap-1 sm:mt-10">
               <span className="mr-2 text-xs text-foreground/60 sm:text-sm dark:text-muted-foreground/60">Follow us</span>
