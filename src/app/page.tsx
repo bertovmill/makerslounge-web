@@ -400,8 +400,8 @@ export default function Home() {
       {/* Hero */}
       <main className="relative z-10 flex-1 flex flex-col">
         <section id="hero" className="relative flex min-h-[72svh] flex-col items-center justify-center px-4 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-12">
-          {/* The sun: a WebGPU field when the browser can, a flat arc when it can't. */}
-          <HeroField className="-top-[12%] -bottom-[6%]" />
+          {/* One light per member: radiance cascades when the browser can, a flat spiral when it cannot. */}
+          <HeroField className="-top-[12%] -bottom-[6%]" members={memberCount} />
 
           <div className="relative flex flex-col items-center">
             <LogoDots className="relative mb-5 h-14 w-14 sm:mb-6 sm:h-20 sm:w-20" />

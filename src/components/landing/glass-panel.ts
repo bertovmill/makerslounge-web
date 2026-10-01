@@ -22,7 +22,7 @@
  * in sync with the DOM: the canvas *is* the rectangle. `seed` offsets the
  * field per card so four cards in a row are not four copies of one frame.
  *
- * Inline WGSL for the same reason as `hero-field.ts`: `withEve()` wraps
+ * Inline WGSL for the same reason as `member-light-scene.ts`: `withEve()` wraps
  * `next.config.ts` and there is no `.wgsl` loader in the chain.
  */
 import { clock, effect, surface } from "vgpu";
