@@ -484,6 +484,23 @@ html {
   .halftone-wipe::after { transition: none; }
 }
 
+/* Community photo strip under the hero. The track holds two copies of the
+   photos, so sliding it by -50% loops without a seam. */
+.photo-marquee-track {
+  animation: photo-marquee 80s linear infinite;
+}
+.photo-marquee:hover .photo-marquee-track {
+  animation-play-state: paused;
+}
+@keyframes photo-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .photo-marquee { overflow-x: auto; }
+  .photo-marquee-track { animation: none; }
+}
+
 /* Oversized arc — the "sun" behind hero content. Purely decorative. */
 .motif-arc {
   position: absolute;

@@ -16,6 +16,7 @@ import { LogoDots } from "@/components/landing/LogoDots";
 import { MayField, type MayFieldRef } from "@/components/landing/MayField";
 import { LiveValueArt } from "@/components/landing/LiveValueArt";
 import { GlassCard } from "@/components/landing/GlassCard";
+import { PhotoMarquee } from "@/components/landing/PhotoMarquee";
 import type { ValueKey } from "@/components/landing/ValueArt";
 
 const openNewsletterPopup = () => {
@@ -483,6 +484,11 @@ export default function Home() {
               </a>
             </div>
           </div>
+        </section>
+
+        {/* Real photos from our events, drifting past under the hero */}
+        <section id="community-photos" aria-label="Photos from MakersLounge events" className="relative pb-16 pt-2 sm:pb-24">
+          <PhotoMarquee />
         </section>
 
         {/* Ask May — the community matcher, and the site's actual product */}
