@@ -1,0 +1,7 @@
+{
+  "coverage": 1,
+  "structural_pass_rate": 1,
+  "planted_recall": 0.85,
+  "grounding": 0.8,
+  "needs_met": 0.75
+}

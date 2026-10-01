@@ -1,0 +1,368 @@
+{
+  "name": "synthetic-meetup",
+  "description": "20 fictional attendees in the shape of a MakersLounge Luma export. Seven planted pairs: one person's need that exactly one other person in the room can meet. Nobody here is real.",
+  "meetupName": "Synthetic Meetup #1",
+  "participants": [
+    {
+      "id": "s01",
+      "name": "Avery Tran",
+      "role": "Founder",
+      "company": "Pantryly",
+      "currently_building": "A grocery inventory app for small Toronto restaurants",
+      "skills": [
+        "product",
+        "sales",
+        "restaurant operations"
+      ],
+      "looking_for_help": "I need a React Native developer to build the mobile version of our app before a pilot in November.",
+      "custom_fields": {
+        "What phase are you in?": "Pilot with 3 customers"
+      }
+    },
+    {
+      "id": "s02",
+      "name": "Jordan Okafor",
+      "role": "Mobile engineer",
+      "company": "Freelance",
+      "currently_building": "Contract mobile apps",
+      "skills": [
+        "React Native",
+        "Expo",
+        "iOS",
+        "Android"
+      ],
+      "looking_for_help": "Looking for early-stage startups that need a mobile app built.",
+      "custom_fields": {
+        "What phase are you in?": "Freelancing"
+      }
+    },
+    {
+      "id": "s03",
+      "name": "Priya Raman",
+      "role": "PhD student",
+      "company": "University of Toronto",
+      "currently_building": "A model that reads chest X-rays",
+      "skills": [
+        "computer vision",
+        "PyTorch",
+        "medical imaging"
+      ],
+      "looking_for_help": "I want to talk to someone who has taken a medical device through Health Canada approval.",
+      "custom_fields": {
+        "What phase are you in?": "Research"
+      }
+    },
+    {
+      "id": "s04",
+      "name": "Marcus Bell",
+      "role": "Regulatory consultant",
+      "company": "Northbridge Regulatory",
+      "currently_building": "Helping medtech startups with Health Canada and FDA submissions",
+      "skills": [
+        "Health Canada licensing",
+        "FDA 510(k)",
+        "medical device regulation"
+      ],
+      "looking_for_help": "Meeting technical founders in health AI.",
+      "custom_fields": {
+        "What phase are you in?": "Established"
+      }
+    },
+    {
+      "id": "s05",
+      "name": "Sofia Martins",
+      "role": "Founder",
+      "company": "Loomwise",
+      "currently_building": "AI tutor for high-school chemistry",
+      "skills": [
+        "teaching",
+        "curriculum design",
+        "prompting"
+      ],
+      "looking_for_help": "I need a technical cofounder who can own the backend and LLM infrastructure.",
+      "custom_fields": {
+        "What phase are you in?": "Idea, 40 beta students"
+      }
+    },
+    {
+      "id": "s06",
+      "name": "Ethan Kowalski",
+      "role": "Senior backend engineer",
+      "company": "Shopify",
+      "currently_building": "Side projects with LLM agents on weekends",
+      "skills": [
+        "Python",
+        "Postgres",
+        "LLM infrastructure",
+        "distributed systems"
+      ],
+      "looking_for_help": "Open to joining an early-stage edtech or AI startup as a technical cofounder.",
+      "custom_fields": {
+        "What phase are you in?": "Exploring"
+      }
+    },
+    {
+      "id": "s07",
+      "name": "Grace Liu",
+      "role": "Founder",
+      "company": "Carbonlens",
+      "currently_building": "Carbon accounting software for mid-size manufacturers",
+      "skills": [
+        "climate",
+        "enterprise sales",
+        "Python"
+      ],
+      "looking_for_help": "Need an intro to angel investors who write cheques into climate tech.",
+      "custom_fields": {
+        "What phase are you in?": "Raising pre-seed"
+      }
+    },
+    {
+      "id": "s08",
+      "name": "Daniel Asante",
+      "role": "Angel investor",
+      "company": "Independent",
+      "currently_building": "A small climate-focused angel portfolio",
+      "skills": [
+        "early-stage investing",
+        "climate tech",
+        "fundraising"
+      ],
+      "looking_for_help": "Meeting pre-seed climate founders.",
+      "custom_fields": {
+        "What phase are you in?": "Investing"
+      }
+    },
+    {
+      "id": "s09",
+      "name": "Hannah Fischer",
+      "role": "Indie hacker",
+      "company": "Quietform",
+      "currently_building": "A Chrome extension that blocks distracting sites with AI",
+      "skills": [
+        "TypeScript",
+        "Chrome extensions",
+        "growth"
+      ],
+      "looking_for_help": "My app is ready but I have no idea how to price it; I want advice on SaaS pricing.",
+      "custom_fields": {
+        "What phase are you in?": "Launched, 200 users"
+      }
+    },
+    {
+      "id": "s10",
+      "name": "Omar Haddad",
+      "role": "Pricing lead",
+      "company": "Wealthsimple",
+      "currently_building": "Pricing and packaging for consumer fintech",
+      "skills": [
+        "SaaS pricing",
+        "packaging",
+        "experimentation"
+      ],
+      "looking_for_help": "Happy to give pricing advice to indie founders.",
+      "custom_fields": {
+        "What phase are you in?": "Established"
+      }
+    },
+    {
+      "id": "s11",
+      "name": "Chloe Dubois",
+      "role": "Founder",
+      "company": "Stagehand",
+      "currently_building": "Booking platform for independent music venues",
+      "skills": [
+        "music industry",
+        "operations",
+        "Figma"
+      ],
+      "looking_for_help": "I need someone who can help me set up Stripe Connect for payouts to venues.",
+      "custom_fields": {
+        "What phase are you in?": "Building MVP"
+      }
+    },
+    {
+      "id": "s12",
+      "name": "Ravi Patel",
+      "role": "Payments engineer",
+      "company": "Stripe",
+      "currently_building": "Marketplace payment integrations",
+      "skills": [
+        "Stripe Connect",
+        "payments",
+        "Ruby",
+        "marketplaces"
+      ],
+      "looking_for_help": "Curious about what marketplace founders are building.",
+      "custom_fields": {
+        "What phase are you in?": "Established"
+      }
+    },
+    {
+      "id": "s13",
+      "name": "Isabella Rossi",
+      "role": "Product designer",
+      "company": "Freelance",
+      "currently_building": "Design systems for startups",
+      "skills": [
+        "UX design",
+        "Figma",
+        "design systems"
+      ],
+      "looking_for_help": "Looking for startups that need a designer.",
+      "custom_fields": {
+        "What phase are you in?": "Freelancing"
+      }
+    },
+    {
+      "id": "s14",
+      "name": "Kenji Watanabe",
+      "role": "ML engineer",
+      "company": "Cohere",
+      "currently_building": "Retrieval systems for enterprise search",
+      "skills": [
+        "RAG",
+        "embeddings",
+        "Python",
+        "evaluation"
+      ],
+      "looking_for_help": "Want to meet founders building on LLMs to hear real use cases.",
+      "custom_fields": {
+        "What phase are you in?": "Established"
+      }
+    },
+    {
+      "id": "s15",
+      "name": "Fatima Noor",
+      "role": "Founder",
+      "company": "Fieldnote",
+      "currently_building": "Voice notes that turn into CRM updates for field sales reps",
+      "skills": [
+        "sales",
+        "B2B SaaS",
+        "go-to-market"
+      ],
+      "looking_for_help": "Looking for design help on our onboarding flow and general feedback.",
+      "custom_fields": {
+        "What phase are you in?": "Seed"
+      }
+    },
+    {
+      "id": "s16",
+      "name": "Lucas Silva",
+      "role": "Student",
+      "company": "Toronto Metropolitan University",
+      "currently_building": "Learning to code by building a habit tracker",
+      "skills": [
+        "JavaScript",
+        "eager to learn"
+      ],
+      "looking_for_help": "Want to meet people working in tech to learn how they got started.",
+      "custom_fields": {
+        "What phase are you in?": "Learning"
+      }
+    },
+    {
+      "id": "s17",
+      "name": "Natalie Park",
+      "role": "Growth marketer",
+      "company": "Freelance",
+      "currently_building": "Growth for B2C apps",
+      "skills": [
+        "paid acquisition",
+        "SEO",
+        "content marketing"
+      ],
+      "looking_for_help": "Looking for consumer apps that need growth help.",
+      "custom_fields": {
+        "What phase are you in?": "Freelancing"
+      }
+    },
+    {
+      "id": "s18",
+      "name": "Tomás Herrera",
+      "role": "Founder",
+      "company": "Brightpath",
+      "currently_building": "A legal-aid chatbot for tenants",
+      "skills": [
+        "law",
+        "policy",
+        "no-code"
+      ],
+      "looking_for_help": "I need a lawyer or paralegal who knows Ontario landlord-tenant law to review our answers.",
+      "custom_fields": {
+        "What phase are you in?": "Prototype"
+      }
+    },
+    {
+      "id": "s19",
+      "name": "Amira Khalil",
+      "role": "Paralegal",
+      "company": "Tenant Rights Clinic",
+      "currently_building": "Helping tenants at the Landlord and Tenant Board",
+      "skills": [
+        "Ontario landlord-tenant law",
+        "LTB hearings",
+        "legal research"
+      ],
+      "looking_for_help": "Curious how AI could help legal clinics.",
+      "custom_fields": {
+        "What phase are you in?": "Established"
+      }
+    },
+    {
+      "id": "s20",
+      "name": "Ben Carter",
+      "role": "DevOps engineer",
+      "company": "Freelance",
+      "currently_building": "Infrastructure for small teams",
+      "skills": [
+        "AWS",
+        "Terraform",
+        "Kubernetes",
+        "CI/CD"
+      ],
+      "looking_for_help": "Looking for startups that need help with infrastructure.",
+      "custom_fields": {
+        "What phase are you in?": "Freelancing"
+      }
+    }
+  ],
+  "planted": [
+    {
+      "person_id": "s01",
+      "should_match_id": "s02",
+      "why": "Needs a React Native developer; s02 is the only one."
+    },
+    {
+      "person_id": "s03",
+      "should_match_id": "s04",
+      "why": "Needs Health Canada device approval experience; s04 is the only regulatory consultant."
+    },
+    {
+      "person_id": "s05",
+      "should_match_id": "s06",
+      "why": "Needs a backend/LLM technical cofounder; s06 is open to exactly that."
+    },
+    {
+      "person_id": "s07",
+      "should_match_id": "s08",
+      "why": "Needs climate angel investors; s08 is the only investor."
+    },
+    {
+      "person_id": "s09",
+      "should_match_id": "s10",
+      "why": "Needs SaaS pricing advice; s10 is the only pricing specialist."
+    },
+    {
+      "person_id": "s11",
+      "should_match_id": "s12",
+      "why": "Needs Stripe Connect help; s12 builds Stripe Connect integrations."
+    },
+    {
+      "person_id": "s18",
+      "should_match_id": "s19",
+      "why": "Needs Ontario landlord-tenant law review; s19 is the only paralegal in that area."
+    }
+  ]
+}

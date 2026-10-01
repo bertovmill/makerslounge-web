@@ -2,7 +2,7 @@
 // See ./schema.ts for provenance and how to regenerate.
 
 import { relations } from "drizzle-orm/relations";
-import { profiles, talks, talkContent, blogPosts, connections, meetups, events, applications, blockedUsers, broadcastAccounts, broadcastChannels, projects, communityContacts, contentEvents, conversations, feedback, comments, hackathonSubmissions, hackathonScores, homeVisions, identities, matcherContacts, matcherEvents, messages, mulerunDemos, mulerunVotes, podcasts, podcastGuests, profileEventNotes, profileAnnotations, reports, scheduledPosts, socialConnections, valuePortfolio, likes } from "./schema";
+import { profiles, talks, talkContent, blogPosts, communityContacts, connections, meetups, events, applications, blockedUsers, broadcastAccounts, broadcastChannels, projects, contentEvents, conversations, feedback, comments, hackathonSubmissions, hackathonScores, homeVisions, identities, matcherContacts, matcherEvents, messages, mulerunDemos, mulerunVotes, podcasts, podcastGuests, profileEventNotes, reports, scheduledPosts, socialConnections, valuePortfolio, likes, profileAnnotations, matcherEvalRuns, matcherEvalLabels } from "./schema";
 
 export const talksRelations = relations(talks, ({one, many}) => ({
 	profiles: one(profiles, {
@@ -15,6 +15,7 @@ export const talksRelations = relations(talks, ({one, many}) => ({
 export const profilesRelations = relations(profiles, ({many}) => ({
 	talkss: many(talks),
 	blogPostss: many(blogPosts),
+	communityContactss: many(communityContacts),
 	connectionss_recipientId: many(connections, {
 		relationName: "connections_recipientId_profiles_id"
 	}),
@@ -33,7 +34,6 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 	broadcastAccountss: many(broadcastAccounts),
 	broadcastChannelss: many(broadcastChannels),
 	projectss: many(projects),
-	communityContactss: many(communityContacts),
 	contentEventss: many(contentEvents),
 	conversationss_participant1: many(conversations, {
 		relationName: "conversations_participant1_profiles_id"
@@ -53,12 +53,6 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 	profileEventNotess_createdBy: many(profileEventNotes, {
 		relationName: "profileEventNotes_createdBy_profiles_id"
 	}),
-	profileAnnotations_ownerId: many(profileAnnotations, {
-		relationName: "profileAnnotations_ownerId_profiles_id"
-	}),
-	profileAnnotations_profileId: many(profileAnnotations, {
-		relationName: "profileAnnotations_profileId_profiles_id"
-	}),
 	profileEventNotess_profileId: many(profileEventNotes, {
 		relationName: "profileEventNotes_profileId_profiles_id"
 	}),
@@ -72,6 +66,12 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 	socialConnectionss: many(socialConnections),
 	valuePortfolios: many(valuePortfolio),
 	likess: many(likes),
+	profileAnnotationss_ownerId: many(profileAnnotations, {
+		relationName: "profileAnnotations_ownerId_profiles_id"
+	}),
+	profileAnnotationss_profileId: many(profileAnnotations, {
+		relationName: "profileAnnotations_profileId_profiles_id"
+	}),
 }));
 
 export const talkContentRelations = relations(talkContent, ({one}) => ({
@@ -84,6 +84,13 @@ export const talkContentRelations = relations(talkContent, ({one}) => ({
 export const blogPostsRelations = relations(blogPosts, ({one}) => ({
 	profiles: one(profiles, {
 		fields: [blogPosts.authorId],
+		references: [profiles.id]
+	}),
+}));
+
+export const communityContactsRelations = relations(communityContacts, ({one}) => ({
+	profiles: one(profiles, {
+		fields: [communityContacts.matchedProfileId],
 		references: [profiles.id]
 	}),
 }));
@@ -158,13 +165,6 @@ export const projectsRelations = relations(projects, ({one, many}) => ({
 	commentss: many(comments),
 	reportss: many(reports),
 	likess: many(likes),
-}));
-
-export const communityContactsRelations = relations(communityContacts, ({one}) => ({
-	profiles: one(profiles, {
-		fields: [communityContacts.matchedProfileId],
-		references: [profiles.id]
-	}),
 }));
 
 export const contentEventsRelations = relations(contentEvents, ({one}) => ({
@@ -323,19 +323,6 @@ export const profileEventNotesRelations = relations(profileEventNotes, ({one}) =
 	}),
 }));
 
-export const profileAnnotationsRelations = relations(profileAnnotations, ({one}) => ({
-	profiles_ownerId: one(profiles, {
-		fields: [profileAnnotations.ownerId],
-		references: [profiles.id],
-		relationName: "profileAnnotations_ownerId_profiles_id"
-	}),
-	profiles_profileId: one(profiles, {
-		fields: [profileAnnotations.profileId],
-		references: [profiles.id],
-		relationName: "profileAnnotations_profileId_profiles_id"
-	}),
-}));
-
 export const reportsRelations = relations(reports, ({one}) => ({
 	comments: one(comments, {
 		fields: [reports.commentId],
@@ -387,4 +374,28 @@ export const likesRelations = relations(likes, ({one}) => ({
 		fields: [likes.userId],
 		references: [profiles.id]
 	}),
+}));
+
+export const profileAnnotationsRelations = relations(profileAnnotations, ({one}) => ({
+	profiles_ownerId: one(profiles, {
+		fields: [profileAnnotations.ownerId],
+		references: [profiles.id],
+		relationName: "profileAnnotations_ownerId_profiles_id"
+	}),
+	profiles_profileId: one(profiles, {
+		fields: [profileAnnotations.profileId],
+		references: [profiles.id],
+		relationName: "profileAnnotations_profileId_profiles_id"
+	}),
+}));
+
+export const matcherEvalLabelsRelations = relations(matcherEvalLabels, ({one}) => ({
+	matcherEvalRuns: one(matcherEvalRuns, {
+		fields: [matcherEvalLabels.runId],
+		references: [matcherEvalRuns.id]
+	}),
+}));
+
+export const matcherEvalRunsRelations = relations(matcherEvalRuns, ({many}) => ({
+	matcherEvalLabelss: many(matcherEvalLabels),
 }));

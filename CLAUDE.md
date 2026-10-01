@@ -204,6 +204,31 @@ Rebuilt in Sep 2026 around the flat editorial motif. Sections have stable ids
   which the CLI also installed — it is corrected to `@/lib/utils`; do not let a
   re-add put it back.
 
+### Meetup matcher evals (`evals/matcher/`, `/admin/matcher-evals`)
+
+The meetup matcher (`/meetup-matcher`, prompt and tools in
+`src/lib/meetup-matcher.ts`) is measured, not eyeballed. The route and the evals
+call the same `runMeetupMatcher()`, so a prompt or model change is evaluated
+exactly as it ships.
+
+- `npm run eval:matcher [dataset] [--no-judge] [--no-save]` runs it, scores it,
+  saves the run to `makerslounge.matcher_eval_runs`, and **exits 1 if any metric is
+  below `evals/matcher/thresholds.json`**, so it can gate a deploy.
+- **Metrics**: coverage and rules followed (exactly 3 matches, real ids, names
+  match ids, no self/duplicate matches) are deterministic; *planted recall* is
+  whether May finds the pairs planted in a dataset (a need exactly one person in
+  the room can meet); *grounding* is whether reasons reuse the matched person's
+  own words; *needs met* is an LLM judge (Haiku, so May isn't grading herself).
+- **Data never includes real people in the repo.** `data/synthetic-meetup.json`
+  is fictional. `npm run eval:matcher:anonymize -- "<luma export.csv>" <name>`
+  scrubs a real export into `data/private/` (gitignored) for local runs.
+- **`/admin/matcher-evals`** shows each run and lets Berto grade May's intros one
+  card at a time (swipe or ←/→). The judge's verdict is hidden until he grades,
+  then "you vs. the judge" agreement shows whether the judge can be trusted.
+- The synthetic set scores ~100%: it's a floor, not a benchmark. Real meetups
+  are where it discriminates (meetup 12 caught a match whose name and id
+  pointed at different people).
+
 ### Eve Agent Workshop (`/eve-workshop`)
 
 Folded in from its own repo (`bertovmill/eve-workshop`) in Aug 2026. It is a
