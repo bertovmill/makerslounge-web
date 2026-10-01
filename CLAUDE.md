@@ -66,23 +66,37 @@ MakersLounge is a Next.js 16 app for connecting makers/builders. It uses the App
 ### Landing page (`/`)
 
 Rebuilt in Sep 2026 around the flat editorial motif. Sections have stable ids
-(`#hero`, `#ask-may`, `#values`, `#listen-and-read`).
+(`#hero`, `#community-photos`, `#ask-may`, `#values`, `#listen-and-read`).
 
-- **The hero "sun" is a WebGPU shader**, `src/components/landing/hero-field.ts`,
-  drawn with [vgpu](https://vgpu.sh) (Vercel Labs). It is a hard-edged disc in
-  `--motif-sun` whose rim breathes on a noise field, with a sparse halftone of
-  `--blue-core` dots near the edge and a faint film grain — still no gradients,
-  no blur. The WGSL is an inline string, deliberately, so the `withEve()`-wrapped
-  `next.config.ts` needs no `.wgsl` loader. Colours are uniforms read from the
-  CSS variables on `<html>`, so theme toggles re-colour it live.
-- **`HeroField.tsx` falls back to the static `Arc`** when WebGPU is missing
-  (Firefox stable, older Safari), the adapter is refused, or the visitor prefers
-  reduced motion. The page must look composed on the fallback; the shader is an
-  upgrade, not a dependency.
+- **The hero is "one light per member"** (Oct 2026; it replaced the WebGPU
+  "sun" disc). Every member is a dot on a golden-angle spiral, and the dot count
+  is the live `/api/community-stats` number, so the cluster grows as people join.
+  A wave of light runs centre-out, the cluster swells, holds, releases, loops.
+  The light is real 2D GI: a radiance-cascade pipeline adapted from vgpu's
+  `agent-radiance-cascades` example (members → jump flood → SDF → cascades →
+  present). Light mode prints the light as blue ink on paper; dark mode glows.
+  Present redraws the dots analytically at output res so they stay hard-edged;
+  only the light is soft.
+  - `member-light-scene.ts` holds the shaders and the pass chain. It imports
+    vgpu **types only** and takes `{ effect, target }` as an argument, so it
+    loads under plain Node. `member-light.ts` is the browser runtime (surface,
+    resize, 24fps lighting, every-frame present).
+  - The WGSL is inline strings, deliberately, so the `withEve()`-wrapped
+    `next.config.ts` needs no `.wgsl` loader. The example's `.wgsl` imports were
+    flattened by concatenation.
+- **`HeroField.tsx` falls back to the same spiral as static SVG** when WebGPU is
+  missing (Firefox stable, older Safari), the adapter is refused, or the visitor
+  prefers reduced motion. The page must look composed on the fallback; the
+  shader is an upgrade, not a dependency.
 - **Validate the shader with pixels, not eyes.** `npx vgpu doctor` is healthy on
-  this Mac (Dawn on Metal), and `scripts/render-hero-field.mts` renders a light
-  and a dark frame to PNG headlessly. Headless Chromium also runs WebGPU with
-  `--enable-unsafe-webgpu --use-angle=metal` for full-page screenshots.
+  this Mac (Dawn on Metal), and `scripts/render-member-light.mts` runs the full
+  chain headlessly and writes light and dark PNGs at several points in the loop.
+  Headless Chromium also runs WebGPU with `--enable-unsafe-webgpu
+  --use-angle=metal` for full-page screenshots.
+- **The Claude browser pane reports `document.visibilityState === "hidden"`**
+  right after a navigation until it gets focus, so every canvas sleeps (by
+  design, via `runWhileVisible`) and the hero looks empty. Click the page
+  before judging it; a real foreground tab is unaffected.
 - **Every canvas shares one context.** `gpu.ts` holds the shared `init()`
   (ref-counted), `runWhileVisible` (a `frameLoop` that sleeps when the canvas
   is off screen or the tab is hidden), theme-colour readers, and `WGSL_COMMON`
@@ -94,7 +108,7 @@ Rebuilt in Sep 2026 around the flat editorial motif. Sections have stable ids
   Ask May that ripples on keystrokes (`MayField` exposes `pulseFrom` /
   `setEnergy` through a ref); `value-fields.ts` animates the four value cards
   as SDFs over the same compositions as the CSS `ValueArt.tsx` fallback. The
-  hero's `scroll` uniform sets the sun as the page scrolls.
+  hero field fades out as the page scrolls past it.
 - **`glass-panel.ts` is the refractive card surface**, used by `GlassCard.tsx`
   on the two `#listen-and-read` cards. A rounded slab with a bevelled edge over
   a ruled, posterised field: the bevel refracts by Snell's law, once per channel

@@ -7,8 +7,9 @@
 //
 // Needs `npx vgpu doctor` to report healthy (Dawn on Metal here).
 //
-// Shader source is read as text rather than imported, for the same reason as
-// render-hero-field.mts: the app modules import the browser build of vgpu.
+// Shader source is read as text rather than imported: the app modules import
+// the browser build of vgpu, which does not load under Node. (The member field
+// avoids this by injecting vgpu; see render-member-light.mts.)
 import { readFileSync, writeFileSync } from "node:fs";
 // @ts-expect-error pngjs ships no types; this is a dev-only check script.
 import { PNG } from "pngjs";
