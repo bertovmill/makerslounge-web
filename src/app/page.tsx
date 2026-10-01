@@ -264,7 +264,7 @@ export default function Home() {
       </div>
 
       {/* Nav */}
-      <header className="relative z-20 flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <header data-hero-clear className="relative z-20 flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <Link href="/" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
           <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
           <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
@@ -400,10 +400,10 @@ export default function Home() {
       {/* Hero */}
       <main className="relative z-10 flex-1 flex flex-col">
         <section id="hero" className="relative flex min-h-[72svh] flex-col items-center justify-center px-4 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-12">
-          {/* One light per member: radiance cascades when the browser can, a flat spiral when it cannot. */}
+          {/* One light per member across the header, steering around the copy. Static SVG without WebGPU. */}
           <HeroField className="-top-[12%] -bottom-[6%]" members={memberCount} />
 
-          <div className="relative flex flex-col items-center">
+          <div data-hero-content className="relative flex flex-col items-center">
             <LogoDots className="relative mb-5 h-14 w-14 sm:mb-6 sm:h-20 sm:w-20" />
 
             <Eyebrow className="relative mb-4">Build · Connect · Create</Eyebrow>

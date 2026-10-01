@@ -14,7 +14,7 @@ import { PNG } from "pngjs";
 import { effect, frame, init, sampler, target } from "vgpu/node";
 // Node needs the .ts extension; the app's bundler-style tsconfig rejects it.
 // @ts-expect-error TS5097
-import { CENTRE, DIRECTION_BASE, MAX_SCENE_EDGE, PRESENT_WGSL, createScene, lightingPasses, memberGeometry, memberLook, prepareScene, scaledSize } from "../src/components/landing/member-light-scene.ts";
+import { DIRECTION_BASE, MAX_SCENE_EDGE, PRESENT_WGSL, clearUniform, createScene, lightingPasses, memberGeometry, memberLook, prepareScene, scaledSize } from "../src/components/landing/member-light-scene.ts";
 
 const out = process.env.OUT ?? ".";
 const W = Number(process.env.W ?? 1440);
@@ -40,11 +40,19 @@ const samp = sampler(gpu, { minFilter: "linear", magFilter: "linear", addressMod
 const outTarget = target(gpu, { size: [W, H], format: "rgba8unorm" });
 const present = effect(gpu, PRESENT_WGSL, { blend: "premultiplied" });
 
+// Rough stand-ins for the hero copy (logo, headline lines, subtitle, buttons),
+// in output pixels, so the keep-out zones show up in the render.
+const s = H / 900;
+const clearRects: [number, number, number, number][] = [
+  [670, 180, 770, 280], [190, 330, 1250, 450], [400, 460, 1040, 580], [470, 610, 970, 680], [520, 720, 920, 790],
+].map(([l, t, r, b]) => [l * (W / 1440), t * s, r * (W / 1440), b * s]);
+const clear = clearUniform(clearRects, W, H);
+
 const params = (time: number, res: readonly [number, number]) => ({
   res,
-  centre: CENTRE,
   time,
-  ...memberGeometry(members, res[0] / res[1]),
+  ...memberGeometry(members, W / H),
+  ...clear,
 });
 
 for (const time of times) {

@@ -1,11 +1,16 @@
 /**
  * The landing hero's "people building together" field: one light per member.
  *
- * Every member of MakersLounge is a dot on a sunflower (golden-angle) spiral,
- * so the cluster grows outward as people join. A wave of light travels from
- * the centre to the rim, the cluster swells a little as it lights, holds the
- * pose, then releases and starts again. Before the wave arrives, a few lone
- * dots glint on their own — makers building alone until they connect.
+ * Every member of MakersLounge is a dot scattered across the whole hero: one
+ * per cell of a grid sized so that the cells fill the canvas, each jittered
+ * and drifting gently so the field reads as people rather than graph paper.
+ * A wave of light travels from the centre outward, holds the pose, then
+ * releases and starts again. Before the wave arrives, a few lone dots glint
+ * on their own — makers building alone until they connect.
+ *
+ * Dots never sit on the hero copy: the page measures the text and buttons
+ * (HeroField.tsx) and passes the rects in as keep-out zones, and a dot whose
+ * centre falls in one neither draws nor emits.
  *
  * The light is real 2D global illumination, adapted from vgpu's "Agent
  * Radiance Cascades" example (`npx vgpu examples pull agent-radiance-cascades`):
@@ -18,7 +23,7 @@
  *
  * Changes from the example, and why:
  *   - Its `.wgsl` modules are inlined as strings (shared helpers concatenated,
- *     `export` dropped), matching hero-field.ts: the `withEve()`-wrapped
+ *     `export` dropped), so the `withEve()`-wrapped
  *     `next.config.ts` has no WGSL loader.
  *   - The debug views and lil-gui panel are gone; only the final image ships.
  *   - It shares the page's GPU context (gpu.ts) and sleeps off screen
@@ -50,14 +55,12 @@ export const DIRECTION_BASE = 2; // 4 rays at cascade 0, the example's "web" qua
 export const LIGHTING_FPS = 24;
 const RC_INTERVAL0 = 2;
 
-/** Cluster radius, in units of canvas height. */
-const CLUSTER_RADIUS = 0.4;
-/** Dot radius as a fraction of the spiral spacing. */
-const DOT_FRACTION = 0.22;
-/** Past this the dots get too small to read; the spiral stops growing. */
+/** Dot radius, in units of canvas height. */
+const DOT_RADIUS = 0.0055;
+/** Past this the cells get too small to read. */
 const MAX_MEMBERS = 600;
-/** The cluster centre in canvas uv: a touch above middle, where the sun sat. */
-export const CENTRE: Vec2 = [0.5, 0.42];
+/** Keep-out rects the shader accepts; HeroField merges down to this many. */
+export const MAX_CLEAR_RECTS = 16;
 
 // ---------------------------------------------------------------------------
 // WGSL. No backticks anywhere inside these strings, comments included.
@@ -65,83 +68,123 @@ export const CENTRE: Vec2 = [0.5, 0.42];
 
 /** The member dots, shared by the emitter pass and the present pass. */
 const MEMBERS_WGSL = /* wgsl */ `
+// q-space: centred on the canvas, in units of canvas height, y down.
 struct Members {
   res: vec2f,
-  centre: vec2f,
+  grid: vec2f,
   time: f32,
   count: f32,
-  spacing: f32,
   radius: f32,
+  clear_count: f32,
+  clear: array<vec4f, ${MAX_CLEAR_RECTS}>,
 };
 
-const GOLDEN_ANGLE: f32 = 2.399963229728653;
-const PERIOD: f32 = 11.0;
+const PERIOD: f32 = 16.0;
 
 fn smootherstep01(value: f32) -> f32 {
   let x = clamp(value, 0.0, 1.0);
   return x * x * x * (x * (x * 6.0 - 15.0) + 10.0);
 }
 
-fn hash11(n: f32) -> f32 {
-  return fract(sin(n * 127.1 + 311.7) * 43758.5453);
+fn hash12(p: vec2f) -> f32 {
+  var v = fract(p * vec2f(0.1031, 0.1030));
+  v += dot(v, v.yx + 33.33);
+  return fract((v.x + v.y) * v.x);
 }
 
-fn member_phase(m: Members) -> f32 {
-  return fract(m.time / PERIOD);
+fn hash22(p: vec2f) -> vec2f {
+  return vec2f(hash12(p), hash12(p + vec2f(19.19, 7.31)));
 }
 
-// The cluster swells as the wave lights it and settles back while dark, so
-// the loop is continuous: 1.0 at both ends of the period.
-fn member_scale(m: Members) -> f32 {
-  let phase = member_phase(m);
-  let grow = smootherstep01(phase / 0.7);
-  let settle = smootherstep01((phase - 0.86) / 0.12);
-  return 0.92 + 0.08 * (grow - settle);
+fn member_aspect(m: Members) -> f32 {
+  return m.res.x / max(m.res.y, 1.0);
 }
 
-fn member_pos(i: f32, spacing: f32) -> vec2f {
-  let r = spacing * sqrt(i + 0.5);
-  let a = i * GOLDEN_ANGLE;
-  return vec2f(cos(a), sin(a)) * r;
+fn member_q(m: Members, uv: vec2f) -> vec2f {
+  return (uv - 0.5) * vec2f(member_aspect(m), 1.0);
 }
 
-fn member_strength(m: Members, i: f32) -> f32 {
-  let phase = member_phase(m);
-  // Spiral index grows with radius squared, so sqrt gives a constant-speed ring.
-  let reach = sqrt((i + 0.5) / max(m.count, 1.0));
+fn member_cell_size(m: Members) -> vec2f {
+  return vec2f(member_aspect(m), 1.0) / m.grid;
+}
+
+// The grid has at least count cells; the surplus is switched off evenly
+// through the grid so exactly count stay on.
+fn member_active(m: Members, cell: vec2f) -> bool {
+  let total = m.grid.x * m.grid.y;
+  let surplus = total - m.count;
+  let k = cell.y * m.grid.x + cell.x;
+  return floor(k * surplus / total) == floor((k + 1.0) * surplus / total);
+}
+
+fn member_pos(m: Members, cell: vec2f) -> vec2f {
+  let size = member_cell_size(m);
+  let h = hash22(cell);
+  let jitter = (h - 0.5) * 0.5;
+  let drift = 0.07 * vec2f(sin(m.time * 0.35 + h.x * 6.28), cos(m.time * 0.29 + h.y * 6.28));
+  let origin = vec2f(-0.5 * member_aspect(m), -0.5);
+  return origin + (cell + 0.5 + jitter + drift) * size;
+}
+
+fn member_clear(m: Members, p: vec2f) -> bool {
+  for (var i = 0; i < i32(m.clear_count); i = i + 1) {
+    let r = m.clear[i];
+    if (p.x > r.x - m.radius && p.x < r.z + m.radius && p.y > r.y - m.radius && p.y < r.w + m.radius) {
+      return true;
+    }
+  }
+  return false;
+}
+
+fn member_strength(m: Members, cell: vec2f, p: vec2f) -> f32 {
+  let phase = fract(m.time / PERIOD);
+  let reach = length(p) / length(vec2f(0.5 * member_aspect(m), 0.5));
   let arrival = 0.06 + 0.56 * reach;
-  let reached = smootherstep01((phase - arrival) / 0.07);
+  let reached = smootherstep01((phase - arrival) / 0.08);
   let release = 1.0 - smootherstep01((phase - 0.84) / 0.1);
-  let h = hash11(i);
-  let flicker = 0.84 + 0.16 * sin(m.time * (1.3 + h * 2.1) + h * 17.0);
+  let h = hash12(cell + vec2f(3.7, 1.3));
+  let flicker = 0.84 + 0.16 * sin(m.time * (1.1 + h * 1.8) + h * 17.0);
   // One maker in nine glints alone before the wave reaches them.
-  let solo_wave = 0.5 + 0.5 * sin(m.time * (0.7 + h * 1.6) + h * 40.0);
+  let solo_wave = 0.5 + 0.5 * sin(m.time * (0.6 + h * 1.4) + h * 40.0);
   let solo = select(0.0, 0.4 * solo_wave * solo_wave, h > 0.89);
   return max(reached * release * flicker, solo * (1.0 - reached));
 }
 
-// Nearest member to q (centred, height units): x = signed distance to its
-// edge, y = its index. Only dots whose spiral radius is within one spacing of
-// |q| can contain q, which bounds the search to about 4 * sqrt(count) dots.
-fn member_nearest(m: Members, q: vec2f) -> vec2f {
-  let scale = member_scale(m);
-  let spacing = m.spacing * scale;
-  let radius = m.radius * scale;
-  let rr = length(q) / spacing;
-  let lo = max(0.0, floor((rr - 1.0) * abs(rr - 1.0) - 0.5));
-  let hi = min(m.count - 1.0, ceil((rr + 1.0) * (rr + 1.0)));
-  var best = vec2f(1e3, -1.0);
-  for (var i = lo; i <= hi; i = i + 1.0) {
-    let d = distance(q, member_pos(i, spacing)) - radius;
-    if (d < best.x) {
-      best = vec2f(d, i);
+// Nearest visible member: x = signed distance to its edge (height units),
+// y = its strength, z = 1 when found. Jitter and drift keep every dot inside
+// its own cell plus a margin, so the 3x3 neighbourhood is enough.
+fn member_nearest(m: Members, q: vec2f) -> vec3f {
+  let size = member_cell_size(m);
+  let origin = vec2f(-0.5 * member_aspect(m), -0.5);
+  let home = floor((q - origin) / size);
+  var best = vec3f(1e3, 0.0, 0.0);
+  var best_cell = vec2f(-1.0);
+  var best_pos = vec2f(0.0);
+  for (var y = -1; y <= 1; y = y + 1) {
+    for (var x = -1; x <= 1; x = x + 1) {
+      let cell = home + vec2f(f32(x), f32(y));
+      if (cell.x < 0.0 || cell.y < 0.0 || cell.x >= m.grid.x || cell.y >= m.grid.y) {
+        continue;
+      }
+      if (!member_active(m, cell)) {
+        continue;
+      }
+      let p = member_pos(m, cell);
+      if (member_clear(m, p)) {
+        continue;
+      }
+      let d = distance(q, p) - m.radius;
+      if (d < best.x) {
+        best = vec3f(d, 0.0, 1.0);
+        best_cell = cell;
+        best_pos = p;
+      }
     }
   }
+  if (best.z > 0.5) {
+    best.y = member_strength(m, best_cell, best_pos);
+  }
   return best;
-}
-
-fn member_q(m: Members, uv: vec2f) -> vec2f {
-  return (uv - m.centre) * vec2f(m.res.x / max(m.res.y, 1.0), 1.0);
 }
 `;
 
@@ -238,12 +281,12 @@ ${MEMBERS_WGSL}
 @fragment
 fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
   let nearest = member_nearest(m, member_q(m, uv));
-  if (nearest.y < 0.0) {
+  if (nearest.z < 0.5) {
     return vec4f(0.0);
   }
   let px = nearest.x * m.res.y;
   let mask = 1.0 - smoothstep(-0.8, 0.8, px);
-  let emission = mix(0.065, 8.5, member_strength(m, nearest.y));
+  let emission = mix(0.065, 8.5, nearest.y);
   return vec4f(vec3f(emission) * mask, mask);
 }
 `;
@@ -484,10 +527,10 @@ fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
 
   // Dots are drawn here at output resolution so their edges stay hard.
   let nearest = member_nearest(m, member_q(m, uv));
-  if (nearest.y >= 0.0) {
+  if (nearest.z > 0.5) {
     let aa = 1.0 / max(m.res.y, 1.0);
     let mask = 1.0 - smoothstep(-aa, aa, nearest.x);
-    let strength = member_strength(m, nearest.y);
+    let strength = nearest.y;
     let dot_col = mix(look.dot_idle.rgb, look.dot_lit.rgb, strength);
     let dot_a = mix(look.dot_idle.a, look.dot_lit.a, strength) * mask;
     rgb = dot_col * dot_a + rgb * (1.0 - dot_a);
@@ -577,20 +620,64 @@ export async function prepareScene(scene: Scene): Promise<void> {
 
 export interface MemberParams {
   res: Vec2;
-  centre: Vec2;
+  grid: Vec2;
   time: number;
   count: number;
-  spacing: number;
   radius: number;
+  clear_count: number;
+  clear: number[][];
 }
 
-/** Spiral spacing and dot radius for `count` members on a canvas of `aspect`. */
+/** Keep-out rect in canvas pixels: [left, top, right, bottom]. */
+export type ClearRect = readonly [number, number, number, number];
+
+/** Grid that gives `count` members one cell each across a canvas of `aspect`. */
 export function memberGeometry(count: number, aspect: number) {
   const n = Math.min(MAX_MEMBERS, Math.max(1, Math.round(count)));
-  // On a narrow (phone) canvas the cluster shrinks to stay inside the width.
-  const radius = Math.min(CLUSTER_RADIUS, 0.46 * aspect);
-  const spacing = radius / Math.sqrt(n);
-  return { count: n, spacing, radius: spacing * DOT_FRACTION };
+  const rows = Math.max(1, Math.round(Math.sqrt(n / aspect)));
+  const cols = Math.max(1, Math.ceil(n / rows));
+  return { count: n, grid: [cols, rows] as Vec2, radius: DOT_RADIUS };
+}
+
+/** Pixel rects to the shader's q-space, padded out to the fixed array length. */
+export function clearUniform(rects: readonly ClearRect[], width: number, height: number) {
+  const h = Math.max(1, height);
+  const list = rects.slice(0, MAX_CLEAR_RECTS).map(([l, t, r, b]) => [
+    (l - width / 2) / h,
+    (t - height / 2) / h,
+    (r - width / 2) / h,
+    (b - height / 2) / h,
+  ]);
+  const clear = [...list, ...Array.from({ length: MAX_CLEAR_RECTS - list.length }, () => [0, 0, 0, 0])];
+  return { clear_count: list.length, clear };
+}
+
+/** The same field in plain JS, for the static SVG fallback. */
+export function memberDots(count: number, width: number, height: number, rects: readonly ClearRect[]) {
+  const { count: n, grid, radius } = memberGeometry(count, width / Math.max(1, height));
+  const [cols, rows] = grid;
+  const total = cols * rows;
+  const surplus = total - n;
+  const hash = (x: number, y: number) => {
+    const v = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+    return v - Math.floor(v);
+  };
+  const cw = width / cols;
+  const ch = height / rows;
+  const r = radius * height;
+  const dots: { x: number; y: number; reach: number }[] = [];
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const k = y * cols + x;
+      if (Math.floor((k * surplus) / total) !== Math.floor(((k + 1) * surplus) / total)) continue;
+      const px = (x + 0.5 + (hash(x, y) - 0.5) * 0.5) * cw;
+      const py = (y + 0.5 + (hash(y + 7, x + 3) - 0.5) * 0.5) * ch;
+      if (rects.some(([l, t, rr, b]) => px > l - r && px < rr + r && py > t - r && py < b + r)) continue;
+      const reach = Math.hypot((px - width / 2) / height, (py - height / 2) / height) / Math.hypot(width / height / 2, 0.5);
+      dots.push({ x: px, y: py, reach });
+    }
+  }
+  return { dots, radius: r };
 }
 
 type Pass = { target: Target; effect: Effect };
@@ -648,7 +735,7 @@ export function memberLook(dark: boolean, read: (v: string, fallback: string) =>
       glow_hi: read("--blue-light", "#9DCBF2"),
       dot_lit: read("--blue-light", "#9DCBF2"),
       dot_idle: [...read("--ink", "#EFE7D9").slice(0, 3), 0.12] as [number, number, number, number],
-      exposure: 0.16,
+      exposure: 0.12,
       glowAlpha: 0.85,
     };
   }
@@ -657,7 +744,7 @@ export function memberLook(dark: boolean, read: (v: string, fallback: string) =>
     glow_hi: read("--blue-core", "#1A6FD4"),
     dot_lit: [...read("--blue-core", "#1A6FD4").slice(0, 3), 0.8] as [number, number, number, number],
     dot_idle: [...read("--ink", "#1B1B23").slice(0, 3), 0.1] as [number, number, number, number],
-    exposure: 0.12,
-    glowAlpha: 0.55,
+    exposure: 0.09,
+    glowAlpha: 0.5,
   };
 }

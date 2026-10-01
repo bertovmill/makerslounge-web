@@ -8,18 +8,19 @@ import type { Gpu } from "vgpu";
 import { runWhileVisible, themeColor } from "./gpu";
 import type { GpuCanvasHandle } from "./use-gpu-canvas";
 import {
-  CENTRE,
   DIRECTION_BASE,
   LIGHTING_FPS,
   MAX_SCENE_EDGE,
   PRESENT_WGSL,
   createScene,
   destroyTargets,
+  clearUniform,
   lightingPasses,
   memberGeometry,
   memberLook,
   prepareScene,
   scaledSize,
+  type ClearRect,
   type MemberParams,
   type Scene,
   type Vec2,
@@ -30,6 +31,8 @@ const vg = { effect, target };
 export interface MemberLightHandle extends GpuCanvasHandle {
   setMembers(count: number): void;
   setScroll(progress: number): void;
+  /** Keep-out rects in CSS px relative to the canvas, plus the canvas CSS size. */
+  setClear(rects: readonly ClearRect[], width: number, height: number): void;
 }
 
 export function startMemberLight(gpu: Gpu, canvas: HTMLCanvasElement): MemberLightHandle {
@@ -78,10 +81,14 @@ export function startMemberLight(gpu: Gpu, canvas: HTMLCanvasElement): MemberLig
   rebuild();
   const unResize = canvasSurface.onResize(rebuild);
 
+  let clear = clearUniform([], 1, 1);
+
+  // The grid comes from the output canvas for both passes: the scene's
+  // rounded size can tip rows/cols, and the two must agree dot for dot.
   const memberParams = (seconds: number, res: Vec2): MemberParams => {
-    const aspect = res[1] === 0 ? 1 : res[0] / res[1];
-    const geometry = memberGeometry(count, aspect);
-    return { res, centre: CENTRE, time: seconds, ...geometry };
+    const [w, h] = canvasSurface.size;
+    const geometry = memberGeometry(count, h === 0 ? 1 : w / h);
+    return { res, time: seconds, ...geometry, ...clear };
   };
 
   const time = clock(gpu);
@@ -116,6 +123,9 @@ export function startMemberLight(gpu: Gpu, canvas: HTMLCanvasElement): MemberLig
     },
     setMembers(next) {
       if (Number.isFinite(next) && next > 0) count = next;
+    },
+    setClear(rects, width, height) {
+      clear = clearUniform(rects, width, height);
     },
     setScroll(progress) {
       // Fade out over the last stretch of the hero, before Ask May.

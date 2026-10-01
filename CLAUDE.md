@@ -69,14 +69,20 @@ Rebuilt in Sep 2026 around the flat editorial motif. Sections have stable ids
 (`#hero`, `#community-photos`, `#ask-may`, `#values`, `#listen-and-read`).
 
 - **The hero is "one light per member"** (Oct 2026; it replaced the WebGPU
-  "sun" disc). Every member is a dot on a golden-angle spiral, and the dot count
-  is the live `/api/community-stats` number, so the cluster grows as people join.
-  A wave of light runs centre-out, the cluster swells, holds, releases, loops.
-  The light is real 2D GI: a radiance-cascade pipeline adapted from vgpu's
-  `agent-radiance-cascades` example (members → jump flood → SDF → cascades →
-  present). Light mode prints the light as blue ink on paper; dark mode glows.
-  Present redraws the dots analytically at output res so they stay hard-edged;
-  only the light is soft.
+  "sun" disc). Every member is a small dot scattered across the whole header,
+  one per cell of a grid sized to the canvas, jittered and drifting; the count
+  is the live `/api/community-stats` number. A wave of light runs centre-out
+  on a 16s loop, holds, releases. The light is real 2D GI: a radiance-cascade
+  pipeline adapted from vgpu's `agent-radiance-cascades` example (members →
+  jump flood → SDF → cascades → present). Light mode prints the light as blue
+  ink on paper; dark mode glows. Present redraws the dots analytically at
+  output res so they stay hard-edged; only the light is soft.
+  - **Dots never sit on copy.** `HeroField.tsx` measures everything inside
+    `[data-hero-content]` and the children of `[data-hero-clear]` (the page
+    header, which the canvas runs up behind) line by line with Range client
+    rects, merges them to at most 16 rects, and passes them to the shader as
+    keep-out zones. Add new hero copy inside `[data-hero-content]` and it is
+    avoided automatically.
   - `member-light-scene.ts` holds the shaders and the pass chain. It imports
     vgpu **types only** and takes `{ effect, target }` as an argument, so it
     loads under plain Node. `member-light.ts` is the browser runtime (surface,
@@ -84,7 +90,7 @@ Rebuilt in Sep 2026 around the flat editorial motif. Sections have stable ids
   - The WGSL is inline strings, deliberately, so the `withEve()`-wrapped
     `next.config.ts` needs no `.wgsl` loader. The example's `.wgsl` imports were
     flattened by concatenation.
-- **`HeroField.tsx` falls back to the same spiral as static SVG** when WebGPU is
+- **`HeroField.tsx` falls back to the same field as static SVG** (same keep-out) when WebGPU is
   missing (Firefox stable, older Safari), the adapter is refused, or the visitor
   prefers reduced motion. The page must look composed on the fallback; the
   shader is an upgrade, not a dependency.
