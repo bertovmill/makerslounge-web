@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventRecapCard } from "./EventRecapCard";
@@ -20,6 +22,24 @@ export default function EventsPage() {
           Upcoming meetups, workshops, and recaps from past events
         </p>
       </div>
+
+      <Link
+        href="/hackathons/better-toronto-buildathon"
+        className="group mb-6 flex items-center justify-between gap-4 rounded-xl border border-border bg-card px-4 py-4 transition-colors hover:bg-secondary/60 md:px-5"
+      >
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+            Featured · Oct 24 to 25 · Apply by Oct 20
+          </span>
+          <span className="text-[15px] font-semibold tracking-tight md:text-base">
+            Better Toronto Buildathon
+          </span>
+          <span className="text-[13px] text-muted-foreground md:text-sm">
+            A weekend building for housing, transit, safer streets and efficient government. The best work goes to City Hall.
+          </span>
+        </div>
+        <ArrowUpRight className="size-5 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
+      </Link>
 
       <Tabs defaultValue="upcoming" className="w-full">
         <TabsList>

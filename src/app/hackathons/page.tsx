@@ -19,6 +19,20 @@ type HackathonEntry = {
 
 const HACKATHONS: HackathonEntry[] = [
   {
+    slug: "better-toronto-buildathon",
+    href: "/hackathons/better-toronto-buildathon",
+    title: "Better Toronto Buildathon",
+    tagline:
+      "Build a better Toronto in a weekend. Housing, transit, safer streets and efficient government. The best work goes to City Hall.",
+    date: "Sat Oct 24 to Sun Oct 25, 2026",
+    location: "Downtown Toronto",
+    status: "upcoming",
+    links: [
+      { label: "Apply as a builder", href: "https://tally.so/r/1AZR04", icon: "external" },
+      { label: "Luma event", href: "https://luma.com/p4mthvry", icon: "external" },
+    ],
+  },
+  {
     slug: "mulerun",
     href: "/hackathons/mulerun",
     title: "AI Hackathon Night with MuleRun",
@@ -35,7 +49,7 @@ const HACKATHONS: HackathonEntry[] = [
     tagline: "100 builders. One week. Live demos at Toronto Tech Week.",
     date: "May 19 to May 26, 2026",
     location: "510 Front St W, Suite 200, Toronto",
-    status: "upcoming",
+    status: "past",
     links: [
       { label: "Demo Night Slides", href: "/hackathons/2026-innovation-hackathon/demo-night", icon: "slides" },
       { label: "Judge Scoring", href: "/hackathons/2026-innovation-hackathon/scoring/judge", icon: "scoring" },
