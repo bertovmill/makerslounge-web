@@ -13,7 +13,12 @@ import { AuthenticateWithRedirectCallback } from "@clerk/nextjs";
 export default function SSOCallbackPage() {
   return (
     <div className="h-svh flex items-center justify-center">
-      <AuthenticateWithRedirectCallback signInFallbackRedirectUrl="/home" />
+      {/* Both land back on /auth, which decides between the onboarding question
+          (new member) and /home. A first-time Google user arrives as a sign-up. */}
+      <AuthenticateWithRedirectCallback
+        signInFallbackRedirectUrl="/auth"
+        signUpFallbackRedirectUrl="/auth"
+      />
       <div className="w-5 h-5 border-2 border-muted-foreground/30 border-t-foreground rounded-full animate-spin" />
     </div>
   );
