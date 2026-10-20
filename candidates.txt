@@ -1,0 +1,500 @@
+0|Arash Nouri|5|10|Jack of all trades, master of some|1|arashnouri.ca
+1|Geethanjali Velusamy|2|10||1|
+2|Declan Kintu|2|6|I perform magic using an IDE. Co-Founder & CTO @ theGarage.|1|thegarages.ca
+3|Asar Qadir|3|5|Executive Vice President @ Harmix Group|1|harmixgroup.com
+4|Kinjal Padhiyar|3|6||1|
+5|Anton kuklin|3|3|Founder Buytoeat|1|buytoeat.com
+6|Crystal Wang|2|7||1|
+7|Harish Kukreja|2|5|Doing a random walk through everything there is to know|1|quartile.ca
+8|Bakhtawar Awan|2|6||1|
+9|Miguel Twahirwa|2|6||1|
+10|Danial Hasan|2|3|inference / harness engineering, applied ai|1|trysquad.ai
+11|Devender Butani|3|3||1|
+12|Henry Hiles|2|3|Hello, I'm Henry Hiles, a developer specializing in flutter |1|henryhiles.com
+13|Alexander Galea|2|3|AI Engineer teaching on YouTube @ZazenCodes|1|
+14|tam|2|4||1|letam.io
+15|Tyler Abbey|2|2|Mech Eng - Founder of Printsimple3D|1|printsimple3D.com
+16|Prabhdeep Singh|2|2|i enjoy ml.|1|prabhxyz.github.io
+17|Rayne Wallace|2|2|Building consciousness from the ground up|1|icarus-cybernetics.com
+18|Seunga Lee|2|4||1|
+19|Amol Kankane|2|2|CEO, Co-founder at Reshape|1|
+20|Faye Fu|2|4||1|
+21|Hish I|2|2|Real estate geek with a curiosity for touch rugby, community|1|
+22|Jack Mufudzi|2|3||1|shakudo.io
+23|Venus Bhatia|0|6|learning software engineering & building in public.|1|venusbhatia.com
+24|Viyasan Ariyarathnam|2|3||1|
+25|Shekhar Tiruwa|2|3||1|
+26|Ayesha Hafeez|2|3||1|
+27|Vinit Shah|2|3||1|
+28|Berat Lutfi Mehmet Koc|2|3||1|
+29|Minas Adonai|1|5||1|
+30|Stephan Ledain|1|5||1|
+31|Ezra Dey|1|3|Chairman of emote.ai|1|
+32|Barry Hillier|1|3|Barry Hillier is a Toronto-based entrepreneur and AI strateg|1|
+33|Michael Lewski|1|5||1|
+34|Jin Park|2|2||1|
+35|Matt Doyle|2|2||1|
+36|Anita Srivastava|1|2|I am building a global wellness ecosystem for Web3 community|1|t.me
+37|Serhii Sharipov|1|5||1|
+38|Seva|2|2||1|
+39|Ala SK|2|2||1|
+40|James Eberhardt|2|2||1|
+41|Daniel Garner|2|2||1|
+42|Inner Flame Movement|1|2|Building an inspiring women's community in Toronto and hosti|1|innerflamemvmt.com
+43|Kachi|2|2||1|
+44|Nish V|2|2||0|
+45|Frank Koziarz|1|4||1|
+46|Mohammed Ahmed|1|2|Serial Founder / CEO / Agentic AI DevOps|1|
+47|Allen Liu|1|2|Product Manager in Ad Tech|1|
+48|Ravi Amin|1|3||1|Ravi-Amin.com
+49|Jharana Luitel|1|2|Cybersecurity girlie with a love for podcasts and community |1|
+50|Kritik Soman|1|2|ML Engineer at loblaws|1|
+51|Karan Balaji|1|3||1|karanbalaji.com
+52|Youssef Assad|1|1|Founder of Passu / Innovating Language Exam Preparation / Ed|1|Passu.ca
+53|Rose Ruhao Lou|0|4|Building 3rd Spaces around cities|1|
+54|Kaicheng Zhang|1|1|Roleplay ai founder|1|
+55|Simon|1|2|Superteam Canada|1|x.com/SuperteamCAN
+56|Brandon Best|1|1|PM & Eng with founder experience. Been in early stage startu|1|
+57|Marc MPSGC|1|3||1|
+58|Noah van Hart|1|3||1|
+59|Ramona S|1|1|Designer / Community builder @joinairess and @openaidevs|1|
+60|Wendy Huang|0|4|VC / Community Builder / MLVC|1|
+61|Paul Gadi|1|3||1|
+62|Anouar Mansour|1|2|Tech is cool I guess|1|anouar.ca
+63|Carolyn Quinlan|1|1|Naming specialist & founder @ Lore|1|
+64|Laura Teran|1|1|PhD student in Chemical Engineering working in developing in|1|
+65|Nikhil K|1|3||1|
+66|Kartik Sorathiya|1|2|Head of Technology @Solvative|1|kartiksorathiya.com
+67|Tanvi Punjani|1|1|Research Data Scientist in healthcare|1|
+68|Jin Choe|1|3||1|
+69|Irina Belgorodskii|1|3||1|
+70|Sarah Ziat|1|3||1|
+71|jules|1|2||1|julespark.xyz
+72|Manuel Olumorin|1|3||1|
+73|Nima Tahami|0|3|I'm a product designer obsessed with solving user problems, |1|
+74|Gursimran Chadha|0|3|Building BACKYARD EGGS|1|
+75|Adam Cote|0|5||1|
+76|Shao Hang He|0|5||1|
+77|Anup Shrestha|1|2|Senior PM, working in fundraising for higher ed and hospital|1|
+78|Franco Bernal|1|2||1|
+79|Muhammad Hamza|1|2||1|
+80|Gabriel|1|2||1|
+81|Kia|1|2||1|
+82|Sahand|1|2||1|
+83|Tuan Nguyen|1|2||1|
+84|Shabs|0|3|Excited about AI technology and networking!|1|
+85|Herman Justino|1|1|Data|1|hermanjustino.com
+86|Paul|1|1|Paul creates meditative experiences designed for people, not|1|peaceful.ventures
+87|Ahmad Sofi-Mahmudi|0|2|Statistician and Data Scientist|1|choxos.com
+88|Syed Qamar|1|2||1|
+89|Bon|1|2||1|
+90|Dale|0|4||1|rosedaledesigns.ca
+91|Demilade|1|2||1|
+92|Shibin Dotco|0|2|Co-Founder, AskAngle.com / Partner at y0.co /|1|shibin.co
+93|Ananya Gupta|1|2|i like to create and meet cool people|1|
+94|Prakash Raaj Vasudevan|1|2||1|
+95|Ash Anand|1|1||1|ashanand.dev
+96|Damon Deng|1|1||1|damondeng.ca
+97|Stefanie Brown|1|1||1|stefthepm.com
+98|Shahzaib Salim|1|2||1|
+99|Hunter Wedgbury|1|2||1|
+100|Shyamal Bhatt|1|2||1|
+101|Samit Khalsa|1|1||1|penseum.com
+102|Arthur Smith|1|2||1|
+103|Kristopher|1|2||1|
+104|Christine Iskander|1|2||1|
+105|Ameya Kale|1|2||1|
+106|Harold Sikkema|1|1|Artist and Educator.|1|nsitu.ca
+107|Benjamin Haddon|1|2||1|
+108|Ayame Ishii|1|2||1|
+109|Melissa Tran|1|2||1|
+110|Zlad Dujsic|1|2||1|
+111|razy|1|2||1|
+112|Kimberly Ng|1|1|Two Whimsical Florists, is an artifcial floral company who b|1|twowhimsicalflorists.com
+113|Eddy Okun|1|1||1|neothread.ai
+114|Miray Berber|1|2||1|
+115|Monique Danao|1|2||1|
+116|Basvy Soni|1|2||1|
+117|Sharfenaz|1|2||1|
+118|Ahmad Almadhoun|1|2||1|
+119|Sohrab Amin|1|1||1|sohrabamin.com
+120|The Human Puzzle|1|1||1|thehumanpuzzle.com
+121|Adit P|0|2|Founder at Blockscope.co|1|
+122|Alejandro C|0|4||1|
+123|Mariglen Q|0|2|Ai Solutions Architect|1|
+124|NATG|0|4|Housing/HighriseBuilding Construction/PM|1|
+125|S G|1|2||0|
+126|Gloria Cheung|1|1|Tech: UX design & marketing Hobbies: board games, Pilates, r|1|
+127|Kelly Sun|1|1||1|
+128|Finn|1|1||1|
+129|Moughees Ahmed|0|1|deep learning, applied audio ML engineering at Rime labs. mo|1|moughees.com
+130|Khi Rowe|1|1||1|
+131|Finn Eriksson|1|1|Innovation & Sustainability|1|
+132|Nazanin Ghelichi|1|1|Totally lost.|1|
+133|Rami|0|1|Founder @ Orbit Labs / Builder, Content Creator / On a missi|1|ramimaalouf.com
+134|Liberty|1|1||1|
+135|Stephen|1|1||1|
+136|Mariana Oka|0|1|Founder of Clawcraft.ca|1|Clawcraft.ca
+137|Miro K|1|1||1|
+138|Mohit|1|1||1|
+139|Soul Choi|1|1||1|
+140|Konstantinos kopanidis|1|1||1|
+141|Joss ☀️|1|1||1|
+142|Santiago Nava|0|2|AI learner|1|
+143|Danyal Imran|1|1||1|
+144|Yvan Bedard|1|1|Hi|1|
+145|Stephanie Reimer|1|1||1|
+146|Paola Santiago|0|4||1|
+147|Su Roy|1|1||1|
+148|gaya k|0|4||1|
+149|Mythily|1|1||1|
+150|Brittany Will|0|4|Designing a playground for the curious conversationalist.|0|
+151|Kartik Chopra|1|1||1|
+152|Leena Roy|1|1||1|
+153|Jasmeet Singh|0|1|Coined the term "Physical AI". Managing Partner @ JMoon Vent|1|jasmeet.me
+154|Sam|0|2|Building the Agent OS for the Automotive Industry|1|
+155|Akshay Gera|0|1|B2B Saas Founder|1|upthrust.io
+156|Hasaam Bhatti|0|1|Founder @Launch Fast. Amazon FBA Seller|1|hasaamb.com
+157|Wonbong Koh|0|4||1|
+158|Kevin Liu|1|1||1|
+159|Saliha Naeem|1|1||1|
+160|Peter Shi|1|1||1|
+161|Barbara Donaldson|1|1|Stakeholder Manager, Change Management guru, Adult Educator|0|
+162|Andrew Peake|1|1||1|
+163|Aaron White|1|1||1|
+164|Will Huang|1|1||1|
+165|Asha Asvathaman|1|1||1|
+166|Alan Manning|1|1||1|
+167|Kingsley Ihekwaba|1|1||1|
+168|Vaishal Shah|1|1||1|
+169|Karan Aggarwal|1|1||1|
+170|Briar|1|1||1|
+171|Mohammad Asadi|1|1||1|
+172|Olajumoke Taiwo|1|1||1|
+173|Hector Ha|1|1||1|
+174|Vraj|1|1||1|
+175|Lav|1|1||1|
+176|Kimmy Yang|1|1||1|
+177|Chris Ahn|1|1||1|
+178|Krishna Yalamarti|1|1||1|
+179|Subha Nair|1|1||1|
+180|Shreya Rajput|1|1||1|
+181|Saanvi Mogla|1|1||1|
+182|Christine Iskander|1|1||1|
+183|Shegweg|1|1||1|
+184|Maksim Krotau|1|1||1|
+185|Rahul Duggal|1|1||1|
+186|Russell Fenton|1|1||1|
+187|Hitarth Padhiyar|1|1||1|
+188|Disha Bobby|1|1||1|
+189|Joe cho|1|1||1|
+190|Adrianna Wasiak|1|1||1|
+191|Idman Farah|1|1||1|
+192|Ayman Abduldayem|1|1||1|
+193|Sophia Ghashghaei|1|1||1|
+194|Eric|1|1||1|
+195|Mehvish|1|1||1|
+196|Nancy W|1|1||1|
+197|Pranshu Bhatia|1|1||1|
+198|Arya Sharma|0|1|Founder & CEO, Datawise|1|trydatawise.com
+199|Kari Gachugu|0|1|I’m a UI/UX Designer who specializes in AI and fintech user |1|karigachugu.com
+200|Xing Yang Lan|1|1||1|
+201|Aayush|1|1||1|
+202|Abdul Kittana|1|1||1|
+203|Abubakar A|1|1||1|
+204|Basma Kaanane|1|1||1|
+205|Leyla Ahmadova|1|1||1|
+206|Davis|1|1||1|
+207|Rohan Nair|1|1||1|
+208|Sonia Ranvir|1|1||1|
+209|Maria Milashenko|1|1||1|
+210|Chloe Guo|1|1||1|
+211|Mohammad Ibrahim Khan|0|1|Founder - K2 Studio. Building things that people care about.|1|k2studio.co
+212|Thane Thomson|1|1||1|
+213|Erica Pisani|1|1||1|
+214|Sagar Chavan|1|1||1|
+215|Leyuan Yu|0|3||1|bravecareer.ai
+216|Minjia Zhu|1|1||1|
+217|Jasreet Kaur|1|1||1|
+218|EDDIE FIGUEROA|0|3|ADVERTISEMENT, CRYPTO. EVENT COORDINATOR. PROFESSIONAL PHOTO|1|
+219|Muneer Mahmoud|1|1||0|
+220|Olga Lysenko|1|1||0|
+221|Bilal Habbab|1|1||0|
+222|Nicki Casseres|1|1||0|
+223|Peter Block|1|1||0|
+224|Avi Franklin-Casseres|1|1||0|
+225|Adyan Pasha|1|1||0|
+226|Kiana Karimi-shahri|1|1||0|
+227|Aahil Pasha|1|1||0|
+228|Karam Sethi|1|1||0|
+229|Arnold Liwanag|0|1|AI strategy and execution|1|
+230|Josh Gagnon|0|1|Co-Founder of 6North Studio|1|
+231|Corey Barron|0|1|Software Developer in the Waterloo Region|1|
+232|Tim Lotarev|0|1|Umbrellags.com And many more interesting things that we are |1|
+233|Marcelo|0|1|Founder of Maxed|1|
+234|Sammy Tourani|0|1|Building @ Weave (YC W25)|1|
+235|Vivek Thakur|0|1|Full Stack Developer|1|
+236|Denali|1|1||0|
+237|Christine DKG|0|1|founder of akwā media|1|
+238|Shalin Patel|0|3||1|
+239|Afeez Moradeyo|0|1|Founder, Cashtella|1|
+240|Ryan Han|0|1|Head of Eng & AI @ Bree (YC 21)|1|
+241|Lydia Shan|0|3||1|
+242|Razi|0|1|exited mental healthtech founder / angel/vc / harvard cs dro|1|
+243|Ior Oliveros|0|3||1|
+244|Ziyad Basheer|0|1|Aide CEO|1|
+245|Shake|0|3||1|
+246|Scott Rollo|0|3|Toronto-based tech professional with a passion for events, c|1|
+247|Valentin Lyashenko|0|3||1|
+248|kai|0|2|don’t let the journey take you…|1|smallerworld.club
+249|John de Grosbois|1|1||0|
+250|Jackson Currie|0|0|I'm a software engineer/tech lead and co-founder of Fishily|1|fishilyapp.com
+251|David Storozhenko|0|0|Applied AI Engineer|1|todoie.net
+252|Mohammad Moahid|0|0|taking organizations from zero AI to fully agentic.|1|zerotoagent.com
+253|Adnaan|0|0|yapping about ai, startups, tech. part time founder, part ti|1|adnaankhan.com
+254|Susana Reyes Khan|0|0|CMO @ Qatom / AI Infra + Agentic Commerce / International De|1|qatom.ai
+255|Divyanshu Singh|0|1|Software Developer|1|
+256|Tunji Olu-Taiwo|0|0|Happiness Engineer..Critical Thinker|1|happydrip.com
+257|A Vishnuvardhan|0|1|Sr Devops engineer|1|
+258|freeatnet.eth|0|0|founder, moai.cash|1|moai.cash
+259|Kurt Jallorina|0|1|building @ tofu|1|
+260|Rashik Shahjahan|0|0|Software engineer|1|rashik.sh
+261|Rodrigo Curbelo|0|1|I’m a founding product engineer and UI/UX designer with a fo|1|
+262|Joyce|0|0|Designer + creative developer based in Taiwan 🇹🇼 I work ac|1|wanchanlin.vercel.app
+263|Qazi Fabia Hoq|0|1|AI consultant helping companies separate real AI value from |1|
+264|Rei Nova|0|0|co-founder @ soulboundlabs.com|1|rei.gg
+265|Jas Dhaliwal|0|1|Co-founder - Physical AI for Senior Living|1|
+266|Musawir|0|3||1|
+267|James Aita|0|1|Tech, wearables, prototyping, software, AI Product managemen|1|
+268|Jonathan Femi-Cole|0|3||1|
+269|Mel|0|3||1|
+270|Alex Morales|0|2||1|moralestapia.com
+271|Sergiy Dybskiy|0|0|Developer Experience Engineer @ Sentry. Curiositymaxxing|1|serg.tech
+272|Sai Yandapalli|0|1|CTO @ usemason.ai|1|
+273|Tanisha Syed|0|3||1|
+274|Tati Petkovic|0|0|Astrologer & Brand Strategist, building a community of over |1|moonsign.ca
+275|Julien|0|1|Senior Software Engineer / FinTech / Product builder|1|
+276|Kristopher Kalhs|0|0|Co-Founder @ Benjee|1|getbenjee.com
+277|Azhar Hemani|0|1|Building|1|
+278|Stefany Nieto|0|0|Decade+ founder/builder/community person.|1|stefanynieto.com
+279|Alexis Presa|0|0|Founder & designer at Presa Studio|1|alexispresa.com
+280|Josh Maldonado|0|2||1|joshmaldonado.com
+281|Tina Li|0|3||1|
+282|FutureRome|0|0|University Professor. Poet & Writer. Startups Mentor & Inves|1|dreamyourmind.com
+283|Kaivalya (Kai) Gandhi|0|2||1|kaivalyagandhi.com
+284|Robert Boulos|0|0|snappy.ai - AI and MCP|1|snappy.ai
+285|Ankit|0|0|Founder Lotus X|1|lotusxgroup.com
+286|Varinia Arevalo|0|0|Co-Event Manager of The AI collective And CEO & Founder of B|1|baussetlab.com
+287|Tyler Squibb|0|0|Co-Founder of Steer AI|1|steerai.ca
+288|Fi|0|0|product manager turned filmmaker 🎬|1|fionna.substack.com
+289|Alex Rozdolskiy|0|2||1|cloudarcworks.io
+290|Rachel Rainbow|0|0|Life is a game, have fun! I'm a community builder who loves |1|eventbrite.com
+291|Kimberly Ramos|0|2||1|linkedin.com
+292|Aurora De La Roca|0|0|CEO of Roca Counselling; Mental Health Corp and ARISEntertai|1|rocacounselling.com
+293|Brandon Ma|0|0|building communities|0|brandonmaprojects.lovable.app
+294|Reza Tangestani|0|2||1|enghub.network
+295|Arman Blackstone|0|2|Wonderer, inventor, philosopher.|1|
+296|Avinash|0|2|The world is yours|1|
+297|Umeed Stanikzai|0|0|We are a startup company with two software products: one for|1|v-bot.ai
+298|Nabil Anouti|0|0|Strategy @ Sprout Social / Web Agency Founder @ NAB Design /|1|nabilanouti.com
+299|Niloo Ravaei|0|0|Startup founder turned tech educator and speaker. Previously|1|aiedulab.org
+300|Godwin Chan|0|0|Knowledge & AI and Mental Health ERG Lead @ Wealthsimple / I|1|
+301|John Peslar|0|0|Automation teacher and builder|1|
+302|JJ Tang (Rootly)|0|0|CEO @ Rootly|1|
+303|Christopher Alert|0|0|Software, computational mathematics, books, languages and ru|1|
+304|Yesung Cho|0|0|Grab your unfair advantage for business through AI Agent|1|
+305|Camilo Meza|0|1|Principal Program Manager @ Autodesk|1|camilomeza.framer.ai
+306|Michael Yue Zuo|0|1|My other hobbies are collecting various kinds of massage equ|1|mzuo.ca
+307|Iven Cui|0|0|Founder of EverTO Ventures. Connect with me or follow me on |1|
+308|Bakz Awan|0|0|Development Lead, Entrepreneur|1|
+309|Christian Paul|0|2||1|
+310|Sofia Panasiuk|0|0|I'm a PhD student studying well-being and the good life, co-|1|
+311|Brian W|0|0|Full-Stack Developer / AI Enthusiast / Background in Enginee|1|
+312|Ariel Fu|0|0|Startup & VC Partnerships Builder / AI Infra, Robotics, FinT|1|
+313|VIMAL KUMAR|0|2||1|
+314|Serena Sung|0|0|Web3 / Crypto / Market Making|1|
+315|Deborah Mepaiyeda|0|0|building a space for others to create outside work -- @inpro|1|
+316|Millin Gabani|0|2||1|
+317|Valera Che|0|2||1|
+318|Sujen|0|2||1|
+319|Vivek Dixit|0|2||1|
+320|Minh Le|0|0|Entrepreneur / Founder of MeetbyMinh / Connector|1|
+321|Jay Mistry|0|0|Currently Investing @ Single Family Office / Ex-founder, VC,|1|
+322|Leonid Tkachenko|0|0|Founder NovelMaker|1|
+323|Ruchish Shah|0|0|AI Consultant|1|
+324|Mark Zander|0|0|Technical Capital Equipment Sales - Research and Applied Sci|1|
+325|Dervish Demaj|0|0|Software Engineer|1|
+326|Gaurav Ranganath|0|0|AI Product Engineer at Radical Ventures, I build AI-native p|1|
+327|Fabliha Nowyar|0|0|MBA student @ UChicago Booth Building across consumer, cultu|1|
+328|Selim zerelli|0|2||1|
+329|Mohammad Airas Yaqub|0|0|Researcher & AI engineer|1|
+330|Max Nagaev|0|0|Engineering Manager (Hands-On) / Leading a cross-functional |1|
+331|Sanjay Deoram|0|0|full stack developer / figuring stuff out|1|
+332|Enzo Cavaliere|0|1||1|quantum8ai.vc
+333|Kyle Lubieniecki|0|1||1|kylelubieniecki.com
+334|Sama|0|0|Product Manager I Building Iris Lens podcast|1|
+335|James Bury|0|0|Software Engineer at Wisedocs leading development on AI prod|1|
+336|Shahbaaz Shakil|0|1||1|fpgaccelx.com
+337|Harm / Mace|0|1||1|mace.ag
+338|Patrick|0|1||1|mca.digital
+339|Visakh Nair|0|0|Software engineer looking to integrate his psychedelic exper|1|
+340|Mihajlo Micic|0|1||1|mmicic.com
+341|Denisha Thakkar|0|2||1|
+342|Porsch Seong|0|2||1|
+343|Mozhgan Parsa|0|2||1|
+344|Luxman|0|2||1|
+345|Sasha Newman-Oktan|0|1|Decision Architect|1|wiai.instalily.ai
+346|Aakash Ahuja|0|0|Building the future of Performance Marketing|1|
+347|Shek|0|2||1|
+348|Nadia Jahan|0|0|Experience designer by day, Educator for the love of it / Re|1|
+349|Berin ARIKAN|0|0|Dietitian & founder of NutriPath Canada / Building accessibl|1|
+350|Tejas|0|0|AI enthusiast, currently working in sports data, earlier bui|1|
+351|Sri Nellutla|0|0|Founder passionate about enhancing business productivity wit|1|
+352|Khugan|0|0|Engineer at Dropbox Avid rock climber, music listener, tech |1|
+353|Tiffy|0|1|Keeping the party (and planet) going🌸 We are a community fo|1|tiffyplace.com
+354|Ashley|0|2||1|
+355|Monica Alfonso|0|1|Deel|1|substack.com
+356|Sukhpreet|0|0|I'm a water resources engineer interested in climate solutio|1|
+357|Jinoh Park|0|0|growth/product in social apps.|1|
+358|Armin Aghayan|0|2||1|
+359|Arun Gowtham|0|0|Reliability Engineer working on physical systems|1|
+360|Abrham|0|1||1|afromona.com
+361|Toni Agbaje-Ojo|0|0|VC Investor @ Forum Ventures: early stage b2b software and a|1|
+362|vishar yaghoubian|0|2||1|
+363|Lokesh|0|2||1|
+364|Raman|0|2||1|
+365|Ria|0|2||1|
+366|Steve Brovchenko|0|2||1|
+367|Aarij|0|2||1|
+368|Kevin H|0|0|AI Solutions Engineer @ Zoom|1|
+369|Jovin|0|2||1|
+370|Nikita Tkachov|0|0|software eng|1|
+371|Shivang|0|2||1|
+372|Laura Scarlett Martin|0|0|Entrepreneurship & AI Ecosystem Builder|1|
+373|Dhwaanii Arora|0|2||1|
+374|Priyanshi Sanghvi|0|2||1|
+375|Anthony Machula|0|1|Neuroscientist and ultra runner|1|
+376|Louna Alouzi|0|1|Marketing specialist looking to learn more about emerging te|1|
+377|Viswanathan Varatharajan|0|1||1|viswanathanv.com
+378|Rahul Malhotra|0|1|Investment banking, Hedge funds , Capital Markets, Venture C|1|
+379|Aakash|0|2||0|
+380|Michael Li|0|1||1|lenavix.com
+381|Gerald Blaboe|0|0|Industrial designer|0|
+382|Yashaank Fomra|0|1|PayPal, Ex - Oracle|1|
+383|Andrew Cheng|0|1||1|ecomnetworking.com
+384|Nathalie Neiva|0|0|Founder of @SweetSoulSessions, a corporate wellness and micr|0|
+385|Alisha Dayaram|0|0|Creative Experimenter & Designer enjoy making things look pr|0|
+386|Mithra Perera|0|0|Full time Automation Engineer Part time Entrepreneur Keep Me|0|
+387|Deep|0|1||1|
+388|Vivek Dangi|0|1||1|
+389|Jay Chopra|0|0|Ops / Growth @ Stan|1|jayantchopra.com
+390|Omid Rajabi|0|1||1|
+391|Jaskarn Grewal|0|1|Hi|1|
+392|yousif salman|0|1||1|
+393|Nikta Niknam|0|1||1|
+394|Nick|0|1||1|
+395|Alex Rayment|0|1|Partnerships @ Elevate|1|
+396|Ju An|0|1||1|
+397|Ningsi Mei|0|1||1|
+398|lai|0|1||1|
+399|Yakshith Kommineni|0|1||1|
+400|Venture Week|0|0|Info @ Venture-Week.com|1|Venture-Week.com
+401|Polina|0|1||1|
+402|Tara Everding|0|1||1|
+403|Kai Borg Barthet|0|1|Umbrella|1|
+404|Alison Chen|0|1||1|
+405|Khushi|0|1||1|
+406|Ahmed Khan|0|0|Future Red Teamer|1|ahmed-k.com
+407|Nima Tahami|0|1||1|
+408|Sia Karpenko|0|1||1|
+409|Allen Lu|0|1||1|
+410|Pascal Thibeault|0|1||1|
+411|Zain|0|1|I’m me|1|
+412|Divsahib Singh Sachdeva|0|1||1|
+413|Kevin Fang|0|0|mts @ fleet|1|kevinfang.tech
+414|Jonathan Catalano|0|0|Big nerd, but also a fun guy|1|thenex.world
+415|Adam Chen|0|0|Happy happy joy joy joy|1|chenadam.ca
+416|Brian Uta|0|1||1|
+417|Junaid L Mahmood|0|1||1|
+418|Ramon Sharif|0|1||1|
+419|Alok Kumar Deepak|0|1|I am Relationship Manager at Pinnacle, working for better in|1|
+420|noah deskin|0|1||1|
+421|JP|0|1||1|
+422|Zayyan Ahmed|0|1||1|
+423|Julia Fedorin|0|1||1|
+424|Rahul Malhotra|0|1|Investment Banking|1|
+425|Rohit|0|1||1|
+426|Dmytro Yasko|0|1||1|
+427|HIBAH NAVIWALA|0|1||1|
+428|Sujay Kumar|0|1|B2B Marketing|1|
+429|Neel Patel|0|1||1|
+430|Harpreet Paul|0|1||1|
+431|Honnesh Rohmetra|0|1||1|
+432|Mohib Rab|0|1||1|
+433|Jacqline Geng|0|1||1|
+434|Raghav Arora|0|0|monkey with a plan|1|raghavaro.com
+435|Yash|0|1||1|
+436|ajay|0|1|I have become humble and wise over the year|1|
+437|Charles Lamarre|0|1||1|
+438|Simon Stern|0|0||1|simonstern.ca
+439|Zane Yee Fong|0|1||1|
+440|Abhishek|0|0||1|abhishekpatel.dev
+441|Zain Abiddin|0|0||1|zainabiddin.com
+442|Waseem Khalo|0|0||1|waseemkhalo.com
+443|Nicholas Montgomery|0|0||1|webuildstuff.io
+444|Myles Harrison|0|0||1|praktikai.com
+445|Leon Zhu|0|0||1|lhzhu.com
+446|Hassan Abdi|0|1||1|
+447|Juliette Fiszka|0|0|☕️ Your French biz BFF who wants it all 🏄🏻‍♀️🏙️🥗🍕 ✨|1|goodinmotion.ca
+448|Anastasiia Konovalenko|0|1||1|
+449|Yihan|0|0||1|yihanzhu.com
+450|Mani|0|1||1|
+451|Vineet T|0|1||1|
+452|Siraj Ajani|0|1||1|
+453|Josh Allan|0|1||1|
+454|Feng Tang|0|1||1|
+455|noor|0|1||1|
+456|Jey Narayanan Sokkappan|0|1||1|
+457|Max|0|1||1|
+458|roop|0|1||1|
+459|Ibrahim Chowdhury|0|1||1|
+460|Imran Chowdhury|0|1||1|
+461|Abdel|0|1||1|
+462|Adam Palter|0|1||1|
+463|Ameen Hassan|0|1||1|
+464|princy|0|1||1|
+465|Esther Deng|0|1||1|
+466|Matt Panousis|0|1||1|
+467|Neel Dandiwala|0|1||1|
+468|Pooja Anandani|0|1||1|
+469|Fernando Santa Cruz Ruiz|0|1||1|
+470|Vinod Parmar|0|1||1|
+471|Harry Zhang|0|1||1|
+472|Molan Liu|0|1||1|
+473|Kseniia Gaskevich|0|1||1|
+474|Jasleen Saini|0|1||1|
+475|Tarun Karnati|0|1||1|
+476|Abdullah Imran|0|1||1|
+477|Efrain Deulofeu|0|1||1|
+478|Shweta Shah|0|1||1|
+479|Jerric Lyns John|0|0||1|jerric.xyz
+480|Krystal McNaughton|0|1||1|
+481|Jaime V|0|1||1|
+482|Yeeman Chen|0|1||1|
+483|Stefano Frontini|0|1||1|
+484|Nikita Kokal|0|1||1|
+485|Liz Jaluague|0|0|Security Architect - Purpose Unlimited|1|iflto.ca
+486|Adina Pop|0|1||1|
+487|Zaafir Ahmad|0|1||1|
+488|Surya|0|1||1|
+489|Cathy Xie|0|1||1|
+490|Marie Nguien|0|1||1|
+491|Kiana Karimi|0|1||1|
+492|Naina Dewan|0|1||1|
+493|Haruna Fujishima|0|1||1|
+494|Adobea|0|1||1|
+495|Vijesh Vijayan|0|0||1|vijesh.net
+496|Olisa Nwobbi|0|1||1|
+497|Krishan Puvitharan|0|1||1|
+498|Agostina Vidal Villanueva|0|1||1|
+499|Kaiwen Liu|0|1||1|

@@ -95,3 +95,12 @@ next-env.d.ts
 
 # Real meetup data for the matcher evals: anonymized, but never committed.
 evals/matcher/data/private/
+.next-main
+.next-preview
+venv
+.venv
+__pycache__
+out
+dist
+.turbo
+!.env.example
