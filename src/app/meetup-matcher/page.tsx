@@ -1050,7 +1050,7 @@ export default function MeetupMatcherPage() {
               <Sparkles className="absolute inset-0 m-auto w-3.5 h-3.5 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-medium">May is analyzing your group</p>
+              <p className="text-sm font-medium">The ML agent is analyzing your group</p>
               <p className="text-xs text-muted-foreground">{selected.length} participants · finding best connections...</p>
             </div>
           </div>

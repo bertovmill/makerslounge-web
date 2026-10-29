@@ -659,7 +659,7 @@ function AssistantActions({
     if (next === undefined) return;
     void fetch("/api/feedback", {
       body: JSON.stringify({
-        message: `May reply rated ${next === "up" ? "👍" : "👎"}\n\n${truncate(text, 600)}`,
+        message: `ML agent reply rated ${next === "up" ? "👍" : "👎"}\n\n${truncate(text, 600)}`,
       }),
       headers: { "Content-Type": "application/json" },
       method: "POST",

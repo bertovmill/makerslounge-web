@@ -40,8 +40,8 @@ export function PhotoMarquee() {
                 width={photo.w}
                 height={photo.h}
                 alt={copy === 1 ? "" : photo.alt}
-                sizes="(min-width: 640px) 340px, 260px"
-                className="h-44 w-auto border-[1.5px] border-[var(--ink)] object-cover shadow-[var(--shadow-card)] sm:h-56"
+                sizes="(min-width: 640px) 400px, 290px"
+                className="h-48 w-auto rounded-2xl object-cover sm:h-64 sm:rounded-3xl"
               />
             </li>
           )),

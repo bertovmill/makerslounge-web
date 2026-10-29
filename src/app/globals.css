@@ -56,25 +56,25 @@
 }
 
 /* ============================================================
-   Flat editorial system — blue + warm neutrals.
+   Blue + warm neutrals, soft corners.
 
-   Every colour is a solid, printable flat. Gradients survive only as
-   token aliases so legacy `.bg-gradient-blue*` usage keeps rendering, but
-   they now resolve to flat fills. Depth comes from hard edges, layered
-   colour blocks and grain — never from blur or glow.
+   Oct 2026: the flat editorial look (hard corners, offset ink shadows,
+   grain) read as boxy and cartoony, so radii are back to soft and shadows
+   are low and diffuse. Gradients still survive only as token aliases so
+   legacy `.bg-gradient-blue*` usage keeps rendering as flat fills.
    ============================================================ */
 
 :root {
-  --radius: 4px;
+  --radius: 10px;
 
-  /* Editorial radius scale — consumed by `@theme inline` above. */
-  --r-sm: 2px;
-  --r-md: 3px;
+  /* Radius scale — consumed by `@theme inline` above. */
+  --r-sm: 6px;
+  --r-md: 8px;
   --r-lg: var(--radius);
-  --r-xl: 6px;
-  --r-2xl: 8px;
-  --r-3xl: 10px;
-  --r-4xl: 12px;
+  --r-xl: 14px;
+  --r-2xl: 18px;
+  --r-3xl: 24px;
+  --r-4xl: 32px;
 
   /* --- Flat palette --- */
   --paper: #FBF8F2;   /* warm ground, kept light for readability */
@@ -124,19 +124,16 @@
   --primary-gradient: var(--blue-core);
   --surface-shine: none;
 
-  /* Depth = offset ink edges, not blur */
+  /* Depth = low, diffuse shadows */
   --shadow-subtle: 0 1px 0 var(--border);
-  --shadow-card: 2px 2px 0 rgba(27, 27, 35, 0.055);
-  --shadow-card-hover: 4px 4px 0 rgba(27, 27, 35, 0.10);
+  --shadow-card: 0 1px 2px rgba(27, 27, 35, 0.04), 0 2px 8px rgba(27, 27, 35, 0.04);
+  --shadow-card-hover: 0 2px 4px rgba(27, 27, 35, 0.04), 0 12px 32px rgba(27, 27, 35, 0.08);
   --shadow-input-focus: 0 0 0 3px rgba(26, 111, 212, 0.22);
-  --shadow-blue-glow: 4px 4px 0 var(--blue-deep);
+  --shadow-blue-glow: 0 8px 24px rgba(26, 111, 212, 0.25);
 
   /* The hero "sun". Theme-aware so headline text keeps contrast against it:
      a light tint on the cream ground, a deep navy on the dark ground. */
   --motif-sun: #CBE4F8;
-
-  --grain-opacity: 0.13;
-  --grain-blend: soft-light;
 }
 
 .dark {
@@ -186,15 +183,12 @@
   --surface-shine: none;
 
   --shadow-subtle: 0 1px 0 var(--border);
-  --shadow-card: 3px 3px 0 rgba(0, 0, 0, 0.45);
-  --shadow-card-hover: 5px 5px 0 rgba(0, 0, 0, 0.55);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.4);
   --shadow-input-focus: 0 0 0 3px rgba(74, 159, 229, 0.28);
-  --shadow-blue-glow: 4px 4px 0 var(--blue-deep);
+  --shadow-blue-glow: 0 8px 24px rgba(74, 159, 229, 0.25);
 
   --motif-sun: #17304E;
-
-  --grain-opacity: 0.10;
-  --grain-blend: soft-light;
 }
 
 @layer base {
@@ -221,25 +215,6 @@
 }
 
 /* --- Global polish --- */
-
-/* Grain over the entire app. This is the single most load-bearing part of
-   the motif: it turns flat fills into printed colour. Fixed + non-interactive
-   so it never intercepts pointer events or scrolls out of register. */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  opacity: var(--grain-opacity);
-  mix-blend-mode: var(--grain-blend);
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 180px 180px;
-}
-
-@media print, (prefers-reduced-transparency: reduce) {
-  body::after { display: none; }
-}
 
 /* Headings use Figtree — a warm, open grotesk set heavy and tight. The
    next/font variable classes live on <html> (not <body>) so the @theme-derived
@@ -400,8 +375,7 @@ html {
 }
 .border-gradient-blue::before { content: none; }
 
-/* Scoped grain — for individual colour blocks that need extra tooth.
-   The global body grain already covers the page, so keep this light. */
+/* Scoped grain — for individual colour blocks that need extra tooth. */
 .grain-overlay { position: relative; }
 .grain-overlay::after {
   content: '';
@@ -446,16 +420,16 @@ html {
   box-shadow: var(--shadow-card);
 }
 
-/* Flat card — hard edge, offset ink block, no blur */
+/* Flat card — hairline edge, soft lift on hover, no blur */
 .flat-card {
   background: var(--card);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-card);
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 .flat-card:hover {
   box-shadow: var(--shadow-card-hover);
-  transform: translate(-2px, -2px);
+  transform: translateY(-2px);
 }
 
 /* Halftone wipe on hover: a screen of brand-blue dots sweeps across the card
@@ -499,6 +473,32 @@ html {
 @media (prefers-reduced-motion: reduce) {
   .photo-marquee { overflow-x: auto; }
   .photo-marquee-track { animation: none; }
+}
+
+/* Landing hero photos (`HeroPhotos.tsx`). The first photo rests underneath;
+   each later one fades in over it on its own delay, holds, and fades out, so
+   with three photos at 8s apiece the 24s cycle never shows a gap. The whole
+   stack drifts slowly so the stills feel alive. */
+.hero-photos {
+  animation: hero-drift 40s ease-in-out infinite alternate;
+}
+.hero-slide {
+  animation: hero-slide 24s ease-in-out infinite both;
+}
+@keyframes hero-slide {
+  0% { opacity: 0; }
+  5% { opacity: 1; }
+  33.3% { opacity: 1; }
+  38.3% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes hero-drift {
+  from { transform: scale(1.02); }
+  to { transform: scale(1.1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-photos { animation: none; }
+  .hero-slide { animation: none; opacity: 0; }
 }
 
 /* Oversized arc — the "sun" behind hero content. Purely decorative. */
@@ -621,10 +621,4 @@ body:has(.eve-workshop) {
   color-scheme: light;
   background-color: #f7fafd;
   color: var(--color-ink);
-}
-
-/* The site-wide grain would sit over the slides; the workshop is meant to be
-   clean flat colour. */
-body:has(.eve-workshop)::after {
-  display: none;
 }

@@ -87,7 +87,7 @@ function MatcherEvals() {
       <header>
         <h1 className="text-2xl font-semibold">Matcher evals</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          How good are May&apos;s introductions? Run <code className="rounded bg-muted px-1">npm run eval:matcher</code>, then grade
+          How good are the ML agent&apos;s introductions? Run <code className="rounded bg-muted px-1">npm run eval:matcher</code>, then grade
           her matches here. Your grades check the judge.
         </p>
       </header>
@@ -244,7 +244,7 @@ function RunView({ summary, onGraded }: { summary: RunSummary; onGraded: () => v
       </section>
 
       <p className="text-xs text-muted-foreground">
-        May: {summary.model} · judge: {summary.judge_model}
+        ML agent: {summary.model} · judge: {summary.judge_model}
         {summary.git_sha && ` · commit ${summary.git_sha}`}
       </p>
 
@@ -348,7 +348,7 @@ function SwipeCard({ card, onGrade }: { card: MatchCard; onGrade: (good: boolean
       </div>
       <ProfileBlock label="For" person={card.person} />
       <div className="border-t" />
-      <ProfileBlock label="May introduces" person={card.match} fallbackName={card.matched_name} />
+      <ProfileBlock label="ML agent introduces" person={card.match} fallbackName={card.matched_name} />
       <div className="rounded-lg bg-muted/60 p-3 text-sm">
         <p>{card.reason}</p>
         <p className="mt-2 italic text-muted-foreground">&ldquo;{card.starter}&rdquo;</p>
