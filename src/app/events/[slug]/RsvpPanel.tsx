@@ -101,7 +101,7 @@ export function RsvpPanel({ event, pageUrl, ended }: { event: PublicEvent; pageU
             </span>
             <div>
               <p className="font-semibold">You&apos;re going{rsvpedAs ? `, ${rsvpedAs}` : ""}.</p>
-              <p className="text-sm text-muted-foreground">See you there. Bring something to work on.</p>
+              <p className="text-sm text-muted-foreground">See you there. Your confirmation email has the details and a cancel link.</p>
             </div>
           </div>
           {calendarLinks}
