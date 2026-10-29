@@ -65,90 +65,44 @@ MakersLounge is a Next.js 16 app for connecting makers/builders. It uses the App
 
 ### Landing page (`/`)
 
-Rebuilt in Sep 2026 around the flat editorial motif. Sections have stable ids
-(`#hero`, `#community-photos`, `#ask-ml-agent`, `#values`, `#listen-and-read`).
+Rebuilt in Oct 2026 as a **full-bleed photo** page, after Berto called the
+flat editorial look (hard ink edges, offset shadows, grain, sparkles, cartoon
+value art) "too boxy and cartoony". Sections have stable ids: `#hero`,
+`#next-event` (phones and tablets only), `#what-we-do`, `#community-photos`,
+`#ask-ml-agent`, `#values`, `#listen-and-read`, `#join`.
 
-- **The hero is "one light per member"** (Oct 2026; it replaced the WebGPU
-  "sun" disc). Every member is a small dot scattered across the whole header,
-  one per cell of a grid sized to the canvas, jittered and drifting; the count
-  is the live `/api/community-stats` number. A wave of light runs centre-out
-  on a 16s loop, holds, releases. The light is real 2D GI: a radiance-cascade
-  pipeline adapted from vgpu's `agent-radiance-cascades` example (members →
-  jump flood → SDF → cascades → present). Light mode prints the light as blue
-  ink on paper; dark mode glows. Present redraws the dots analytically at
-  output res so they stay hard-edged; only the light is soft.
-  - **Dots never sit on copy.** `HeroField.tsx` measures everything inside
-    `[data-hero-content]` and the children of `[data-hero-clear]` (the page
-    header, which the canvas runs up behind) line by line with Range client
-    rects, merges them to at most 16 rects, and passes them to the shader as
-    keep-out zones. Add new hero copy inside `[data-hero-content]` and it is
-    avoided automatically.
-  - `member-light-scene.ts` holds the shaders and the pass chain. It imports
-    vgpu **types only** and takes `{ effect, target }` as an argument, so it
-    loads under plain Node. `member-light.ts` is the browser runtime (surface,
-    resize, 24fps lighting, every-frame present).
-  - The WGSL is inline strings, deliberately, so the `withEve()`-wrapped
-    `next.config.ts` needs no `.wgsl` loader. The example's `.wgsl` imports were
-    flattened by concatenation.
-- **`HeroField.tsx` falls back to the same field as static SVG** (same keep-out) when WebGPU is
-  missing (Firefox stable, older Safari), the adapter is refused, or the visitor
-  prefers reduced motion. The page must look composed on the fallback; the
-  shader is an upgrade, not a dependency.
-- **Validate the shader with pixels, not eyes.** `npx vgpu doctor` is healthy on
-  this Mac (Dawn on Metal), and `scripts/render-member-light.mts` runs the full
-  chain headlessly and writes light and dark PNGs at several points in the loop.
-  Headless Chromium also runs WebGPU with `--enable-unsafe-webgpu
-  --use-angle=metal` for full-page screenshots.
-- **The Claude browser pane reports `document.visibilityState === "hidden"`**
-  right after a navigation until it gets focus, so every canvas sleeps (by
-  design, via `runWhileVisible`) and the hero looks empty. Click the page
-  before judging it; a real foreground tab is unaffected.
-- **Every canvas shares one context.** `gpu.ts` holds the shared `init()`
-  (ref-counted), `runWhileVisible` (a `frameLoop` that sleeps when the canvas
-  is off screen or the tab is hidden), theme-colour readers, and `WGSL_COMMON`
-  (hash, noise, Bayer, SDFs). `use-gpu-canvas.ts` is the lifecycle hook every
-  component uses; each one falls back to static markup.
-- **The other shaders**: `logo-dots.ts` renders the "M" as halftone dots that
-  scatter from the cursor (the mark is rasterised from `LOGO_PATH` into a
-  storage buffer, no texture upload); `may-field.ts` is the dot band behind
-  Ask May that ripples on keystrokes (`MayField` exposes `pulseFrom` /
-  `setEnergy` through a ref); `value-fields.ts` animates the four value cards
-  as SDFs over the same compositions as the CSS `ValueArt.tsx` fallback. The
-  hero field fades out as the page scrolls past it.
-- **`glass-panel.ts` is the refractive card surface**, used by `GlassCard.tsx`
-  on the two `#listen-and-read` cards. A rounded slab with a bevelled edge over
-  a ruled, posterised field: the bevel refracts by Snell's law, once per channel
-  at slightly different indices so the corners fringe, with a Schlick Fresnel
-  rim and a specular glint. It is **not** glassmorphism — there is no blur, and
-  the interior is left flat and undistorted so text over the middle stays
-  legible. All the event is in the border.
-  - **Refraction needs something with structure to bend.** The first version
-    refracted a soft colour field and looked like nothing at all; the diagonal
-    rules are there because a straight line that visibly kinks is what the eye
-    reads as thickness.
-  - **The canvas draws the whole card face**, fill and border and corners, so
-    `flat-card` is applied only on the fallback path. A rounded canvas inside a
-    rounded bordered box leaves a halo where the two radii disagree.
-  - Radius and bevel are authored in **pixels** and divided by the canvas height
-    in `metrics()`, or a tall card gets a fatter corner than a short one beside
-    it.
-  - `scripts/render-glass-panel.mts` renders both themes headlessly and asserts
-    on pixels (corner alpha, edge vs. interior variation).
-- **WGSL gotchas that cost time**: `half` is a reserved word (Dawn accepts it,
-  so a headless render passes while Chrome rejects the shader); a derivative
-  (`fwidth`, so `fill()`) after a non-uniform early `return` fails the
-  uniformity check; a backtick inside a WGSL comment ends the template string —
-  `tsc` catches this but the render scripts do not, since they read the shader
-  as text with a regex; `bayer4` casts to `u32`, which is undefined for negative
-  floats, so any coordinate that can go negative (a refracted one, say) has to
-  be pushed positive first or the corners fill with colour speckle.
-- **Compositing a shader PNG in a check script needs a clamp.** `png.data` is a
-  Buffer, so an over-255 sum wraps to near zero and reads as a shader bug that
-  isn't there.
-- **Hover wipes are CSS** (`.halftone-wipe` in `globals.css`), a dot-pattern
-  pseudo-element revealed by an animated `clip-path`. A GPU canvas per
-  hoverable card would be the wrong tool.
-- The glossy 3D renders in `public/values/` are no longer referenced.
+- **The hero is real event photos.** `HeroPhotos.tsx` stacks three photos from
+  `public/makerslounge-photos/` under a dark scrim. The first rests; the others
+  crossfade over it on staggered delays (`.hero-slide` / `.hero-photos` in
+  `globals.css`), and reduced motion holds the first still. The photos are only
+  ~1086px wide, so swap in larger originals if they ever look soft on big screens.
+- **Events come from Luma, never from copy.** `src/lib/luma-events.ts` reads the
+  public iCalendar feed of the MakersLounge calendar (`cal-FGHayLJ6ZAmkYJi`, no
+  key needed) and `/api/luma-events` returns `{ next, latest, total, since }`,
+  cached for an hour. `NextEventCard` shows the next event with an RSVP link, or
+  the latest one with "See what's next" when nothing is scheduled. Do not
+  hardcode "every Monday": the last Maker Monday on Luma was May 4, 2026. Events whose
+  address is hidden carry a Luma URL as `LOCATION`, so they get no venue.
+- **The member count is gone from the page.** The live Neon db held 2 profiles
+  in Oct 2026, so "Join 2 builders" was hurting more than helping. The event
+  total from Luma is the social proof instead. `/api/community-stats` still exists.
+- **Phones get a floating action pill** (`MobileEventBar.tsx`): RSVP to the next
+  event, or Join when none is scheduled. It shows only between the hero's buttons
+  and `#join`, tracked with two IntersectionObservers.
+- Glass surfaces on the photo (nav pills, event card, phone bar) need
+  `.allow-blur`, because a base-layer rule still strips `backdrop-blur-*` everywhere else.
+- **Site-wide tokens changed with it**: radii are soft again (`--radius` 10px,
+  scale up to 32px), `--shadow-card*` are low diffuse shadows instead of offset
+  ink blocks, and the global grain overlay on `body::after` is gone.
+- **Retired from the landing page, still in the repo**: the WebGPU member-light
+  hero (`HeroField`, `member-light*.ts`), `LogoDots`, `MayField`, `LiveValueArt` /
+  `ValueArt`, and the refractive `GlassCard`. Their render scripts
+  (`scripts/render-member-light.mts`, `scripts/render-glass-panel.mts`) still run.
+  If any of them come back: `half` is a reserved word in WGSL that Dawn accepts
+  but Chrome rejects; a derivative after a non-uniform early `return` fails the
+  uniformity check; a backtick in a WGSL comment ends the template string; and
+  the Claude browser pane reports the tab hidden until it is clicked, so every
+  canvas sleeps.
 
 ### The community agent — ML agent, formerly May (`/home`)
 

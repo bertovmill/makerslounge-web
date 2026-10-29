@@ -6,18 +6,15 @@ import Image from "next/image";
 import { fetchPosts } from "@/lib/blog-list-client";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
-import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, Instagram, Linkedin, Menu, X, Mic, Play, BookOpen } from "lucide-react";
+import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, ArrowUpRight, Instagram, Linkedin, Menu, X, Mic, Play, BookOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import NewsletterPopup, { OPEN_NEWSLETTER_EVENT } from "@/components/NewsletterPopup";
-import { Constellation, Eyebrow } from "@/components/Motif";
-import { HeroField } from "@/components/landing/HeroField";
-import { LogoDots } from "@/components/landing/LogoDots";
-import { MayField, type MayFieldRef } from "@/components/landing/MayField";
-import { LiveValueArt } from "@/components/landing/LiveValueArt";
-import { GlassCard } from "@/components/landing/GlassCard";
+import { HeroPhotos } from "@/components/landing/HeroPhotos";
+import { NextEventCard } from "@/components/landing/NextEventCard";
+import { MobileEventBar } from "@/components/landing/MobileEventBar";
 import { PhotoMarquee } from "@/components/landing/PhotoMarquee";
-import type { ValueKey } from "@/components/landing/ValueArt";
+import { LUMA_CALENDAR_URL, type LumaSummary } from "@/lib/luma-events";
 
 const openNewsletterPopup = () => {
   window.dispatchEvent(new CustomEvent(OPEN_NEWSLETTER_EVENT));
@@ -40,11 +37,45 @@ interface ActionCategory {
   subs: ActionSub[];
 }
 
-const VALUES: { key: ValueKey; label: string; description: string }[] = [
-  { key: "hustle", label: "Hustle", description: "We ship fast, iterate often, and never stop building." },
-  { key: "learning", label: "Learning", description: "Every maker is a student. We grow by sharing knowledge." },
-  { key: "community", label: "Community", description: "We lift each other up. Your win is our win." },
-  { key: "fun", label: "Fun", description: "Building should be exciting. We celebrate the joy of creating." },
+const VALUES = [
+  { label: "Hustle", description: "We ship fast, iterate often, and never stop building." },
+  { label: "Learning", description: "Every maker is a student. We grow by sharing knowledge." },
+  { label: "Community", description: "We lift each other up. Your win is our win." },
+  { label: "Fun", description: "Building should be exciting. We celebrate the joy of creating." },
+];
+
+// The three kinds of event on the Luma calendar, each with a real photo from one.
+const WAYS = [
+  {
+    title: "Meetups",
+    body: "Build and demo nights. Bring what you're working on, show the room, and leave with feedback and new friends.",
+    photo: "lounge-working.jpeg",
+    alt: "Makers working on laptops around the lounge",
+    href: LUMA_CALENDAR_URL,
+    cta: "See meetups",
+  },
+  {
+    title: "Hackathons",
+    body: "Sprints with partners and prizes, where strangers become teammates and ideas become demos.",
+    photo: "hackathon-working.jpeg",
+    alt: "Teams heads-down at a hackathon",
+    href: "/hackathons",
+    cta: "Explore hackathons",
+  },
+  {
+    title: "Workshops",
+    body: "Hands-on sessions on the tools we actually use, from Claude Code to building agents.",
+    photo: "presenting-slides.jpeg",
+    alt: "A presenter walking through slides",
+    href: "/workshops",
+    cta: "Browse workshops",
+  },
+];
+
+const NAV_LINKS = [
+  { href: "/about", label: "About" },
+  { href: "/hackathons", label: "Hackathons" },
+  { href: "/podcasts", label: "Podcasts" },
 ];
 
 const ACTION_TREE: ActionCategory[] = [
@@ -195,9 +226,13 @@ export default function Home() {
     title: string;
     excerpt: string;
   } | null>(null);
-  const [memberCount, setMemberCount] = useState<number | null>(null);
+  // undefined while loading, null if Luma couldn't be read
+  const [events, setEvents] = useState<LumaSummary | null | undefined>(undefined);
+  const [heroActionsVisible, setHeroActionsVisible] = useState(true);
+  const [joinVisible, setJoinVisible] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const mayFieldRef = useRef<MayFieldRef>(null);
+  const heroActionsRef = useRef<HTMLDivElement>(null);
+  const joinRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     fetchPosts()
@@ -213,12 +248,25 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/community-stats")
+    fetch("/api/luma-events")
       .then((res) => (res.ok ? res.json() : null))
-      .then((stats: { members?: number } | null) => {
-        if (typeof stats?.members === "number" && stats.members > 0) setMemberCount(stats.members);
-      })
-      .catch(() => {});
+      .then((summary: LumaSummary | null) => setEvents(summary))
+      .catch(() => setEvents(null));
+  }, []);
+
+  // The phone action bar shows only between the hero's buttons and the closing call to action.
+  useEffect(() => {
+    const watch = (el: Element | null, set: (v: boolean) => void) => {
+      if (!el) return null;
+      const io = new IntersectionObserver(([entry]) => set(entry.isIntersecting));
+      io.observe(el);
+      return io;
+    };
+    const observers = [
+      watch(heroActionsRef.current, setHeroActionsVisible),
+      watch(joinRef.current, setJoinVisible),
+    ];
+    return () => observers.forEach((io) => io?.disconnect());
   }, []);
 
   const category = ACTION_TREE.find((c) => c.label === activeCategory);
@@ -245,7 +293,6 @@ export default function Home() {
   function selectIdea(prompt: string) {
     setQuery(prompt);
     textareaRef.current?.focus();
-    mayFieldRef.current?.pulseFrom(textareaRef.current);
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -256,393 +303,364 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-svh flex flex-col relative overflow-hidden">
-      {/* Background: flat colour blocks and arcs — no blur, no gradients.
-          Grain comes from the global body overlay. */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <Constellation tone="core" className="opacity-35 dark:opacity-55" />
-      </div>
+    <div className="flex min-h-svh flex-col">
+      {/* Hero: real event photos, full bleed, with the next event from Luma */}
+      <section id="hero" className="relative isolate flex min-h-[88svh] flex-col text-white lg:min-h-[92svh]">
+        <HeroPhotos />
 
-      {/* Nav */}
-      <header data-hero-clear className="relative z-20 flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <Link href="/" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
-          <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
-          <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
-          <span className="text-base sm:text-xl font-sans font-normal tracking-normal">makerslounge</span>
-        </Link>
+        <header className="relative z-20 mx-auto flex w-full max-w-[1200px] items-center justify-between px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-8 sm:pt-6">
+          <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+            <Image src="/logos/logo-light.svg" alt="MakersLounge" width={20} height={21} />
+            <span className="text-lg font-medium tracking-tight">makerslounge</span>
+          </Link>
 
-        {/* Desktop nav */}
-        <div className="hidden sm:flex items-center gap-2">
-          <button
-            onClick={toggleTheme}
-            className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md"
-            aria-label="Toggle theme"
-          >
-            {resolved === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-          <Link
-            href="/about"
-            className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
-          >
-            About Us
-          </Link>
-          <Link
-            href="/hackathons"
-            className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Hackathons
-          </Link>
-          <Link
-            href="/podcasts"
-            className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Podcasts
-          </Link>
-          <button
-            onClick={openNewsletterPopup}
-            className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Newsletter
-          </button>
-          <Link
-            href="/auth"
-            className="text-sm font-medium px-4 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Sign in
-          </Link>
-          <Link
-            href="/auth?mode=signup"
-            className="text-sm font-medium px-4 py-2 rounded-md bg-gradient-blue text-white hover:opacity-90 transition-opacity"
-          >
-            Join Now
-          </Link>
-        </div>
-
-        {/* Mobile hamburger */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="sm:hidden p-2 text-foreground/70 hover:text-foreground transition-colors"
-          aria-label="Toggle menu"
-        >
-          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
-      </header>
-
-      {/* Mobile menu overlay */}
-      {mobileMenuOpen && (
-        <div className="sm:hidden fixed inset-0 z-50 bg-background flex flex-col">
-          <div className="flex items-center justify-between px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
-            <Link href="/" className="flex items-center gap-1.5" onClick={() => setMobileMenuOpen(false)}>
-              <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
-              <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
-              <span className="text-base font-sans font-normal tracking-normal">makerslounge</span>
-            </Link>
+          {/* Desktop nav */}
+          <nav className="hidden items-center gap-1 md:flex">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-full px-3.5 py-2 text-sm text-white/75 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                {link.label}
+              </Link>
+            ))}
             <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="p-2 text-foreground/70 hover:text-foreground transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <nav className="flex-1 flex flex-col items-center justify-center gap-6">
-            <Link
-              href="/about"
-              className="text-lg font-medium text-foreground/80 hover:text-foreground transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              About Us
-            </Link>
-            <Link
-              href="/hackathons"
-              className="text-lg font-medium text-foreground/80 hover:text-foreground transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Hackathons
-            </Link>
-            <Link
-              href="/podcasts"
-              className="text-lg font-medium text-foreground/80 hover:text-foreground transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Podcasts
-            </Link>
-            <button
-              onClick={() => { setMobileMenuOpen(false); openNewsletterPopup(); }}
-              className="text-lg font-medium text-foreground/80 hover:text-foreground transition-colors"
+              onClick={openNewsletterPopup}
+              className="rounded-full px-3.5 py-2 text-sm text-white/75 transition-colors hover:bg-white/10 hover:text-white"
             >
               Newsletter
             </button>
+            <button
+              onClick={toggleTheme}
+              className="rounded-full p-2 text-white/75 transition-colors hover:bg-white/10 hover:text-white"
+              aria-label="Toggle theme"
+            >
+              {resolved === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
             <Link
               href="/auth"
-              className="text-lg font-medium text-foreground/80 hover:text-foreground transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-full px-3.5 py-2 text-sm text-white/75 transition-colors hover:bg-white/10 hover:text-white"
             >
               Sign in
             </Link>
             <Link
               href="/auth?mode=signup"
-              className="text-lg font-medium px-8 py-3 rounded-full bg-gradient-blue text-white hover:opacity-90 transition-opacity"
-              onClick={() => setMobileMenuOpen(false)}
+              className="ml-1 rounded-full bg-white px-4 py-2 text-sm font-medium text-neutral-950 transition-opacity hover:opacity-90"
             >
-              Join Now
+              Join
             </Link>
-            <button
-              onClick={() => { toggleTheme(); setMobileMenuOpen(false); }}
-              className="text-lg font-medium text-foreground/60 hover:text-foreground transition-colors flex items-center gap-2"
-            >
-              {resolved === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              {resolved === "dark" ? "Light mode" : "Dark mode"}
-            </button>
           </nav>
-        </div>
-      )}
 
-      {/* Hero */}
-      <main className="relative z-10 flex-1 flex flex-col">
-        <section id="hero" className="relative flex min-h-[72svh] flex-col items-center justify-center px-4 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-12">
-          {/* One light per member across the header, steering around the copy. Static SVG without WebGPU. */}
-          <HeroField className="-top-[12%] -bottom-[6%]" members={memberCount} />
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="rounded-full p-2 text-white/85 transition-colors hover:bg-white/10 md:hidden"
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        </header>
 
-          <div data-hero-content className="relative flex flex-col items-center">
-            <LogoDots className="relative mb-5 h-14 w-14 sm:mb-6 sm:h-20 sm:w-20" />
-
-            <Eyebrow className="relative mb-4">Build · Connect · Create</Eyebrow>
-
-            <h1 className="relative mb-4 text-center text-5xl tracking-[-0.03em] text-foreground sm:mb-6 sm:text-7xl md:text-8xl">
-              Where <span className="text-gradient-blue">makers</span> build
-              <br />
-              together
+        <div className="relative z-10 mx-auto mt-auto grid w-full max-w-[1200px] gap-10 px-5 pb-10 pt-24 sm:px-8 sm:pb-16 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+          <div>
+            <span className="allow-blur inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/85 backdrop-blur-md">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#4F9BFF]" />
+              Toronto&apos;s AI builder community
+            </span>
+            <h1 className="mt-5 max-w-3xl text-[2.75rem] font-semibold leading-[0.98] tracking-[-0.04em] sm:text-6xl lg:text-[5.25rem]">
+              Where makers build together
             </h1>
-
-            <p className="relative mb-8 max-w-md text-center text-base leading-relaxed text-muted-foreground sm:mb-10 sm:text-lg">
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-white/75 sm:text-lg">
               A Toronto community of builders who ship, learn, and back each other in the age of AI.
             </p>
-
-            <div className="flex flex-wrap items-center justify-center gap-3">
+            <div ref={heroActionsRef} className="mt-8 flex flex-wrap items-center gap-3">
               <Link
                 href="/auth?mode=signup"
-                className="inline-flex items-center gap-2 border-[1.5px] border-[var(--ink)] bg-[var(--ink)] px-6 py-2.5 text-sm font-medium text-[var(--paper)] shadow-[var(--shadow-card)] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)] sm:px-8 sm:py-3 sm:text-base"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-medium text-neutral-950 transition-opacity hover:opacity-90 sm:text-base"
               >
-                Join Now
+                Join MakersLounge
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <a
-                href="https://lu.ma/makerslounge"
+                href={LUMA_CALENDAR_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 border-[1.5px] border-[var(--ink)] bg-[var(--paper)] px-6 py-2.5 text-sm font-medium text-foreground shadow-[var(--shadow-card)] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)] sm:px-8 sm:py-3 sm:text-base"
+                className="allow-blur inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 py-3 text-sm font-medium text-white backdrop-blur-md transition-colors hover:bg-white/20 sm:text-base"
               >
                 <Calendar className="h-4 w-4" />
-                Next event
-              </a>
-            </div>
-
-            {/* Live signup count. The line keeps its height while loading so the hero doesn't jump. */}
-            <p
-              id="member-count"
-              aria-live="polite"
-              className="mt-4 flex min-h-5 items-center gap-1.5 text-sm text-foreground/70 dark:text-muted-foreground"
-            >
-              {memberCount !== null && (
-                <>
-                  <Users className="h-4 w-4" />
-                  Join <span className="font-semibold tabular-nums text-foreground">{memberCount.toLocaleString()}</span> builders in this community
-                </>
-              )}
-            </p>
-
-            <div className="mt-8 flex items-center gap-1 sm:mt-10">
-              <span className="mr-2 text-xs text-foreground/60 sm:text-sm dark:text-muted-foreground/60">Follow us</span>
-              <a
-                href="https://lu.ma/makerslounge"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs text-foreground/60 transition-colors hover:bg-secondary/50 hover:text-foreground sm:text-sm dark:text-muted-foreground"
-              >
-                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C12 2 14 8.5 12 12C10 8.5 12 2 12 2ZM12 22C12 22 10 15.5 12 12C14 15.5 12 22 12 22ZM2 12C2 12 8.5 10 12 12C8.5 14 2 12 2 12ZM22 12C22 12 15.5 14 12 12C15.5 10 22 12 22 12Z" />
-                </svg>
-                Luma
-              </a>
-              <a
-                href="https://instagram.com/makersloungeto"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs text-foreground/60 transition-colors hover:bg-secondary/50 hover:text-foreground sm:text-sm dark:text-muted-foreground"
-              >
-                <Instagram className="h-3.5 w-3.5" />
-                Instagram
-              </a>
-              <a
-                href="https://linkedin.com/company/makerslounge"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs text-foreground/60 transition-colors hover:bg-secondary/50 hover:text-foreground sm:text-sm dark:text-muted-foreground"
-              >
-                <Linkedin className="h-3.5 w-3.5" />
-                LinkedIn
+                Upcoming events
               </a>
             </div>
           </div>
+
+          <NextEventCard summary={events} tone="glass" className="hidden lg:block" />
+        </div>
+      </section>
+
+      {/* Mobile menu */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-background md:hidden">
+          <div className="flex items-center justify-between px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
+            <Link href="/" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
+              <Image src="/logos/logo.svg" alt="MakersLounge" width={20} height={21} className="dark:hidden" />
+              <Image src="/logos/logo-light.svg" alt="MakersLounge" width={20} height={21} className="hidden dark:block" />
+              <span className="text-lg font-medium tracking-tight">makerslounge</span>
+            </Link>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-full p-2 text-foreground/70 transition-colors hover:bg-muted hover:text-foreground"
+              aria-label="Close menu"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <nav className="flex flex-1 flex-col px-5 pt-4">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="border-b border-border py-4 text-2xl font-semibold tracking-tight"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {link.label}
+              </Link>
+            ))}
+            <button
+              onClick={() => { setMobileMenuOpen(false); openNewsletterPopup(); }}
+              className="border-b border-border py-4 text-left text-2xl font-semibold tracking-tight"
+            >
+              Newsletter
+            </button>
+            <button
+              onClick={toggleTheme}
+              className="flex items-center gap-2 py-4 text-left text-base text-muted-foreground"
+            >
+              {resolved === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {resolved === "dark" ? "Light mode" : "Dark mode"}
+            </button>
+          </nav>
+          <div className="flex flex-col gap-3 px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <Link
+              href="/auth?mode=signup"
+              className="rounded-full bg-foreground py-3.5 text-center text-base font-medium text-background"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Join MakersLounge
+            </Link>
+            <Link
+              href="/auth"
+              className="rounded-full border border-border py-3.5 text-center text-base font-medium"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Sign in
+            </Link>
+          </div>
+        </div>
+      )}
+
+      <main className="flex-1">
+        {/* On phones and tablets the event card sits just under the photo */}
+        <section id="next-event" className="px-5 pt-6 sm:px-8 lg:hidden">
+          <NextEventCard summary={events} tone="surface" className="mx-auto max-w-xl" />
         </section>
 
-        {/* Real photos from our events, drifting past under the hero */}
-        <section id="community-photos" aria-label="Photos from MakersLounge events" className="relative pb-16 pt-2 sm:pb-24">
+        {/* What happens here, shown with photos from each kind of event */}
+        <section id="what-we-do" className="py-16 sm:py-24">
+          <div className="mx-auto max-w-[1200px] px-5 sm:px-8">
+            <p className="text-sm font-medium text-[var(--blue-core)]">What we do</p>
+            <h2 className="mt-2 max-w-2xl text-3xl font-semibold tracking-[-0.035em] sm:text-5xl">
+              Three ways to build with us
+            </h2>
+          </div>
+          <div className="mx-auto mt-8 flex max-w-[1200px] snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-5 px-5 pb-2 [scrollbar-width:none] sm:mt-12 sm:grid sm:snap-none sm:grid-cols-3 sm:gap-6 sm:overflow-visible sm:px-8 sm:pb-0 [&::-webkit-scrollbar]:hidden">
+            {WAYS.map((way) => {
+              const external = way.href.startsWith("http");
+              return (
+                <Link
+                  key={way.title}
+                  href={way.href}
+                  {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                  className="group flex w-[82%] shrink-0 snap-start flex-col sm:w-auto"
+                >
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-muted">
+                    <Image
+                      src={`/makerslounge-photos/${way.photo}`}
+                      alt={way.alt}
+                      fill
+                      sizes="(min-width: 1200px) 380px, (min-width: 640px) 33vw, 82vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
+                  </div>
+                  <h3 className="mt-5 text-xl font-semibold tracking-tight">{way.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">{way.body}</p>
+                  <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[var(--blue-core)]">
+                    {way.cta}
+                    {external ? (
+                      <ArrowUpRight className="h-4 w-4" />
+                    ) : (
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    )}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Real photos from our events, drifting past */}
+        <section id="community-photos" aria-label="Photos from MakersLounge events" className="pb-16 sm:pb-24">
           <PhotoMarquee />
         </section>
 
         {/* Ask the ML agent — the community matcher, and the site's actual product */}
-        <section id="ask-ml-agent" className="relative px-4 pb-16 sm:px-6 sm:pb-24">
-          <MayField ref={mayFieldRef} className="-top-16 -bottom-8" />
-          <div className="relative mx-auto w-full max-w-[720px]">
-            <div className="mb-5 flex flex-col items-center text-center sm:mb-6">
-              <Eyebrow className="mb-3">ML agent · community matcher</Eyebrow>
-              <h2 className="text-2xl tracking-[-0.02em] text-foreground sm:text-3xl">
-                Tell the ML agent what you&apos;re building
-              </h2>
-              <p className="mt-2 max-w-md text-sm text-muted-foreground sm:text-base">
-                It knows every member, event, and project here, and points you at the right ones.
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="mb-4">
-              <div className="relative overflow-hidden border-[1.5px] border-[var(--ink)] bg-card shadow-[var(--shadow-card)] transition-shadow focus-within:shadow-[var(--shadow-card-hover)]">
-                <textarea
-                  ref={textareaRef}
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    mayFieldRef.current?.pulseFrom(e.currentTarget);
-                  }}
-                  onBlur={() => mayFieldRef.current?.setEnergy(0)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSubmit(e);
-                    }
-                  }}
-                  onFocus={() => {
-                    mayFieldRef.current?.setEnergy(1);
-                    // On iOS, the keyboard can cover the textarea — scroll it into view (mobile only)
-                    if (window.innerWidth < 768) {
-                      setTimeout(() => {
-                        textareaRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                      }, 300);
-                    }
-                  }}
-                  placeholder="I'm looking for a designer to help ship my app…"
-                  rows={2}
-                  className="w-full resize-none bg-transparent px-4 pb-12 pt-3.5 text-sm placeholder:text-muted-foreground/60 focus:outline-none sm:px-5 sm:pt-4 sm:text-[15px]"
-                />
-                <div className="absolute bottom-3 right-3">
-                  <button
-                    type="submit"
-                    aria-label="Ask the ML agent"
-                    className="flex h-9 w-9 items-center justify-center bg-[var(--blue-core)] text-white transition-opacity hover:opacity-85 disabled:opacity-30"
-                    disabled={!query.trim()}
-                  >
-                    <ArrowUp className="h-4 w-4" />
-                  </button>
-                </div>
+        <section id="ask-ml-agent" className="px-5 pb-16 sm:px-8 sm:pb-24">
+          <div className="mx-auto max-w-[1200px] rounded-[2rem] bg-[var(--sand)] px-5 py-12 sm:px-12 sm:py-20">
+            <div className="mx-auto w-full max-w-[680px]">
+              <div className="mb-8 flex flex-col items-center text-center">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-xs font-medium text-[var(--blue-core)]">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  ML agent · community matcher
+                </span>
+                <h2 className="mt-4 text-3xl font-semibold tracking-[-0.035em] sm:text-5xl">
+                  Tell the ML agent what you&apos;re building
+                </h2>
+                <p className="mt-3 max-w-md text-base text-muted-foreground">
+                  It knows every member, event, and project here, and points you at the right ones.
+                </p>
               </div>
-            </form>
 
-            {/* Drill-down quick actions */}
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                {ACTION_TREE.map((action) => {
-                  const isActive = activeCategory === action.label;
-                  return (
+              <form onSubmit={handleSubmit} className="mb-5">
+                <div className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-[var(--shadow-card)] transition-shadow focus-within:shadow-[var(--shadow-card-hover)] focus-within:ring-2 focus-within:ring-[var(--blue-core)]/25">
+                  <textarea
+                    ref={textareaRef}
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmit(e);
+                      }
+                    }}
+                    onFocus={() => {
+                      // On iOS, the keyboard can cover the textarea — scroll it into view (mobile only)
+                      if (window.innerWidth < 768) {
+                        setTimeout(() => {
+                          textareaRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }, 300);
+                      }
+                    }}
+                    placeholder="I'm looking for a designer to help ship my app…"
+                    rows={3}
+                    className="w-full resize-none bg-transparent px-5 pb-14 pt-4 text-base placeholder:text-muted-foreground/60 focus:outline-none"
+                  />
+                  <div className="absolute bottom-3 right-3">
                     <button
-                      key={action.label}
-                      type="button"
-                      onClick={() => selectCategory(action.label)}
-                      className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs transition-colors sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
-                        isActive
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-                      }`}
+                      type="submit"
+                      aria-label="Ask the ML agent"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--blue-core)] text-white transition-opacity hover:opacity-85 disabled:opacity-30"
+                      disabled={!query.trim()}
                     >
-                      <action.icon className="h-4 w-4" />
-                      {action.label}
+                      <ArrowUp className="h-4 w-4" />
                     </button>
-                  );
-                })}
-              </div>
-
-              {category && (
-                <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                  <p className="mb-2 text-center text-sm font-medium text-foreground">
-                    {category.question}
-                  </p>
-                  <div className="flex flex-wrap items-center justify-center gap-2">
-                    {category.subs.map((s) => {
-                      const isActive = activeSub === s.label;
-                      return (
-                        <button
-                          key={s.label}
-                          type="button"
-                          onClick={() => selectSub(s.label)}
-                          className={`inline-flex items-center gap-1.5 border px-3.5 py-1.5 text-sm transition-colors ${
-                            isActive
-                              ? "border-foreground/50 bg-foreground/10 text-foreground"
-                              : "border-border text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-                          }`}
-                        >
-                          {s.label}
-                        </button>
-                      );
-                    })}
                   </div>
                 </div>
-              )}
+              </form>
 
-              {sub && (
-                <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                  <p className="mb-2 text-center text-sm font-medium text-foreground">
-                    Explore ideas
-                  </p>
-                  <div className="flex flex-wrap items-center justify-center gap-2">
-                    {sub.ideas.map((idea) => (
+              {/* Drill-down quick actions */}
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {ACTION_TREE.map((action) => {
+                    const isActive = activeCategory === action.label;
+                    return (
                       <button
-                        key={idea.label}
+                        key={action.label}
                         type="button"
-                        onClick={() => selectIdea(idea.prompt)}
-                        className="inline-flex items-center gap-1.5 border border-border px-3.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary/50 hover:text-foreground"
+                        onClick={() => selectCategory(action.label)}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm transition-colors ${
+                          isActive
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border bg-card text-muted-foreground hover:text-foreground"
+                        }`}
                       >
-                        {idea.label}
-                        <ChevronRight className="h-3 w-3 opacity-50" />
+                        <action.icon className="h-4 w-4" />
+                        {action.label}
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              )}
+
+                {category && (
+                  <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                    <p className="mb-2 text-center text-sm font-medium text-foreground">
+                      {category.question}
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      {category.subs.map((s) => {
+                        const isActive = activeSub === s.label;
+                        return (
+                          <button
+                            key={s.label}
+                            type="button"
+                            onClick={() => selectSub(s.label)}
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm transition-colors ${
+                              isActive
+                                ? "border-foreground/50 bg-foreground/10 text-foreground"
+                                : "border-border bg-card text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            {s.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {sub && (
+                  <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                    <p className="mb-2 text-center text-sm font-medium text-foreground">
+                      Explore ideas
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      {sub.ideas.map((idea) => (
+                        <button
+                          key={idea.label}
+                          type="button"
+                          onClick={() => selectIdea(idea.prompt)}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          {idea.label}
+                          <ChevronRight className="h-3 w-3 opacity-50" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </section>
 
         {/* Values */}
-        <section id="values" className="relative px-4 pb-16 sm:px-6 sm:pb-24">
-          <div className="mx-auto w-full max-w-[1040px]">
-            <div className="mb-6 flex flex-col items-start gap-2 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+        <section id="values" className="px-5 pb-16 sm:px-8 sm:pb-24">
+          <div className="mx-auto max-w-[1200px]">
+            <div className="mb-10 flex flex-col gap-4 sm:mb-14 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <Eyebrow className="mb-2">What we&apos;re about</Eyebrow>
-                <h2 className="text-2xl tracking-[-0.02em] text-foreground sm:text-3xl">Four things we hold onto</h2>
+                <p className="text-sm font-medium text-[var(--blue-core)]">What we&apos;re about</p>
+                <h2 className="mt-2 text-3xl font-semibold tracking-[-0.035em] sm:text-5xl">Four things we hold onto</h2>
               </div>
-              <Link href="/about" className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground">
+              <Link href="/about" className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
                 About the community
-                <ArrowRight className="h-3.5 w-3.5" />
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-              {VALUES.map((value) => (
-                <div key={value.key} className="flat-card halftone-wipe flex flex-col overflow-hidden">
-                  <LiveValueArt value={value.key} />
-                  <div className="p-4 sm:p-5">
-                    <h3 className="mb-1 font-display text-lg text-foreground sm:text-xl">{value.label}</h3>
-                    <p className="text-xs leading-relaxed text-muted-foreground/90 sm:text-sm">{value.description}</p>
-                  </div>
+            <div className="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+              {VALUES.map((value, i) => (
+                <div key={value.label} className="border-t border-border pt-5">
+                  <span className="text-sm tabular-nums text-muted-foreground">0{i + 1}</span>
+                  <h3 className="mt-3 text-2xl font-semibold tracking-tight">{value.label}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">{value.description}</p>
                 </div>
               ))}
             </div>
@@ -650,114 +668,130 @@ export default function Home() {
         </section>
 
         {/* Listen and read */}
-        <section id="listen-and-read" className="relative px-4 pb-16 sm:px-6 sm:pb-24">
-          <div className="mx-auto grid w-full max-w-[1040px] gap-4 md:grid-cols-2">
+        <section id="listen-and-read" className="px-5 pb-16 sm:px-8 sm:pb-24">
+          <div className="mx-auto grid max-w-[1200px] gap-4 md:grid-cols-2 md:gap-6">
             {/* Podcast */}
-            <GlassCard seed={[0.9, 2.3]} className="flex flex-col overflow-hidden">
-              <div className="flex items-start gap-4 p-5">
-                <div className="field-blue flex h-12 w-12 flex-shrink-0 items-center justify-center">
-                  <Mic className="h-6 w-6" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="mb-1 flex items-center gap-2">
-                    <span className="label-caps text-[var(--blue-core)]">Podcast</span>
-                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-600 sm:text-xs dark:text-green-500">
-                      <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                      New
-                    </span>
-                  </div>
-                  <h3 className="font-display text-xl text-foreground">The MakersLounge Podcast</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">Stories from builders, creators, and makers shaping the future.</p>
-                </div>
+            <div className="flex flex-col rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-card)] sm:p-8">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--blue-core)] text-white">
+                  <Mic className="h-5 w-5" />
+                </span>
+                <span className="text-sm font-medium text-[var(--blue-core)]">Podcast</span>
+                <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">New</span>
               </div>
-              <div className="mt-auto flex items-center justify-between gap-3 border-t border-border px-5 py-3">
-                <Link href="/auth" className="flex min-w-0 items-center gap-2 text-sm text-foreground/80 transition-colors hover:text-foreground">
-                  <span className="label-caps flex-shrink-0">Latest</span>
-                  <span className="truncate">A Chat with Fayaz</span>
+              <h3 className="mt-6 text-2xl font-semibold tracking-tight">The MakersLounge Podcast</h3>
+              <p className="mb-8 mt-2 text-muted-foreground">Stories from builders, creators, and makers shaping the future.</p>
+              <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-5">
+                <Link href="/podcasts" className="min-w-0 truncate text-sm text-muted-foreground transition-colors hover:text-foreground">
+                  Latest: <span className="text-foreground">A Chat with Fayaz</span>
                 </Link>
                 <Link
-                  href="/auth"
-                  className="inline-flex flex-shrink-0 items-center gap-1.5 bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 sm:text-sm"
+                  href="/podcasts"
+                  className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-85"
                 >
-                  <Play className="h-3 w-3 fill-current" />
+                  <Play className="h-3.5 w-3.5 fill-current" />
                   Listen
                 </Link>
               </div>
-            </GlassCard>
+            </div>
 
             {/* Blog */}
-            <GlassCard seed={[4.1, 0.6]} className="flex flex-col overflow-hidden">
-              <div className="flex items-start gap-4 p-5">
-                <div className="field-blue flex h-12 w-12 flex-shrink-0 items-center justify-center">
-                  <BookOpen className="h-6 w-6" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="mb-1 flex items-center gap-2">
-                    <span className="label-caps text-[var(--blue-core)]">Blog</span>
-                    {latestPost && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-600 sm:text-xs dark:text-green-500">
-                        <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                        New
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="font-display text-xl text-foreground">Stories from the maker community</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">Insights, lessons, and recaps from Toronto&apos;s makers.</p>
-                </div>
+            <div className="flex flex-col rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-card)] sm:p-8">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--blue-core)] text-white">
+                  <BookOpen className="h-5 w-5" />
+                </span>
+                <span className="text-sm font-medium text-[var(--blue-core)]">Blog</span>
               </div>
-              <div className="mt-auto flex items-center justify-between gap-3 border-t border-border px-5 py-3">
+              <h3 className="mt-6 text-2xl font-semibold tracking-tight">Stories from the maker community</h3>
+              <p className="mb-8 mt-2 text-muted-foreground">Insights, lessons, and recaps from Toronto&apos;s makers.</p>
+              <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-5">
                 {latestPost ? (
-                  <Link href={`/blog/${latestPost.slug}`} className="flex min-w-0 items-center gap-2 text-sm text-foreground/80 transition-colors hover:text-foreground">
-                    <span className="label-caps flex-shrink-0">Latest</span>
-                    <span className="truncate">{latestPost.title}</span>
+                  <Link href={`/blog/${latestPost.slug}`} className="min-w-0 truncate text-sm text-muted-foreground transition-colors hover:text-foreground">
+                    Latest: <span className="text-foreground">{latestPost.title}</span>
                   </Link>
                 ) : (
                   <span className="text-sm text-muted-foreground">Recaps, lessons, and interviews.</span>
                 )}
                 <Link
                   href="/blog"
-                  className="inline-flex flex-shrink-0 items-center gap-1.5 bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 sm:text-sm"
+                  className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-85"
                 >
-                  <BookOpen className="h-3 w-3" />
+                  <BookOpen className="h-3.5 w-3.5" />
                   Read
                 </Link>
               </div>
-            </GlassCard>
+            </div>
+          </div>
+        </section>
+
+        {/* Closing call to action, back on a photo */}
+        <section id="join" ref={joinRef} className="px-5 pb-16 sm:px-8 sm:pb-24">
+          <div className="relative isolate mx-auto max-w-[1200px] overflow-hidden rounded-[2rem] px-6 py-20 text-center text-white sm:px-12 sm:py-28">
+            <Image
+              src="/makerslounge-photos/team-photo.jpeg"
+              alt=""
+              fill
+              sizes="(min-width: 1200px) 1200px, 100vw"
+              className="-z-10 object-cover"
+            />
+            <div className="absolute inset-0 -z-10 bg-black/60" />
+            <h2 className="mx-auto max-w-2xl text-4xl font-semibold tracking-[-0.04em] sm:text-6xl">Come build with us</h2>
+            <p className="mx-auto mt-4 max-w-md text-base text-white/75 sm:text-lg">
+              Free to join. Bring a project, or come find one.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href="/auth?mode=signup"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-medium text-neutral-950 transition-opacity hover:opacity-90 sm:text-base"
+              >
+                Join MakersLounge
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a
+                href={LUMA_CALENDAR_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="allow-blur inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 py-3 text-sm font-medium text-white backdrop-blur-md transition-colors hover:bg-white/20 sm:text-base"
+              >
+                <Calendar className="h-4 w-4" />
+                Upcoming events
+              </a>
+            </div>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-border field-sand">
-        <div className="max-w-[640px] mx-auto px-4 sm:px-6 py-8 sm:py-10">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
-            {/* Brand */}
-            <div className="flex flex-col items-center sm:items-start gap-2">
-              <Link href="/" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
-                <Image src="/logos/logo.svg" alt="MakersLounge" width={16} height={17} className="dark:hidden" />
-                <Image src="/logos/logo-light.svg" alt="MakersLounge" width={16} height={17} className="hidden dark:block" />
-                <span className="text-sm font-sans font-normal">makerslounge</span>
-              </Link>
-              <p className="text-xs text-muted-foreground/60">Build. Connect. Create.</p>
-            </div>
-
-            {/* Links */}
-            <div className="flex items-center gap-4 sm:gap-6 text-xs text-muted-foreground/60">
-              <Link href="/hackathons" className="hover:text-foreground transition-colors">Hackathons</Link>
-              <Link href="/blog" className="hover:text-foreground transition-colors">Blog</Link>
-              <a href="https://lu.ma/makerslounge" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Luma</a>
-              <a href="https://instagram.com/makersloungeto" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Instagram</a>
-              <a href="https://linkedin.com/company/makerslounge" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">LinkedIn</a>
-              <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
-            </div>
+      <footer className="border-t border-border px-5 pb-28 pt-10 sm:px-8 md:pb-10">
+        <div className="mx-auto flex max-w-[1200px] flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div>
+            <Link href="/" className="inline-flex items-center gap-2 transition-opacity hover:opacity-70">
+              <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
+              <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
+              <span className="font-medium tracking-tight">makerslounge</span>
+            </Link>
+            <p className="mt-1 text-sm text-muted-foreground">Build. Connect. Create.</p>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-border/50 text-center">
-            <p className="text-[11px] text-muted-foreground/40">&copy; {new Date().getFullYear()} MakersLounge. All rights reserved.</p>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
+            <Link href="/about" className="transition-colors hover:text-foreground">About</Link>
+            <Link href="/hackathons" className="transition-colors hover:text-foreground">Hackathons</Link>
+            <Link href="/blog" className="transition-colors hover:text-foreground">Blog</Link>
+            <a href={LUMA_CALENDAR_URL} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-foreground">Luma</a>
+            <a href="https://instagram.com/makersloungeto" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="transition-colors hover:text-foreground">
+              <Instagram className="h-4 w-4" />
+            </a>
+            <a href="https://linkedin.com/company/makerslounge" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="transition-colors hover:text-foreground">
+              <Linkedin className="h-4 w-4" />
+            </a>
           </div>
         </div>
+        <p className="mx-auto mt-8 max-w-[1200px] text-xs text-muted-foreground/70">
+          &copy; {new Date().getFullYear()} MakersLounge. All rights reserved.
+        </p>
       </footer>
 
+      <MobileEventBar summary={events} visible={!heroActionsVisible && !joinVisible} />
       <NewsletterPopup />
     </div>
   );
