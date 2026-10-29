@@ -54,7 +54,7 @@ MakersLounge is a Next.js 16 app for connecting makers/builders. It uses the App
 - `/` - Landing page (redirects authenticated users to `/home`)
 - `/auth` - Login/signup (Google, Apple, email)
 - `/onboarding` - Simple onboarding (name + projects)
-- `/home` - May, the community matcher agent (authenticated) — see below
+- `/home` - the ML agent (formerly "May"), the community matcher agent (authenticated) — see below
 - `/profile` - Edit own profile (authenticated)
 - `/profile/[id]` - View user profile by ID
 - `/p/[username]` - Public profile by username
@@ -66,7 +66,7 @@ MakersLounge is a Next.js 16 app for connecting makers/builders. It uses the App
 ### Landing page (`/`)
 
 Rebuilt in Sep 2026 around the flat editorial motif. Sections have stable ids
-(`#hero`, `#community-photos`, `#ask-may`, `#values`, `#listen-and-read`).
+(`#hero`, `#community-photos`, `#ask-ml-agent`, `#values`, `#listen-and-read`).
 
 - **The hero is "one light per member"** (Oct 2026; it replaced the WebGPU
   "sun" disc). Every member is a small dot scattered across the whole header,
@@ -150,7 +150,7 @@ Rebuilt in Sep 2026 around the flat editorial motif. Sections have stable ids
   hoverable card would be the wrong tool.
 - The glossy 3D renders in `public/values/` are no longer referenced.
 
-### The community agent — May (`/home`)
+### The community agent — ML agent, formerly May (`/home`)
 
 `/home` is an [eve](https://eve.dev) agent, not an API route. It lives in
 `community-agent/`, its own npm package with its own lockfile, mounted by

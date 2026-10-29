@@ -491,17 +491,17 @@ export default function Home() {
           <PhotoMarquee />
         </section>
 
-        {/* Ask May — the community matcher, and the site's actual product */}
-        <section id="ask-may" className="relative px-4 pb-16 sm:px-6 sm:pb-24">
+        {/* Ask the ML agent — the community matcher, and the site's actual product */}
+        <section id="ask-ml-agent" className="relative px-4 pb-16 sm:px-6 sm:pb-24">
           <MayField ref={mayFieldRef} className="-top-16 -bottom-8" />
           <div className="relative mx-auto w-full max-w-[720px]">
             <div className="mb-5 flex flex-col items-center text-center sm:mb-6">
-              <Eyebrow className="mb-3">May · community matcher</Eyebrow>
+              <Eyebrow className="mb-3">ML agent · community matcher</Eyebrow>
               <h2 className="text-2xl tracking-[-0.02em] text-foreground sm:text-3xl">
-                Tell May what you&apos;re building
+                Tell the ML agent what you&apos;re building
               </h2>
               <p className="mt-2 max-w-md text-sm text-muted-foreground sm:text-base">
-                She knows every member, event, and project here, and points you at the right ones.
+                It knows every member, event, and project here, and points you at the right ones.
               </p>
             </div>
 
@@ -537,7 +537,7 @@ export default function Home() {
                 <div className="absolute bottom-3 right-3">
                   <button
                     type="submit"
-                    aria-label="Ask May"
+                    aria-label="Ask the ML agent"
                     className="flex h-9 w-9 items-center justify-center bg-[var(--blue-core)] text-white transition-opacity hover:opacity-85 disabled:opacity-30"
                     disabled={!query.trim()}
                   >

@@ -323,7 +323,7 @@ export function MatcherChat({ initialQuery }: { initialQuery?: string | null }) 
           <header className="relative z-20 mx-auto flex w-full max-w-2xl shrink-0 items-center gap-3 px-4 pt-3">
             <Persona className="size-9" state={personaState} variant="halo" />
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="font-medium text-sm">May</p>
+              <p className="font-medium text-sm">ML agent</p>
               <p className="truncate text-muted-foreground text-xs">
                 {personaState === "listening"
                   ? "Listening…"
@@ -387,7 +387,7 @@ export function MatcherChat({ initialQuery }: { initialQuery?: string | null }) 
                   <MessageContent>
                     <div className="flex items-center gap-2 text-sm">
                       <Spinner className="size-4 text-muted-foreground" />
-                      <Shimmer>May is thinking…</Shimmer>
+                      <Shimmer>ML agent is thinking…</Shimmer>
                     </div>
                   </MessageContent>
                 </Message>
@@ -492,7 +492,7 @@ function toUIMessage(message: EveMessage): UIMessage {
 }
 
 function formatForDownload(message: UIMessage): string {
-  const who = message.role === "user" ? "You" : "May";
+  const who = message.role === "user" ? "You" : "ML agent";
   const text = message.parts
     .filter((part) => part.type === "text")
     .map((part) => part.text)
