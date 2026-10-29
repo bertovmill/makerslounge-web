@@ -29,7 +29,15 @@ export function MobileEventBar({ summary, visible }: MobileEventBarProps) {
         <p className="text-[11px] text-white/60">{next ? `Next up · ${formatEventDate(next.start).when}` : "Toronto's builder community"}</p>
         <p className="truncate font-medium">{next ? next.title : "Build with MakersLounge"}</p>
       </div>
-      {next ? (
+      {next && next.url.startsWith("/") ? (
+        <Link
+          href={next.url}
+          tabIndex={visible ? undefined : -1}
+          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white px-4 py-2 text-sm font-medium text-neutral-950"
+        >
+          RSVP
+        </Link>
+      ) : next ? (
         <a
           href={next.url}
           target="_blank"

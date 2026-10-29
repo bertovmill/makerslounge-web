@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import ReactMarkdown from "react-markdown";
@@ -18,6 +19,9 @@ import { RsvpPanel } from "./RsvpPanel";
 export const dynamic = "force-dynamic";
 
 const SITE_URL = "https://makerslounge.ca";
+
+// Used when an event has no image of its own: a real MakersLounge co-working afternoon.
+const DEFAULT_PHOTO = "/makerslounge-photos/lounge-working.jpeg";
 
 async function resolve(slug: string) {
   await topUpSeriesOccurrences();
@@ -52,62 +56,86 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     : null;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 pb-24 md:py-10">
+    <div className="mx-auto max-w-5xl px-4 py-6 pb-24 md:py-8">
       <Link
         href="/events"
-        className="inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground transition-opacity hover:opacity-70"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
-        <ArrowLeft className="size-3.5" />
+        <ArrowLeft className="size-4" />
         All events
       </Link>
 
-      <div className="mt-8 grid gap-10 md:grid-cols-[1fr_20rem] md:gap-12">
+      {/* A real event photo under a dark scrim, like the landing hero. */}
+      <section
+        id="event-hero"
+        className="relative isolate mt-4 flex min-h-[18rem] flex-col justify-end overflow-hidden rounded-3xl bg-neutral-950 p-6 text-white sm:min-h-[22rem] sm:p-8"
+      >
+        <Image
+          src={event.image_url ?? DEFAULT_PHOTO}
+          alt=""
+          fill
+          priority
+          // Admin-set image URLs can be on any host, which next/image won't optimise.
+          unoptimized={Boolean(event.image_url)}
+          sizes="(min-width: 1024px) 1024px, 100vw"
+          className="-z-10 object-cover object-[center_60%]"
+        />
+        <div aria-hidden className="absolute inset-0 -z-10 bg-linear-to-t from-black/85 via-black/40 to-black/30" />
+
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="allow-blur inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-white/90 backdrop-blur-md">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#4F9BFF]" />
+            {formatEventDay(event.start_time)}
+          </span>
+          {event.series_id && (
+            <span className="allow-blur rounded-full border border-white/20 bg-white/10 px-3 py-1 text-white/90 backdrop-blur-md">
+              Every week
+            </span>
+          )}
+        </div>
+        <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-[1] tracking-[-0.04em] sm:text-6xl">
+          {event.title}
+        </h1>
+        <p className="mt-3 text-base text-white/75 sm:text-lg">
+          {formatEventTimes(event.start_time, event.end_time)}
+          {event.location && ` · ${event.location.split(",")[0]}`}
+        </p>
+      </section>
+
+      <div className="mt-8 grid gap-8 md:grid-cols-[minmax(0,1fr)_22rem] md:gap-10">
         <section id="event-details" className="min-w-0">
-          <div className="flex flex-wrap items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            <span className="text-foreground">{formatEventDay(event.start_time)}</span>
-            <span className="h-px w-8 bg-border" />
-            <span>{formatEventTimes(event.start_time, event.end_time)}</span>
-            {event.series_id && (
-              <>
-                <span className="h-px w-8 bg-border" />
-                <span>Weekly</span>
-              </>
-            )}
-          </div>
-
-          <h1 className="mt-4 font-display text-[clamp(2.25rem,7vw,4.5rem)] leading-[0.95] tracking-tight">
-            {event.title}
-          </h1>
-
           {event.location && (
-            <div className="mt-6 flex items-start gap-2 text-base">
-              <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-              <div className="flex flex-col gap-1">
-                <span>{event.location}</span>
-                {mapsUrl && (
-                  <a
-                    href={mapsUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground"
-                  >
-                    Open in maps <ArrowUpRight className="size-3" />
-                  </a>
-                )}
+            <div className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary">
+                <MapPin className="size-4" />
+              </span>
+              <div className="flex min-w-0 flex-col">
+                <span className="font-medium">{event.location.split(",")[0]}</span>
+                <span className="text-sm text-muted-foreground">{event.location.split(",").slice(1).join(",").trim()}</span>
               </div>
+              {mapsUrl && (
+                <a
+                  href={mapsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-sm transition-colors hover:bg-secondary"
+                >
+                  Map <ArrowUpRight className="size-3.5" />
+                </a>
+              )}
             </div>
           )}
 
           {event.description && (
-            <div className="mt-8 border-t border-border pt-8 text-base leading-relaxed text-foreground/90">
+            <div className="mt-8 text-base leading-relaxed text-foreground/85">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
                   p: (props) => <p className="mb-4" {...props} />,
                   strong: (props) => <strong className="font-semibold text-foreground" {...props} />,
-                  ul: (props) => <ul className="mb-4 list-disc space-y-1.5 pl-5" {...props} />,
-                  ol: (props) => <ol className="mb-4 list-decimal space-y-1.5 pl-5" {...props} />,
-                  h2: (props) => <h2 className="mb-3 mt-8 font-display text-2xl tracking-tight" {...props} />,
+                  ul: (props) => <ul className="mb-6 list-disc space-y-1.5 pl-5" {...props} />,
+                  ol: (props) => <ol className="mb-6 list-decimal space-y-1.5 pl-5" {...props} />,
+                  h2: (props) => <h2 className="mb-3 mt-8 text-xl font-semibold tracking-tight" {...props} />,
                   h3: (props) => <h3 className="mb-2 mt-6 text-lg font-semibold" {...props} />,
                   a: (props) => (
                     <a className="underline underline-offset-4 hover:opacity-70" target="_blank" rel="noreferrer" {...props} />

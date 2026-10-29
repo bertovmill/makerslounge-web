@@ -66,14 +66,14 @@ export function RsvpPanel({ event, pageUrl, ended }: { event: PublicEvent; pageU
 
   const calendarLinks = (
     <div className="flex flex-col gap-2">
-      <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Add to calendar</span>
+      <span className="text-xs text-muted-foreground">Add to calendar</span>
       <div className="flex flex-wrap gap-2">
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline" size="sm" className="rounded-full">
           <a href={googleCalendarUrl(event, pageUrl)} target="_blank" rel="noreferrer">
             <CalendarPlus className="size-3.5" /> Google
           </a>
         </Button>
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline" size="sm" className="rounded-full">
           <a href={`/events/${event.slug ?? event.id}/calendar.ics`}>
             <CalendarPlus className="size-3.5" /> Apple / Outlook
           </a>
@@ -83,10 +83,10 @@ export function RsvpPanel({ event, pageUrl, ended }: { event: PublicEvent; pageU
   );
 
   return (
-    <div className="flex flex-col gap-5 rounded-xl border border-border bg-card p-5">
+    <div className="flex flex-col gap-5 rounded-3xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
       <div className="flex items-baseline justify-between gap-3">
-        <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
-          {ended ? "This event has ended" : "RSVP"}
+        <span className="font-semibold">
+          {ended ? "This event has ended" : "Free · RSVP to join"}
         </span>
         <span className="text-sm text-muted-foreground">
           {going} going{event.capacity != null && ` · ${event.capacity} spots`}
@@ -112,6 +112,7 @@ export function RsvpPanel({ event, pageUrl, ended }: { event: PublicEvent; pageU
         <form onSubmit={submit} className="flex flex-col gap-3">
           <Input
             required
+            className="h-11 rounded-full px-4"
             autoComplete="name"
             placeholder="Your name"
             value={name}
@@ -120,6 +121,7 @@ export function RsvpPanel({ event, pageUrl, ended }: { event: PublicEvent; pageU
           />
           <Input
             required
+            className="h-11 rounded-full px-4"
             type="email"
             autoComplete="email"
             placeholder="Email"
@@ -128,11 +130,11 @@ export function RsvpPanel({ event, pageUrl, ended }: { event: PublicEvent; pageU
             onChange={(e) => setEmail(e.target.value)}
           />
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" disabled={submitting} className="w-full">
+          <Button type="submit" disabled={submitting} className="h-11 w-full rounded-full">
             {submitting ? "Saving…" : "I'm going"}
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Free. We only use your email for this event.
+          <p className="text-center text-xs text-muted-foreground">
+            We only use your email for this event.
           </p>
         </form>
       )}

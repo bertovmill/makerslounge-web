@@ -71,8 +71,11 @@ export async function topUpSeriesOccurrences({ force = false } = {}) {
   }
 }
 
+// Written out in full: an interpolated `${events.id}` renders unqualified inside
+// a select list, and `id` then binds to `r.id`, so every count came back 0.
 const going = sql<number>`(
-  SELECT count(*)::int FROM makerslounge.event_rsvps r WHERE r.event_id = ${events.id}
+  SELECT count(*)::int FROM makerslounge.event_rsvps r
+  WHERE r.event_id = "makerslounge"."events"."id"
 )`;
 
 const publicColumns = {
@@ -91,20 +94,34 @@ const publicColumns = {
   going,
 };
 
+/**
+ * Postgres hands back "2026-11-07 16:30:00+00", which Node parses but Safari
+ * doesn't. Everything leaving this module uses ISO 8601 instead.
+ */
+function withIsoTimes<T extends { start_time: string; end_time: string }>(row: T): T {
+  return {
+    ...row,
+    start_time: new Date(row.start_time).toISOString(),
+    end_time: new Date(row.end_time).toISOString(),
+  };
+}
+
 /** Events that haven't ended yet, soonest first. */
 export async function listUpcomingEvents(): Promise<PublicEvent[]> {
   await topUpSeriesOccurrences();
-  return getSiteDb()
+  const rows = await getSiteDb()
     .select(publicColumns)
     .from(events)
     .where(gte(events.endTime, sql`now()`))
     .orderBy(asc(events.startTime));
+  return rows.map(withIsoTimes);
 }
 
 /** Every event, oldest first. The admin list. */
 export async function listAllEvents(): Promise<PublicEvent[]> {
   await topUpSeriesOccurrences();
-  return getSiteDb().select(publicColumns).from(events).orderBy(asc(events.startTime));
+  const rows = await getSiteDb().select(publicColumns).from(events).orderBy(asc(events.startTime));
+  return rows.map(withIsoTimes);
 }
 
 /** One event by slug, or by id for events created before slugs existed. */
@@ -114,7 +131,7 @@ export async function getEventBySlugOrId(slugOrId: string): Promise<PublicEvent 
     .from(events)
     .where(UUID.test(slugOrId) ? eq(events.id, slugOrId) : eq(events.slug, slugOrId))
     .limit(1);
-  return row ?? null;
+  return row ? withIsoTimes(row) : null;
 }
 
 /**
@@ -130,5 +147,5 @@ export async function getNextSeriesOccurrence(seriesSlug: string): Promise<Publi
     .where(and(eq(eventSeries.slug, seriesSlug), gte(events.endTime, sql`now()`)))
     .orderBy(asc(events.startTime))
     .limit(1);
-  return row ?? null;
+  return row ? withIsoTimes(row) : null;
 }

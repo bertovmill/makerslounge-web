@@ -1,4 +1,5 @@
-import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { LUMA_CALENDAR_URL, type LumaSummary } from "@/lib/luma-events";
 import { cn } from "@/lib/utils";
 
@@ -29,8 +30,8 @@ interface NextEventCardProps {
 }
 
 /**
- * The next MakersLounge event from Luma, or the latest one when nothing is
- * scheduled yet. Never invents a date: with no feed it just points at Luma.
+ * The next MakersLounge event (our own `/events/<slug>` pages first, Luma for
+ * older ones), or the latest one when nothing is scheduled yet. Never invents a date: with no feed it just points at Luma.
  */
 export function NextEventCard({ summary, tone, className }: NextEventCardProps) {
   const glass = tone === "glass";
@@ -117,15 +118,22 @@ export function NextEventCard({ summary, tone, className }: NextEventCardProps) 
         </div>
       </div>
 
-      <a
-        href={upcoming ? event.url : LUMA_CALENDAR_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={button}
-      >
-        {upcoming ? "RSVP on Luma" : "See what's next"}
-        <ArrowUpRight className="h-4 w-4" />
-      </a>
+      {upcoming && event.url.startsWith("/") ? (
+        <Link href={event.url} className={button}>
+          RSVP
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      ) : (
+        <a
+          href={upcoming ? event.url : LUMA_CALENDAR_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={button}
+        >
+          {upcoming ? "RSVP on Luma" : "See what's next"}
+          <ArrowUpRight className="h-4 w-4" />
+        </a>
+      )}
     </div>
   );
 }

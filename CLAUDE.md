@@ -62,6 +62,30 @@ MakersLounge is a Next.js 16 app for connecting makers/builders. It uses the App
 - `/matcher` - Contact matching tool
 - `/feedback` - User feedback submission
 - `/eve-workshop` - Eve Agent Workshop (see below)
+- `/events` - Upcoming in-house events and recaps; `/events/<slug>` is one event with RSVP
+- `/admin/events` - Create events and weekly series; `/admin/events/<id>/guests` is the guest list
+
+### In-house events (`/events`, Oct 2026)
+
+Makerslounge runs its own events instead of Luma: event pages, RSVP and guest
+lists live in the site. Tables are `events`, `event_series` and `event_rsvps`
+(migrations `neon-migrations/0007` and `0008`).
+
+- **A weekly series is a rule, materialised as ordinary events.** `event_series`
+  holds "every Saturday 11:30 to 3"; `topUpSeriesOccurrences()` in
+  `src/lib/events/server.ts` inserts the next `weeks_ahead` (8) weeks as `events`
+  rows on read, throttled per instance. Local times go through `AT TIME ZONE`, so
+  DST doesn't shift them. It only generates dates after a series' latest existing
+  occurrence, so deleting one date (a holiday) doesn't bring it back.
+- **`/events/<series-slug>` redirects to that series' next date**, so
+  `/events/makerslounge-saturdays` is the link to share every week.
+- **RSVP is name + email, no account** (`POST /api/events/<id>/rsvp`), unique on
+  event + `lower(email)`, so repeats are no-ops. Emails are admin-only
+  (`/api/events/<id>/rsvps`); the public API returns a `going` count. There are
+  no confirmation or reminder emails yet.
+- `GET /api/events` returns the snake_case `PublicEvent` shape from
+  `src/lib/events/format.ts`. Times display in `America/Toronto` regardless of
+  the viewer's timezone.
 
 ### Landing page (`/`)
 
@@ -76,12 +100,13 @@ value art) "too boxy and cartoony". Sections have stable ids: `#hero`,
   crossfade over it on staggered delays (`.hero-slide` / `.hero-photos` in
   `globals.css`), and reduced motion holds the first still. The photos are only
   ~1086px wide, so swap in larger originals if they ever look soft on big screens.
-- **Events come from Luma, never from copy.** `src/lib/luma-events.ts` reads the
-  public iCalendar feed of the MakersLounge calendar (`cal-FGHayLJ6ZAmkYJi`, no
-  key needed) and `/api/luma-events` returns `{ next, latest, total, since }`,
-  cached for an hour. `NextEventCard` shows the next event with an RSVP link, or
-  the latest one with "See what's next" when nothing is scheduled. Do not
-  hardcode "every Monday": the last Maker Monday on Luma was May 4, 2026. Events whose
+- **Events come from the database and Luma, never from copy.**
+  `/api/event-summary` merges our own events (see "In-house events" below) with
+  the public Luma iCalendar feed (`src/lib/luma-events.ts`, calendar
+  `cal-FGHayLJ6ZAmkYJi`, no key) and returns `{ next, latest, total, since }`,
+  cached for ten minutes. Luma now only supplies history for the total.
+  `NextEventCard` links an in-house event to its `/events/<slug>` page and a
+  Luma one out to Luma. Do not hardcode a weekday in copy. Events whose Luma
   address is hidden carry a Luma URL as `LOCATION`, so they get no venue.
 - **The member count is gone from the page.** The live Neon db held 2 profiles
   in Oct 2026, so "Join 2 builders" was hurting more than helping. The event

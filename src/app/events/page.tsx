@@ -41,7 +41,7 @@ export default function EventsPage() {
           {upcoming === null ? (
             <div className="flex flex-col gap-3">
               {[0, 1, 2].map((i) => (
-                <div key={i} className="h-24 animate-pulse rounded-xl border border-border bg-card" />
+                <div key={i} className="h-24 animate-pulse rounded-2xl border border-border bg-card" />
               ))}
             </div>
           ) : upcoming.length === 0 ? (
@@ -54,20 +54,20 @@ export default function EventsPage() {
                 <li key={event.id}>
                   <Link
                     href={eventPath(event)}
-                    className="group flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-4 transition-colors hover:bg-secondary/60 md:gap-6 md:px-5"
+                    className="group flex items-center gap-4 rounded-2xl border border-border bg-card px-4 py-4 shadow-[var(--shadow-card)] transition-colors hover:bg-secondary/60 md:gap-6 md:px-5"
                   >
-                    <div className="flex w-16 shrink-0 flex-col items-center border-r border-border pr-4 md:w-20 md:pr-6">
-                      <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                        {formatEventDayShort(event.start_time).split(" ")[0]}
+                    <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-[var(--blue-core)] text-white">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">
+                        {formatEventDayShort(event.start_time).split(" ")[1]}
                       </span>
-                      <span className="font-display text-2xl leading-none tracking-tight md:text-3xl">
-                        {formatEventDayShort(event.start_time).split(" ").slice(1).join(" ")}
+                      <span className="text-xl font-semibold leading-none">
+                        {formatEventDayShort(event.start_time).split(" ")[2]}
                       </span>
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className="text-[15px] font-semibold tracking-tight md:text-base">{event.title}</span>
                       <span className="text-[13px] text-muted-foreground md:text-sm">
-                        {formatEventTimes(event.start_time, event.end_time)}
+                        {formatEventDayShort(event.start_time).split(" ")[0]} · {formatEventTimes(event.start_time, event.end_time)}
                         {event.going > 0 && ` · ${event.going} going`}
                       </span>
                       {event.location && (

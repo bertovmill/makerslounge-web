@@ -248,7 +248,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/luma-events")
+    fetch("/api/event-summary")
       .then((res) => (res.ok ? res.json() : null))
       .then((summary: LumaSummary | null) => setEvents(summary))
       .catch(() => setEvents(null));
