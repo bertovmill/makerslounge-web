@@ -305,7 +305,8 @@ export default function Home() {
   return (
     <div className="flex min-h-svh flex-col">
       {/* Hero: real event photos, full bleed, with the next event from Luma */}
-      <section id="hero" className="relative isolate flex min-h-[88svh] flex-col text-white lg:min-h-[92svh]">
+      {/* Phones get a shorter hero so the next-event card shows on the first screen. */}
+      <section id="hero" className="relative isolate flex min-h-[64svh] flex-col text-white sm:min-h-[88svh] lg:min-h-[92svh]">
         <HeroPhotos />
 
         <header className="relative z-20 mx-auto flex w-full max-w-[1200px] items-center justify-between px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-8 sm:pt-6">
@@ -361,7 +362,7 @@ export default function Home() {
           </button>
         </header>
 
-        <div className="relative z-10 mx-auto mt-auto grid w-full max-w-[1200px] gap-10 px-5 pb-10 pt-24 sm:px-8 sm:pb-16 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+        <div className="relative z-10 mx-auto mt-auto grid w-full max-w-[1200px] gap-10 px-5 pb-8 pt-16 sm:px-8 sm:pt-24 sm:pb-16 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
           <div>
             <span className="allow-blur inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/85 backdrop-blur-md">
               <span className="h-1.5 w-1.5 rounded-full bg-[#4F9BFF]" />
