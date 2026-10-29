@@ -17,7 +17,7 @@
 // has no JWT-aware policy layer, so authorization is per-route application code
 // instead. See docs/supabase-to-clerk-neon-migration.md.
 
-import { pgTable, pgSchema, index, foreignKey, unique, uuid, text, integer, timestamp, boolean, uniqueIndex, check, jsonb, date, primaryKey, bigint } from "drizzle-orm/pg-core"
+import { pgTable, pgSchema, index, foreignKey, unique, uuid, text, integer, timestamp, boolean, uniqueIndex, check, jsonb, date, primaryKey, bigint, smallint, time } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const makerslounge = pgSchema("makerslounge");
@@ -245,13 +245,72 @@ export const events = makerslounge.table("events", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
 	isAllDay: boolean("is_all_day").default(false),
+	slug: text(),
+	seriesId: uuid("series_id"),
+	capacity: integer(),
 }, (table) => [
 	index("events_start_time_idx").using("btree", table.startTime.asc().nullsLast().op("timestamptz_ops")),
+	uniqueIndex("events_series_start_idx").using("btree", table.seriesId.asc().nullsLast().op("uuid_ops"), table.startTime.asc().nullsLast().op("timestamptz_ops")).where(sql`(series_id IS NOT NULL)`),
 	foreignKey({
 			columns: [table.createdBy],
 			foreignColumns: [profiles.id],
 			name: "events_created_by_fkey"
 		}),
+	foreignKey({
+			columns: [table.seriesId],
+			foreignColumns: [eventSeries.id],
+			name: "events_series_id_fkey"
+		}).onDelete("set null"),
+	unique("events_slug_key").on(table.slug),
+	check("events_capacity_check", sql`(capacity IS NULL) OR (capacity > 0)`),
+]);
+
+export const eventSeries = makerslounge.table("event_series", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	slug: text().notNull(),
+	title: text().notNull(),
+	description: text(),
+	location: text(),
+	weekday: smallint().notNull(),
+	startLocal: time("start_local").notNull(),
+	endLocal: time("end_local").notNull(),
+	timezone: text().default('America/Toronto').notNull(),
+	startsOn: date("starts_on").notNull(),
+	endsOn: date("ends_on"),
+	capacity: integer(),
+	weeksAhead: smallint("weeks_ahead").default(8).notNull(),
+	createdBy: uuid("created_by"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.createdBy],
+			foreignColumns: [profiles.id],
+			name: "event_series_created_by_fkey"
+		}),
+	unique("event_series_slug_key").on(table.slug),
+	check("event_series_weekday_check", sql`(weekday >= 0) AND (weekday <= 6)`),
+	check("event_series_times_ordered", sql`end_local > start_local`),
+]);
+
+export const eventRsvps = makerslounge.table("event_rsvps", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	eventId: uuid("event_id").notNull(),
+	name: text().notNull(),
+	email: text().notNull(),
+	profileId: uuid("profile_id"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	uniqueIndex("event_rsvps_event_email_idx").using("btree", table.eventId.asc().nullsLast().op("uuid_ops"), sql`lower(email)`),
+	foreignKey({
+			columns: [table.eventId],
+			foreignColumns: [events.id],
+			name: "event_rsvps_event_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.profileId],
+			foreignColumns: [profiles.id],
+			name: "event_rsvps_profile_id_fkey"
+		}).onDelete("set null"),
 ]);
 
 export const workshops = makerslounge.table("workshops", {

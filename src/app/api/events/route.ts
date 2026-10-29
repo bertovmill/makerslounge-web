@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { asc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getSiteDb } from "@/db/site";
 import { events } from "@/db/site/schema";
 import { requireAdmin } from "@/lib/api/auth";
 import { badRequest, handleApiError } from "@/lib/api/respond";
+import { eventSlug } from "@/lib/events/format";
+import { getEventBySlugOrId, listAllEvents, listUpcomingEvents } from "@/lib/events/server";
 
 /**
  * Site events.
@@ -12,6 +14,10 @@ import { badRequest, handleApiError } from "@/lib/api/respond";
  * keyed on the admin email and are now `requireAdmin()`.
  *
  * `created_by` comes from the session rather than the request.
+ *
+ * GET returns the public shape (`PublicEvent`, snake_case, with a `going`
+ * count). It never includes guests' names or emails; those are admin-only at
+ * `/api/events/[id]/rsvps`.
  */
 
 const WRITABLE = {
@@ -23,6 +29,7 @@ const WRITABLE = {
   image_url: "imageUrl",
   event_url: "eventUrl",
   is_all_day: "isAllDay",
+  capacity: "capacity",
 } as const;
 
 function pick(body: Record<string, unknown>) {
@@ -35,14 +42,15 @@ function pick(body: Record<string, unknown>) {
 
 export async function GET(request: NextRequest) {
   try {
-    const id = new URL(request.url).searchParams.get("id");
+    const params = new URL(request.url).searchParams;
+    const id = params.get("id");
 
-    const rows = await getSiteDb()
-      .select()
-      .from(events)
-      .where(id ? eq(events.id, id) : undefined)
-      .orderBy(asc(events.startTime));
+    if (id) {
+      const event = await getEventBySlugOrId(id);
+      return NextResponse.json({ data: event ? [event] : [] });
+    }
 
+    const rows = params.get("upcoming") ? await listUpcomingEvents() : await listAllEvents();
     return NextResponse.json({ data: rows });
   } catch (err) {
     return handleApiError(err, "api/events GET");
@@ -59,6 +67,10 @@ export async function POST(request: Request) {
     if (!values.title || !values.startTime || !values.endTime) {
       return badRequest("title, start_time and end_time are required");
     }
+    // Two events with the same title on the same day get a short suffix.
+    const slug = eventSlug(String(values.title), String(values.startTime));
+    const taken = await getEventBySlugOrId(slug);
+    values.slug = taken ? `${slug}-${crypto.randomUUID().slice(0, 4)}` : slug;
 
     const [created] = await getSiteDb()
       .insert(events)

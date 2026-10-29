@@ -5,20 +5,9 @@
  * policies said. `created_by` is set by the route from the session.
  */
 
-export interface EventRow {
-  id: string;
-  title: string;
-  description: string | null;
-  start_time: string;
-  end_time: string;
-  location: string | null;
-  image_url: string | null;
-  event_url: string | null;
-  is_all_day: boolean | null;
-  created_by: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-}
+import type { PublicEvent } from "@/lib/events/format";
+
+export type EventRow = PublicEvent;
 
 export async function fetchEvents(id?: string): Promise<EventRow[]> {
   const qs = id ? `?id=${encodeURIComponent(id)}` : "";

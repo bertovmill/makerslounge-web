@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { fetchEvents, deleteEvent, type EventRow as Event } from "@/lib/events-client";
 import EventForm from "@/components/EventForm";
+import EventSeriesForm from "@/components/EventSeriesForm";
+import { eventPath } from "@/lib/events/format";
 
 
 export default function AdminEventsPage() {
@@ -14,6 +16,7 @@ export default function AdminEventsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
+  const [showSeriesForm, setShowSeriesForm] = useState(false);
 
   // Named `loadEvents`: `fetchEvents` is imported.
   const loadEvents = async () => {
@@ -48,7 +51,7 @@ export default function AdminEventsPage() {
   };
 
   const handleEventSaved = () => {
-    fetchEvents();
+    loadEvents();
     handleFormClose();
   };
 
@@ -84,6 +87,9 @@ export default function AdminEventsPage() {
               </svg>
               View Calendar
             </Link>
+          </Button>
+          <Button variant="outline" onClick={() => setShowSeriesForm(true)}>
+            New Weekly Series
           </Button>
           <Button onClick={() => setShowForm(true)}>
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -216,6 +222,14 @@ export default function AdminEventsPage() {
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex justify-end gap-2">
+                          <Button asChild variant="outline" size="sm">
+                            <Link href={`/admin/events/${event.id}/guests`}>
+                              Guests ({event.going})
+                            </Link>
+                          </Button>
+                          <Button asChild variant="outline" size="sm">
+                            <Link href={eventPath(event)}>Page</Link>
+                          </Button>
                           <Button asChild size="sm">
                             <Link href={`/admin/events/${event.id}`}>
                               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -269,6 +283,24 @@ export default function AdminEventsPage() {
           </div>
         )}
       </Card>
+
+      {showSeriesForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+            <h2 className="text-xl font-bold mb-1">New Weekly Series</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Creates an event every week on the same day and time, 8 weeks ahead, topped up automatically.
+            </p>
+            <EventSeriesForm
+              onCreated={() => {
+                setShowSeriesForm(false);
+                loadEvents();
+              }}
+              onCancel={() => setShowSeriesForm(false)}
+            />
+          </Card>
+        </div>
+      )}
 
       {/* Event Form Modal */}
       {showForm && (
