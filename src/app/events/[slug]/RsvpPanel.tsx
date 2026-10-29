@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CalendarPlus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { googleCalendarUrl, type PublicEvent } from "@/lib/events/format";
 
 /**
@@ -19,6 +20,7 @@ const storageKey = (eventId: string) => `ml-rsvp:${eventId}`;
 export function RsvpPanel({ event, pageUrl, ended }: { event: PublicEvent; pageUrl: string; ended: boolean }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [building, setBuilding] = useState("");
   const [going, setGoing] = useState(event.going);
   const [rsvpedAs, setRsvpedAs] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -42,7 +44,7 @@ export function RsvpPanel({ event, pageUrl, ended }: { event: PublicEvent; pageU
       const res = await fetch(`/api/events/${event.id}/rsvp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email }),
+        body: JSON.stringify({ name, email, building }),
       });
       const body = (await res.json().catch(() => ({}))) as { going?: number; detail?: string };
       if (!res.ok) {
@@ -129,12 +131,21 @@ export function RsvpPanel({ event, pageUrl, ended }: { event: PublicEvent; pageU
             maxLength={254}
             onChange={(e) => setEmail(e.target.value)}
           />
+          <Textarea
+            required
+            rows={2}
+            className="min-h-0 resize-none rounded-2xl px-4 py-2.5"
+            placeholder="What are you building? (a few words is fine)"
+            value={building}
+            maxLength={280}
+            onChange={(e) => setBuilding(e.target.value)}
+          />
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" disabled={submitting} className="h-11 w-full rounded-full">
             {submitting ? "Saving…" : "I'm going"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            We only use your email for this event.
+            We group intros by what you&apos;re building. Your email is only used for this event.
           </p>
         </form>
       )}

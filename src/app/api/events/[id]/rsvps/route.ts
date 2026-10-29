@@ -19,6 +19,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         id: eventRsvps.id,
         name: eventRsvps.name,
         email: eventRsvps.email,
+        building: eventRsvps.building,
         profile_id: eventRsvps.profileId,
         created_at: eventRsvps.createdAt,
       })

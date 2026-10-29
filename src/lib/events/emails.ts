@@ -98,7 +98,10 @@ function compose(
 
 export function rsvpConfirmationEmail(event: PublicEvent, guest: RsvpGuest): OutgoingEmail {
   return compose(event, guest, {
-    subject: `You're going: ${event.title}, ${formatEventDayShort(event.start_time)}`,
+    // A series date already carries its date in the title ("… · Nov 7").
+    subject: event.series_id
+      ? `You're going: ${event.title}`
+      : `You're going: ${event.title}, ${formatEventDayShort(event.start_time)}`,
     heading: `You're going, ${firstName(guest.name)}!`,
     intro: "Your spot is saved. Here are the details, and the event is attached for your calendar.",
   });

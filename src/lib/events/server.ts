@@ -36,7 +36,7 @@ export async function topUpSeriesOccurrences({ force = false } = {}) {
       INSERT INTO makerslounge.events
         (title, description, start_time, end_time, location, slug, series_id, capacity, created_by)
       SELECT
-        s.title,
+        s.title || ' · ' || to_char(d, 'Mon FMDD'),
         s.description,
         (d::date + s.start_local) AT TIME ZONE s.timezone,
         (d::date + s.end_local) AT TIME ZONE s.timezone,

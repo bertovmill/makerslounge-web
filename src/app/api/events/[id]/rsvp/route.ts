@@ -8,7 +8,8 @@ import { sendRsvpConfirmation } from "@/lib/events/emails";
 import { getEventBySlugOrId } from "@/lib/events/server";
 
 /**
- * RSVP to an event. Public: name and email, no account needed, like Luma.
+ * RSVP to an event. Public: name, email and what you're building (hosts group
+ * intros by it), no account needed, like Luma.
  *
  * A repeat RSVP with the same email is a no-op (unique on event + lower(email)),
  * so double-submits and "did it work?" retries never take a second seat. If the
@@ -24,12 +25,15 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const body = (await request.json().catch(() => ({}))) as { name?: unknown; email?: unknown };
+    const body = (await request.json().catch(() => ({}))) as { name?: unknown; email?: unknown; building?: unknown };
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
 
     if (!name || name.length > 120) return badRequest("Please enter your name.");
     if (!EMAIL.test(email) || email.length > 254) return badRequest("Please enter a valid email.");
+    const building = typeof body.building === "string" ? body.building.trim() : "";
+    if (!building) return badRequest("Tell us what you're building, even in a few words.");
+    if (building.length > 280) return badRequest("Keep what you're building under 280 characters.");
 
     const event = await getEventBySlugOrId(id);
     if (!event) return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -52,7 +56,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const profileId = await optionalUser();
     const inserted = await db
       .insert(eventRsvps)
-      .values({ eventId: event.id, name, email, profileId })
+      .values({ eventId: event.id, name, email, building, profileId })
       .onConflictDoNothing()
       .returning({ id: eventRsvps.id, cancelToken: eventRsvps.cancelToken });
 

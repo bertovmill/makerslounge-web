@@ -13,6 +13,7 @@ interface Guest {
   id: string;
   name: string;
   email: string;
+  building: string | null;
   profile_id: string | null;
   created_at: string;
 }
@@ -94,6 +95,7 @@ export default function EventGuestsPage() {
               <tr className="border-b border-border text-left">
                 <th className="py-2 pr-4 font-semibold">Name</th>
                 <th className="py-2 pr-4 font-semibold">Email</th>
+                <th className="py-2 pr-4 font-semibold">Building</th>
                 <th className="py-2 pr-4 font-semibold">RSVP&apos;d</th>
                 <th />
               </tr>
@@ -105,6 +107,7 @@ export default function EventGuestsPage() {
                     {guest.profile_id ? <Link href={`/profile/${guest.profile_id}`} className="hover:underline">{guest.name}</Link> : guest.name}
                   </td>
                   <td className="py-3 pr-4 text-muted-foreground">{guest.email}</td>
+                  <td className="py-3 pr-4">{guest.building ?? "—"}</td>
                   <td className="py-3 pr-4 text-muted-foreground">
                     {new Date(guest.created_at).toLocaleDateString("en-CA", { month: "short", day: "numeric" })}
                   </td>
