@@ -81,8 +81,21 @@ lists live in the site. Tables are `events`, `event_series` and `event_rsvps`
   `/events/makerslounge-saturdays` is the link to share every week.
 - **RSVP is name + email, no account** (`POST /api/events/<id>/rsvp`), unique on
   event + `lower(email)`, so repeats are no-ops. Emails are admin-only
-  (`/api/events/<id>/rsvps`); the public API returns a `going` count. There are
-  no confirmation or reminder emails yet.
+  (`/api/events/<id>/rsvps`); the public API returns a `going` count.
+- **RSVP emails** (`src/lib/events/emails.ts`, template `renderEventEmail` in
+  `src/lib/email-render.ts`, sent with Resend). A new RSVP gets a confirmation
+  with the `.ics` attached; a daily Vercel Cron (`vercel.json`, 14:00 UTC) hits
+  `/api/cron/event-reminders`, which emails everyone going to tomorrow's
+  (Toronto) events. Each RSVP is claimed via `reminder_sent_at` before sending,
+  so reruns never double-send; RSVPs under 12 hours old are skipped. The cron
+  needs `CRON_SECRET` set in Vercel or it answers 401 in production.
+- **Cancelling** is a link in both emails, `/events/<slug>/cancel-rsvp?token=…`,
+  keyed on `event_rsvps.cancel_token` (migration `0009`). Opening it only shows
+  the RSVP; a button press deletes it, because mail scanners prefetch links.
+- **Local times look shifted on a Mac in Toronto.** Drizzle hands back event
+  timestamps without an offset and `withIsoTimes` parses them as machine-local,
+  so local dev shows times 4 to 5 hours late. Production runs in UTC and is
+  correct.
 - `GET /api/events` returns the snake_case `PublicEvent` shape from
   `src/lib/events/format.ts`. Times display in `America/Toronto` regardless of
   the viewer's timezone.

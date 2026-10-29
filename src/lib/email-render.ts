@@ -77,6 +77,82 @@ export function renderNewsletterEmail(opts: RenderOptions): string {
 </html>`;
 }
 
+interface EventEmailOptions {
+  /** Hidden preview line most inboxes show next to the subject. */
+  preheader: string;
+  heading: string;
+  intro: string;
+  event: { title: string; day: string; times: string; location: string | null; mapsUrl: string | null };
+  pageUrl: string;
+  googleCalendarUrl: string;
+  icsUrl: string;
+  cancelUrl: string;
+}
+
+/**
+ * An event RSVP email (confirmation or reminder): the event's details in a card,
+ * a button to its page, calendar links, and a cancel link at the foot. Same
+ * frame as the newsletter, so every MakersLounge email looks like one family.
+ */
+export function renderEventEmail(opts: EventEmailOptions): string {
+  const { event } = opts;
+  const row = (label: string, value: string) => `
+        <tr>
+          <td style="padding:6px 16px 6px 0;font-size:13px;line-height:1.5;color:${MUTED};vertical-align:top;white-space:nowrap;">${label}</td>
+          <td style="padding:6px 0;font-size:15px;line-height:1.5;color:${TEXT};">${value}</td>
+        </tr>`;
+  const where = event.location
+    ? event.mapsUrl
+      ? `<a href="${escapeHtml(event.mapsUrl)}" style="color:${TEXT};text-decoration:underline;">${escapeHtml(event.location)}</a>`
+      : escapeHtml(event.location)
+    : null;
+
+  return `<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#f4f7fb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${TEXT};">
+    <span style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(opts.preheader)}</span>
+    <div style="max-width:560px;margin:0 auto;padding:32px 16px;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <a href="https://makerslounge.ca" style="color:${BRAND_BLUE};text-decoration:none;font-weight:700;font-size:18px;letter-spacing:0.5px;">MakersLounge</a>
+      </div>
+
+      <div style="background:${BG};border:1px solid ${BORDER};border-radius:16px;overflow:hidden;">
+        <div style="height:6px;background:${BRAND_BLUE};background-image:linear-gradient(90deg,#6AC4F7,#3A9FF3,#1A7DE8);"></div>
+        <div style="padding:28px 28px 24px;">
+          <h1 style="font-size:26px;line-height:1.25;margin:0 0 10px;color:${TEXT};">${escapeHtml(opts.heading)}</h1>
+          <p style="font-size:16px;line-height:1.6;margin:0 0 24px;color:${TEXT};">${escapeHtml(opts.intro)}</p>
+
+          <div style="background:#f4f7fb;border-radius:12px;padding:16px 18px;margin:0 0 24px;">
+            <p style="font-size:17px;font-weight:700;line-height:1.35;margin:0 0 8px;color:${TEXT};">${escapeHtml(event.title)}</p>
+            <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+              ${row("When", `${escapeHtml(event.day)}<br />${escapeHtml(event.times)} <span style="color:${MUTED};">(Toronto time)</span>`)}
+              ${where ? row("Where", where) : ""}
+            </table>
+          </div>
+
+          <a href="${escapeHtml(opts.pageUrl)}" style="display:inline-block;background:${BRAND_BLUE};color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:999px;">View event page</a>
+
+          <p style="font-size:14px;line-height:1.6;margin:20px 0 0;color:${MUTED};">
+            Add it to your calendar:
+            <a href="${escapeHtml(opts.googleCalendarUrl)}" style="color:${BRAND_BLUE};">Google</a> ·
+            <a href="${escapeHtml(opts.icsUrl)}" style="color:${BRAND_BLUE};">Apple / Outlook</a>
+          </p>
+        </div>
+      </div>
+
+      <p style="font-size:13px;line-height:1.6;margin:24px 8px 0;color:${MUTED};text-align:center;">
+        Can't make it anymore? <a href="${escapeHtml(opts.cancelUrl)}" style="color:${MUTED};text-decoration:underline;">Cancel your RSVP</a> so someone else can have the spot.
+      </p>
+      <p style="font-size:13px;line-height:1.6;margin:8px 8px 0;color:${MUTED};text-align:center;">
+        You're getting this because you RSVPed at
+        <a href="https://makerslounge.ca" style="color:${MUTED};">makerslounge.ca</a>.
+        Build. Connect. Create.
+      </p>
+    </div>
+  </body>
+</html>`;
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")

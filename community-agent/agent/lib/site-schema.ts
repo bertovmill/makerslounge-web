@@ -305,8 +305,11 @@ export const eventRsvps = makerslounge.table("event_rsvps", {
 	email: text().notNull(),
 	profileId: uuid("profile_id"),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	cancelToken: uuid("cancel_token").defaultRandom().notNull(),
+	reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true, mode: 'string' }),
 }, (table) => [
 	uniqueIndex("event_rsvps_event_email_idx").using("btree", table.eventId.asc().nullsLast().op("uuid_ops"), sql`lower(email)`),
+	uniqueIndex("event_rsvps_cancel_token_idx").using("btree", table.cancelToken.asc().nullsLast().op("uuid_ops")),
 	foreignKey({
 			columns: [table.eventId],
 			foreignColumns: [events.id],

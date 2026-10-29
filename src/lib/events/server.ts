@@ -1,6 +1,6 @@
 import { and, asc, eq, gte, sql } from "drizzle-orm";
 import { getSiteDb } from "@/db/site";
-import { events, eventSeries } from "@/db/site/schema";
+import { eventRsvps, events, eventSeries } from "@/db/site/schema";
 import type { PublicEvent } from "./format";
 
 /**
@@ -148,4 +148,23 @@ export async function getNextSeriesOccurrence(seriesSlug: string): Promise<Publi
     .orderBy(asc(events.startTime))
     .limit(1);
   return row ? withIsoTimes(row) : null;
+}
+
+/**
+ * The RSVP behind a cancel link, with its event. The token is the guest's only
+ * credential, so a malformed one is treated exactly like an unknown one.
+ */
+export async function getRsvpByCancelToken(
+  token: string,
+): Promise<{ rsvp: { id: string; name: string }; event: PublicEvent } | null> {
+  if (!UUID.test(token)) return null;
+  const [row] = await getSiteDb()
+    .select({ rsvpId: eventRsvps.id, rsvpName: eventRsvps.name, ...publicColumns })
+    .from(eventRsvps)
+    .innerJoin(events, eq(events.id, eventRsvps.eventId))
+    .where(eq(eventRsvps.cancelToken, token))
+    .limit(1);
+  if (!row) return null;
+  const { rsvpId, rsvpName, ...event } = row;
+  return { rsvp: { id: rsvpId, name: rsvpName }, event: withIsoTimes(event) };
 }
