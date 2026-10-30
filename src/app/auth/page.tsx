@@ -255,9 +255,10 @@ function SignInForm({ onSignUp }: { onSignUp: () => void }) {
     setLoading(true);
     setMessage("");
 
+    // OAuth skips redirectAfterAuth, so a `?next=` page has to ride along here.
     const { error } = await signIn.sso({
       strategy,
-      redirectUrl: "/home",
+      redirectUrl: takePostAuthRedirect() || "/home",
       redirectCallbackUrl: "/auth/sso-callback",
     });
 
@@ -449,12 +450,13 @@ function AuthContent() {
       console.error("[auth] contact merge failed:", err);
     }
 
-    // Everyone who authenticates goes to /home, including brand-new signups.
+    // Everyone who authenticates goes to /home, including brand-new signups,
+    // unless a gated page (an admin page, say) sent them here with `?next=`.
     // Onboarding is a page they can fill in later, not a gate in front of the
     // app — see the note in AuthContext.
-    takePostAuthRedirect();
+    const next = takePostAuthRedirect();
     localStorage.removeItem("pendingMatcherQuery");
-    router.push("/home");
+    router.push(next || "/home");
   };
 
   useEffect(() => {

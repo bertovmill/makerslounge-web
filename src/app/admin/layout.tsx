@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 
 const adminNavItems = [
@@ -104,7 +106,18 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading, isAdmin, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(true);
+
+  // Gate every admin page here, once. A signed-out visitor used to get the admin
+  // sidebar plus a bare "Access denied", which read as a permissions bug rather
+  // than "you need to sign in". Now they go to sign-in and come straight back.
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace(`/auth?next=${encodeURIComponent(pathname)}`);
+    }
+  }, [loading, user, pathname, router]);
 
   // Load saved state from localStorage
   useEffect(() => {
@@ -127,6 +140,34 @@ export default function AdminLayout({
     }
     return pathname.startsWith(href);
   };
+
+  if (loading || !user) return null;
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="max-w-sm text-center space-y-4">
+          <h1 className="text-lg font-semibold">This page is for MakersLounge admins</h1>
+          <p className="text-sm text-muted-foreground">
+            You&apos;re signed in as {user.email ?? "an account"} without admin access.
+          </p>
+          <div className="flex justify-center gap-2">
+            <Button
+              onClick={async () => {
+                await signOut();
+                router.replace(`/auth?next=${encodeURIComponent(pathname)}`);
+              }}
+            >
+              Switch account
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/home">Go home</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
