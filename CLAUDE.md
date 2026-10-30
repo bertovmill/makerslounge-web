@@ -64,6 +64,7 @@ MakersLounge is a Next.js 16 app for connecting makers/builders. It uses the App
 - `/eve-workshop` - Eve Agent Workshop (see below)
 - `/events` - Upcoming in-house events and recaps; `/events/<slug>` is one event with RSVP
 - `/admin/events` - Create events and weekly series; `/admin/events/<id>/guests` is the guest list
+- `/admin/tasks` - MakersLounge to-do list (table `admin_tasks`, migration `0011`, API `/api/admin/tasks`). Done = `completed_at` set; open tasks sort by due date then priority (`src/lib/admin-tasks.ts`)
 
 ### In-house events (`/events`, Oct 2026)
 
