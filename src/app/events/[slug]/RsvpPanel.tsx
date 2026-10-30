@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarPlus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { googleCalendarUrl, type PublicEvent } from "@/lib/events/format";
 
 /**
- * The RSVP card on an event page. Name and email, no account.
+ * The RSVP card on an event page, styled after Luma's "Registration" card.
+ * Name and email, no account.
  *
  * After an RSVP the browser remembers it (localStorage, per event) so a guest
  * who comes back sees "You're going" instead of the form. That's a convenience
@@ -25,6 +27,7 @@ export function RsvpPanel({ event, pageUrl, ended }: { event: PublicEvent; pageU
   const [rsvpedAs, setRsvpedAs] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     try {
@@ -52,6 +55,8 @@ export function RsvpPanel({ event, pageUrl, ended }: { event: PublicEvent; pageU
         return;
       }
       if (typeof body.going === "number") setGoing(body.going);
+      // Re-render the server parts of the page so the "Going" block includes them.
+      router.refresh();
       const first = name.trim().split(/\s+/)[0];
       setRsvpedAs(first);
       try {
@@ -85,72 +90,78 @@ export function RsvpPanel({ event, pageUrl, ended }: { event: PublicEvent; pageU
   );
 
   return (
-    <div className="flex flex-col gap-5 rounded-3xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="font-semibold">
-          {ended ? "This event has ended" : "Free · RSVP to join"}
-        </span>
-        <span className="text-sm text-muted-foreground">
-          {going} going{event.capacity != null && ` · ${event.capacity} spots`}
-        </span>
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--shadow-card)]">
+      <div className="flex items-baseline justify-between gap-3 border-b border-border bg-secondary/60 px-5 py-2.5">
+        <span className="text-sm font-medium text-muted-foreground">{ended ? "Past event" : "Registration"}</span>
+        {!ended && event.capacity != null && (
+          <span className="text-xs text-muted-foreground">
+            {Math.max(event.capacity - going, 0)} of {event.capacity} spots left
+          </span>
+        )}
       </div>
+      <div className="flex flex-col gap-5 p-5">
+        {ended && <p className="text-sm text-muted-foreground">This event has ended. Thanks to everyone who came.</p>}
+        {!ended && !rsvpedAs && !full && (
+          <p className="text-sm">Welcome! It&apos;s free. To join, please register below.</p>
+        )}
 
-      {ended ? null : rsvpedAs ? (
-        <>
-          <div className="flex items-start gap-3">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
-              <Check className="size-4" />
-            </span>
-            <div>
-              <p className="font-semibold">You&apos;re going{rsvpedAs ? `, ${rsvpedAs}` : ""}.</p>
-              <p className="text-sm text-muted-foreground">See you there. Your confirmation email has the details and a cancel link.</p>
+        {ended ? null : rsvpedAs ? (
+          <>
+            <div className="flex items-start gap-3">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
+                <Check className="size-4" />
+              </span>
+              <div>
+                <p className="font-semibold">You&apos;re going{rsvpedAs ? `, ${rsvpedAs}` : ""}.</p>
+                <p className="text-sm text-muted-foreground">See you there. Your confirmation email has the details and a cancel link.</p>
+              </div>
             </div>
-          </div>
-          {calendarLinks}
-        </>
-      ) : full ? (
-        <p className="text-sm text-muted-foreground">This one is full. Check back next week.</p>
-      ) : (
-        <form onSubmit={submit} className="flex flex-col gap-3">
-          <Input
-            required
-            className="h-11 rounded-full px-4"
-            autoComplete="name"
-            placeholder="Your name"
-            value={name}
-            maxLength={120}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <Input
-            required
-            className="h-11 rounded-full px-4"
-            type="email"
-            autoComplete="email"
-            placeholder="Email"
-            value={email}
-            maxLength={254}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <Textarea
-            required
-            rows={2}
-            className="min-h-0 resize-none rounded-2xl px-4 py-2.5"
-            placeholder="What are you building? (a few words is fine)"
-            value={building}
-            maxLength={280}
-            onChange={(e) => setBuilding(e.target.value)}
-          />
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" disabled={submitting} className="h-11 w-full rounded-full">
-            {submitting ? "Saving…" : "I'm going"}
-          </Button>
-          <p className="text-center text-xs text-muted-foreground">
-            We group intros by what you&apos;re building. Your email is only used for this event.
-          </p>
-        </form>
-      )}
+            {calendarLinks}
+          </>
+        ) : full ? (
+          <p className="text-sm text-muted-foreground">This one is full. Check back next week.</p>
+        ) : (
+          <form onSubmit={submit} className="flex flex-col gap-3">
+            <Input
+              required
+              className="h-11 rounded-full px-4"
+              autoComplete="name"
+              placeholder="Your name"
+              value={name}
+              maxLength={120}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <Input
+              required
+              className="h-11 rounded-full px-4"
+              type="email"
+              autoComplete="email"
+              placeholder="Email"
+              value={email}
+              maxLength={254}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <Textarea
+              required
+              rows={2}
+              className="min-h-0 resize-none rounded-2xl px-4 py-2.5"
+              placeholder="What are you building? (a few words is fine)"
+              value={building}
+              maxLength={280}
+              onChange={(e) => setBuilding(e.target.value)}
+            />
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" disabled={submitting} className="h-11 w-full rounded-full">
+              {submitting ? "Saving…" : "I'm going"}
+            </Button>
+            <p className="text-center text-xs text-muted-foreground">
+              We group intros by what you&apos;re building. Your email is only used for this event.
+            </p>
+          </form>
+        )}
 
-      {!ended && !rsvpedAs && !full && <div className="border-t border-border pt-4">{calendarLinks}</div>}
+        {!ended && !rsvpedAs && !full && <div className="border-t border-border pt-4">{calendarLinks}</div>}
+      </div>
     </div>
   );
 }
