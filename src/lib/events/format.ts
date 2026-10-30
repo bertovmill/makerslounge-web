@@ -38,6 +38,14 @@ export function formatEventDayShort(iso: string) {
   return fmt(iso, { weekday: "short", month: "short", day: "numeric" }).replace(/\./g, "").replace(",", "");
 }
 
+/** `{ month: "NOV", day: "7" }`, for a little calendar-page tile. */
+export function formatEventDateTile(iso: string) {
+  return {
+    month: fmt(iso, { month: "short" }).replace(/\./g, "").toUpperCase(),
+    day: fmt(iso, { day: "numeric" }),
+  };
+}
+
 /** "11:30 a.m. to 3:00 p.m." in en-CA, normalised to "11:30 AM to 3:00 PM". */
 export function formatEventTimes(startIso: string, endIso: string) {
   const time = (iso: string) =>

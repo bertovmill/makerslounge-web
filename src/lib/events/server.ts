@@ -135,6 +135,20 @@ export async function getEventBySlugOrId(slugOrId: string): Promise<PublicEvent 
 }
 
 /**
+ * First names of an event's guests, earliest RSVP first, for the public
+ * "Going" block. Only the first word of each name ever leaves this function:
+ * no surnames, emails, or "what are you building" answers.
+ */
+export async function listGuestFirstNames(eventId: string): Promise<string[]> {
+  const rows = await getSiteDb()
+    .select({ name: eventRsvps.name })
+    .from(eventRsvps)
+    .where(eq(eventRsvps.eventId, eventId))
+    .orderBy(asc(eventRsvps.createdAt));
+  return rows.map((r) => r.name.trim().split(/\s+/)[0]).filter(Boolean);
+}
+
+/**
  * The next not-yet-ended occurrence of a series, by the series' slug. Lets
  * `/events/makerslounge-saturdays` be a permanent "this week's" link.
  */
