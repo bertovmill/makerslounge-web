@@ -998,6 +998,24 @@ export const matcherEvalLabels = makerslounge.table("matcher_eval_labels", {
 	primaryKey({ columns: [table.runId, table.personId, table.matchedId], name: "matcher_eval_labels_pkey"}),
 	check("matcher_eval_labels_note_max", sql`(note IS NULL) OR (char_length(note) <= 1000)`),
 ]);
+
+export const adminTasks = makerslounge.table("admin_tasks", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	title: text().notNull(),
+	notes: text(),
+	dueDate: date("due_date"),
+	priority: smallint(),
+	assignee: text(),
+	completedAt: timestamp("completed_at", { withTimezone: true, mode: 'string' }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("admin_tasks_open_due_idx").using("btree", table.dueDate.asc().nullsLast().op("date_ops")).where(sql`(completed_at IS NULL)`),
+	check("admin_tasks_title_check", sql`(char_length(title) >= 1) AND (char_length(title) <= 300)`),
+	check("admin_tasks_notes_check", sql`(notes IS NULL) OR (char_length(notes) <= 5000)`),
+	check("admin_tasks_priority_check", sql`(priority IS NULL) OR ((priority >= 0) AND (priority <= 2))`),
+	check("admin_tasks_assignee_check", sql`(assignee IS NULL) OR (char_length(assignee) <= 100)`),
+]);
 export const connectionCounts = makerslounge.view("connection_counts", {	profileId: uuid("profile_id"),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	connectionCount: bigint("connection_count", { mode: "number" }),
