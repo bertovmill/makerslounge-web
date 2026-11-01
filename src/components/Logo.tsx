@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import LogoContextMenu from "./LogoContextMenu";
 
 interface LogoProps {
   className?: string;
@@ -12,18 +13,14 @@ export default function Logo({ className = "", href = "/", size, showText }: Log
   void size;
   void showText;
   return (
-    <Link href={href} className={`flex items-center gap-1.5 hover:opacity-70 transition-opacity ${className}`}>
-      <Image src="/logos/logo-blue.svg" alt="MakersLounge" width={20} height={21} className="dark:hidden" />
-      <Image src="/logos/logo-light.svg" alt="MakersLounge" width={20} height={21} className="hidden dark:block" />
-      <span className="text-xl font-sans font-normal tracking-normal text-foreground">
-        makerslounge
-      </span>
-    </Link>
-  );
-}
-
-export function LogoIcon({ size = 32 }: { size?: number }) {
-  return (
-    <Image src="/logos/logo-blue.svg" alt="MakersLounge" width={size} height={size} />
+    <LogoContextMenu>
+      <Link href={href} className={`flex items-center gap-1.5 hover:opacity-70 transition-opacity ${className}`}>
+        <Image src="/logos/logo-blue.svg" alt="MakersLounge" width={20} height={21} className="dark:hidden" />
+        <Image src="/logos/logo-light.svg" alt="MakersLounge" width={20} height={21} className="hidden dark:block" />
+        <span className="text-xl font-sans font-normal tracking-normal text-foreground">
+          makerslounge
+        </span>
+      </Link>
+    </LogoContextMenu>
   );
 }
