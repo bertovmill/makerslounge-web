@@ -1,5 +1,7 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { createHash, timingSafeEqual } from "node:crypto";
+import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import { getSiteDb } from "@/db/site";
 import { profiles } from "@/db/site/schema";
 
@@ -78,12 +80,54 @@ export async function optionalUser(): Promise<string | null> {
 }
 
 /**
+ * Cael, Berto's agent, is an admin too. It has no Clerk session, so it calls with
+ * `Authorization: Bearer <CAEL_ADMIN_TOKEN>` and acts as the admin account: the
+ * same rights, and anything it creates is attributed to Berto's profile.
+ *
+ * Hashing both sides makes the comparison constant-time whatever the lengths.
+ */
+async function isAgentAdmin(): Promise<boolean> {
+  const expected = process.env.CAEL_ADMIN_TOKEN;
+  if (!expected) return false;
+  let header = "";
+  try {
+    header = (await headers()).get("authorization") ?? "";
+  } catch {
+    return false; // outside a request (scripts, build): never the agent
+  }
+  const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+  if (!token) return false;
+  const digest = (v: string) => createHash("sha256").update(v).digest();
+  return timingSafeEqual(digest(token), digest(expected));
+}
+
+let adminProfileId: string | null = null;
+
+/** The admin account's profile uuid, looked up through Clerk by email once per instance. */
+async function getAdminProfileId(): Promise<string> {
+  if (adminProfileId) return adminProfileId;
+  const { data: users } = await (await clerkClient()).users.getUserList({
+    emailAddress: [ADMIN_EMAIL],
+  });
+  if (!users[0]) throw new ApiAuthError(404, "no_profile");
+  const [row] = await getSiteDb()
+    .select({ id: profiles.id })
+    .from(profiles)
+    .where(eq(profiles.clerkUserId, users[0].id))
+    .limit(1);
+  if (!row) throw new ApiAuthError(404, "no_profile");
+  adminProfileId = row.id;
+  return row.id;
+}
+
+/**
  * Assert the caller is the admin, and return their profile uuid.
  *
  * The email is read from Clerk's user record server-side. It must never come
  * from the request, and never from `profiles` — there is no email column there.
  */
 export async function requireAdmin(): Promise<string> {
+  if (await isAgentAdmin()) return getAdminProfileId();
   const profileId = await requireUser();
   const user = await currentUser();
   const email = user?.primaryEmailAddress?.emailAddress?.toLowerCase();
@@ -93,6 +137,7 @@ export async function requireAdmin(): Promise<string> {
 
 /** Whether the caller is the admin, without throwing. */
 export async function isAdmin(): Promise<boolean> {
+  if (await isAgentAdmin()) return true;
   const user = await currentUser();
   return user?.primaryEmailAddress?.emailAddress?.toLowerCase() === ADMIN_EMAIL;
 }
