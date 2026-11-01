@@ -5,6 +5,8 @@
  * anyone else, which is what the two SELECT policies did. Writes are admin-only.
  */
 
+import type { ContactNote, ContactNoteInput } from "@/lib/contact-notes";
+
 export interface CommunityContact {
   id: string;
   name: string | null;
@@ -190,5 +192,47 @@ export async function importContacts(
   } catch (err) {
     console.error("[contacts] import failed:", err);
     return { success: false, error: "import_failed" };
+  }
+}
+
+/**
+ * Conversation notes on one contact, via `/api/admin/contacts/<id>/notes`
+ * (admin-only). Types and validation live in `@/lib/contact-notes`.
+ */
+export async function fetchContactNotes(contactId: string): Promise<ContactNote[]> {
+  try {
+    const res = await fetch(`/api/admin/contacts/${encodeURIComponent(contactId)}/notes`, {
+      credentials: "include",
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { data: ContactNote[] };
+    return body.data ?? [];
+  } catch (err) {
+    console.error("[contacts] notes unreachable:", err);
+    return [];
+  }
+}
+
+/** Add a note (no `noteId`), edit one (`noteId` + fields), or delete one (`noteId`, `null`). */
+export async function saveContactNote(
+  contactId: string,
+  noteId: string | null,
+  input: ContactNoteInput | null,
+): Promise<{ success: boolean; data?: ContactNote; error?: string }> {
+  const base = `/api/admin/contacts/${encodeURIComponent(contactId)}/notes`;
+  try {
+    const res = await fetch(noteId ? `${base}/${encodeURIComponent(noteId)}` : base, {
+      method: !noteId ? "POST" : input ? "PATCH" : "DELETE",
+      headers: input ? { "Content-Type": "application/json" } : undefined,
+      credentials: "include",
+      body: input ? JSON.stringify(input) : undefined,
+    });
+    const body = (await res.json().catch(() => ({}))) as { data?: ContactNote; error?: string; detail?: string };
+    if (!res.ok) return { success: false, error: body.detail || body.error || "failed" };
+    return { success: true, data: body.data };
+  } catch (err) {
+    console.error("[contacts] note save failed:", err);
+    return { success: false, error: "failed" };
   }
 }
