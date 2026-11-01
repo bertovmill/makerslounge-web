@@ -13,8 +13,9 @@ import { handleApiError } from "@/lib/api/respond";
  * Two sources, one list. `source: "site"` is an in-house event (`events`, RSVPs
  * in `event_rsvps`); `source: "luma"` is a past Luma event imported into
  * `luma_events` / `luma_event_guests`, where only `status = 'approved'` counts
- * as an RSVP (most rows are invitees). Site events have no check-in yet, so
- * their `check_ins` is `null`, meaning unknown, not zero.
+ * as an RSVP (most rows are invitees). Site check-ins are taken at the door on
+ * `/admin/events/<id>/guests` (`event_rsvps.checked_in_at`, since Nov 2026);
+ * a site event's `rsvps` includes walk-ins, and `walk_ins` says how many.
  *
  * Counts only; guest names and emails stay at `/api/events/<id>/rsvps`.
  * Read-only: it skips the series top-up that public reads run, so it never writes.
@@ -40,20 +41,22 @@ export async function GET(request: NextRequest) {
       SELECT source, id, slug, title,
              to_char(start_time AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS start_time,
              to_char(end_time AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS end_time,
-             location, capacity, series_slug, url, rsvps, check_ins
+             location, capacity, series_slug, url, rsvps, check_ins, walk_ins
       FROM (
         SELECT 'site' AS source, e.id::text AS id, e.slug, e.title, e.start_time,
                e.end_time, e.location, e.capacity, s.slug AS series_slug,
                'https://makerslounge.ca/events/' || coalesce(e.slug, e.id::text) AS url,
                (SELECT count(*)::int FROM makerslounge.event_rsvps r WHERE r.event_id = e.id) AS rsvps,
-               NULL::int AS check_ins
+               (SELECT count(r.checked_in_at)::int FROM makerslounge.event_rsvps r WHERE r.event_id = e.id) AS check_ins,
+               (SELECT count(*) FILTER (WHERE r.walk_in)::int FROM makerslounge.event_rsvps r WHERE r.event_id = e.id) AS walk_ins
         FROM makerslounge.events e
         LEFT JOIN makerslounge.event_series s ON s.id = e.series_id
         UNION ALL
         SELECT 'luma', l.id::text, NULL, l.name, l.starts_at,
                coalesce(l.ends_at, l.starts_at), l.location, NULL, NULL, l.luma_url,
                count(*) FILTER (WHERE g.status = 'approved')::int,
-               count(g.checked_in_at)::int
+               count(g.checked_in_at)::int,
+               NULL::int
         FROM makerslounge.luma_events l
         LEFT JOIN makerslounge.luma_event_guests g ON g.luma_event_id = l.id
         GROUP BY l.id
@@ -69,6 +72,8 @@ export async function GET(request: NextRequest) {
           (SELECT count(*)::int FROM makerslounge.events WHERE end_time < now()) AS site_events_run,
           (SELECT count(*)::int FROM makerslounge.events WHERE end_time >= now()) AS events_upcoming,
           (SELECT count(*)::int FROM makerslounge.event_rsvps) AS site_rsvps,
+          (SELECT count(*)::int FROM makerslounge.event_rsvps WHERE checked_in_at IS NOT NULL) AS site_check_ins,
+          (SELECT count(*)::int FROM makerslounge.event_rsvps WHERE walk_in) AS site_walk_ins,
           (SELECT count(*)::int FROM makerslounge.luma_events) AS luma_events,
           (SELECT count(*)::int FROM makerslounge.luma_event_guests WHERE status = 'approved') AS luma_rsvps,
           (SELECT count(*)::int FROM makerslounge.luma_event_guests WHERE checked_in_at IS NOT NULL) AS luma_check_ins,
@@ -82,8 +87,7 @@ export async function GET(request: NextRequest) {
         ...totals,
         events_run: totals.site_events_run + totals.luma_events,
         rsvps_total: totals.site_rsvps + totals.luma_rsvps,
-        // Only Luma events record check-ins so far.
-        check_ins: totals.luma_check_ins,
+        check_ins: totals.site_check_ins + totals.luma_check_ins,
       },
       events: events.rows,
     });
