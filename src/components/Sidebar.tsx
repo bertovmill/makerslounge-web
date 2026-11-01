@@ -19,7 +19,6 @@ import {
   LogOut,
   Shield,
   Sparkles,
-  Palette,
   BookOpen,
   Trophy,
   Info,
@@ -28,6 +27,7 @@ import {
 } from "lucide-react";
 import { ADMIN_NAV_SECTIONS } from "@/components/admin/admin-nav";
 import UserMenu from "./UserMenu";
+import LogoContextMenu from "./LogoContextMenu";
 import { useState } from "react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { useFeedback } from "@/context/FeedbackContext";
@@ -59,7 +59,6 @@ const NAV_SECTIONS: { label?: string; items: NavItem[] }[] = [
     label: "Content",
     items: [
       { href: "/blog", label: "Blog", icon: BookOpen },
-      { href: "/brand", label: "Branding", icon: Palette },
       { href: "/about", label: "About Us", icon: Info },
     ],
   },
@@ -186,16 +185,18 @@ export default function Sidebar() {
   }
 
   const wordmark = (
-    <Link href="/home" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
-      <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
-      <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
-      <span className="text-[17px] font-sans font-semibold tracking-tight text-foreground">makerslounge</span>
-      {inAdmin && (
-        <span className="ml-1 rounded-md bg-foreground/[0.07] px-1.5 py-0.5 text-[11px] font-semibold text-foreground/70">
-          Admin
-        </span>
-      )}
-    </Link>
+    <LogoContextMenu>
+      <Link href="/home" className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
+        <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
+        <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
+        <span className="text-[17px] font-sans font-semibold tracking-tight text-foreground">makerslounge</span>
+        {inAdmin && (
+          <span className="ml-1 rounded-md bg-foreground/[0.07] px-1.5 py-0.5 text-[11px] font-semibold text-foreground/70">
+            Admin
+          </span>
+        )}
+      </Link>
+    </LogoContextMenu>
   );
 
   // The way out of the admin console, pinned above its nav.
@@ -260,28 +261,30 @@ export default function Sidebar() {
         <div className={cn("pt-3.5 pb-3", collapsed ? "px-2" : "pl-4 pr-3")}>
           {collapsed ? (
             /* Collapsed: show logo icon, on hover show panel toggle icon */
-            <button
-              onClick={toggleCollapsed}
-              onMouseEnter={() => setLogoHovered(true)}
-              onMouseLeave={() => setLogoHovered(false)}
-              className="relative group w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[var(--frame-hover)] transition-colors mx-auto"
-              title="Open sidebar"
-            >
-              {logoHovered ? (
-                <PanelLeft className="w-5 h-5 text-muted-foreground" />
-              ) : (
-                <>
-                  <Image src="/logos/logo.svg" alt="MakersLounge" width={20} height={21} className="dark:hidden" />
-                  <Image src="/logos/logo-light.svg" alt="MakersLounge" width={20} height={21} className="hidden dark:block" />
-                </>
-              )}
-              {/* Tooltip */}
-              {logoHovered && (
-                <span className="absolute left-full ml-2 px-2 py-1 rounded-md bg-foreground text-background text-xs whitespace-nowrap z-50">
-                  Open sidebar
-                </span>
-              )}
-            </button>
+            <LogoContextMenu>
+              <button
+                onClick={toggleCollapsed}
+                onMouseEnter={() => setLogoHovered(true)}
+                onMouseLeave={() => setLogoHovered(false)}
+                className="relative group w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[var(--frame-hover)] transition-colors mx-auto"
+                title="Open sidebar"
+              >
+                {logoHovered ? (
+                  <PanelLeft className="w-5 h-5 text-muted-foreground" />
+                ) : (
+                  <>
+                    <Image src="/logos/logo.svg" alt="MakersLounge" width={20} height={21} className="dark:hidden" />
+                    <Image src="/logos/logo-light.svg" alt="MakersLounge" width={20} height={21} className="hidden dark:block" />
+                  </>
+                )}
+                {/* Tooltip */}
+                {logoHovered && (
+                  <span className="absolute left-full ml-2 px-2 py-1 rounded-md bg-foreground text-background text-xs whitespace-nowrap z-50">
+                    Open sidebar
+                  </span>
+                )}
+              </button>
+            </LogoContextMenu>
           ) : (
             /* Expanded: logo + text + toggle button */
             <div className="flex items-center justify-between">

@@ -58,7 +58,7 @@
     "drizzle-orm": "^0.45.2",
     "embla-carousel-react": "^8.6.0",
     "eve": "^0.31.3",
-    "geist": "^1.7.0",
+    "geist": "^1.9.0",
     "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.562.0",

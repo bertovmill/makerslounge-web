@@ -10,8 +10,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { collapsed } = useSidebar();
 
-  // Scroll to top on page navigation (iOS-like behavior)
+  // Scroll to top on page navigation (iOS-like behavior), unless the URL
+  // names a section to land on, like `/#logo-downloads`.
   useEffect(() => {
+    if (window.location.hash) return;
     window.scrollTo(0, 0);
   }, [pathname]);
 

@@ -49,6 +49,13 @@ const nextConfig: NextConfig = {
   }),
   redirects: async () => [
     {
+      // The brand page was folded into the landing footer and a right-click
+      // menu on every logo.
+      source: "/brand",
+      destination: "/#logo-downloads",
+      permanent: false,
+    },
+    {
       source: "/hackathon",
       destination: "/hackathons/2026-innovation-hackathon",
       permanent: true,

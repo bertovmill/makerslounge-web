@@ -1,16 +1,23 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { Figtree, Instrument_Serif } from "next/font/google";
+import localFont from "next/font/local";
+import { Instrument_Serif } from "next/font/google";
 
-// Figtree is the display face for headings across the site. Instrument Serif
-// stays only because /eve-workshop, a walled garden, still renders its
-// headings in it (see the h1–h3 rules in globals.css).
-const figtree = Figtree({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-figtree",
+// Geist Serif is the display face for headings across the site (Nov 2026,
+// replacing Figtree). It ships in one weight, 400. Instrument Serif stays only
+// because /eve-workshop, a walled garden, still renders its headings in it
+// (see the h1–h3 rules in globals.css).
+//
+// Loaded here rather than from "geist/font/serif": that module declares all
+// five Geist Serif cuts, and next/font preloads every one it declares.
+const geistSerif = localFont({
+  src: "../../node_modules/geist/dist/fonts/geist-serif/GeistSerif-Regular.woff2",
+  variable: "--font-geist-serif-regular",
+  weight: "400",
   display: "swap",
+  fallback: ["Georgia", "Times New Roman", "serif"],
+  adjustFontFallback: "Times New Roman",
 });
 
 const instrumentSerif = Instrument_Serif({
@@ -71,7 +78,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${GeistSans.variable} ${GeistMono.variable} ${figtree.variable} ${instrumentSerif.variable}`}
+      className={`${GeistSans.variable} ${GeistMono.variable} ${geistSerif.variable} ${instrumentSerif.variable}`}
     >
       <body className="font-sans min-h-svh transition-colors duration-300">
         {/* Clerk now authenticates the whole site, not just the workshop, so
