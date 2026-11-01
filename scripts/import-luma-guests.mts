@@ -23,6 +23,8 @@ import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 import Papa from "papaparse";
 import { neon } from "@neondatabase/serverless";
+// Node needs the .ts extension; the app's bundler-style tsconfig rejects it.
+// @ts-expect-error TS5097
 import { fetchLumaEvents, type LumaEvent } from "../src/lib/luma-events.ts";
 
 type Row = Record<string, string>;
