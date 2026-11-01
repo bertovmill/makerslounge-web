@@ -57,7 +57,7 @@ ${notes ? `Notes: ${notes}` : "(no notes)"}
 ${selectedAction.instruction}`;
 
     const { text } = await generateText({
-      model: "anthropic/claude-sonnet-4",
+      model: "anthropic/claude-sonnet-5.5",
       maxOutputTokens: 1500,
       system: selectedAction.system,
       prompt: userContent,

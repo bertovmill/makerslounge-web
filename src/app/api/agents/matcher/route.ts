@@ -463,7 +463,7 @@ Remember: ALWAYS verify your groups before submitting. If verification fails, fi
         await withRetry(
           () =>
             generateText({
-              model: "anthropic/claude-sonnet-4",
+              model: "anthropic/claude-sonnet-5.5",
               maxOutputTokens: 4096,
               system: SYSTEM_PROMPT,
               prompt: initialPrompt,
@@ -563,7 +563,7 @@ Start by calling get_all_contacts to see the data, then analyze, create groups, 
 
   await withRetry(() =>
     generateText({
-      model: "anthropic/claude-sonnet-4",
+      model: "anthropic/claude-sonnet-5.5",
       maxOutputTokens: 4096,
       system: SYSTEM_PROMPT,
       prompt: initialPrompt,

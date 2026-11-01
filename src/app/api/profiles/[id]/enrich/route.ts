@@ -78,14 +78,33 @@ export async function POST(
     );
   }
 
+  const db = getSiteDb();
+
+  // Admin-only, checked above, and the target is a route param rather than the
+  // caller — so this deliberately writes to someone else's profile. That is what
+  // the service-role key was doing here.
+  const [existing] = await db
+    .select({ name: profiles.name, bio: profiles.bio, skills: profiles.skills })
+    .from(profiles)
+    .where(eq(profiles.id, profileId))
+    .limit(1);
+
+  if (!existing) {
+    return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+  }
+
+  const name = existing.name?.trim() || "this person";
+
   let parsed: LinkedinData;
   try {
     const result = await generateObject({
-      model: "anthropic/claude-sonnet-4",
+      model: "anthropic/claude-sonnet-5.5",
       schema: linkedinSchema,
-      system:
-        "You are extracting structured profile information from pasted LinkedIn content. Pull only what is clearly stated. Use null for anything missing — never invent details. Keep descriptions concise (max 2 sentences each).",
-      prompt: `Extract a structured profile from this LinkedIn text:\n\n${linkedinText}`,
+      // A LinkedIn copy-paste drags in other people too: who they follow,
+      // "People also viewed", recommendations. Naming the person keeps their
+      // jobs from landing on this profile.
+      system: `You are extracting structured profile information about ${name} from text pasted from their LinkedIn profile. Pull only what is clearly stated about ${name}. LinkedIn pages also show other people (people they follow, "People also viewed", recommendations, post authors): ignore anything about anyone else. Use null or empty values for anything missing — never invent details. Keep descriptions concise (max 2 sentences each).`,
+      prompt: `Extract ${name}'s structured profile from this LinkedIn text:\n\n${linkedinText}`,
     });
     parsed = result.object;
   } catch (error) {
@@ -96,19 +115,19 @@ export async function POST(
     );
   }
 
-  const db = getSiteDb();
+  const foundAnything =
+    parsed.headline.trim() ||
+    parsed.current_role ||
+    parsed.past_roles.length > 0 ||
+    parsed.education.length > 0;
 
-  // Admin-only, checked above, and the target is a route param rather than the
-  // caller — so this deliberately writes to someone else's profile. That is what
-  // the service-role key was doing here.
-  const [existing] = await db
-    .select({ bio: profiles.bio, skills: profiles.skills })
-    .from(profiles)
-    .where(eq(profiles.id, profileId))
-    .limit(1);
-
-  if (!existing) {
-    return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+  if (!foundAnything) {
+    return NextResponse.json(
+      {
+        error: `Nothing in that paste is about ${name}. Copy their own About, Experience and Education sections.`,
+      },
+      { status: 422 }
+    );
   }
 
   const now = new Date().toISOString();

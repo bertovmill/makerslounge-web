@@ -72,7 +72,7 @@ matchStrength should be:
 Only include people from the member list. Be specific about WHY each person is a good match.`;
 
     const { text } = await generateText({
-      model: "anthropic/claude-sonnet-4",
+      model: "anthropic/claude-sonnet-5.5",
       maxOutputTokens: 1500,
       system: systemPrompt,
       prompt: userPrompt,

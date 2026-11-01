@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = streamText({
-      model: "anthropic/claude-sonnet-4",
+      model: "anthropic/claude-sonnet-5.5",
       maxOutputTokens: 16000,
       system: SYSTEM_PROMPT,
       messages: messages.map((msg: { role: string; content: string }) => ({

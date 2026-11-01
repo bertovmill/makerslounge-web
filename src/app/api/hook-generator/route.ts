@@ -49,7 +49,7 @@ Only respond with valid JSON, no other text.`;
     const userPrompt = `Generate 5 compelling hooks for a ${videoType || "tutorial"} video about: "${topic}"`;
 
     const { text } = await generateText({
-      model: "anthropic/claude-sonnet-4",
+      model: "anthropic/claude-sonnet-5.5",
       maxOutputTokens: 1500,
       system: systemPrompt,
       prompt: userPrompt,

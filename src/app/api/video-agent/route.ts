@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = streamText({
-      model: "anthropic/claude-sonnet-4",
+      model: "anthropic/claude-sonnet-5.5",
       maxOutputTokens: 8000,
       system: systemPrompt,
       // Anthropic runs web search server-side; the gateway passes the tool through.
