@@ -82,6 +82,11 @@ email.
   The raw answers stay on the guest row. Berto's view: this people data is the
   part no AI model has, so enrich it rather than trim it.
 - Contact columns are only filled when empty; re-running the import is safe.
+- **Then `scripts/structure-people-intel.mts`** sends each person's answers,
+  notes and events to Sonnet (AI Gateway) and writes clean skill tags, projects,
+  needs, domains and a summary to `metadata -> 'intel' -> 'structured'`. It merges
+  new tags into `skills`, which the agent's `filter_by_skills` matches exactly, so
+  the prompt steers onto the tags already in use. About $0.008 a person.
 
 ### In-house events (`/events`, Oct 2026)
 
