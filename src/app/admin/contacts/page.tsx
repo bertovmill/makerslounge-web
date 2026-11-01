@@ -1,32 +1,74 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { Suspense, useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ChevronDown, Search, Upload, Plus, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { AdminPage, PageHeader, StatusPill, Initials } from "@/components/admin/AdminPage";
+import { cn } from "@/lib/utils";
 import type { CommunityContact } from "@/lib/contacts-client";
 import {
   fetchContacts as fetchContactRows,
-  deleteContact,
   deleteContacts,
-  updateContact,
   importContacts,
 } from "@/lib/contacts-client";
 import { useAuth } from "@/context/AuthContext";
 
 
+// Shopify-style index tabs: saved views over the same list.
+const TABS = [
+  { key: "all", label: "All" },
+  { key: "intel", label: "With intel" },
+  { key: "members", label: "Members" },
+  { key: "public", label: "Public" },
+] as const;
+type TabKey = (typeof TABS)[number]["key"];
+
+const TAB_FILTERS: Record<TabKey, (c: CommunityContact) => boolean> = {
+  all: () => true,
+  intel: (c) => !!c.metadata?.intel?.structured,
+  members: (c) => !!c.matched_profile_id,
+  public: (c) => c.visibility === "public",
+};
+
+const shortDate = new Intl.DateTimeFormat("en-CA", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "America/Toronto",
+});
+
+// `useSearchParams` needs a Suspense boundary or the build bails out of
+// prerendering the page.
 export default function ContactsPage() {
+  return (
+    <Suspense>
+      <ContactsIndex />
+    </Suspense>
+  );
+}
+
+function ContactsIndex() {
   const { isAdmin } = useAuth();
   const router = useRouter();
+  const params = useSearchParams();
+  // The admin top bar searches by landing here with `?q=`.
+  const urlQuery = params.get("q") ?? "";
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingFilesRef = useRef<File[]>([]);
   const [contacts, setContacts] = useState<CommunityContact[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [search, setSearch] = useState(urlQuery);
+  const [debouncedSearch, setDebouncedSearch] = useState(urlQuery);
+  const [tab, setTab] = useState<TabKey>("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -37,8 +79,19 @@ export default function ContactsPage() {
 
   // Column filters
   const [filterSource, setFilterSource] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"" | "matched" | "unmatched">("");
   const [filterCompany, setFilterCompany] = useState("");
+
+  // A new top-bar search replaces whatever was typed here.
+  useEffect(() => {
+    setSearch(urlQuery);
+    setDebouncedSearch(urlQuery);
+  }, [urlQuery]);
+
+  // Search runs on the server, so wait for a pause in typing.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 250);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const fetchContacts = useCallback(async () => {
     try {
@@ -46,18 +99,17 @@ export default function ContactsPage() {
       // by interpolation. The old expression also matched `source` as an array
       // containment check, which the route does not — searching by source list is a
       // filter the UI already offers separately.
-      const data = await fetchContactRows({ q: search.trim() || undefined });
+      const data = await fetchContactRows({ q: debouncedSearch.trim() || undefined });
       setContacts(data);
     } catch (err) {
       console.error("Error fetching contacts:", err);
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     if (!isAdmin) return;
-    setLoading(true);
     fetchContacts();
   }, [isAdmin, fetchContacts]);
 
@@ -76,28 +128,27 @@ export default function ContactsPage() {
     [contacts]
   );
 
+  const tabCounts = useMemo(
+    () =>
+      Object.fromEntries(TABS.map((t) => [t.key, contacts.filter(TAB_FILTERS[t.key]).length])) as Record<
+        TabKey,
+        number
+      >,
+    [contacts],
+  );
+
   // Filtered contacts
   const filtered = useMemo(() => {
-    let result = contacts;
+    let result = contacts.filter(TAB_FILTERS[tab]);
     if (filterSource) result = result.filter((c) => c.source?.includes(filterSource));
     if (filterCompany) result = result.filter((c) => c.company === filterCompany);
-    if (filterStatus === "matched") result = result.filter((c) => c.matched_profile_id);
-    if (filterStatus === "unmatched") result = result.filter((c) => !c.matched_profile_id);
     return result;
-  }, [contacts, filterSource, filterCompany, filterStatus]);
+  }, [contacts, tab, filterSource, filterCompany]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this contact?")) return;
-    setDeleting(id);
-    try {
-      if (!(await deleteContact(id))) throw new Error("delete failed");
-      setContacts((prev) => prev.filter((c) => c.id !== id));
-    } catch (err) {
-      console.error("Error deleting contact:", err);
-    } finally {
-      setDeleting(null);
-    }
-  };
+  // Selection is per view: switching tab or filter clears it.
+  useEffect(() => {
+    setSelected(new Set());
+  }, [tab, filterSource, filterCompany]);
 
   const handleBulkDelete = async () => {
     if (selected.size === 0) return;
@@ -342,77 +393,27 @@ export default function ContactsPage() {
   const total = contacts.length;
 
   const displayName = (c: CommunityContact) =>
-    c.name || [c.first_name, c.last_name].filter(Boolean).join(" ") || "—";
+    c.name || [c.first_name, c.last_name].filter(Boolean).join(" ") || c.email || "Unnamed";
 
-  // Dynamic columns: detect which fields have data
-  const optionalFields = useMemo<{ key: string; label: string }[]>(() => [
-    { key: "company", label: "Company" },
-    { key: "role", label: "Role" },
-    { key: "phone", label: "Phone" },
-    { key: "source", label: "Source" },
-    { key: "skills", label: "Skills" },
-    { key: "linkedin", label: "LinkedIn" },
-    { key: "twitter", label: "Twitter" },
-    { key: "instagram", label: "Instagram" },
-    { key: "website", label: "Website" },
-    { key: "notes", label: "Notes" },
-  ], []);
+  const hasActiveFilters = filterSource || filterCompany;
+  const allSelected = selected.size === filtered.length && filtered.length > 0;
 
-  // Also gather metadata keys across all contacts
-  const metadataKeys = useMemo(() => {
-    const keys = new Set<string>();
-    for (const c of filtered) {
-      if (c.metadata) {
-        // Strings only: `intel` is a nested object, shown on the contact page.
-        for (const [k, v] of Object.entries(c.metadata)) if (typeof v === "string") keys.add(k);
+  const handleDeleteAll = async () => {
+    if (!confirm(`Delete ALL ${contacts.length} contacts? This cannot be undone.`)) return;
+    setBulkDeleting(true);
+    try {
+      // Still batched: the ids go in the query string, and 822 uuids would
+      // make for an unreasonable URL.
+      const ids = contacts.map((c) => c.id);
+      for (let i = 0; i < ids.length; i += 50) {
+        await deleteContacts(ids.slice(i, i + 50));
       }
-    }
-    return [...keys].sort();
-  }, [filtered]);
-
-  // Only show columns where at least one contact has data
-  const activeColumns = useMemo(() => {
-    return optionalFields.filter((col) => {
-      if (col.key === "source") return filtered.some((c) => c.source?.length);
-      if (col.key === "skills") return filtered.some((c) => c.skills?.length);
-      return filtered.some((c) => {
-        const val = c[col.key as keyof CommunityContact];
-        return val != null && val !== "";
-      });
-    });
-  }, [filtered, optionalFields]);
-
-  const hasActiveFilters = filterSource || filterCompany || filterStatus;
-
-  const renderCell = (contact: CommunityContact, key: string): React.ReactNode => {
-    switch (key) {
-      case "source":
-        return contact.source?.length ? (
-          <div className="flex gap-1 flex-wrap">
-            {contact.source.map((s) => (
-              <Badge key={s} variant="outline" className="text-xs">{s}</Badge>
-            ))}
-          </div>
-        ) : null;
-      case "skills":
-        return contact.skills?.length ? (
-          <div className="flex gap-1 flex-wrap">
-            {contact.skills.slice(0, 3).map((s) => (
-              <Badge key={s} variant="outline" className="text-xs">{s}</Badge>
-            ))}
-            {contact.skills.length > 3 && (
-              <Badge variant="outline" className="text-xs">+{contact.skills.length - 3}</Badge>
-            )}
-          </div>
-        ) : null;
-      case "linkedin":
-      case "website":
-        const val = contact[key as keyof CommunityContact] as string | null;
-        return val ? <span className="truncate max-w-[150px] block">{val}</span> : null;
-      case "notes":
-        return contact.notes ? <span className="truncate max-w-[200px] block">{contact.notes}</span> : null;
-      default:
-        return (contact[key as keyof CommunityContact] as string | null) || null;
+      setContacts([]);
+      setSelected(new Set());
+    } catch (err) {
+      console.error("Delete all error:", err);
+    } finally {
+      setBulkDeleting(false);
     }
   };
 
@@ -424,264 +425,279 @@ export default function ContactsPage() {
     );
   }
 
+  const selectClass =
+    "h-8 rounded-lg border border-[var(--frame-edge)] bg-card px-2.5 text-[13px] text-foreground/80 hover:bg-foreground/[0.03] focus:outline-none focus:ring-2 focus:ring-primary/15";
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <Badge variant="secondary" className="mb-4">
-            Admin
-          </Badge>
-          <h1 className="text-4xl font-bold mb-2">Community Contacts</h1>
-          <p className="text-muted-foreground">
-            Pre-loaded attendee data from events — auto-matches on signup
-          </p>
-        </div>
-        <Card className="px-6 py-4 text-center">
-          <p className="text-3xl font-bold">{total}</p>
-          <p className="text-sm text-muted-foreground">Total Contacts</p>
-        </Card>
-      </div>
+    <AdminPage width="wide">
+      <PageHeader
+        title="Contacts"
+        subtitle={`${total.toLocaleString()} people from event guest lists and imports. They match to a member when that person signs up.`}
+        actions={
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="bg-card">
+                  More actions <ChevronDown className="opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  variant="destructive"
+                  disabled={contacts.length === 0 || bulkDeleting}
+                  onSelect={handleDeleteAll}
+                >
+                  {bulkDeleting ? "Deleting…" : "Delete all contacts"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-card"
+              disabled={importing}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload /> {importing ? "Importing…" : "Import"}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+              disabled={importing}
+            />
+            <Button size="sm" onClick={() => router.push("/admin/contacts/new")}>
+              <Plus /> Add contact
+            </Button>
+          </>
+        }
+      />
 
-      {/* Search + Actions */}
-      <div className="flex items-center gap-4 mb-4">
-        <Input
-          placeholder="Search by name, email, company, source..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-md"
-        />
-        <Button onClick={() => router.push("/admin/contacts/new")}>
-          + Add Contact
-        </Button>
-        {contacts.length > 0 && (
-          <Button
-            variant="destructive"
-            onClick={async () => {
-              if (!confirm(`Delete ALL ${contacts.length} contacts? This cannot be undone.`)) return;
-              setBulkDeleting(true);
-              try {
-                // Still batched: the ids go in the query string, and 822 uuids would
-                // make for an unreasonable URL.
-                const ids = contacts.map((c) => c.id);
-                for (let i = 0; i < ids.length; i += 50) {
-                  await deleteContacts(ids.slice(i, i + 50));
-                }
-                setContacts([]);
-                setSelected(new Set());
-              } catch (err) {
-                console.error("Delete all error:", err);
-              } finally {
-                setBulkDeleting(false);
-              }
-            }}
-            disabled={bulkDeleting}
-          >
-            {bulkDeleting ? "Deleting..." : "Delete All"}
-          </Button>
-        )}
-        <label>
-          <Button variant="outline" asChild disabled={importing}>
-            <span>{importing ? "Importing..." : "Import CSV"}</span>
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            multiple
-            onChange={handleFileSelect}
-            className="hidden"
-            disabled={importing}
-          />
-        </label>
-      </div>
-
-      {/* Column Filters */}
-      <div className="flex items-center gap-3 mb-4">
-        <span className="text-sm text-muted-foreground">Filters:</span>
-        <select
-          value={filterSource}
-          onChange={(e) => setFilterSource(e.target.value)}
-          className="px-3 py-1.5 text-sm rounded-md border border-input bg-background"
-        >
-          <option value="">All Sources</option>
-          {sources.map((s) => (
-            <option key={s} value={s}>{s}</option>
+      <section
+        id="contacts-table"
+        className="overflow-hidden rounded-xl border border-[var(--frame-edge)] bg-card shadow-[var(--shadow-card)]"
+      >
+        {/* Views */}
+        <div className="flex items-center gap-1 overflow-x-auto px-2 pt-2" role="tablist">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              role="tab"
+              aria-selected={tab === t.key}
+              onClick={() => setTab(t.key)}
+              className={cn(
+                "flex h-8 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-[13px] font-medium transition-colors",
+                tab === t.key
+                  ? "bg-foreground/[0.07] text-foreground"
+                  : "text-foreground/60 hover:bg-foreground/[0.04] hover:text-foreground",
+              )}
+            >
+              {t.label}
+              <span className="tabular-nums text-foreground/45">{tabCounts[t.key].toLocaleString()}</span>
+            </button>
           ))}
-        </select>
-        <select
-          value={filterCompany}
-          onChange={(e) => setFilterCompany(e.target.value)}
-          className="px-3 py-1.5 text-sm rounded-md border border-input bg-background"
-        >
-          <option value="">All Companies</option>
-          {companies.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value as "" | "matched" | "unmatched")}
-          className="px-3 py-1.5 text-sm rounded-md border border-input bg-background"
-        >
-          <option value="">All Status</option>
-          <option value="matched">Matched</option>
-          <option value="unmatched">Unmatched</option>
-        </select>
-        {hasActiveFilters && (
-          <button
-            onClick={() => { setFilterSource(""); setFilterCompany(""); setFilterStatus(""); }}
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
-            Clear filters
-          </button>
-        )}
-        {hasActiveFilters && (
-          <span className="text-xs text-muted-foreground">
-            Showing {filtered.length} of {contacts.length}
-          </span>
-        )}
-      </div>
-
-      {/* Bulk Actions */}
-      {selected.size > 0 && (
-        <div className="flex items-center gap-3 mb-4 px-4 py-2 bg-muted rounded-lg">
-          <span className="text-sm font-medium">
-            {selected.size} selected
-          </span>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleBulkDelete}
-            disabled={bulkDeleting}
-          >
-            {bulkDeleting ? "Deleting..." : `Delete ${selected.size}`}
-          </Button>
-          <button
-            onClick={() => setSelected(new Set())}
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            Clear selection
-          </button>
         </div>
-      )}
 
-      <Card className="p-6">
-        {loading ? (
-          <div className="text-center py-12 text-muted-foreground">
-            Loading contacts...
-          </div>
+        {/* Search + filters, or bulk actions while rows are selected */}
+        <div className="flex min-h-12 flex-wrap items-center gap-2 border-b border-[var(--frame-edge)] px-3 py-2">
+          {selected.size > 0 ? (
+            <>
+              <span className="text-[13px] font-medium">{selected.size} selected</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-card text-destructive hover:text-destructive"
+                onClick={handleBulkDelete}
+                disabled={bulkDeleting}
+              >
+                {bulkDeleting ? "Deleting…" : "Delete"}
+              </Button>
+              <button
+                onClick={() => setSelected(new Set())}
+                className="text-[13px] text-muted-foreground hover:text-foreground"
+              >
+                Clear
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="relative min-w-[200px] flex-1">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/40" />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search name, company or location"
+                  aria-label="Search contacts"
+                  className="h-8 w-full rounded-lg border border-[var(--frame-edge)] bg-card pl-8 pr-3 text-[13px] outline-none placeholder:text-foreground/40 focus:border-primary/40 focus:ring-2 focus:ring-primary/15"
+                />
+              </div>
+              <select
+                value={filterSource}
+                onChange={(e) => setFilterSource(e.target.value)}
+                className={cn(selectClass, "max-w-[200px]")}
+                aria-label="Filter by source"
+              >
+                <option value="">Any source</option>
+                {sources.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+              <select
+                value={filterCompany}
+                onChange={(e) => setFilterCompany(e.target.value)}
+                className={cn(selectClass, "max-w-[180px]")}
+                aria-label="Filter by company"
+              >
+                <option value="">Any company</option>
+                {companies.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              {hasActiveFilters && (
+                <button
+                  onClick={() => { setFilterSource(""); setFilterCompany(""); }}
+                  className="flex h-8 items-center gap-1 rounded-lg px-2 text-[13px] text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" /> Clear filters
+                </button>
+              )}
+            </>
+          )}
+        </div>
+
+        {loading && contacts.length === 0 ? (
+          <div className="py-16 text-center text-sm text-muted-foreground">Loading contacts…</div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            {search || hasActiveFilters ? "No contacts match your filters" : "No contacts yet"}
+          <div className="py-16 text-center">
+            <p className="text-sm font-medium">No contacts found</p>
+            <p className="mt-1 text-[13px] text-muted-foreground">
+              {search || hasActiveFilters || tab !== "all"
+                ? "Try changing the search, filters or view."
+                : "Import a guest list or add someone by hand."}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full text-[13px]">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="py-3 px-4 w-10">
+                <tr className="border-b border-[var(--frame-edge)] bg-foreground/[0.025] text-left text-xs font-medium text-foreground/60">
+                  <th className="w-10 py-2 pl-4 pr-1">
                     <input
                       type="checkbox"
-                      checked={selected.size === filtered.length && filtered.length > 0}
+                      aria-label="Select all"
+                      checked={allSelected}
                       onChange={toggleSelectAll}
-                      className="rounded"
+                      className="h-3.5 w-3.5 rounded accent-primary align-middle"
                     />
                   </th>
-                  <th className="text-left py-3 px-4 font-semibold">Name</th>
-                  <th className="text-left py-3 px-4 font-semibold">Email</th>
-                  {activeColumns.map((col) => (
-                    <th key={col.key} className="text-left py-3 px-4 font-semibold">{col.label}</th>
-                  ))}
-                  {metadataKeys.map((key) => (
-                    <th key={`meta-${key}`} className="text-left py-3 px-4 font-semibold capitalize">
-                      {key.replace(/[_-]/g, " ")}
-                    </th>
-                  ))}
-                  <th className="text-left py-3 px-4 font-semibold">Actions</th>
+                  <th className="py-2 px-3 font-medium">Contact</th>
+                  <th className="py-2 px-3 font-medium">Location</th>
+                  <th className="py-2 px-3 font-medium">Tags</th>
+                  <th className="py-2 px-3 font-medium">Source</th>
+                  <th className="py-2 px-3 font-medium whitespace-nowrap">Last event</th>
+                  <th className="py-2 px-3 pr-4 font-medium">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((contact) => (
-                  <tr
-                    key={contact.id}
-                    className={`border-b border-border/50 hover:bg-muted/30 ${selected.has(contact.id) ? "bg-muted/20" : ""}`}
-                  >
-                    <td className="py-3 px-4">
-                      <input
-                        type="checkbox"
-                        checked={selected.has(contact.id)}
-                        onChange={() => toggleSelect(contact.id)}
-                        className="rounded"
-                      />
-                    </td>
-                    <td className="py-3 px-4 text-sm font-medium whitespace-nowrap">
-                      <Link href={`/community/${contact.id}`} className="hover:underline">
-                        {displayName(contact)}
-                      </Link>
-                      {contact.visibility === "public" && (
-                        <Badge variant="default" className="ml-2 text-[10px] py-0">Public</Badge>
+                {filtered.map((contact) => {
+                  const intel = contact.metadata?.intel;
+                  const tags = intel?.structured?.roles?.length
+                    ? intel.structured.roles
+                    : contact.skills ?? [];
+                  const place = intel?.city || contact.location;
+                  const role = [contact.role, contact.company].filter(Boolean).join(" · ");
+                  return (
+                    <tr
+                      key={contact.id}
+                      onClick={() => router.push(`/admin/contacts/${contact.id}`)}
+                      className={cn(
+                        "cursor-pointer border-b border-[var(--frame-edge)] last:border-0 hover:bg-foreground/[0.025]",
+                        selected.has(contact.id) && "bg-primary/[0.04]",
                       )}
-                    </td>
-                    <td className="py-3 px-4 font-mono text-sm">
-                      {contact.email}
-                    </td>
-                    {activeColumns.map((col) => (
-                      <td key={col.key} className="py-3 px-4 text-sm">
-                        {renderCell(contact, col.key) || <span className="text-muted-foreground">—</span>}
+                    >
+                      <td className="py-2.5 pl-4 pr-1" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${displayName(contact)}`}
+                          checked={selected.has(contact.id)}
+                          onChange={() => toggleSelect(contact.id)}
+                          className="h-3.5 w-3.5 rounded accent-primary align-middle"
+                        />
                       </td>
-                    ))}
-                    {metadataKeys.map((key) => (
-                      <td key={`meta-${key}`} className="py-3 px-4 text-sm">
-                        <span className="truncate max-w-[200px] block">
-                          {(contact.metadata?.[key] as string | undefined) || <span className="text-muted-foreground">—</span>}
-                        </span>
+                      <td className="py-2.5 px-3">
+                        <div className="flex w-[280px] items-center gap-2.5">
+                          <Initials name={displayName(contact)} />
+                          <div className="min-w-0">
+                            <div className="truncate font-medium text-foreground">{displayName(contact)}</div>
+                            <div className="truncate text-xs text-muted-foreground">
+                              {role || contact.email}
+                            </div>
+                          </div>
+                        </div>
                       </td>
-                    ))}
-                    <td className="py-3 px-4">
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={async () => {
-                            const newVis = contact.visibility === "public" ? "private" : "public";
-                            await updateContact(contact.id, { visibility: newVis });
-                            setContacts((prev) =>
-                              prev.map((c) =>
-                                c.id === contact.id ? { ...c, visibility: newVis } : c
-                              )
-                            );
-                          }}
-                          className={contact.visibility === "public" ? "text-green-600" : ""}
-                        >
-                          {contact.visibility === "public" ? "Public" : "Private"}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            router.push(`/admin/contacts/${contact.id}`)
-                          }
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive"
-                          onClick={() => handleDelete(contact.id)}
-                          disabled={deleting === contact.id}
-                        >
-                          {deleting === contact.id ? "..." : "Delete"}
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      <td className="py-2.5 px-3 text-foreground/75">
+                        {place ? (
+                          <span className="block max-w-[160px] truncate" title={place}>{place}</span>
+                        ) : (
+                          <span className="text-foreground/30">—</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        {tags.length ? (
+                          <div className="flex max-w-[240px] flex-wrap gap-1">
+                            {tags.slice(0, 2).map((t) => (
+                              <StatusPill key={t}>{t}</StatusPill>
+                            ))}
+                            {tags.length > 2 && (
+                              <span className="px-0.5 text-xs text-muted-foreground">+{tags.length - 2}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-foreground/30">—</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 text-foreground/75">
+                        {contact.source?.length ? (
+                          <span className="block max-w-[180px] truncate" title={contact.source.join(", ")}>
+                            {contact.source[0]}
+                            {contact.source.length > 1 && (
+                              <span className="text-muted-foreground"> +{contact.source.length - 1}</span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-foreground/30">—</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 whitespace-nowrap tabular-nums text-foreground/75">
+                        {intel?.last_event_at ? (
+                          shortDate.format(new Date(intel.last_event_at))
+                        ) : (
+                          <span className="text-foreground/30">—</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 pr-4">
+                        <div className="flex gap-1">
+                          {contact.matched_profile_id && <StatusPill tone="success">Member</StatusPill>}
+                          {contact.visibility === "public" && <StatusPill tone="info">Public</StatusPill>}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
-      </Card>
+        {filtered.length > 0 && (
+          <div className="border-t border-[var(--frame-edge)] px-4 py-2.5 text-xs text-muted-foreground">
+            Showing {filtered.length.toLocaleString()} of {total.toLocaleString()}
+          </div>
+        )}
+      </section>
 
       {/* Import Source Modal */}
       {showImportModal && (
@@ -726,6 +742,6 @@ export default function ContactsPage() {
           </Card>
         </div>
       )}
-    </div>
+    </AdminPage>
   );
 }
