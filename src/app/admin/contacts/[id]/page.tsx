@@ -36,6 +36,7 @@ import {
   Initials,
 } from "@/components/admin/AdminPage";
 import { IntelSummaryCard, ProjectsCard, EventHistoryCard } from "@/components/admin/ContactIntelPanel";
+import { ContactNotesCard } from "@/components/admin/ContactNotesCard";
 import { fetchProfile } from "@/lib/profiles-client";
 import { useAuth } from "@/context/AuthContext";
 
@@ -86,7 +87,7 @@ type Section = "contact" | "tags" | "notes";
 const SECTION_TITLES: Record<Section, string> = {
   contact: "Edit contact",
   tags: "Edit tags",
-  notes: "Edit notes",
+  notes: "Edit about",
 };
 
 function toForm(c: CommunityContact): ContactForm {
@@ -313,11 +314,11 @@ export default function ContactDetailPage() {
   );
 
   const notesField = (
-    <Field label="Notes" wide>
+    <Field label="About" wide>
       <textarea
         value={form.notes}
         onChange={update("notes")}
-        placeholder="Anything worth remembering about this person"
+        placeholder="Background worth remembering. Log conversations under Conversations."
         rows={6}
         className={textareaClass}
       />
@@ -347,7 +348,7 @@ export default function ContactDetailPage() {
           <AdminCard title="Tags">
             <div className="grid grid-cols-2 gap-3">{tagFields}</div>
           </AdminCard>
-          <AdminCard title="Notes">{notesField}</AdminCard>
+          <AdminCard title="About">{notesField}</AdminCard>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" className="bg-card" onClick={() => router.push("/admin/contacts")}>
               Cancel
@@ -441,6 +442,7 @@ export default function ContactDetailPage() {
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-4 min-w-0">
+          <ContactNotesCard contactId={contact.id} />
           <IntelSummaryCard intel={intel} />
           <ProjectsCard intel={intel} />
           <EventHistoryCard events={contact.events} />
@@ -535,11 +537,11 @@ export default function ContactDetailPage() {
             </div>
           </AdminCard>
 
-          <AdminCard title="Notes" action={<CardAction onClick={() => openEdit("notes")}>Edit</CardAction>}>
+          <AdminCard title="About" action={<CardAction onClick={() => openEdit("notes")}>Edit</CardAction>}>
             {contact.notes ? (
               <p className="whitespace-pre-wrap text-[13px] leading-relaxed">{contact.notes}</p>
             ) : (
-              <p className="text-[13px] text-foreground/40">No notes</p>
+              <p className="text-[13px] text-foreground/40">Nothing yet</p>
             )}
           </AdminCard>
 

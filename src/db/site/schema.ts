@@ -1059,6 +1059,31 @@ export const adminTasks = makerslounge.table("admin_tasks", {
 	check("admin_tasks_priority_check", sql`(priority IS NULL) OR ((priority >= 0) AND (priority <= 2))`),
 	check("admin_tasks_assignee_check", sql`(assignee IS NULL) OR (char_length(assignee) <= 100)`),
 ]);
+
+export const contactNotes = makerslounge.table("contact_notes", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	contactId: uuid("contact_id").notNull(),
+	happenedOn: date("happened_on").default(sql`((now() AT TIME ZONE 'America/Toronto'::text))::date`).notNull(),
+	channel: text(),
+	body: text().notNull(),
+	createdBy: uuid("created_by"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("contact_notes_contact_idx").using("btree", table.contactId.asc().nullsLast().op("uuid_ops"), table.happenedOn.desc().nullsFirst().op("date_ops"), table.createdAt.desc().nullsFirst().op("timestamptz_ops")),
+	foreignKey({
+			columns: [table.contactId],
+			foreignColumns: [communityContacts.id],
+			name: "contact_notes_contact_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.createdBy],
+			foreignColumns: [profiles.id],
+			name: "contact_notes_created_by_fkey"
+		}).onDelete("set null"),
+	check("contact_notes_channel_check", sql`(channel IS NULL) OR (char_length(channel) <= 100)`),
+	check("contact_notes_body_check", sql`(char_length(body) >= 1) AND (char_length(body) <= 10000)`),
+]);
 export const connectionCounts = makerslounge.view("connection_counts", {	profileId: uuid("profile_id"),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	connectionCount: bigint("connection_count", { mode: "number" }),

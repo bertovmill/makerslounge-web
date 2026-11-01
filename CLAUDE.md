@@ -89,6 +89,17 @@ email.
   new tags into `skills`, which the agent's `filter_by_skills` matches exactly, so
   the prompt steers onto the tags already in use. About $0.008 a person.
 
+### Conversation notes (`contact_notes`, Nov 2026)
+
+Berto logs his conversations with people on `/admin/contacts/<id>`, in the
+**Conversations** timeline card (`ContactNotesCard`). One row per conversation in
+`makerslounge.contact_notes` (migration `0015`): `happened_on` (a date, defaults
+to today in Toronto), `channel` (free text: LinkedIn, Coffee, an event name) and
+`body`. API is `GET|POST /api/admin/contacts/<id>/notes` and
+`PATCH|DELETE …/notes/<noteId>`, behind `requireAdmin()`, so Cael logs notes with
+its bearer token. New conversation notes go here, not in
+`community_contacts.notes`, which is now shown as the contact's "About".
+
 ### In-house events (`/events`, Oct 2026)
 
 Makerslounge runs its own events instead of Luma: event pages, RSVP and guest
