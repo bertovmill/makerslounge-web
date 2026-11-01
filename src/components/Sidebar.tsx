@@ -22,8 +22,10 @@ import {
   BookOpen,
   Trophy,
   Info,
+  ArrowLeft,
   type LucideIcon,
 } from "lucide-react";
+import { ADMIN_NAV_SECTIONS } from "@/components/admin/admin-nav";
 import UserMenu from "./UserMenu";
 import LogoContextMenu from "./LogoContextMenu";
 import { useState } from "react";
@@ -103,8 +105,14 @@ export default function Sidebar() {
 
   if (isHidden || !user) return null;
 
+  // Shopify-style: inside the admin console the sidebar swaps to the admin nav
+  // instead of a second column opening beside it.
+  const inAdmin = isAdmin && pathname.startsWith("/admin");
+  const sections = inAdmin ? ADMIN_NAV_SECTIONS : NAV_SECTIONS;
+
   function isActive(href: string) {
     if (href === "/home") return pathname === "/home";
+    if (href === "/admin") return pathname === "/admin";
     return pathname === href || pathname.startsWith(href + "/");
   }
 
@@ -152,7 +160,7 @@ export default function Sidebar() {
   }
 
   function renderNav(compact = false) {
-    return NAV_SECTIONS.map((section, i) => (
+    return sections.map((section, i) => (
       <div key={section.label ?? "main"} className={cn("space-y-px", i > 0 && "mt-4")}>
         {section.label && !compact && (
           <div className="px-2.5 pb-1 text-xs font-medium text-foreground/50">
@@ -169,7 +177,7 @@ export default function Sidebar() {
     return (
       <>
         {renderLink({ href: "/profile", label: "Profile", icon: UserCircle }, compact)}
-        {isAdmin && renderLink({ href: "/admin", label: "Admin", icon: Shield }, compact)}
+        {isAdmin && !inAdmin && renderLink({ href: "/admin", label: "Admin", icon: Shield }, compact)}
         {renderButton("Feedback", MessageSquarePlus, openFeedback, compact)}
         {renderButton("Log out", LogOut, handleSignOut, compact)}
       </>
@@ -182,9 +190,24 @@ export default function Sidebar() {
         <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
         <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
         <span className="text-[17px] font-sans font-semibold tracking-tight text-foreground">makerslounge</span>
+        {inAdmin && (
+          <span className="ml-1 rounded-md bg-foreground/[0.07] px-1.5 py-0.5 text-[11px] font-semibold text-foreground/70">
+            Admin
+          </span>
+        )}
       </Link>
     </LogoContextMenu>
   );
+
+  // The way out of the admin console, pinned above its nav.
+  function renderExitAdmin(compact = false) {
+    if (!inAdmin) return null;
+    return (
+      <div className="mb-3">
+        {renderLink({ href: "/home", label: "Back to MakersLounge", icon: ArrowLeft }, compact)}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -217,7 +240,10 @@ export default function Sidebar() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <nav className="flex-1 overflow-y-auto px-2">{renderNav()}</nav>
+            <nav className="flex-1 overflow-y-auto px-2">
+              {renderExitAdmin()}
+              {renderNav()}
+            </nav>
             <div className="py-3 px-2 space-y-px">{renderFooter()}</div>
           </div>
         </div>
@@ -275,6 +301,7 @@ export default function Sidebar() {
         </div>
 
         <nav className={cn("flex-1 overflow-y-auto pb-2", collapsed ? "px-2" : "px-2.5")}>
+          {renderExitAdmin(collapsed)}
           {renderNav(collapsed)}
         </nav>
 

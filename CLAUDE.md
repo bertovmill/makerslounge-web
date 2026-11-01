@@ -64,6 +64,7 @@ MakersLounge is a Next.js 16 app for connecting makers/builders. It uses the App
 - `/eve-workshop` - Eve Agent Workshop (see below)
 - `/events` - Upcoming in-house events and recaps; `/events/<slug>` is one event with RSVP
 - `/admin/events` - Create events and weekly series; `/admin/events/<id>/guests` is the guest list
+- `/admin/*` - Admin console, laid out like Shopify Admin (Nov 2026). There is no second nav column: on `/admin/*` the main `Sidebar` swaps to the grouped nav in `src/components/admin/admin-nav.ts`, and `admin/layout.tsx` adds a top bar whose search lands on `/admin/contacts?q=`. Build pages from `src/components/admin/AdminPage.tsx` (`AdminPage`, `PageHeader`, `AdminCard`, `StatusPill`): index pages are one card with tabs, search and a table; detail pages are a main column of cards plus a right column of summary cards edited through dialogs (see `/admin/contacts/<id>`)
 - `/admin/tasks` - MakersLounge to-do list (table `admin_tasks`, migration `0011`, API `/api/admin/tasks`). Done = `completed_at` set; open tasks sort by due date then priority (`src/lib/admin-tasks.ts`)
 
 ### Luma guest history (`luma_events`, `luma_event_guests`, Nov 2026)
