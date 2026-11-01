@@ -363,7 +363,8 @@ export default function ContactsPage() {
     const keys = new Set<string>();
     for (const c of filtered) {
       if (c.metadata) {
-        for (const k of Object.keys(c.metadata)) keys.add(k);
+        // Strings only: `intel` is a nested object, shown on the contact page.
+        for (const [k, v] of Object.entries(c.metadata)) if (typeof v === "string") keys.add(k);
       }
     }
     return [...keys].sort();
@@ -632,7 +633,7 @@ export default function ContactsPage() {
                     {metadataKeys.map((key) => (
                       <td key={`meta-${key}`} className="py-3 px-4 text-sm">
                         <span className="truncate max-w-[200px] block">
-                          {contact.metadata?.[key] || <span className="text-muted-foreground">—</span>}
+                          {(contact.metadata?.[key] as string | undefined) || <span className="text-muted-foreground">—</span>}
                         </span>
                       </td>
                     ))}

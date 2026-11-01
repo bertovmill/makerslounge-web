@@ -97,8 +97,23 @@ export function formatCommunityContact(c: {
   if (c.source?.length) profile.events_attended = c.source;
   if (c.linkedin) profile.linkedin = c.linkedin;
   if (c.metadata) {
+    // `intel.structured` is the cleaned-up version of their Luma form answers
+    // (scripts/structure-people-intel.mts): the richest thing we know about them.
+    const intel = (c.metadata as Record<string, unknown>).intel as
+      | { phase?: string; structured?: Record<string, unknown> }
+      | undefined;
+    const s = intel?.structured;
+    if (s) {
+      for (const key of ["roles", "projects", "can_help_with", "needs_help_with", "domains", "tools"]) {
+        if (Array.isArray(s[key]) && (s[key] as unknown[]).length) profile[key] = s[key];
+      }
+      if (!profile.bio && typeof s.summary === "string") profile.bio = s.summary;
+    }
+    if (intel?.phase) profile.phase = intel.phase;
+
     const interesting: Record<string, string> = {};
     for (const [k, v] of Object.entries(c.metadata)) {
+      if (typeof v !== "string") continue;
       const kl = k.toLowerCase();
       if (
         kl.includes("project") ||

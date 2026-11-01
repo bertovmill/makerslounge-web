@@ -58,7 +58,10 @@ const people = await sql.query(
 const Structured = z.object({
   summary: z
     .string()
-    .describe("Two sentences, third person, plain facts: who they are, what they build, what they bring. No hype."),
+    .describe(
+      "Two sentences, third person, plain facts: who they are, what they build, what they bring. No hype. " +
+        "Use their first name or they/them, never he/she/his/her.",
+    ),
   roles: z
     .array(z.string())
     .describe("What they are, e.g. Founder, Software Engineer, Designer, Student, Researcher, Marketer, Investor, Community Builder"),
