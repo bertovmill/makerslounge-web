@@ -277,6 +277,7 @@ export const eventSeries = makerslounge.table("event_series", {
 	title: text().notNull(),
 	description: text(),
 	location: text(),
+	imageUrl: text("image_url"),
 	weekday: smallint().notNull(),
 	startLocal: time("start_local").notNull(),
 	endLocal: time("end_local").notNull(),

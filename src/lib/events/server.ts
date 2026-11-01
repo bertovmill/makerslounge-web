@@ -34,13 +34,14 @@ export async function topUpSeriesOccurrences({ force = false } = {}) {
   try {
     await getSiteDb().execute(sql`
       INSERT INTO makerslounge.events
-        (title, description, start_time, end_time, location, slug, series_id, capacity, created_by)
+        (title, description, start_time, end_time, location, image_url, slug, series_id, capacity, created_by)
       SELECT
         s.title || ' · ' || to_char(d, 'Mon FMDD'),
         s.description,
         (d::date + s.start_local) AT TIME ZONE s.timezone,
         (d::date + s.end_local) AT TIME ZONE s.timezone,
         s.location,
+        s.image_url,
         s.slug || '-' || to_char(d, 'YYYY-MM-DD'),
         s.id,
         s.capacity,

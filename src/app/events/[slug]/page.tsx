@@ -158,7 +158,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               fill
               priority
               // Admin-set image URLs can be on any host, which next/image won't optimise.
-              unoptimized={Boolean(event.image_url)}
+              unoptimized={Boolean(event.image_url?.startsWith("http"))}
               sizes="(min-width: 768px) 320px, 100vw"
               className="object-cover"
             />
