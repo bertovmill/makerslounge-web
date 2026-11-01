@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     });
 
     const { text } = await generateText({
-      model: "anthropic/claude-3.7-sonnet",
+      model: "anthropic/claude-sonnet-5.5",
       maxOutputTokens: 1024,
       system: `You are a creative podcast consultant helping brainstorm episode ideas for the MakersLounge Podcast.
 

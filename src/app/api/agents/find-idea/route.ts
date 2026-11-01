@@ -105,7 +105,7 @@ export async function POST(request: Request) {
 
         try {
           const { text: finalText } = await generateText({
-            model: "anthropic/claude-sonnet-4",
+            model: "anthropic/claude-sonnet-5.5",
             maxOutputTokens: 2048,
             system: SYSTEM_PROMPT,
             messages: apiMessages,

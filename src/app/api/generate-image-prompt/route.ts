@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       : `Title: ${ideaTitle}\nNotes: ${ideaNotes || "None"}`;
 
     const { text } = await generateText({
-      model: "anthropic/claude-sonnet-4",
+      model: "anthropic/claude-sonnet-5.5",
       maxOutputTokens: 300,
       system:
         "You are a visual content strategist. Given a social media post, output a concise image prompt (1-2 sentences) for an AI image generator. The image should complement the post visually. Avoid text, typography, or words in the image. Output only the prompt, nothing else.",

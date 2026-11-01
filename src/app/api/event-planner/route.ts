@@ -85,7 +85,7 @@ When generating social posts, include:
 - An Instagram caption (engaging, with hashtag suggestions)`;
 
     const { text } = await generateText({
-      model: "anthropic/claude-3.7-sonnet",
+      model: "anthropic/claude-sonnet-5.5",
       maxOutputTokens: 2048,
       system: systemPrompt,
       messages,

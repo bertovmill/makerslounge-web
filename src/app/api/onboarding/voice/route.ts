@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       : messages.map(m => ({ role: m.role, content: m.content }));
 
     const { text: reply } = await generateText({
-      model: "anthropic/claude-sonnet-4",
+      model: "anthropic/claude-sonnet-5.5",
       maxOutputTokens: 1024,
       system: SYSTEM_PROMPT,
       messages: modelMessages,

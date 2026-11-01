@@ -81,7 +81,7 @@ Example format:
 }]`;
 
     const { text } = await generateText({
-      model: "anthropic/claude-sonnet-4",
+      model: "anthropic/claude-sonnet-5.5",
       maxOutputTokens: 4096,
       prompt,
     });

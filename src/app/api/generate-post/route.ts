@@ -171,7 +171,7 @@ ${notes ? `\nNotes/Context: ${notes}` : ""}${searchHint}`;
     const webSearchTool = { web_search: anthropic.tools.webSearch_20250305({ maxUses: 3 }) };
 
     const result = await generateText({
-      model: "anthropic/claude-sonnet-4",
+      model: "anthropic/claude-sonnet-5.5",
       maxOutputTokens: 1000,
       system: systemPrompt,
       prompt: userPrompt,
@@ -190,7 +190,7 @@ ${notes ? `\nNotes/Context: ${notes}` : ""}${searchHint}`;
       // Debug info for viewing the API call
       debug: {
         request: {
-          model: "anthropic/claude-sonnet-4",
+          model: "anthropic/claude-sonnet-5.5",
           maxOutputTokens: 1000,
           system: systemPrompt,
           prompt: userPrompt,

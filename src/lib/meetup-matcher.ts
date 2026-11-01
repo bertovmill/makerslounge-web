@@ -9,7 +9,7 @@ import { z } from "zod";
  * exact prompt, model and tools production runs. Change May here and both move.
  */
 
-export const MATCHER_MODEL = "anthropic/claude-sonnet-4";
+export const MATCHER_MODEL = "anthropic/claude-sonnet-5.5";
 
 export interface Participant {
   id: string;

@@ -52,7 +52,7 @@ Respond with ONLY a JSON array of pairs in this exact format (no markdown, no ex
 [{"person1_id": "id1", "person2_id": "id2", "reason": "Brief explanation of why they're paired"}]`;
 
     const { text } = await generateText({
-      model: "anthropic/claude-sonnet-4",
+      model: "anthropic/claude-sonnet-5.5",
       maxOutputTokens: 1024,
       prompt,
     });

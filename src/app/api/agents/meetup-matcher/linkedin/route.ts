@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     .join("\n");
 
   const { text } = await generateText({
-    model: "anthropic/claude-sonnet-4",
+    model: "anthropic/claude-sonnet-5.5",
     maxOutputTokens: 512,
     system: `You write short, warm, personal LinkedIn messages on behalf of Berto, the organizer of MakersLounge — a community of makers, builders, and entrepreneurs in Toronto.
 

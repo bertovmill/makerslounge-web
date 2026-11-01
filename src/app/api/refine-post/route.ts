@@ -87,7 +87,7 @@ Output only the refined post content - no explanations, no quotes, just the cont
     }
 
     const { text, usage } = await generateText({
-      model: "anthropic/claude-sonnet-4",
+      model: "anthropic/claude-sonnet-5.5",
       maxOutputTokens: 1000,
       system: systemPrompt,
       messages,
@@ -106,7 +106,7 @@ Output only the refined post content - no explanations, no quotes, just the cont
       conversationHistory: updatedHistory,
       debug: {
         request: {
-          model: "anthropic/claude-sonnet-4",
+          model: "anthropic/claude-sonnet-5.5",
           system: systemPrompt,
           messages: messages,
         },
