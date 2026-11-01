@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, inArray, isNull, lt, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import { getSiteDb } from "@/db/site";
 import { eventRsvps, events } from "@/db/site/schema";
 import { rsvpReminderEmail, sendReminderBatch } from "@/lib/events/emails";
@@ -14,7 +14,8 @@ import { getEventBySlugOrId } from "@/lib/events/server";
  * claimed by setting `reminder_sent_at` before anything is sent, so a retried or
  * overlapping run never emails anyone twice; a failed send releases its claim
  * for the next run. RSVPs made in the last 12 hours are skipped: those guests
- * just got a confirmation with the same details.
+ * just got a confirmation with the same details. Walk-ins added at the door
+ * are never emailed.
  */
 
 export async function GET(request: NextRequest) {
@@ -38,6 +39,8 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           isNull(eventRsvps.reminderSentAt),
+          eq(eventRsvps.walkIn, false),
+          isNotNull(eventRsvps.email),
           lt(eventRsvps.createdAt, sql`now() - interval '12 hours'`),
           inArray(eventRsvps.eventId, tomorrowsEvents),
         ),
@@ -46,7 +49,7 @@ export async function GET(request: NextRequest) {
         id: eventRsvps.id,
         eventId: eventRsvps.eventId,
         name: eventRsvps.name,
-        email: eventRsvps.email,
+        email: sql<string>`${eventRsvps.email}`,
         cancelToken: eventRsvps.cancelToken,
       });
 

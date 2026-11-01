@@ -92,7 +92,7 @@ email.
 
 Makerslounge runs its own events instead of Luma: event pages, RSVP and guest
 lists live in the site. Tables are `events`, `event_series` and `event_rsvps`
-(migrations `neon-migrations/0007` and `0008`).
+(migrations `neon-migrations/0007` and `0008`, check-in `0014`).
 
 - **A weekly series is a rule, materialised as ordinary events.** `event_series`
   holds "every Saturday 11:30 to 3"; `topUpSeriesOccurrences()` in
@@ -125,8 +125,16 @@ lists live in the site. Tables are `events`, `event_series` and `event_rsvps`
   account, resolving Berto's profile through Clerk. `GET /api/admin/events` is
   its read path: in-house events (`source: "site"`) and imported Luma history
   (`source: "luma"`, RSVPs = `approved` guests) in one list, with turnout and
-  community totals. In-house events have no check-in yet, so their `check_ins`
-  is `null`, meaning unknown, not zero.
+  community totals. In-house events count `check_ins` from the door (below);
+  Luma rows have `walk_ins: null`.
+- **Door check-in** (migration `0014`, Nov 2026) is host-only: on
+  `/admin/events/<id>/guests` a host searches a guest and taps Check in, which
+  sets `event_rsvps.checked_in_at` (`PATCH /api/events/<id>/rsvps`, tap again
+  to undo). Walk-in adds a row with `walk_in = true`, already checked in
+  (`POST` on the same route); email is optional (the column is nullable for
+  them) and walk-ins are never emailed, the reminder cron skips them. A walk-in
+  whose email already has an RSVP checks that RSVP in instead. Berto chose this
+  over QR self check-in, which lets people check in without being there.
 - `GET /api/events` returns the snake_case `PublicEvent` shape from
   `src/lib/events/format.ts`. Times display in `America/Toronto` regardless of
   the viewer's timezone.
