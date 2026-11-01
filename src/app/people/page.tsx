@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { fetchMyAnnotations, type ProfileAnnotation } from "@/lib/profile-annotations-client";
 import { collectTags, tagsMatch } from "@/lib/profile-annotations";
 import { PersonAnnotationButton, PersonAnnotationDialog } from "@/components/PersonAnnotation";
-import { Search, X, UserPlus, Tag, MapPin, Pencil, Lock, Globe } from "lucide-react";
+import { Search, X, UserPlus, Tag, MapPin, Pencil, Lock, Globe, Shield, Eye } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -48,6 +48,11 @@ export default function PeoplePage() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [editing, setEditing] = useState<Profile | null>(null);
   const [filtersReady, setFiltersReady] = useState(false);
+  // Admins can preview the page as a member sees it (`/people?view=public`):
+  // no community contacts, no admin controls. Their own tags still show, as they
+  // would for any signed-in member.
+  const [publicView, setPublicView] = useState(false);
+  const showAdmin = isAdmin && !publicView;
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState<AddPersonForm>(EMPTY_FORM);
   const [addLoading, setAddLoading] = useState(false);
@@ -173,6 +178,7 @@ export default function PeoplePage() {
     setSelectedTag(params.get("tag"));
     setSelectedSkill(params.get("skill"));
     setSearch(params.get("q") ?? "");
+    setPublicView(params.get("view") === "public");
     setFiltersReady(true);
   }, []);
 
@@ -182,12 +188,13 @@ export default function PeoplePage() {
     if (search) params.set("q", search);
     if (selectedSkill) params.set("skill", selectedSkill);
     if (selectedTag) params.set("tag", selectedTag);
+    if (publicView) params.set("view", "public");
     const qs = params.toString();
     const next = `${window.location.pathname}${qs ? `?${qs}` : ""}`;
     if (next !== `${window.location.pathname}${window.location.search}`) {
       window.history.replaceState(null, "", next);
     }
-  }, [filtersReady, search, selectedSkill, selectedTag]);
+  }, [filtersReady, search, selectedSkill, selectedTag, publicView]);
 
   function handleAnnotationSaved(profileId: string, saved: ProfileAnnotation | null) {
     setAnnotations((prev) => {
@@ -231,10 +238,16 @@ export default function PeoplePage() {
     await loadPeople();
   }
 
+  // Non-admins never load community contacts, so the public view drops them too.
+  const visibleProfiles = useMemo(
+    () => (showAdmin ? profiles : profiles.filter((p) => p._type !== "community")),
+    [profiles, showAdmin],
+  );
+
   // All unique skills sorted by frequency
   const allSkills = useMemo(() => {
     const map = new Map<string, number>();
-    profiles.forEach((p) => {
+    visibleProfiles.forEach((p) => {
       p.skills?.forEach((s) => {
         const normalized = s.trim();
         if (normalized) map.set(normalized, (map.get(normalized) || 0) + 1);
@@ -243,13 +256,13 @@ export default function PeoplePage() {
     return Array.from(map.entries())
       .sort((a, b) => b[1] - a[1])
       .map(([name]) => name);
-  }, [profiles]);
+  }, [visibleProfiles]);
 
   // The viewer's own tags, most-used first. Drives the "Your tags" filter row.
   const myTags = useMemo(() => collectTags(annotations.values()), [annotations]);
 
   const filtered = useMemo(() => {
-    return profiles.filter((p) => {
+    return visibleProfiles.filter((p) => {
       // Only show profiles that have a name
       if (!p.name?.trim()) return false;
 
@@ -273,7 +286,7 @@ export default function PeoplePage() {
 
       return matchesSearch && matchesSkill && matchesTag;
     });
-  }, [profiles, search, selectedSkill, selectedTag, annotations]);
+  }, [visibleProfiles, search, selectedSkill, selectedTag, annotations]);
 
   if (loading) {
     return (
@@ -300,16 +313,48 @@ export default function PeoplePage() {
           </h1>
           <p className="text-[13px] md:text-sm text-muted-foreground">
             {filtered.length} maker{filtered.length !== 1 ? "s" : ""} in the community
+            {isAdmin && publicView && " · as members see it"}
           </p>
         </div>
         {isAdmin && (
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
-          >
-            <UserPlus className="w-4 h-4" />
-            Add person
-          </button>
+          <div className="flex items-center gap-2">
+            <div
+              id="view-toggle"
+              role="radiogroup"
+              aria-label="Page view"
+              className="flex items-center p-0.5 rounded-lg bg-secondary"
+            >
+              {([
+                { value: false, label: "Admin view", icon: Shield },
+                { value: true, label: "Public view", icon: Eye },
+              ] as const).map(({ value, label, icon: Icon }) => (
+                <button
+                  key={label}
+                  type="button"
+                  role="radio"
+                  aria-checked={publicView === value}
+                  onClick={() => setPublicView(value)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                    publicView === value
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">{label}</span>
+                </button>
+              ))}
+            </div>
+            {showAdmin && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+              >
+                <UserPlus className="w-4 h-4" />
+                Add person
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -462,7 +507,7 @@ export default function PeoplePage() {
                         Community
                       </span>
                     )}
-                    {profile._type === "community" && isAdmin && (
+                    {profile._type === "community" && showAdmin && (
                       <button
                         type="button"
                         onClick={(e) => handleToggleVisibility(e, profile)}
@@ -504,7 +549,7 @@ export default function PeoplePage() {
                     </p>
                   )}
                 </div>
-                {isAdmin && (
+                {showAdmin && (
                   <button
                     type="button"
                     onClick={(e) => openLocationEditor(e, profile)}
