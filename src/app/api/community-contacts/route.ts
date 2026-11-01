@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, asc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { getSiteDb } from "@/db/site";
-import { communityContacts } from "@/db/site/schema";
+import { communityContacts, lumaEventGuests, lumaEvents } from "@/db/site/schema";
 import { isAdmin, requireAdmin } from "@/lib/api/auth";
 import { badRequest, handleApiError } from "@/lib/api/respond";
 
@@ -113,6 +113,25 @@ export async function GET(request: NextRequest) {
       .where(conditions.length ? and(...conditions) : undefined)
       .orderBy(asc(communityContacts.name));
 
+    // One contact, for an admin: add their Luma event history (migration 0013).
+    if (id && admin && rows[0]) {
+      const events = await getSiteDb()
+        .select({
+          name: lumaEvents.name,
+          starts_at: lumaEvents.startsAt,
+          luma_url: lumaEvents.lumaUrl,
+          status: lumaEventGuests.status,
+          registered_at: lumaEventGuests.registeredAt,
+          checked_in_at: lumaEventGuests.checkedInAt,
+          answers: lumaEventGuests.answers,
+        })
+        .from(lumaEventGuests)
+        .innerJoin(lumaEvents, eq(lumaEvents.id, lumaEventGuests.lumaEventId))
+        .where(eq(lumaEventGuests.contactId, id))
+        .orderBy(desc(lumaEvents.startsAt));
+      return NextResponse.json({ data: [{ ...rows[0], events }] });
+    }
+
     return NextResponse.json({ data: rows });
   } catch (err) {
     return handleApiError(err, "api/community-contacts GET");
@@ -178,6 +197,15 @@ export async function POST(request: Request) {
                           coalesce(excluded.source, '{}'::text[])
                         ))
                       )`),
+                    ];
+                  }
+                  // `metadata` is merged key by key, so a CSV's columns never wipe
+                  // the structured `intel` the Luma import wrote.
+                  if (col === "metadata") {
+                    return [
+                      col,
+                      sql.raw(`coalesce("community_contacts".metadata, '{}'::jsonb) ||
+                        coalesce(excluded.metadata, '{}'::jsonb)`),
                     ];
                   }
                   return [

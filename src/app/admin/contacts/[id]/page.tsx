@@ -6,7 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { fetchContact, createContact, updateContact } from "@/lib/contacts-client";
+import { fetchContact, createContact, updateContact, type ContactEvent, type ContactIntel } from "@/lib/contacts-client";
+import { ContactIntelPanel } from "@/components/admin/ContactIntelPanel";
 import { fetchProfile } from "@/lib/profiles-client";
 import { useAuth } from "@/context/AuthContext";
 
@@ -60,6 +61,8 @@ export default function ContactEditPage() {
 
   const [form, setForm] = useState<ContactForm>(emptyForm);
   const [metadata, setMetadata] = useState<Record<string, string> | null>(null);
+  const [intel, setIntel] = useState<ContactIntel | undefined>();
+  const [events, setEvents] = useState<ContactEvent[] | undefined>();
   const [matchedProfile, setMatchedProfile] = useState<MatchedProfile | null>(null);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -96,9 +99,14 @@ export default function ContactEditPage() {
         website: data.website || "",
       });
 
-      if (data.metadata && Object.keys(data.metadata).length > 0) {
-        setMetadata(data.metadata);
-      }
+      // Plain CSV columns go in "Additional Data"; the nested `intel` object
+      // gets its own panel.
+      const extra = Object.fromEntries(
+        Object.entries(data.metadata ?? {}).filter((e): e is [string, string] => typeof e[1] === "string"),
+      );
+      if (Object.keys(extra).length > 0) setMetadata(extra);
+      setIntel(data.metadata?.intel);
+      setEvents(data.events);
 
       if (data.matched_profile_id) {
         const profile = await fetchProfile(data.matched_profile_id);
@@ -231,6 +239,8 @@ export default function ContactEditPage() {
           {error}
         </div>
       )}
+
+      <ContactIntelPanel intel={intel} events={events} />
 
       <form onSubmit={handleSubmit}>
         <Card className="p-6 space-y-6">

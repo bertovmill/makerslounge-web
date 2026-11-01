@@ -98,9 +98,11 @@ export default function CommunityProfilePage() {
   // Collect registration answers from metadata for display
   const interestingMeta = contact.metadata
     ? Object.entries(contact.metadata).filter(
-        ([k]) =>
+        (e): e is [string, string] =>
+          // Strings only: the nested `intel` object is not a registration answer.
+          typeof e[1] === "string" &&
           !["ticket_name", "ticket_type", "referral_source", "how did you hear about the event?"].includes(
-            k.toLowerCase()
+            e[0].toLowerCase()
           )
       )
     : [];

@@ -27,12 +27,47 @@ export interface CommunityContact {
   matched_profile_id: string | null;
   matched_at: string | null;
   /**
-   * jsonb. Read as a flat string map — that is what the CSV importers write, and the
-   * admin table indexes into it by key.
+   * jsonb. Mostly a flat string map (the CSV importers' extra columns), plus one
+   * object under `intel` from the Luma import (`ContactIntel`). Check a value is a
+   * string before rendering it.
    */
-  metadata: Record<string, string> | null;
+  metadata: (Record<string, unknown> & { intel?: ContactIntel }) | null;
   created_at: string | null;
   updated_at: string | null;
+  /** Luma event history. Only on a single-contact read by an admin. */
+  events?: ContactEvent[];
+}
+
+/** What `scripts/import-luma-guests.mts` and `structure-people-intel.mts` write. */
+export interface ContactIntel {
+  phase?: string;
+  industry?: string;
+  city?: string;
+  country?: string;
+  how_heard?: string[];
+  last_event_at?: string;
+  structured?: {
+    summary: string;
+    roles: string[];
+    skills: string[];
+    can_help_with: string[];
+    needs_help_with: string[];
+    projects: { name: string; description: string; url: string | null; stage: string | null }[];
+    domains: string[];
+    tools: string[];
+    model: string;
+    structured_at: string;
+  };
+}
+
+export interface ContactEvent {
+  name: string;
+  starts_at: string | null;
+  luma_url: string;
+  status: "approved" | "invited" | "waitlist" | "pending_approval" | "declined" | string;
+  registered_at: string | null;
+  checked_in_at: string | null;
+  answers: Record<string, string>;
 }
 
 export async function fetchContacts(
