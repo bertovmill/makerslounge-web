@@ -210,7 +210,7 @@ export default function ConversationPage() {
   const profileHref = otherUser?.username ? `/p/${otherUser.username}` : `/profile/${otherUser?.id}`;
 
   return (
-    <div className="max-w-lg mx-auto flex flex-col h-[calc(100dvh-2.75rem-env(safe-area-inset-top,0px))] md:h-[calc(100dvh-3.5rem)]">
+    <div className="max-w-lg mx-auto flex flex-col h-[calc(100dvh-2.75rem-env(safe-area-inset-top,0px))] md:h-[calc(100dvh-4rem)]">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
         <button

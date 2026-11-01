@@ -204,7 +204,7 @@ export default function AdminLayout({
       {/* Secondary Admin Sidebar - Collapsible */}
       <aside
         className={cn(
-          "border-r border-border bg-card/95 backdrop-blur-sm fixed top-0 bottom-0 hidden md:block z-40 overflow-y-auto transition-all duration-300 ease-in-out",
+          "border-r border-border bg-card/95 backdrop-blur-sm fixed top-0 md:top-2 md:rounded-tl-xl bottom-0 hidden md:block z-40 overflow-y-auto transition-all duration-300 ease-in-out",
           isOpen ? "w-48 opacity-100" : "w-0 opacity-0 overflow-hidden"
         )}
         style={{ left: "var(--sidebar-width, 15rem)" }}

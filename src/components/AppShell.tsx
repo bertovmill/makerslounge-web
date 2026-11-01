@@ -28,9 +28,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return <main>{children}</main>;
   }
 
+  // Shopify-admin frame: on desktop the page sits on a raised panel inset
+  // from the sidebar's frame colour, rounded where it meets it.
   return (
-    <main className={`app-main ${collapsed ? "md:ml-16" : "md:ml-60"} transition-[margin] duration-200 ease-in-out`}>
-      {children}
-    </main>
+    <div className="min-h-svh md:bg-[var(--frame)] md:pt-2 md:pr-2">
+      <main
+        className={`app-main ${collapsed ? "md:ml-16" : "md:ml-60"} md:min-h-[calc(100svh-0.5rem)] md:rounded-t-xl md:overflow-clip md:border md:border-b-0 md:border-[var(--frame-edge)] md:bg-background md:shadow-[var(--frame-panel-shadow)] transition-[margin] duration-200 ease-in-out`}
+      >
+        {children}
+      </main>
+    </div>
   );
 }
