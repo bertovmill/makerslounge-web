@@ -119,8 +119,8 @@ async function main() {
   }
 
   // ---- rewrite the URLs stored in Neon --------------------------------------
-  // Only these four columns hold storage URLs; found by scanning every text and
-  // text[] column in the schema for '%supabase.co/storage%'.
+  // Only these five columns hold storage URLs; found by scanning every text,
+  // text[] and jsonb column in the schema for '%supabase.co/storage%'.
   // `hackathon_submissions.file_urls` deliberately is NOT here: it stores object
   // *paths*, not URLs, and those paths are still the Blob keys.
   console.log("\nrewriting stored URLs");
@@ -142,6 +142,10 @@ async function main() {
       sql`update makerslounge.projects
              set media_urls = array_replace(media_urls, ${oldUrl}, ${newUrl})
            where ${oldUrl} = any(media_urls) returning id`,
+      // A meetup's participant snapshot copies each person's photo URL into jsonb.
+      sql`update makerslounge.meetups
+             set participants = replace(participants::text, ${oldUrl}, ${newUrl})::jsonb
+           where strpos(participants::text, ${oldUrl}) > 0 returning id`,
     ]);
 
     rewrites += updated.reduce((n, rows) => n + rows.length, 0);
@@ -153,7 +157,9 @@ async function main() {
       (select count(*) from makerslounge.feedback where screenshot_url like '%supabase.co/storage%') +
       (select count(*) from makerslounge.podcasts where audio_url like '%supabase.co/storage%') +
       (select count(*) from makerslounge.projects
-         where array_to_string(media_urls, ',') like '%supabase.co/storage%')
+         where array_to_string(media_urls, ',') like '%supabase.co/storage%') +
+      (select count(*) from makerslounge.meetups
+         where participants::text like '%supabase.co/storage%')
     )::int as remaining`;
 
   console.log(`rewrote ${rewrites} rows; ${remaining} Supabase URLs remain`);
