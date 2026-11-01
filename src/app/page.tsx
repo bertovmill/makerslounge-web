@@ -6,7 +6,7 @@ import Image from "next/image";
 import { fetchPosts } from "@/lib/blog-list-client";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
-import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, ArrowUpRight, Instagram, Linkedin, Menu, X, Mic, Play, BookOpen } from "lucide-react";
+import { Sun, Moon, ArrowUp, Users, Sparkles, Calendar, Briefcase, ChevronRight, ArrowRight, ArrowUpRight, Instagram, Linkedin, Menu, X, Mic, Play, BookOpen, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import NewsletterPopup, { OPEN_NEWSLETTER_EVENT } from "@/components/NewsletterPopup";
@@ -15,6 +15,16 @@ import { NextEventCard } from "@/components/landing/NextEventCard";
 import { MobileEventBar } from "@/components/landing/MobileEventBar";
 import { PhotoMarquee } from "@/components/landing/PhotoMarquee";
 import { LUMA_CALENDAR_URL, type LumaSummary } from "@/lib/luma-events";
+import LogoContextMenu from "@/components/LogoContextMenu";
+import { LOGO_MARKS, SOCIAL_ASSETS } from "@/lib/brand-assets";
+
+// The plain logo marks, one row per colour with its SVG and PNG side by side.
+const LOGO_MARK_GROUPS = Object.values(
+  LOGO_MARKS.reduce<Record<string, { label: string; files: typeof LOGO_MARKS }>>((groups, file) => {
+    (groups[file.label] ??= { label: file.label, files: [] }).files.push(file);
+    return groups;
+  }, {})
+);
 
 const openNewsletterPopup = () => {
   window.dispatchEvent(new CustomEvent(OPEN_NEWSLETTER_EVENT));
@@ -310,10 +320,12 @@ export default function Home() {
         <HeroPhotos />
 
         <header className="relative z-20 mx-auto flex w-full max-w-[1200px] items-center justify-between px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-8 sm:pt-6">
-          <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-            <Image src="/logos/logo-light.svg" alt="MakersLounge" width={20} height={21} />
-            <span className="text-lg font-medium tracking-tight">makerslounge</span>
-          </Link>
+          <LogoContextMenu>
+            <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+              <Image src="/logos/logo-light.svg" alt="MakersLounge" width={20} height={21} />
+              <span className="text-lg font-medium tracking-tight">makerslounge</span>
+            </Link>
+          </LogoContextMenu>
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-1 md:flex">
@@ -766,11 +778,13 @@ export default function Home() {
       <footer className="border-t border-border px-5 pb-28 pt-10 sm:px-8 md:pb-10">
         <div className="mx-auto flex max-w-[1200px] flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <Link href="/" className="inline-flex items-center gap-2 transition-opacity hover:opacity-70">
-              <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
-              <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
-              <span className="font-medium tracking-tight">makerslounge</span>
-            </Link>
+            <LogoContextMenu>
+              <Link href="/" className="inline-flex items-center gap-2 transition-opacity hover:opacity-70">
+                <Image src="/logos/logo.svg" alt="MakersLounge" width={18} height={19} className="dark:hidden" />
+                <Image src="/logos/logo-light.svg" alt="MakersLounge" width={18} height={19} className="hidden dark:block" />
+                <span className="font-medium tracking-tight">makerslounge</span>
+              </Link>
+            </LogoContextMenu>
             <p className="mt-1 text-sm text-muted-foreground">Build. Connect. Create.</p>
           </div>
 
@@ -785,6 +799,39 @@ export default function Home() {
             <a href="https://linkedin.com/company/makerslounge" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="transition-colors hover:text-foreground">
               <Linkedin className="h-4 w-4" />
             </a>
+          </div>
+        </div>
+        {/* Logo files, also behind a right-click on any logo. /brand redirects here. */}
+        <div id="logo-downloads" className="mx-auto mt-8 max-w-[1200px] scroll-mt-8 border-t border-border pt-6">
+          <p className="text-sm font-medium">Logo downloads</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Or right-click any MakersLounge logo.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {LOGO_MARK_GROUPS.map(({ label, files }) => (
+              <div key={label} className="inline-flex items-center gap-1 rounded-full border border-border py-1 pl-3 pr-1 text-xs">
+                <span className="mr-1 text-foreground/80">{label}</span>
+                {files.map((file) => (
+                  <a
+                    key={file.href}
+                    href={file.href}
+                    download={file.filename}
+                    className="rounded-full px-2 py-0.5 font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    {file.format}
+                  </a>
+                ))}
+              </div>
+            ))}
+            {SOCIAL_ASSETS.map((asset) => (
+              <a
+                key={asset.href}
+                href={asset.href}
+                download={asset.filename}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <Download className="h-3 w-3 text-muted-foreground" />
+                {asset.label}
+              </a>
+            ))}
           </div>
         </div>
         <p className="mx-auto mt-8 max-w-[1200px] text-xs text-muted-foreground/70">

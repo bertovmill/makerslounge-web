@@ -338,6 +338,11 @@ never reach production.
 - `logos/logo-instagram.png` / `logos/logo-instagram.svg` — Instagram profile logo
 - `logos/linkedin-banner.png` / `logos/linkedin-banner.svg` — LinkedIn banner
 
+**Public logo downloads** (Nov 2026): right-clicking any MakersLounge logo opens
+`LogoContextMenu` (copy SVG, download each variant), and the landing footer has
+the same files at `/#logo-downloads`. The list lives in `src/lib/brand-assets.ts`.
+The old `/brand` page is gone; it redirects to that footer.
+
 **Brand colors**: Blue gradient (#6AC4F7 → #3A9FF3 → #1A7DE8), white text/logo
 
 **Makerslounge logo SVG path**: The "M" flame mark path data is stored in the Luma cover SVG template at `/maker-mondays-cover.svg` in the project root (used by the scheduled task).
