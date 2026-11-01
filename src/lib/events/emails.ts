@@ -178,3 +178,48 @@ export async function sendReminderBatch<T extends OutgoingEmail>(emails: T[]) {
   }
   return { sent, failed };
 }
+
+export interface HostMessage {
+  name: string;
+  email: string;
+  message: string;
+}
+
+/**
+ * Forward a "Contact the host" message. Reply-To is the guest, so the host
+ * answers straight from their inbox and the guest never sees the host's address
+ * until they do. Unlike the RSVP emails this one is the whole point of the
+ * request, so it reports failure instead of swallowing it.
+ */
+export async function sendHostMessage(event: PublicEvent, to: string, msg: HostMessage) {
+  const client = resendClient();
+  if (!client) {
+    console.warn("[events] Resend env vars missing, skipping host message");
+    return false;
+  }
+  const pageUrl = `${SITE_URL}${eventPath(event)}`;
+  const text = [
+    `${msg.name} (${msg.email}) sent a message about ${event.title}:`,
+    "",
+    msg.message,
+    "",
+    `Reply to this email to answer them. Event page: ${pageUrl}`,
+  ].join("\n");
+  try {
+    const { error } = await client.resend.emails.send({
+      from: client.from,
+      to,
+      replyTo: `${msg.name} <${msg.email}>`,
+      subject: `Question about ${event.title} from ${msg.name}`,
+      text,
+    });
+    if (error) {
+      console.error("[events] host message failed:", error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[events] host message failed:", err);
+    return false;
+  }
+}

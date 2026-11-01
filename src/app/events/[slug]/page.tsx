@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ArrowLeft, ArrowUpRight, MapPin, Repeat } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, ChevronRight, Globe, Instagram, Linkedin, MapPin, Repeat, Slack } from "lucide-react";
 import { formatEventDateTile, formatEventDay, formatEventTimes } from "@/lib/events/format";
 import {
   getEventBySlugOrId,
@@ -12,6 +12,8 @@ import {
   listGuestFirstNames,
   topUpSeriesOccurrences,
 } from "@/lib/events/server";
+import { HOSTS, PRESENTER, type SocialLink } from "@/lib/events/hosts";
+import { ContactHost } from "./ContactHost";
 import { RsvpPanel } from "./RsvpPanel";
 
 /**
@@ -69,18 +71,104 @@ function guestLine(names: string[]) {
 const FACE_TINTS = ["bg-sky-100 text-sky-800", "bg-amber-100 text-amber-800", "bg-rose-100 text-rose-800", "bg-emerald-100 text-emerald-800", "bg-violet-100 text-violet-800"];
 const tintFor = (name: string) => FACE_TINTS[[...name].reduce((n, c) => n + c.charCodeAt(0), 0) % FACE_TINTS.length];
 
-function HostsAndGuests({ guests, ended }: { guests: string[]; ended: boolean }) {
+const SOCIAL_LABELS: Record<SocialLink["kind"], string> = {
+  instagram: "Instagram",
+  x: "X",
+  linkedin: "LinkedIn",
+  slack: "Slack",
+  website: "Website",
+};
+
+/** X's mark. Lucide only ships the old bird. */
+function XIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.77L17.75 3Zm-1.08 16.17h1.7L7.4 4.73H5.58l11.09 14.44Z" />
+    </svg>
+  );
+}
+
+function SocialIcons({ links, size = "size-4" }: { links: SocialLink[]; size?: string }) {
+  const icon = (kind: SocialLink["kind"]) => {
+    switch (kind) {
+      case "instagram":
+        return <Instagram className={size} />;
+      case "x":
+        return <XIcon className={size} />;
+      case "linkedin":
+        return <Linkedin className={size} />;
+      case "slack":
+        return <Slack className={size} />;
+      case "website":
+        return <Globe className={size} />;
+    }
+  };
+  return (
+    <div className="flex items-center gap-3">
+      {links.map((link) => (
+        <a
+          key={link.href}
+          href={link.href}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={SOCIAL_LABELS[link.kind]}
+          title={SOCIAL_LABELS[link.kind]}
+          className="text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {icon(link.kind)}
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function LogoMark({ size }: { size: "sm" | "lg" }) {
+  const box = size === "lg" ? "size-10 rounded-lg" : "size-7 rounded-full";
+  const [w, h] = size === "lg" ? [20, 21] : [14, 15];
+  return (
+    <span className={`flex shrink-0 items-center justify-center bg-secondary ${box}`}>
+      <Image src="/logos/logo.svg" alt="" width={w} height={h} className="dark:hidden" />
+      <Image src="/logos/logo-light.svg" alt="" width={w} height={h} className="hidden dark:block" />
+    </span>
+  );
+}
+
+function HostsAndGuests({ eventId, guests, ended }: { eventId: string; guests: string[]; ended: boolean }) {
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
-        <SectionLabel>Hosted by</SectionLabel>
-        <div className="flex items-center gap-2.5">
-          <span className="flex size-7 items-center justify-center rounded-full bg-secondary">
-            <Image src="/logos/logo.svg" alt="" width={14} height={15} className="dark:hidden" />
-            <Image src="/logos/logo-light.svg" alt="" width={14} height={15} className="hidden dark:block" />
+        <Link href={PRESENTER.href} className="group flex items-center gap-3">
+          <LogoMark size="lg" />
+          <span className="flex flex-col">
+            <span className="text-xs text-muted-foreground">Presented by</span>
+            <span className="flex items-center gap-0.5 font-medium">
+              {PRESENTER.name}
+              <ChevronRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+            </span>
           </span>
-          <span className="text-sm font-medium">MakersLounge</span>
-        </div>
+        </Link>
+        <SocialIcons links={PRESENTER.socials} />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <SectionLabel>Hosted by</SectionLabel>
+        <ul className="flex flex-col gap-3">
+          {HOSTS.map((host) => (
+            <li key={host.name} className="flex items-center justify-between gap-3">
+              <span className="flex items-center gap-2.5">
+                <Image
+                  src={host.photo}
+                  alt=""
+                  width={28}
+                  height={28}
+                  className="size-7 rounded-full object-cover"
+                />
+                <span className="text-sm font-medium">{host.name}</span>
+              </span>
+              <SocialIcons links={host.socials} size="size-3.5" />
+            </li>
+          ))}
+        </ul>
       </section>
 
       {guests.length > 0 && (
@@ -107,6 +195,8 @@ function HostsAndGuests({ guests, ended }: { guests: string[]; ended: boolean })
           <p className="text-sm text-muted-foreground">{guestLine(guests)}</p>
         </section>
       )}
+
+      <ContactHost eventId={eventId} />
     </div>
   );
 }
@@ -164,7 +254,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             />
           </div>
           <div className="hidden md:block">
-            <HostsAndGuests guests={guests} ended={ended} />
+            <HostsAndGuests eventId={event.id} guests={guests} ended={ended} />
           </div>
         </div>
 
@@ -273,7 +363,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           )}
 
           <div className="md:hidden">
-            <HostsAndGuests guests={guests} ended={ended} />
+            <HostsAndGuests eventId={event.id} guests={guests} ended={ended} />
           </div>
         </div>
       </div>
