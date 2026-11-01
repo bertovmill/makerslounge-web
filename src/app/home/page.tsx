@@ -23,7 +23,7 @@ function HomeContent() {
   // status are resolved server-side from the Clerk cookie in the agent's own
   // `channels/eve.ts`, never from anything this component could pass.
   return (
-    <div className="max-md:h-[calc(100dvh-2.75rem-50px-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] md:h-dvh overflow-hidden">
+    <div className="max-md:h-[calc(100dvh-2.75rem-50px-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] md:h-[calc(100dvh-0.5rem)] overflow-hidden">
       <MatcherChat initialQuery={initialQuery} />
     </div>
   );
