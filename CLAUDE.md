@@ -66,6 +66,23 @@ MakersLounge is a Next.js 16 app for connecting makers/builders. It uses the App
 - `/admin/events` - Create events and weekly series; `/admin/events/<id>/guests` is the guest list
 - `/admin/tasks` - MakersLounge to-do list (table `admin_tasks`, migration `0011`, API `/api/admin/tasks`). Done = `completed_at` set; open tasks sort by due date then priority (`src/lib/admin-tasks.ts`)
 
+### Luma guest history (`luma_events`, `luma_event_guests`, Nov 2026)
+
+Every guest of every past Luma event lives in Neon (migration `0013`), imported
+from Luma's guest CSVs by `scripts/import-luma-guests.mts` (header comment has
+the command). One row per person per event, linked to `community_contacts` by
+email.
+
+- **Everyone is kept, invitees too**: they are the invite pool. Only
+  `status = 'approved'` means registered; most rows are `invited`. The older
+  `community_contacts.source` tags never made that distinction.
+- **Form answers become structured intel** on the contact,
+  `metadata -> 'intel'` (projects, superpowers, needs, phase, company, role,
+  linkedin, …), mapped from each event's question wording by `QUESTION_FIELDS`.
+  The raw answers stay on the guest row. Berto's view: this people data is the
+  part no AI model has, so enrich it rather than trim it.
+- Contact columns are only filled when empty; re-running the import is safe.
+
 ### In-house events (`/events`, Oct 2026)
 
 Makerslounge runs its own events instead of Luma: event pages, RSVP and guest

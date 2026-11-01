@@ -324,6 +324,52 @@ export const eventRsvps = makerslounge.table("event_rsvps", {
 		}).onDelete("set null"),
 ]);
 
+export const lumaEvents = makerslounge.table("luma_events", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	name: text().notNull(),
+	startsAt: timestamp("starts_at", { withTimezone: true, mode: 'string' }),
+	endsAt: timestamp("ends_at", { withTimezone: true, mode: 'string' }),
+	location: text(),
+	lumaUrl: text("luma_url").notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	unique("luma_events_luma_url_key").on(table.lumaUrl),
+]);
+
+export const lumaEventGuests = makerslounge.table("luma_event_guests", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	lumaEventId: uuid("luma_event_id").notNull(),
+	contactId: uuid("contact_id"),
+	lumaGuestId: text("luma_guest_id"),
+	email: text().notNull(),
+	name: text(),
+	status: text().notNull(),
+	registeredAt: timestamp("registered_at", { withTimezone: true, mode: 'string' }),
+	checkedInAt: timestamp("checked_in_at", { withTimezone: true, mode: 'string' }),
+	ticketName: text("ticket_name"),
+	referrer: text(),
+	referredBy: text("referred_by"),
+	utmSource: text("utm_source"),
+	surveyRating: smallint("survey_rating"),
+	surveyFeedback: text("survey_feedback"),
+	answers: jsonb().default({}).notNull(),
+	importedAt: timestamp("imported_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("luma_event_guests_contact_idx").using("btree", table.contactId.asc().nullsLast().op("uuid_ops")),
+	index("luma_event_guests_email_idx").using("btree", table.email.asc().nullsLast().op("text_ops")),
+	unique("luma_event_guests_luma_event_id_email_key").on(table.lumaEventId, table.email),
+	foreignKey({
+			columns: [table.lumaEventId],
+			foreignColumns: [lumaEvents.id],
+			name: "luma_event_guests_luma_event_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.contactId],
+			foreignColumns: [communityContacts.id],
+			name: "luma_event_guests_contact_id_fkey"
+		}).onDelete("set null"),
+]);
+
 export const workshops = makerslounge.table("workshops", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	title: text().notNull(),
