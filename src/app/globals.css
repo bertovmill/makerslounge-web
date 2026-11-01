@@ -12,7 +12,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-figtree);
+  --font-display: var(--font-geist-serif-regular);
   --font-serif: var(--font-instrument-serif);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -30,11 +30,9 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  /* Editorial motif: shapes are hard-edged. Radii are flattened across the
-     whole scale so existing rounded-2xl/3xl usage becomes crisp automatically.
-     rounded-full is deliberately untouched — circles are part of the motif.
-     Routed through vars so `.eve-workshop` can restore a rounded scale for the
-     workshop's shadcn components without touching the rest of the site. */
+  /* Radii come from the --r-* scale on :root, so every rounded-* class
+     follows it. Routed through vars so `.eve-workshop` can keep its own scale
+     for the workshop's shadcn components without touching the rest of the site. */
   --radius-sm: var(--r-sm);
   --radius-md: var(--r-md);
   --radius-lg: var(--r-lg);
@@ -44,6 +42,20 @@
   --radius-4xl: var(--r-4xl);
   --animate-aurora: aurora 60s linear infinite;
   --animate-twinkle: twinkle 4s ease-in-out infinite;
+}
+
+/* Text runs a step larger than Tailwind's defaults (Nov 2026: "bigger,
+   friendlier"). Body copy is 17px like iOS; text-sm is 15px, text-xs 13px.
+   Only the type scale moves, so spacing and layout stay put. */
+@theme {
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.4;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.45;
+  --text-base: 1.0625rem;
+  --text-base--line-height: 1.55;
+  --text-lg: 1.1875rem;
+  --text-lg--line-height: 1.5;
 }
 
 @keyframes aurora {
@@ -60,21 +72,22 @@
 
    Oct 2026: the flat editorial look (hard corners, offset ink shadows,
    grain) read as boxy and cartoony, so radii are back to soft and shadows
-   are low and diffuse. Gradients still survive only as token aliases so
+   are low and diffuse. Nov 2026: rounder still, closer to iOS and the
+   Shopify admin (inputs and buttons 10px, cards 18px). Gradients still survive only as token aliases so
    legacy `.bg-gradient-blue*` usage keeps rendering as flat fills.
    ============================================================ */
 
 :root {
-  --radius: 10px;
+  --radius: 14px;
 
   /* Radius scale — consumed by `@theme inline` above. */
-  --r-sm: 6px;
-  --r-md: 8px;
+  --r-sm: 8px;
+  --r-md: 10px;
   --r-lg: var(--radius);
-  --r-xl: 14px;
-  --r-2xl: 18px;
-  --r-3xl: 24px;
-  --r-4xl: 32px;
+  --r-xl: 18px;
+  --r-2xl: 22px;
+  --r-3xl: 28px;
+  --r-4xl: 36px;
 
   /* --- Flat palette --- */
   --paper: #FBF8F2;   /* warm ground, kept light for readability */
@@ -232,20 +245,25 @@
 
 /* --- Global polish --- */
 
-/* Headings use Figtree — a warm, open grotesk set heavy and tight. The
-   next/font variable classes live on <html> (not <body>) so the @theme-derived
-   --font-display resolves at :root; keep them there, or this declaration
-   silently invalidates and headings fall back to Geist Sans. */
+/* Headings use Geist Serif. The next/font variable classes live on <html>
+   (not <body>) so the @theme-derived --font-display resolves at :root; keep
+   them there, or this declaration silently invalidates and headings fall back
+   to Geist Sans. The face has one weight, so font-synthesis is off: a
+   font-bold on a heading renders at 400 instead of a smeared fake bold. */
 h1, h2, h3 {
-  font-family: var(--font-display), system-ui, sans-serif;
-  letter-spacing: -0.03em;
-  font-weight: 700;
-  line-height: 1.05;
+  font-family: var(--font-display), Georgia, serif;
+  letter-spacing: -0.015em;
+  font-weight: 400;
+  line-height: 1.1;
   text-wrap: balance;
 }
 
+h1, h2, h3, .font-display {
+  font-synthesis: none;
+}
+
 /* The Eve workshop is a walled garden and keeps the serif headings it shipped
-   with; the Figtree swap above is for the rest of the site. */
+   with; the Geist Serif rule above is for the rest of the site. */
 body:has(.eve-workshop) :is(h1, h2, h3) {
   font-family: var(--font-serif), Georgia, serif;
   letter-spacing: -0.02em;
@@ -326,7 +344,7 @@ html {
 /* iOS grouped section */
 .ios-group {
   background: var(--card);
-  border-radius: 0.75rem;
+  border-radius: var(--r-xl);
   overflow: hidden;
 }
 
@@ -346,7 +364,7 @@ html {
 .ios-search {
   background: var(--secondary);
   border: none;
-  border-radius: 0.625rem;
+  border-radius: var(--r-md);
   height: 2.25rem;
   padding-left: 2rem;
   padding-right: 0.75rem;

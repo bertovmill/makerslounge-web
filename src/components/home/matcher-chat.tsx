@@ -227,6 +227,7 @@ export function MatcherChat({ initialQuery }: { initialQuery?: string | null }) 
   const composer = (
     <PromptInput
       accept={ACCEPTED_FILES}
+      className="[&_[data-slot=input-group]]:rounded-2xl"
       maxFileSize={MAX_FILE_SIZE}
       maxFiles={MAX_FILES}
       multiple
