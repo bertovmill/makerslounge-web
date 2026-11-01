@@ -117,9 +117,11 @@ lists live in the site. Tables are `events`, `event_series` and `event_rsvps`
 - **Cael (Berto's agent) is an admin.** It calls with `Authorization: Bearer
   <CAEL_ADMIN_TOKEN>` (env on Vercel and in Cael as `MAKERSLOUNGE_ADMIN_TOKEN`);
   `requireAdmin()`/`isAdmin()` in `src/lib/api/auth.ts` accept it as the admin
-  account, resolving Berto's profile through Clerk. `GET /api/admin/events`
-  (events with RSVP counts plus totals) is its read path. There is no check-in
-  yet, so `check_ins` is `null`, meaning unknown, not zero.
+  account, resolving Berto's profile through Clerk. `GET /api/admin/events` is
+  its read path: in-house events (`source: "site"`) and imported Luma history
+  (`source: "luma"`, RSVPs = `approved` guests) in one list, with turnout and
+  community totals. In-house events have no check-in yet, so their `check_ins`
+  is `null`, meaning unknown, not zero.
 - `GET /api/events` returns the snake_case `PublicEvent` shape from
   `src/lib/events/format.ts`. Times display in `America/Toronto` regardless of
   the viewer's timezone.

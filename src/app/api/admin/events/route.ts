@@ -5,15 +5,19 @@ import { requireAdmin } from "@/lib/api/auth";
 import { handleApiError } from "@/lib/api/respond";
 
 /**
- * Events with their RSVP counts, plus community totals. Admin-only, and built
- * for Cael (Berto's agent), which reads it with its admin token.
+ * Every MakersLounge event with its turnout, plus community totals. Admin-only,
+ * and built for Cael (Berto's agent), which reads it with its admin token.
  *
  * `GET /api/admin/events?when=upcoming|past|all&limit=20`
  *
- * Check-ins are `null`, not 0: the site has no check-in yet, so show-up is
- * unknown rather than nobody. Counts only; guest names and emails stay at
- * `/api/events/<id>/rsvps`. Read-only: it skips the series top-up that public
- * reads run, so it never writes.
+ * Two sources, one list. `source: "site"` is an in-house event (`events`, RSVPs
+ * in `event_rsvps`); `source: "luma"` is a past Luma event imported into
+ * `luma_events` / `luma_event_guests`, where only `status = 'approved'` counts
+ * as an RSVP (most rows are invitees). Site events have no check-in yet, so
+ * their `check_ins` is `null`, meaning unknown, not zero.
+ *
+ * Counts only; guest names and emails stay at `/api/events/<id>/rsvps`.
+ * Read-only: it skips the series top-up that public reads run, so it never writes.
  */
 
 export const dynamic = "force-dynamic";
@@ -27,18 +31,33 @@ export async function GET(request: NextRequest) {
     const db = getSiteDb();
 
     // Upcoming = hasn't ended yet, soonest first; past = ended, latest first.
+    // A Luma event with no end time counts as ended once it has started.
     const filter =
-      when === "past" ? sql`WHERE e.end_time < now()` : when === "all" ? sql`` : sql`WHERE e.end_time >= now()`;
-    const order = when === "upcoming" ? sql`ORDER BY e.start_time ASC` : sql`ORDER BY e.start_time DESC`;
+      when === "past" ? sql`WHERE end_time < now()` : when === "all" ? sql`` : sql`WHERE end_time >= now()`;
+    const order = when === "upcoming" ? sql`ORDER BY start_time ASC` : sql`ORDER BY start_time DESC`;
 
     const events = await db.execute(sql`
-      SELECT e.id, e.slug, e.title,
-             to_char(e.start_time AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS start_time,
-             to_char(e.end_time AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS end_time,
-             e.location, e.capacity, s.slug AS series_slug,
-             (SELECT count(*)::int FROM makerslounge.event_rsvps r WHERE r.event_id = e.id) AS rsvps
-      FROM makerslounge.events e
-      LEFT JOIN makerslounge.event_series s ON s.id = e.series_id
+      SELECT source, id, slug, title,
+             to_char(start_time AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS start_time,
+             to_char(end_time AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS end_time,
+             location, capacity, series_slug, url, rsvps, check_ins
+      FROM (
+        SELECT 'site' AS source, e.id::text AS id, e.slug, e.title, e.start_time,
+               e.end_time, e.location, e.capacity, s.slug AS series_slug,
+               'https://makerslounge.ca/events/' || coalesce(e.slug, e.id::text) AS url,
+               (SELECT count(*)::int FROM makerslounge.event_rsvps r WHERE r.event_id = e.id) AS rsvps,
+               NULL::int AS check_ins
+        FROM makerslounge.events e
+        LEFT JOIN makerslounge.event_series s ON s.id = e.series_id
+        UNION ALL
+        SELECT 'luma', l.id::text, NULL, l.name, l.starts_at,
+               coalesce(l.ends_at, l.starts_at), l.location, NULL, NULL, l.luma_url,
+               count(*) FILTER (WHERE g.status = 'approved')::int,
+               count(g.checked_in_at)::int
+        FROM makerslounge.luma_events l
+        LEFT JOIN makerslounge.luma_event_guests g ON g.luma_event_id = l.id
+        GROUP BY l.id
+      ) all_events
       ${filter} ${order}
       LIMIT ${limit}
     `);
@@ -47,22 +66,26 @@ export async function GET(request: NextRequest) {
       await db.execute(sql`
         SELECT
           (SELECT count(*)::int FROM makerslounge.profiles) AS members,
-          (SELECT count(*)::int FROM makerslounge.events) AS events_total,
-          (SELECT count(*)::int FROM makerslounge.events WHERE end_time < now()) AS events_run,
+          (SELECT count(*)::int FROM makerslounge.events WHERE end_time < now()) AS site_events_run,
           (SELECT count(*)::int FROM makerslounge.events WHERE end_time >= now()) AS events_upcoming,
-          (SELECT count(*)::int FROM makerslounge.event_rsvps) AS rsvps_total,
-          (SELECT count(*)::int FROM makerslounge.event_rsvps r
-             JOIN makerslounge.events e ON e.id = r.event_id WHERE e.end_time < now()) AS rsvps_past
+          (SELECT count(*)::int FROM makerslounge.event_rsvps) AS site_rsvps,
+          (SELECT count(*)::int FROM makerslounge.luma_events) AS luma_events,
+          (SELECT count(*)::int FROM makerslounge.luma_event_guests WHERE status = 'approved') AS luma_rsvps,
+          (SELECT count(*)::int FROM makerslounge.luma_event_guests WHERE checked_in_at IS NOT NULL) AS luma_check_ins,
+          (SELECT count(DISTINCT lower(email))::int FROM makerslounge.luma_event_guests WHERE status = 'approved') AS luma_people_registered,
+          (SELECT count(DISTINCT lower(email))::int FROM makerslounge.luma_event_guests WHERE checked_in_at IS NOT NULL) AS luma_people_checked_in
       `)
-    ).rows;
+    ).rows as Record<string, number>[];
 
     return NextResponse.json({
-      totals: { ...totals, check_ins: null },
-      events: events.rows.map((e) => ({
-        ...e,
-        url: `https://makerslounge.ca/events/${e.slug ?? e.id}`,
-        check_ins: null,
-      })),
+      totals: {
+        ...totals,
+        events_run: totals.site_events_run + totals.luma_events,
+        rsvps_total: totals.site_rsvps + totals.luma_rsvps,
+        // Only Luma events record check-ins so far.
+        check_ins: totals.luma_check_ins,
+      },
+      events: events.rows,
     });
   } catch (err) {
     return handleApiError(err, "api/admin/events GET");
