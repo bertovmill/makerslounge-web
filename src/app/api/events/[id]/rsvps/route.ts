@@ -24,6 +24,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         name: eventRsvps.name,
         email: eventRsvps.email,
         building: eventRsvps.building,
+        needs_help: eventRsvps.needsHelp,
+        can_help: eventRsvps.canHelp,
         profile_id: eventRsvps.profileId,
         created_at: eventRsvps.createdAt,
         checked_in_at: eventRsvps.checkedInAt,
