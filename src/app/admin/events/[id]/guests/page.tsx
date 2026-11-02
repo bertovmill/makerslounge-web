@@ -15,6 +15,8 @@ interface Guest {
   name: string;
   email: string | null;
   building: string | null;
+  needs_help: string | null;
+  can_help: string | null;
   profile_id: string | null;
   created_at: string;
   checked_in_at: string | null;
@@ -222,7 +224,15 @@ export default function EventGuestsPage() {
                     {guest.walk_in && <span className="ml-2 text-xs text-muted-foreground">walk-in</span>}
                   </td>
                   <td className="hidden py-3 pr-4 text-muted-foreground sm:table-cell">{guest.email ?? "—"}</td>
-                  <td className="hidden py-3 pr-4 md:table-cell">{guest.building ?? "—"}</td>
+                  <td className="hidden py-3 pr-4 md:table-cell">
+                    {guest.building ?? "—"}
+                    {guest.needs_help && (
+                      <p className="mt-1 text-xs text-muted-foreground">Needs: {guest.needs_help}</p>
+                    )}
+                    {guest.can_help && (
+                      <p className="mt-1 text-xs text-muted-foreground">Can help: {guest.can_help}</p>
+                    )}
+                  </td>
                   <td className="hidden py-3 pr-4 text-muted-foreground sm:table-cell">
                     {new Date(guest.created_at).toLocaleDateString("en-CA", { month: "short", day: "numeric" })}
                   </td>

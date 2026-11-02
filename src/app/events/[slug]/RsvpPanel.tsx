@@ -23,6 +23,8 @@ export function RsvpPanel({ event, pageUrl, ended }: { event: PublicEvent; pageU
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [building, setBuilding] = useState("");
+  const [needsHelp, setNeedsHelp] = useState("");
+  const [canHelp, setCanHelp] = useState("");
   const [going, setGoing] = useState(event.going);
   const [rsvpedAs, setRsvpedAs] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -47,7 +49,7 @@ export function RsvpPanel({ event, pageUrl, ended }: { event: PublicEvent; pageU
       const res = await fetch(`/api/events/${event.id}/rsvp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, building }),
+        body: JSON.stringify({ name, email, building, needsHelp, canHelp }),
       });
       const body = (await res.json().catch(() => ({}))) as { going?: number; detail?: string };
       if (!res.ok) {
@@ -150,12 +152,28 @@ export function RsvpPanel({ event, pageUrl, ended }: { event: PublicEvent; pageU
               maxLength={280}
               onChange={(e) => setBuilding(e.target.value)}
             />
+            <Textarea
+              rows={2}
+              className="min-h-0 resize-none rounded-2xl px-4 py-2.5"
+              placeholder="What do you need help with right now? (optional)"
+              value={needsHelp}
+              maxLength={280}
+              onChange={(e) => setNeedsHelp(e.target.value)}
+            />
+            <Textarea
+              rows={2}
+              className="min-h-0 resize-none rounded-2xl px-4 py-2.5"
+              placeholder="What could you help other makers with? (optional)"
+              value={canHelp}
+              maxLength={280}
+              onChange={(e) => setCanHelp(e.target.value)}
+            />
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" disabled={submitting} className="h-11 w-full rounded-full">
               {submitting ? "Saving…" : "I'm going"}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              We group intros by what you&apos;re building. Your email is only used for this event.
+              We group intros by what you&apos;re building and pair people who can help each other. Your email is only used for this event.
             </p>
           </form>
         )}
