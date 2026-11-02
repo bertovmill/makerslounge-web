@@ -3,12 +3,13 @@ import { getServerAppUser } from "@/lib/clerk-server";
 import { eq } from "drizzle-orm";
 import { getSiteDb } from "@/db/site";
 import { profiles } from "@/db/site/schema";
-import { generateObject } from "ai";
+import { generateObject, NoObjectGeneratedError, RetryError, APICallError } from "ai";
 import { z } from "zod";
 
 const ADMIN_EMAIL = "bertmill19@gmail.com";
 
-export const maxDuration = 60;
+// A whole-page paste can run long, and 60s cut some of them off mid-answer.
+export const maxDuration = 120;
 
 const linkedinSchema = z.object({
   summary: z
@@ -19,7 +20,7 @@ const linkedinSchema = z.object({
   current_role: z
     .object({
       title: z.string(),
-      company: z.string(),
+      company: z.string().nullable(),
       start_date: z.string().nullable().describe("Month + year if available, e.g. 'Jan 2024'."),
       description: z.string().nullable().describe("Brief description of what they do in this role."),
     })
@@ -28,7 +29,7 @@ const linkedinSchema = z.object({
     .array(
       z.object({
         title: z.string(),
-        company: z.string(),
+        company: z.string().nullable(),
         start_date: z.string().nullable(),
         end_date: z.string().nullable(),
         description: z.string().nullable(),
@@ -52,6 +53,36 @@ const linkedinSchema = z.object({
 });
 
 export type LinkedinData = z.infer<typeof linkedinSchema>;
+
+type EnrichFailure = { code: string; error: string; status: number };
+
+// One generic "failed to parse" hid every cause, from a retired model id to a
+// timeout. This endpoint is admin-only, so the caller also gets the raw detail.
+function describeFailure(error: unknown): EnrichFailure {
+  const cause = RetryError.isInstance(error) ? error.lastError : error;
+  const e = cause as { name?: string; type?: string; statusCode?: number; message?: string };
+  const name = e?.name ?? "";
+
+  if (name === "GatewayModelNotFoundError" || e?.type === "model_not_found") {
+    return { code: "model_unavailable", status: 502, error: "The AI model this uses is no longer available. It needs a code change." };
+  }
+  if (name === "GatewayAuthenticationError" || e?.statusCode === 401) {
+    return { code: "ai_auth", status: 502, error: "The AI Gateway rejected our credentials. Check AI_GATEWAY_API_KEY in Vercel." };
+  }
+  if (name === "GatewayRateLimitError" || e?.statusCode === 429) {
+    return { code: "rate_limited", status: 429, error: "The AI Gateway is rate limiting us. Wait a minute and try again." };
+  }
+  if (NoObjectGeneratedError.isInstance(cause)) {
+    return { code: "bad_output", status: 502, error: "The model answered, but not in the expected shape. Try a shorter paste: just About, Experience and Education." };
+  }
+  if (name === "AbortError" || name === "TimeoutError") {
+    return { code: "timeout", status: 504, error: "Parsing took too long. Try a shorter paste: just About, Experience and Education." };
+  }
+  if (APICallError.isInstance(cause) || name.startsWith("Gateway")) {
+    return { code: "ai_error", status: 502, error: "The AI service returned an error. Try again in a minute." };
+  }
+  return { code: "unknown", status: 500, error: "Something went wrong parsing that paste." };
+}
 
 export async function POST(
   request: NextRequest,
@@ -108,10 +139,15 @@ export async function POST(
     });
     parsed = result.object;
   } catch (error) {
-    console.error("LinkedIn enrichment failed:", error);
+    const failure = describeFailure(error);
+    console.error(`LinkedIn enrichment failed [${failure.code}]:`, error);
     return NextResponse.json(
-      { error: "Failed to parse LinkedIn content. Try pasting more context." },
-      { status: 500 }
+      {
+        error: failure.error,
+        code: failure.code,
+        detail: error instanceof Error ? error.message.slice(0, 500) : String(error).slice(0, 500),
+      },
+      { status: failure.status }
     );
   }
 
@@ -125,6 +161,7 @@ export async function POST(
     return NextResponse.json(
       {
         error: `Nothing in that paste is about ${name}. Copy their own About, Experience and Education sections.`,
+        code: "nothing_found",
       },
       { status: 422 }
     );

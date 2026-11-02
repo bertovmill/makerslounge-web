@@ -45,7 +45,7 @@ import {
 
 interface LinkedinRole {
   title: string;
-  company: string;
+  company: string | null;
   start_date: string | null;
   end_date?: string | null;
   description: string | null;
@@ -433,9 +433,15 @@ export default function ProfileView({ profile: initialProfile }: ProfileViewProp
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ linkedinText: enrichText }),
       });
-      const json = await res.json();
+      // A platform timeout answers with HTML, not JSON.
+      const json = await res.json().catch(() => ({
+        error: `The server answered ${res.status} without details.`,
+        code: res.status === 504 ? "timeout" : "no_body",
+      }));
       if (!res.ok) {
-        setEnrichError(json.error || "Enrichment failed");
+        const code = json.code ? ` (${json.code})` : "";
+        const detail = json.detail ? ` ${json.detail}` : "";
+        setEnrichError(`${json.error || "Enrichment failed"}${code}${detail}`);
         return;
       }
       setProfile((prev) => ({ ...prev, linkedin_data: json.data }));
